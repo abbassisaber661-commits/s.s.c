@@ -13,7 +13,8 @@ export const initPi = (): Promise<void> => {
   if (piInitPromise) return piInitPromise;
   const Pi = (window as any).Pi;
   if (!Pi) return Promise.resolve();
-  piInitPromise = Promise.resolve(Pi.init({ version: "2.0", sandbox: true }));
+  const sandbox = import.meta.env.DEV;
+  piInitPromise = Promise.resolve(Pi.init({ version: "2.0", sandbox }));
   return piInitPromise;
 };
 
