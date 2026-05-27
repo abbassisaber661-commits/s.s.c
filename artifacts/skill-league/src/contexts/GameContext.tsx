@@ -29,9 +29,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [lastTokensEarned, setTokensEarned] = useState(0);
 
   useEffect(() => {
-    initPi();
     document.documentElement.dir = data.language === 'ar' ? 'rtl' : 'ltr';
   }, [data.language]);
+
+  useEffect(() => {
+    if (!getCurrentUser()) {
+      initPi().then(() => {
+        loginWithPi().then((u) => {
+          if (u) setUser(u);
+        });
+      });
+    }
+  }, []);
 
   const login = async () => {
     const user = await loginWithPi();
