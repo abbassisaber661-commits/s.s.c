@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { PlayerData, storage } from '../lib/storage';
 import { PiUser, getCurrentUser, loginWithPi, logoutPi } from '../lib/pi-auth';
-import { Language } from '../lib/i18n';
+import { Language, isRTL } from '../lib/i18n';
 
 interface GameState extends PlayerData {
   user: PiUser | null;
@@ -25,21 +25,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PlayerData>(storage.get());
   const [user, setUser] = useState<PiUser | null>(getCurrentUser());
 
-  const [lastScore, setScore] = useState(0);
-  const [lastAccuracy, setAccuracy] = useState(0);
-  const [lastCoinsEarned, setCoinsEarned] = useState(0);
-  const [lastTokensEarned, setTokensEarned] = useState(0);
-  const [lastStreak, setLastStreak] = useState(0);
-  const [lastCorrect, setLastCorrect] = useState(0);
+  const [lastScore,       setScore]        = useState(0);
+  const [lastAccuracy,    setAccuracy]     = useState(0);
+  const [lastCoinsEarned, setCoinsEarned]  = useState(0);
+  const [lastTokensEarned,setTokensEarned] = useState(0);
+  const [lastStreak,      setLastStreak]   = useState(0);
+  const [lastCorrect,     setLastCorrect]  = useState(0);
 
+  // Apply RTL/LTR on language change
   useEffect(() => {
-    document.documentElement.dir = data.language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir  = isRTL(data.language) ? 'rtl' : 'ltr';
+    document.documentElement.lang = data.language;
   }, [data.language]);
 
+  // Pi auth on mount
   useEffect(() => {
-    loginWithPi().then((u) => {
-      if (u) setUser(u);
-    });
+    loginWithPi().then(u => { if (u) setUser(u); });
   }, []);
 
   const login = async () => {
@@ -47,10 +48,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (u) setUser(u);
   };
 
-  const logout = () => {
-    logoutPi();
-    setUser(null);
-  };
+  const logout = () => { logoutPi(); setUser(null); };
 
   const setLanguage = (lang: Language) => {
     const newData = { ...data, language: lang };
@@ -62,7 +60,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const newData = {
       ...data,
       trainingCoins: Math.max(0, data.trainingCoins + coins),
-      entryTokens: Math.max(0, data.entryTokens + tokens),
+      entryTokens:   Math.max(0, data.entryTokens   + tokens),
     };
     setData(newData);
     storage.save(newData);
@@ -77,47 +75,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const setLastResult = (
-    score: number,
-    accuracy: number,
-    coins: number,
-    tokens: number,
-    streak: number,
-    correct: number,
+    score: number, accuracy: number,
+    coins: number, tokens: number,
+    streak: number, correct: number,
   ) => {
-    setScore(score);
-    setAccuracy(accuracy);
-    setCoinsEarned(coins);
-    setTokensEarned(tokens);
-    setLastStreak(streak);
-    setLastCorrect(correct);
+    setScore(score); setAccuracy(accuracy);
+    setCoinsEarned(coins); setTokensEarned(tokens);
+    setLastStreak(streak); setLastCorrect(correct);
   };
 
   return (
-    <GameContext.Provider
-      value={{
-        ...data,
-        user,
-        login,
-        logout,
-        setLanguage,
-        updateCurrency,
-        updateHighScore,
-        lastScore,
-        lastAccuracy,
-        lastCoinsEarned,
-        lastTokensEarned,
-        lastStreak,
-        lastCorrect,
-        setLastResult,
-      }}
-    >
+    <GameContext.Provider value={{
+      ...data, user, login, logout, setLanguage,
+      updateCurrency, updateHighScore,
+      lastScore, lastAccuracy, lastCoinsEarned, lastTokensEarned, lastStreak, lastCorrect,
+      setLastResult,
+    }}>
       {children}
     </GameContext.Provider>
   );
 }
 
 export function useGame() {
-  const context = useContext(GameContext);
-  if (!context) throw new Error('useGame must be used within GameProvider');
-  return context;
+  const ctx = useContext(GameContext);
+  if (!ctx) throw new Error('useGame must be used within GameProvider');
+  return ctx;
 }

@@ -1,24 +1,22 @@
 import { useGame } from "@/contexts/GameContext";
-import { getTranslation } from "@/lib/i18n";
+import { useT } from "@/lib/i18n";
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Trophy, Zap, Coins, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import LanguageSelector from "@/components/LanguageSelector";
 
 export default function Home() {
   const { user, login, logout, language, setLanguage, trainingCoins, entryTokens } = useGame();
-  const t = (key: Parameters<typeof getTranslation>[1]) => getTranslation(language, key);
+  const t = useT(language);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
-      
-      <div className="w-full max-w-md flex justify-between items-center absolute top-0 pt-6 px-6 z-10">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')} className="font-mono">
-            {language === 'en' ? 'AR' : 'EN'}
-          </Button>
-        </div>
+
+      {/* Top bar */}
+      <div className="w-full max-w-md flex justify-between items-center absolute top-0 pt-5 px-5 z-10">
+        <LanguageSelector current={language} onChange={setLanguage} />
         <div>
           {user ? (
             <div className="flex items-center gap-3">
@@ -34,7 +32,8 @@ export default function Home() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10 space-y-12">
-        
+
+        {/* Logo + title */}
         <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-accent shadow-[0_0_40px_rgba(var(--primary),0.5)] mb-4">
             <Zap className="w-12 h-12 text-white" />
@@ -47,30 +46,31 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Currency */}
         <div className="flex gap-6 animate-in fade-in zoom-in-95 duration-700 delay-150">
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-card border border-border shadow-lg">
               <Coins className="w-6 h-6 text-yellow-400" />
             </div>
-            <span className="text-2xl font-bold">{trainingCoins}</span>
-            <span className="text-xs text-muted-foreground uppercase">{t('training_coins')}</span>
+            <span className="text-2xl font-bold tabular-nums">{trainingCoins}</span>
+            <span className="text-xs text-muted-foreground uppercase text-center">{t('training_coins')}</span>
           </div>
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-card border border-border shadow-lg">
               <Trophy className="w-6 h-6 text-purple-400" />
             </div>
-            <span className="text-2xl font-bold">{entryTokens}</span>
-            <span className="text-xs text-muted-foreground uppercase">{t('entry_tokens')}</span>
+            <span className="text-2xl font-bold tabular-nums">{entryTokens}</span>
+            <span className="text-xs text-muted-foreground uppercase text-center">{t('entry_tokens')}</span>
           </div>
         </div>
 
+        {/* Actions */}
         <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
           <Link href="/leagues" className="w-full block">
             <Button size="lg" className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)] transition-all active:scale-95">
               {t('play')}
             </Button>
           </Link>
-          
           <Link href="/rules" className="w-full block">
             <Button variant="outline" size="lg" className="w-full h-14 font-semibold gap-2 border-border/50 hover:bg-card">
               <Info className="w-5 h-5" />

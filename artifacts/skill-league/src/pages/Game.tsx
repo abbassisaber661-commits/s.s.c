@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams } from 'wouter';
 import { useGame } from '@/contexts/GameContext';
+import { useT } from '@/lib/i18n';
 import {
   COLORS,
   Color,
@@ -27,7 +28,8 @@ export default function Game() {
   const params = useParams<{ league: string }>();
   const league = params.league as LeagueType;
   const [, setLocation] = useLocation();
-  const { updateCurrency, updateHighScore, setLastResult } = useGame();
+  const { language, updateCurrency, updateHighScore, setLastResult } = useGame();
+  const t = useT(language);
   const config = LEAGUES[league];
 
   const [phase, setPhase] = useState<Phase>('waiting');
@@ -269,7 +271,7 @@ export default function Game() {
         {/* WAITING */}
         {phase === 'waiting' && (
           <div className="flex flex-col items-center gap-8">
-            <p className="text-muted-foreground uppercase tracking-widest text-sm">Ready?</p>
+            <p className="text-muted-foreground uppercase tracking-widest text-sm">{t('ready')}</p>
             <button
               data-testid="button-start"
               onClick={startGame}
@@ -279,7 +281,7 @@ export default function Game() {
                 boxShadow: '0 0 60px hsl(var(--primary) / 0.5)',
               }}
             >
-              START
+              {t('play')}
             </button>
           </div>
         )}
@@ -290,7 +292,7 @@ export default function Game() {
             {/* Target */}
             <div className="text-center space-y-3">
               <p className="text-xs text-muted-foreground uppercase tracking-widest">
-                {challenge.type === 'reaction' ? 'TAP THIS' : 'MATCH THIS'}
+                {challenge.type === 'reaction' ? t('tap_this') : t('match_this')}
               </p>
               <div
                 className="w-32 h-32 rounded-3xl mx-auto"
@@ -327,7 +329,9 @@ export default function Game() {
         {phase === 'memory_show' && challenge && challenge.type === 'memory' && (
           <div className="flex flex-col items-center gap-6 w-full">
             <p className="text-sm text-muted-foreground uppercase tracking-widest">
-              {memoryShowIdx === -1 ? 'WATCH CAREFULLY' : `${memoryShowIdx + 1} / ${challenge.sequence.length}`}
+              {memoryShowIdx === -1
+                ? t('watch_sequence')
+                : `${memoryShowIdx + 1} ${t('seq_index')}${challenge.sequence.length}`}
             </p>
 
             <div className="grid grid-cols-5 gap-3 w-full max-w-xs">
@@ -366,7 +370,7 @@ export default function Game() {
         {/* MEMORY INPUT */}
         {(phase === 'memory_input' || (isFeedback && challenge?.type === 'memory')) && challenge && challenge.type === 'memory' && (
           <div className="flex flex-col items-center gap-6 w-full">
-            <p className="text-sm text-muted-foreground uppercase tracking-widest">REPEAT THE SEQUENCE</p>
+            <p className="text-sm text-muted-foreground uppercase tracking-widest">{t('repeat_sequence')}</p>
 
             <div className="flex gap-2">
               {challenge.sequence.map((c, i) => (
@@ -401,7 +405,7 @@ export default function Game() {
         )}
 
         {phase === 'done' && (
-          <p className="text-muted-foreground animate-pulse">Finishing…</p>
+          <p className="text-muted-foreground animate-pulse">{t('finishing')}</p>
         )}
       </div>
     </div>
