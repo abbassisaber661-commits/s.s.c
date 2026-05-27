@@ -14,7 +14,9 @@ interface GameState extends PlayerData {
   lastAccuracy: number;
   lastCoinsEarned: number;
   lastTokensEarned: number;
-  setLastResult: (score: number, accuracy: number, coins: number, tokens: number) => void;
+  lastStreak: number;
+  lastCorrect: number;
+  setLastResult: (score: number, accuracy: number, coins: number, tokens: number, streak: number, correct: number) => void;
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -22,11 +24,13 @@ const GameContext = createContext<GameState | undefined>(undefined);
 export function GameProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PlayerData>(storage.get());
   const [user, setUser] = useState<PiUser | null>(getCurrentUser());
-  
+
   const [lastScore, setScore] = useState(0);
   const [lastAccuracy, setAccuracy] = useState(0);
   const [lastCoinsEarned, setCoinsEarned] = useState(0);
   const [lastTokensEarned, setTokensEarned] = useState(0);
+  const [lastStreak, setLastStreak] = useState(0);
+  const [lastCorrect, setLastCorrect] = useState(0);
 
   useEffect(() => {
     document.documentElement.dir = data.language === 'ar' ? 'rtl' : 'ltr';
@@ -39,8 +43,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async () => {
-    const user = await loginWithPi();
-    if (user) setUser(user);
+    const u = await loginWithPi();
+    if (u) setUser(u);
   };
 
   const logout = () => {
@@ -55,10 +59,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCurrency = (coins: number, tokens: number) => {
-    const newData = { 
-      ...data, 
-      trainingCoins: Math.max(0, data.trainingCoins + coins), 
-      entryTokens: Math.max(0, data.entryTokens + tokens) 
+    const newData = {
+      ...data,
+      trainingCoins: Math.max(0, data.trainingCoins + coins),
+      entryTokens: Math.max(0, data.entryTokens + tokens),
     };
     setData(newData);
     storage.save(newData);
@@ -72,28 +76,41 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setLastResult = (score: number, accuracy: number, coins: number, tokens: number) => {
+  const setLastResult = (
+    score: number,
+    accuracy: number,
+    coins: number,
+    tokens: number,
+    streak: number,
+    correct: number,
+  ) => {
     setScore(score);
     setAccuracy(accuracy);
     setCoinsEarned(coins);
     setTokensEarned(tokens);
+    setLastStreak(streak);
+    setLastCorrect(correct);
   };
 
   return (
-    <GameContext.Provider value={{ 
-      ...data, 
-      user, 
-      login, 
-      logout, 
-      setLanguage, 
-      updateCurrency, 
-      updateHighScore,
-      lastScore,
-      lastAccuracy,
-      lastCoinsEarned,
-      lastTokensEarned,
-      setLastResult
-    }}>
+    <GameContext.Provider
+      value={{
+        ...data,
+        user,
+        login,
+        logout,
+        setLanguage,
+        updateCurrency,
+        updateHighScore,
+        lastScore,
+        lastAccuracy,
+        lastCoinsEarned,
+        lastTokensEarned,
+        lastStreak,
+        lastCorrect,
+        setLastResult,
+      }}
+    >
       {children}
     </GameContext.Provider>
   );
