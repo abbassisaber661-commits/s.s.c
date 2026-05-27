@@ -7,27 +7,25 @@ export const PiUserSchema = z.object({
 
 export type PiUser = z.infer<typeof PiUserSchema>;
 
-let piInitPromise: Promise<void> | null = null;
+let initialized = false;
 
-export const initPi = (): Promise<void> => {
-  if (piInitPromise) return piInitPromise;
+export const initPi = (): void => {
+  if (initialized) return;
   const Pi = (window as any).Pi;
-  if (!Pi) return Promise.resolve();
-  const sandbox = import.meta.env.DEV;
-  piInitPromise = Promise.resolve(Pi.init({ version: "2.0", sandbox }));
-  return piInitPromise;
+  if (!Pi) return;
+  Pi.init({ version: "2.0", sandbox: import.meta.env.DEV });
+  initialized = true;
 };
 
 export const loginWithPi = async (): Promise<PiUser | null> => {
-  await initPi();
+  initPi();
 
   const Pi = (window as any).Pi;
   if (!Pi) return null;
 
   try {
     const authResult: { accessToken: string; user: { uid: string; username: string } } =
-      await Pi.authenticate(["username"], (_payment: unknown) => {
-      });
+      await Pi.authenticate(["username"], (_payment: unknown) => {});
 
     const response = await fetch("/api/auth/pi", {
       method: "POST",

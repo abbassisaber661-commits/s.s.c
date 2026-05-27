@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { PlayerData, storage } from '../lib/storage';
-import { PiUser, getCurrentUser, loginWithPi, logoutPi, initPi } from '../lib/pi-auth';
+import { PiUser, getCurrentUser, loginWithPi, logoutPi } from '../lib/pi-auth';
 import { Language } from '../lib/i18n';
 
 interface GameState extends PlayerData {
@@ -33,13 +33,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [data.language]);
 
   useEffect(() => {
-    if (!getCurrentUser()) {
-      initPi().then(() => {
-        loginWithPi().then((u) => {
-          if (u) setUser(u);
-        });
-      });
-    }
+    loginWithPi().then((u) => {
+      if (u) setUser(u);
+    });
   }, []);
 
   const login = async () => {
