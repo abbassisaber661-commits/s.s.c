@@ -5,28 +5,32 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GameProvider } from "@/contexts/GameContext";
 import NotFound from "@/pages/not-found";
 
-import Home from "@/pages/Home";
+import Home        from "@/pages/Home";
 import LeagueSelect from "@/pages/LeagueSelect";
-import Game from "@/pages/Game";
-import Results from "@/pages/Results";
-import Rules from "@/pages/Rules";
+import Game        from "@/pages/Game";
+import Results     from "@/pages/Results";
+import Rules       from "@/pages/Rules";
+import Profile     from "@/pages/Profile";
+import Leaderboard from "@/pages/Leaderboard";
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/leagues" component={LeagueSelect} />
+      <Route path="/"            component={Home} />
+      <Route path="/leagues"     component={LeagueSelect} />
       <Route path="/game/:league" component={Game} />
-      <Route path="/results" component={Results} />
-      <Route path="/rules" component={Rules} />
+      <Route path="/results"     component={Results} />
+      <Route path="/rules"       component={Rules} />
+      <Route path="/profile"     component={Profile} />
+      <Route path="/leaderboard" component={Leaderboard} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <GameProvider>
@@ -40,5 +44,3 @@ function App() {
     </QueryClientProvider>
   );
 }
-
-export default App;

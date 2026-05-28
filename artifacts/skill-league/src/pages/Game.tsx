@@ -3,61 +3,53 @@ import { useLocation, useParams } from 'wouter';
 import { useGame } from '@/contexts/GameContext';
 import { useT } from '@/lib/i18n';
 import {
-  COLORS,
-  Color,
-  Challenge,
-  generateChallenge,
-  getPoints,
-  LEAGUES,
-  LeagueType,
+  COLORS, Color, Challenge,
+  generateChallenge, getPoints,
+  LEAGUES, LeagueId,
 } from '@/lib/game-engine';
 
-type Phase =
-  | 'waiting'
-  | 'playing'
-  | 'memory_show'
-  | 'memory_input'
-  | 'feedback_good'
-  | 'feedback_bad'
-  | 'done';
+type Phase = 'waiting' | 'playing' | 'memory_show' | 'memory_input' | 'feedback_good' | 'feedback_bad' | 'done';
 
 const GAME_DURATION = 30;
-const CHALLENGE_TIMEOUT = 2500;
 
 export default function Game() {
   const params = useParams<{ league: string }>();
-  const league = params.league as LeagueType;
+  const league = params.league as LeagueId;
   const [, setLocation] = useLocation();
-  const { language, updateCurrency, updateHighScore, setLastResult } = useGame();
+  const ctx = useGame();
+  const { language, recordMatch } = ctx;
   const t = useT(language);
   const config = LEAGUES[league];
 
-  const [phase, setPhase] = useState<Phase>('waiting');
-  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
-  const [score, setScore] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [memoryShowIdx, setMemoryShowIdx] = useState(-1);
-  const [memoryInput, setMemoryInput] = useState<string[]>([]);
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [phase,        setPhase]        = useState<Phase>('waiting');
+  const [timeLeft,     setTimeLeft]     = useState(GAME_DURATION);
+  const [score,        setScore]        = useState(0);
+  const [streak,       setStreak]       = useState(0);
+  const [challenge,    setChallenge]    = useState<Challenge | null>(null);
+  const [memoryShowIdx,setMemoryShowIdx]= useState(-1);
+  const [memoryInput,  setMemoryInput]  = useState<string[]>([]);
 
-  // Mutable refs — safe to read from stale closures inside timers
-  const phaseRef     = useRef<Phase>('waiting');
-  const scoreRef     = useRef(0);
-  const streakRef    = useRef(0);
-  const bestRef      = useRef(0);
-  const correctRef   = useRef(0);
-  const totalRef     = useRef(0);
-  const doneRef      = useRef(false);
-  const challengeRef = useRef<Challenge | null>(null);
-  const memInRef     = useRef<string[]>([]);
+  // ── Refs (safe in stale closures) ─────────────────────────────────────────
+  const phaseRef    = useRef<Phase>('waiting');
+  const scoreRef    = useRef(0);
+  const streakRef   = useRef(0);
+  const bestRef     = useRef(0);
+  const correctRef  = useRef(0);
+  const totalRef    = useRef(0);
+  const doneRef     = useRef(false);
+  const challengeRef= useRef<Challenge | null>(null);
+  const memInRef    = useRef<string[]>([]);
+  const recordRef   = useRef(recordMatch);
+  recordRef.current = recordMatch;
 
-  const gameTickRef  = useRef<ReturnType<typeof setInterval> | null>(null);
-  const actionRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const seqRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const nextFnRef    = useRef<() => void>(() => {});
+  const gameTickRef = useRef<ReturnType<typeof setInterval>  | null>(null);
+  const actionRef   = useRef<ReturnType<typeof setTimeout>   | null>(null);
+  const seqRef      = useRef<ReturnType<typeof setTimeout>   | null>(null);
+  const nextFnRef   = useRef<() => void>(() => {});
 
   useEffect(() => {
-    if (!config) setLocation('/');
+    if (!config) setLocation('/leagues');
     return () => {
       if (gameTickRef.current) clearInterval(gameTickRef.current);
       if (actionRef.current)   clearTimeout(actionRef.current);
@@ -70,11 +62,8 @@ export default function Game() {
     if (seqRef.current)    { clearTimeout(seqRef.current);    seqRef.current    = null; }
   };
 
-  /* ── helpers ── */
-  const addScore = (pts: number) => {
-    scoreRef.current += pts;
-    setScore(scoreRef.current);
-  };
+  // ── Score helpers ─────────────────────────────────────────────────────────
+  const addScore = (pts: number) => { scoreRef.current += pts; setScore(scoreRef.current); };
 
   const recordAnswer = (correct: boolean, type: Challenge['type']) => {
     totalRef.current += 1;
@@ -95,12 +84,10 @@ export default function Game() {
     const p: Phase = good ? 'feedback_good' : 'feedback_bad';
     phaseRef.current = p;
     setPhase(p);
-    setTimeout(() => {
-      if (!doneRef.current) nextFnRef.current();
-    }, 350);
+    setTimeout(() => { if (!doneRef.current) nextFnRef.current(); }, 350);
   };
 
-  /* ── memory sequence animation ── */
+  // ── Memory sequence animation ─────────────────────────────────────────────
   const runSequence = (seq: Color[], idx: number) => {
     if (doneRef.current) return;
     if (idx >= seq.length) {
@@ -121,12 +108,12 @@ export default function Game() {
     }, 700);
   };
 
-  /* ── next challenge ── */
+  // ── Generate next challenge ───────────────────────────────────────────────
   const nextChallenge = () => {
     if (doneRef.current) return;
     clearAction();
 
-    const c = generateChallenge();
+    const c = generateChallenge(config?.memorySeqLen ?? 4);
     challengeRef.current = c;
     setChallenge(c);
     memInRef.current = [];
@@ -140,17 +127,18 @@ export default function Game() {
     } else {
       phaseRef.current = 'playing';
       setPhase('playing');
+      const timeout = config?.challengeTimeout ?? 2500;
       actionRef.current = setTimeout(() => {
         if (phaseRef.current !== 'playing' || doneRef.current) return;
         recordAnswer(false, c.type);
         doFeedback(false);
-      }, CHALLENGE_TIMEOUT);
+      }, timeout);
     }
   };
 
   nextFnRef.current = nextChallenge;
 
-  /* ── finish game ── */
+  // ── Finish game ───────────────────────────────────────────────────────────
   const finishGame = () => {
     if (doneRef.current) return;
     doneRef.current = true;
@@ -159,25 +147,16 @@ export default function Game() {
     phaseRef.current = 'done';
     setPhase('done');
 
-    const s = scoreRef.current;
+    const s   = scoreRef.current;
     const acc = totalRef.current > 0 ? Math.round((correctRef.current / totalRef.current) * 100) : 0;
-    const coins  = (league === 'training' || league === 'easy') ? Math.max(5, Math.floor(s / 5)) : 0;
-    const tokens = (league === 'ranked'   || league === 'elite') ? Math.max(1, Math.floor(s / 50)) : 0;
-
-    if (config) {
-      if (config.entryCostType === 'coins')  updateCurrency(-config.entryCost, 0);
-      if (config.entryCostType === 'tokens') updateCurrency(0, -config.entryCost);
-    }
-    updateCurrency(coins, tokens);
-    updateHighScore(league, s);
-    setLastResult(s, acc, coins, tokens, bestRef.current, correctRef.current);
+    recordRef.current(league, s, acc, bestRef.current, correctRef.current);
 
     setTimeout(() => setLocation('/results'), 600);
   };
 
-  /* ── start game ── */
+  // ── Start game ────────────────────────────────────────────────────────────
   const startGame = () => {
-    doneRef.current  = false;
+    doneRef.current = false;
     scoreRef.current = streakRef.current = bestRef.current = correctRef.current = totalRef.current = 0;
     setScore(0); setStreak(0); setTimeLeft(GAME_DURATION);
 
@@ -191,7 +170,7 @@ export default function Game() {
     nextFnRef.current();
   };
 
-  /* ── tap handler ── */
+  // ── Tap handler ───────────────────────────────────────────────────────────
   const handleTap = (color: Color) => {
     if (doneRef.current) return;
     const c = challengeRef.current;
@@ -199,9 +178,8 @@ export default function Game() {
 
     if ((c.type === 'reaction' || c.type === 'decision') && phaseRef.current === 'playing') {
       clearAction();
-      const correct = color.id === c.target.id;
-      recordAnswer(correct, c.type);
-      doFeedback(correct);
+      recordAnswer(color.id === c.target.id, c.type);
+      doFeedback(color.id === c.target.id);
 
     } else if (c.type === 'memory' && phaseRef.current === 'memory_input') {
       const next = [...memInRef.current, color.id];
@@ -210,62 +188,49 @@ export default function Game() {
 
       const expected = c.sequence[next.length - 1].id;
       if (color.id !== expected) {
-        clearAction();
-        recordAnswer(false, 'memory');
-        doFeedback(false);
+        clearAction(); recordAnswer(false, 'memory'); doFeedback(false);
       } else if (next.length === c.sequence.length) {
-        clearAction();
-        recordAnswer(true, 'memory');
-        doFeedback(true);
+        clearAction(); recordAnswer(true, 'memory'); doFeedback(true);
       }
     }
   };
 
   if (!config) return null;
 
-  const pct = (timeLeft / GAME_DURATION) * 100;
+  const pct        = (timeLeft / GAME_DURATION) * 100;
   const isFeedback = phase === 'feedback_good' || phase === 'feedback_bad';
 
-  /* ── render ── */
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
       className="min-h-screen flex flex-col select-none overflow-hidden"
       style={{
         background:
-          phase === 'feedback_good' ? 'radial-gradient(circle at center, #2EE87A22 0%, hsl(var(--background)) 70%)' :
-          phase === 'feedback_bad'  ? 'radial-gradient(circle at center, #FF3A5E22 0%, hsl(var(--background)) 70%)' :
+          phase === 'feedback_good' ? 'radial-gradient(circle at center,#2EE87A22,hsl(var(--background)) 70%)' :
+          phase === 'feedback_bad'  ? 'radial-gradient(circle at center,#FF3A5E22,hsl(var(--background)) 70%)' :
           'hsl(var(--background))',
         transition: 'background 0.2s',
       }}
     >
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-center gap-4 px-5 pt-5 pb-3">
         <div className="w-12 text-center">
-          <div
-            className="text-3xl font-black font-mono tabular-nums leading-none"
-            style={{ color: timeLeft <= 5 ? '#FF3A5E' : 'inherit' }}
-          >
+          <div className="text-3xl font-black font-mono tabular-nums leading-none"
+            style={{ color: timeLeft <= 5 ? '#FF3A5E' : 'inherit' }}>
             {timeLeft}
           </div>
         </div>
         <div className="flex-1 h-2 bg-card rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-1000"
-            style={{
-              width: `${pct}%`,
-              background: timeLeft <= 5 ? '#FF3A5E' : 'hsl(var(--primary))',
-            }}
-          />
+          <div className="h-full rounded-full transition-all duration-1000"
+            style={{ width: `${pct}%`, background: timeLeft <= 5 ? '#FF3A5E' : 'hsl(var(--primary))' }} />
         </div>
         <div className="w-20 text-right">
           <div className="text-2xl font-black tabular-nums">{score}</div>
-          {streak >= 3 && (
-            <div className="text-xs font-bold text-orange-400">×{streak}</div>
-          )}
+          {streak >= 3 && <div className="text-xs font-bold text-orange-400">×{streak}</div>}
         </div>
       </div>
 
-      {/* ── Main Area ── */}
+      {/* Main */}
       <div className="flex-1 flex flex-col items-center justify-center px-5 pb-8 gap-8">
 
         {/* WAITING */}
@@ -273,13 +238,9 @@ export default function Game() {
           <div className="flex flex-col items-center gap-8">
             <p className="text-muted-foreground uppercase tracking-widest text-sm">{t('ready')}</p>
             <button
-              data-testid="button-start"
               onClick={startGame}
               className="w-44 h-44 rounded-full text-white text-2xl font-black uppercase tracking-wider active:scale-95 transition-transform"
-              style={{
-                background: 'hsl(var(--primary))',
-                boxShadow: '0 0 60px hsl(var(--primary) / 0.5)',
-              }}
+              style={{ background: config.themeColor, boxShadow: `0 0 60px ${config.themeColor}66` }}
             >
               {t('play')}
             </button>
@@ -289,37 +250,20 @@ export default function Game() {
         {/* REACTION / DECISION */}
         {(phase === 'playing' || isFeedback) && challenge && challenge.type !== 'memory' && (
           <>
-            {/* Target */}
             <div className="text-center space-y-3">
               <p className="text-xs text-muted-foreground uppercase tracking-widest">
                 {challenge.type === 'reaction' ? t('tap_this') : t('match_this')}
               </p>
-              <div
-                className="w-32 h-32 rounded-3xl mx-auto"
-                style={{
-                  backgroundColor: challenge.target.hex,
-                  boxShadow: `0 0 50px ${challenge.target.hex}88`,
-                }}
-              />
+              <div className="w-32 h-32 rounded-3xl mx-auto"
+                style={{ backgroundColor: challenge.target.hex, boxShadow: `0 0 50px ${challenge.target.hex}88` }} />
             </div>
-
-            {/* Buttons */}
-            <div
-              className="grid gap-4 w-full max-w-xs"
-              style={{ gridTemplateColumns: `repeat(${Math.min(challenge.options.length, 2)}, 1fr)` }}
-            >
-              {challenge.options.map((c) => (
-                <button
-                  key={c.id}
-                  data-testid={`button-color-${c.id}`}
-                  onClick={() => handleTap(c)}
-                  disabled={isFeedback}
+            <div className="grid gap-4 w-full max-w-xs"
+              style={{ gridTemplateColumns: `repeat(${Math.min(challenge.options.length, 2)}, 1fr)` }}>
+              {challenge.options.map(c => (
+                <button key={c.id}
+                  onClick={() => handleTap(c)} disabled={isFeedback}
                   className="h-24 rounded-2xl active:scale-95 transition-transform disabled:opacity-60"
-                  style={{
-                    backgroundColor: c.hex,
-                    boxShadow: `0 4px 24px ${c.hex}55`,
-                  }}
-                />
+                  style={{ backgroundColor: c.hex, boxShadow: `0 4px 24px ${c.hex}55` }} />
               ))}
             </div>
           </>
@@ -329,39 +273,23 @@ export default function Game() {
         {phase === 'memory_show' && challenge && challenge.type === 'memory' && (
           <div className="flex flex-col items-center gap-6 w-full">
             <p className="text-sm text-muted-foreground uppercase tracking-widest">
-              {memoryShowIdx === -1
-                ? t('watch_sequence')
-                : `${memoryShowIdx + 1} ${t('seq_index')}${challenge.sequence.length}`}
+              {memoryShowIdx === -1 ? t('watch_sequence') : `${memoryShowIdx + 1} ${t('seq_index')}${challenge.sequence.length}`}
             </p>
-
             <div className="grid grid-cols-5 gap-3 w-full max-w-xs">
-              {COLORS.map((c) => {
+              {COLORS.map(c => {
                 const active = memoryShowIdx >= 0 && challenge.sequence[memoryShowIdx]?.id === c.id;
                 return (
-                  <div
-                    key={c.id}
-                    className="aspect-square rounded-xl transition-all duration-150"
-                    style={{
-                      backgroundColor: c.hex,
-                      opacity: active ? 1 : 0.18,
+                  <div key={c.id} className="aspect-square rounded-xl transition-all duration-150"
+                    style={{ backgroundColor: c.hex, opacity: active ? 1 : 0.18,
                       transform: active ? 'scale(1.25)' : 'scale(1)',
-                      boxShadow: active ? `0 0 32px ${c.hex}` : 'none',
-                    }}
-                  />
+                      boxShadow: active ? `0 0 32px ${c.hex}` : 'none' }} />
                 );
               })}
             </div>
-
             <div className="flex gap-2">
               {challenge.sequence.map((c, i) => (
-                <div
-                  key={i}
-                  className="w-3 h-3 rounded-full transition-all duration-200"
-                  style={{
-                    backgroundColor: i <= memoryShowIdx ? c.hex : 'transparent',
-                    border: `2px solid ${c.hex}`,
-                  }}
-                />
+                <div key={i} className="w-3 h-3 rounded-full transition-all duration-200"
+                  style={{ backgroundColor: i <= memoryShowIdx ? c.hex : 'transparent', border: `2px solid ${c.hex}` }} />
               ))}
             </div>
           </div>
@@ -371,34 +299,18 @@ export default function Game() {
         {(phase === 'memory_input' || (isFeedback && challenge?.type === 'memory')) && challenge && challenge.type === 'memory' && (
           <div className="flex flex-col items-center gap-6 w-full">
             <p className="text-sm text-muted-foreground uppercase tracking-widest">{t('repeat_sequence')}</p>
-
             <div className="flex gap-2">
               {challenge.sequence.map((c, i) => (
-                <div
-                  key={i}
-                  className="w-4 h-4 rounded-full transition-all duration-200"
-                  style={{
-                    backgroundColor: memoryInput[i] ? challenge.sequence[i].hex : 'transparent',
-                    border: `2px solid ${challenge.sequence[i].hex}`,
-                    opacity: memoryInput[i] ? 1 : 0.35,
-                  }}
-                />
+                <div key={i} className="w-4 h-4 rounded-full transition-all duration-200"
+                  style={{ backgroundColor: memoryInput[i] ? challenge.sequence[i].hex : 'transparent',
+                    border: `2px solid ${challenge.sequence[i].hex}`, opacity: memoryInput[i] ? 1 : 0.35 }} />
               ))}
             </div>
-
             <div className="grid grid-cols-5 gap-3 w-full max-w-xs">
-              {COLORS.map((c) => (
-                <button
-                  key={c.id}
-                  data-testid={`button-mem-${c.id}`}
-                  onClick={() => handleTap(c)}
-                  disabled={isFeedback}
+              {COLORS.map(c => (
+                <button key={c.id} onClick={() => handleTap(c)} disabled={isFeedback}
                   className="aspect-square rounded-xl active:scale-90 transition-transform disabled:opacity-60"
-                  style={{
-                    backgroundColor: c.hex,
-                    boxShadow: `0 4px 16px ${c.hex}55`,
-                  }}
-                />
+                  style={{ backgroundColor: c.hex, boxShadow: `0 4px 16px ${c.hex}55` }} />
               ))}
             </div>
           </div>

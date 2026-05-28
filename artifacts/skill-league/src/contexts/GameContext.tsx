@@ -1,22 +1,28 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { PlayerData, storage } from '../lib/storage';
+import { PlayerData, LeaderboardEntry, storage } from '../lib/storage';
 import { PiUser, getCurrentUser, loginWithPi, logoutPi } from '../lib/pi-auth';
 import { Language, isRTL } from '../lib/i18n';
+import { LEAGUES, LeagueId, calculateReward } from '../lib/game-engine';
+import { addLeaderboardEntry } from '../lib/progression';
 
 interface GameState extends PlayerData {
+  // Auth
   user: PiUser | null;
   login: () => Promise<void>;
   logout: () => void;
+  // Settings
   setLanguage: (lang: Language) => void;
-  updateCurrency: (coins: number, tokens: number) => void;
-  updateHighScore: (league: string, score: number) => void;
+  updateUsername: (name: string) => void;
+  // Progression
+  recordMatch: (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => void;
+  unlockLeagueWithCoins: (leagueId: string) => boolean;
+  // Last match (for Results screen)
   lastScore: number;
   lastAccuracy: number;
   lastCoinsEarned: number;
-  lastTokensEarned: number;
   lastStreak: number;
   lastCorrect: number;
-  setLastResult: (score: number, accuracy: number, coins: number, tokens: number, streak: number, correct: number) => void;
+  lastUnlockedLeague: string | null;
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -25,71 +31,103 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PlayerData>(storage.get());
   const [user, setUser] = useState<PiUser | null>(getCurrentUser());
 
-  const [lastScore,       setScore]        = useState(0);
-  const [lastAccuracy,    setAccuracy]     = useState(0);
-  const [lastCoinsEarned, setCoinsEarned]  = useState(0);
-  const [lastTokensEarned,setTokensEarned] = useState(0);
-  const [lastStreak,      setLastStreak]   = useState(0);
-  const [lastCorrect,     setLastCorrect]  = useState(0);
+  const [lastScore,          setLScore]    = useState(0);
+  const [lastAccuracy,       setLAccuracy] = useState(0);
+  const [lastCoinsEarned,    setLCoins]    = useState(0);
+  const [lastStreak,         setLStreak]   = useState(0);
+  const [lastCorrect,        setLCorrect]  = useState(0);
+  const [lastUnlockedLeague, setLUnlocked] = useState<string | null>(null);
 
-  // Apply RTL/LTR on language change
   useEffect(() => {
     document.documentElement.dir  = isRTL(data.language) ? 'rtl' : 'ltr';
     document.documentElement.lang = data.language;
   }, [data.language]);
 
-  // Pi auth on mount
   useEffect(() => {
     loginWithPi().then(u => { if (u) setUser(u); });
   }, []);
 
-  const login = async () => {
-    const u = await loginWithPi();
-    if (u) setUser(u);
-  };
+  const persist = (newData: PlayerData) => { setData(newData); storage.save(newData); };
 
+  const login  = async () => { const u = await loginWithPi(); if (u) setUser(u); };
   const logout = () => { logoutPi(); setUser(null); };
 
-  const setLanguage = (lang: Language) => {
-    const newData = { ...data, language: lang };
-    setData(newData);
-    storage.save(newData);
-  };
+  const setLanguage    = (lang: Language) => persist({ ...data, language: lang });
+  const updateUsername = (name: string)   => persist({ ...data, username: name.trim().slice(0, 20) || data.username });
 
-  const updateCurrency = (coins: number, tokens: number) => {
-    const newData = {
-      ...data,
-      trainingCoins: Math.max(0, data.trainingCoins + coins),
-      entryTokens:   Math.max(0, data.entryTokens   + tokens),
-    };
-    setData(newData);
-    storage.save(newData);
-  };
-
-  const updateHighScore = (league: string, score: number) => {
-    if ((data.highScores[league] || 0) < score) {
-      const newData = { ...data, highScores: { ...data.highScores, [league]: score } };
-      setData(newData);
-      storage.save(newData);
-    }
-  };
-
-  const setLastResult = (
-    score: number, accuracy: number,
-    coins: number, tokens: number,
-    streak: number, correct: number,
+  const recordMatch = (
+    leagueId: string,
+    score: number,
+    accuracy: number,
+    streak: number,
+    correct: number,
   ) => {
-    setScore(score); setAccuracy(accuracy);
-    setCoinsEarned(coins); setTokensEarned(tokens);
-    setLastStreak(streak); setLastCorrect(correct);
+    const config = LEAGUES[leagueId as LeagueId];
+    if (!config) return;
+
+    const earned  = calculateReward(config, score);
+    const net     = earned - config.entryCost;
+
+    const entry: LeaderboardEntry = {
+      score, correct, streak, accuracy,
+      date: new Date().toISOString(),
+    };
+
+    let newUnlocked = [...data.unlockedLeagues];
+    let unlockedLeague: string | null = null;
+
+    if (config.nextLeague) {
+      const nextCfg = LEAGUES[config.nextLeague];
+      if (score >= nextCfg.unlockScore && !newUnlocked.includes(config.nextLeague)) {
+        newUnlocked = [...newUnlocked, config.nextLeague];
+        unlockedLeague = config.nextLeague;
+      }
+    }
+
+    const newData: PlayerData = {
+      ...data,
+      coins:          Math.max(0, data.coins + net),
+      matchesPlayed:  data.matchesPlayed + 1,
+      matchesWon:     data.matchesWon + (score > 0 ? 1 : 0),
+      bestStreak:     Math.max(data.bestStreak, streak),
+      highScores: {
+        ...data.highScores,
+        [leagueId]: Math.max(data.highScores[leagueId] ?? 0, score),
+      },
+      leaderboard:     addLeaderboardEntry(data.leaderboard, leagueId, entry),
+      unlockedLeagues: newUnlocked,
+    };
+
+    persist(newData);
+    setLScore(score);
+    setLAccuracy(accuracy);
+    setLCoins(earned);
+    setLStreak(streak);
+    setLCorrect(correct);
+    setLUnlocked(unlockedLeague);
+  };
+
+  const unlockLeagueWithCoins = (leagueId: string): boolean => {
+    const config = LEAGUES[leagueId as LeagueId];
+    if (!config || config.unlockCoinsCost === 0) return false;
+    if (data.coins < config.unlockCoinsCost) return false;
+    if (data.unlockedLeagues.includes(leagueId)) return true;
+    persist({
+      ...data,
+      coins: data.coins - config.unlockCoinsCost,
+      unlockedLeagues: [...data.unlockedLeagues, leagueId],
+    });
+    return true;
   };
 
   return (
     <GameContext.Provider value={{
-      ...data, user, login, logout, setLanguage,
-      updateCurrency, updateHighScore,
-      lastScore, lastAccuracy, lastCoinsEarned, lastTokensEarned, lastStreak, lastCorrect,
-      setLastResult,
+      ...data,
+      user, login, logout,
+      setLanguage, updateUsername,
+      recordMatch, unlockLeagueWithCoins,
+      lastScore, lastAccuracy, lastCoinsEarned,
+      lastStreak, lastCorrect, lastUnlockedLeague,
     }}>
       {children}
     </GameContext.Provider>
