@@ -32,6 +32,7 @@ interface GameState extends PlayerData {
   recordPvpResult: (won: boolean, opponentLevel: number, coinsEarned: number) => void;
   recordTournamentWin: (place: number, coinsReward: number, xpReward: number) => void;
   spendCoins: (amount: number) => boolean;
+  addCoins: (amount: number) => void;
   unlockLeagueWithCoins: (leagueId: string) => boolean;
   addFame: (amount: number) => void;
   setLastPostTime: (ts: number) => void;
@@ -41,6 +42,7 @@ interface GameState extends PlayerData {
   toggleNotif: (type: 'match' | 'community' | 'trophy') => void;
   toggleSound: () => void;
   toggleVibration: () => void;
+  setAvatarTheme: (id: string) => void;
   // Last match results
   lastScore: number;
   lastAccuracy: number;
@@ -84,13 +86,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { loginWithPi().then(u => { if (u) setUser(u); }); }, []);
 
-  // Season & verification tracking
   useEffect(() => {
     const season = getCurrentSeason();
     let updated = { ...data };
     let changed = false;
 
-    // Season rollover
     if (data.currentSeasonNumber !== 0 && data.currentSeasonNumber !== season.number) {
       import('../lib/seasons').then(({ getSeasonTier }) => {
         const t = getSeasonTier(data.elo);
@@ -125,11 +125,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       changed = true;
     }
 
-    // Verification check
     const newVerifLevel = checkVerification(
-      !!user,
-      data.level,
-      data.matchesPlayed,
+      !!user, data.level, data.matchesPlayed,
       !!(data.piLockTierId && data.piLockExpiry && data.piLockExpiry > Date.now()),
       (data.verificationLevel ?? 0) as VerificationLevel,
     );
@@ -156,6 +153,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const setLanguage    = (lang: Language) => persist({ ...data, language: lang });
   const updateUsername = (name: string)   => persist({ ...data, username: name.trim().slice(0, 20) || data.username });
+  const setAvatarTheme = (id: string)     => persist({ ...data, avatarThemeId: id });
 
   const toggleNotif = (type: 'match' | 'community' | 'trophy') => {
     if (type === 'match')     persist({ ...data, notifPushMatch: !data.notifPushMatch });
@@ -172,8 +170,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const addFame = (amount: number) => persist({ ...data, fame: (data.fame || 0) + amount });
-  const setLastPostTime = (ts: number) => persist({ ...data, lastPostTime: ts });
+  const addCoins = (amount: number) => {
+    persist({ ...data, coins: data.coins + amount, totalCoinsEarned: data.totalCoinsEarned + amount });
+    addTransaction({ type: 'earn_match', amount, label: 'Referral reward' });
+  };
+
+  const addFame        = (amount: number) => persist({ ...data, fame: (data.fame || 0) + amount });
+  const setLastPostTime = (ts: number)   => persist({ ...data, lastPostTime: ts });
 
   const isXpBoosted = (): boolean =>
     data.xpBoostUntil !== null && (data.xpBoostUntil ?? 0) > Date.now();
@@ -185,7 +188,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return tier ? 1 + tier.coinBonus / 100 : 1;
   };
 
-  // ─── Store purchase ───────────────────────────────────────────────────────
+  // ─── Store purchase ────────────────────────────────────────────────────────
 
   const purchaseItem = async (item: StoreItem): Promise<boolean> => {
     try {
@@ -229,7 +232,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     persist({ ...data, ...updates });
   };
 
-  // ─── Pi Lock ──────────────────────────────────────────────────────────────
+  // ─── Pi Lock ─────────────────────────────────────────────────────────────
 
   const activatePiLock = async (tier: PiLockTier): Promise<boolean> => {
     try {
@@ -275,7 +278,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // ─── Weekly helpers ───────────────────────────────────────────────────────
+  // ─── Weekly helpers ──────────────────────────────────────────────────────
 
   function ensureWeekState(wc: WeeklyChallengeState): WeeklyChallengeState {
     const thisWeek = getWeekString();
@@ -288,7 +291,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     updates: Partial<Record<WeeklyMissionType, number>>,
     absolute = false,
   ): { state: WeeklyChallengeState; newlyCompleted: string[]; coinsReward: number; xpReward: number } {
-    const missions   = getWeeklyMissions(wc.week);
+    const missions    = getWeeklyMissions(wc.week);
     const newProgress = { ...wc.progress };
     for (const [type, val] of Object.entries(updates) as [WeeklyMissionType, number][]) {
       newProgress[type] = absolute
@@ -305,7 +308,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   }
 
-  // ─── Trophy helper ────────────────────────────────────────────────────────
+  // ─── Trophy helper ───────────────────────────────────────────────────────
 
   const applyTrophyChecks = (mid: PlayerData, extra?: Partial<TrophyStats>) => {
     const stats: TrophyStats = {
@@ -327,7 +330,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     };
   };
 
-  // ─── recordMatch ──────────────────────────────────────────────────────────
+  // ─── recordMatch ─────────────────────────────────────────────────────────
 
   const recordMatch = (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => {
     const config = LEAGUES[leagueId as LeagueId];
@@ -357,8 +360,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     const entry: LeaderboardEntry = { score, correct, streak, accuracy, date: new Date().toISOString() };
-    const isWin   = score > 0;
-    const baseXp  = xpForMatch(score, accuracy, isWin, streak);
+    const isWin    = score > 0;
+    const baseXp   = xpForMatch(score, accuracy, isWin, streak);
     const xpEarned = isXpBoosted() ? baseXp * 2 : baseXp;
     const oldLevel = data.level;
     const newXp    = data.xp + xpEarned;
@@ -441,19 +444,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setLLevelUp(didLevelUp); setLTrophies(newTrophies); setLWeekly(weeklyDone);
   };
 
-  // ─── recordPvpResult ──────────────────────────────────────────────────────
+  // ─── recordPvpResult ─────────────────────────────────────────────────────
 
   const recordPvpResult = (won: boolean, opponentLevel: number, coinsEarned: number) => {
-    const coinMult  = getCoinMultiplier();
+    const coinMult     = getCoinMultiplier();
     const boostedCoins = Math.round(coinsEarned * coinMult);
-    const baseXp    = won ? xpForPvpWin(opponentLevel, data.level) : 20;
-    const xpEarned  = isXpBoosted() ? baseXp * 2 : baseXp;
-    const newXp     = data.xp + xpEarned;
-    const newLevel  = Math.min(100, levelFromXp(newXp));
-    const didLevelUp = newLevel > data.level;
-    const newPvpWins = data.pvpWins + (won ? 1 : 0);
+    const baseXp       = won ? xpForPvpWin(opponentLevel, data.level) : 20;
+    const xpEarned     = isXpBoosted() ? baseXp * 2 : baseXp;
+    const newXp        = data.xp + xpEarned;
+    const newLevel     = Math.min(100, levelFromXp(newXp));
+    const didLevelUp   = newLevel > data.level;
+    const newPvpWins   = data.pvpWins + (won ? 1 : 0);
     const newWinStreak = won ? data.pvpWinStreak + 1 : 0;
-    const fameGain   = won ? fameForPvpWin(newWinStreak) : 0;
+    const fameGain     = won ? fameForPvpWin(newWinStreak) : 0;
 
     if (boostedCoins > 0) addTransaction({ type: 'earn_pvp', amount: boostedCoins, label: won ? 'PvP win' : 'PvP reward' });
 
@@ -482,18 +485,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setLCoins(boostedCoins + weekCoins); setLWeekly(weeklyDone);
   };
 
-  // ─── recordTournamentWin ──────────────────────────────────────────────────
+  // ─── recordTournamentWin ─────────────────────────────────────────────────
 
   const recordTournamentWin = (place: number, coinsReward: number, xpReward: number) => {
-    const coinMult  = getCoinMultiplier();
-    const boostedCoins = Math.round(coinsReward * coinMult);
+    const coinMult          = getCoinMultiplier();
+    const boostedCoins      = Math.round(coinsReward * coinMult);
     const newTournamentWins = place === 1 ? data.tournamentWins + 1 : data.tournamentWins;
-    const baseXp   = xpReward;
-    const xpEarned = isXpBoosted() ? baseXp * 2 : baseXp;
-    const newXp    = data.xp + xpEarned;
-    const newLevel = Math.min(100, levelFromXp(newXp));
-    const didLevelUp = newLevel > data.level;
-    const fameGain = fameForTournamentPlace(place);
+    const xpEarned          = isXpBoosted() ? xpReward * 2 : xpReward;
+    const newXp             = data.xp + xpEarned;
+    const newLevel          = Math.min(100, levelFromXp(newXp));
+    const didLevelUp        = newLevel > data.level;
+    const fameGain          = fameForTournamentPlace(place);
 
     if (boostedCoins > 0) addTransaction({ type: 'earn_tournament', amount: boostedCoins, label: `Tournament ${place === 1 ? '1st place' : `top ${place}`}` });
 
@@ -534,9 +536,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   return (
     <GameContext.Provider value={{
       ...data, user, login, logout,
-      setLanguage, updateUsername,
+      setLanguage, updateUsername, setAvatarTheme,
       recordMatch, recordPvpResult, recordTournamentWin,
-      spendCoins, unlockLeagueWithCoins,
+      spendCoins, addCoins, unlockLeagueWithCoins,
       addFame, setLastPostTime, purchaseItem, activatePiLock, isXpBoosted,
       toggleNotif, toggleSound, toggleVibration,
       lastScore, lastAccuracy, lastCoinsEarned,

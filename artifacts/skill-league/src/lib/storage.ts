@@ -75,6 +75,9 @@ export interface PlayerData {
   notifPushTrophy: boolean;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
+  // Phase 7
+  avatarThemeId: string;
+  avatarFrameId: string;
 }
 
 const ADJECTIVES = ['Swift', 'Bright', 'Sharp', 'Bold', 'Quick', 'Smart', 'Fast', 'Keen'];
@@ -144,6 +147,9 @@ export const DEFAULTS: PlayerData = {
   notifPushTrophy: true,
   soundEnabled: true,
   vibrationEnabled: true,
+  // Phase 7
+  avatarThemeId: 'blue',
+  avatarFrameId: 'none',
 };
 
 export const storage = {
