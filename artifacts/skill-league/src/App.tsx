@@ -30,6 +30,7 @@ import Messages        from "@/pages/Messages";
 import Wallet          from "@/pages/Wallet";
 import PiLock          from "@/pages/PiLock";
 import Settings        from "@/pages/Settings";
+import Journey         from "@/pages/Journey";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ function AppShell() {
         <Route path="/wallet"            component={Wallet} />
         <Route path="/pi-lock"           component={PiLock} />
         <Route path="/settings"          component={Settings} />
+        <Route path="/journey"           component={Journey} />
         <Route component={NotFound} />
       </Switch>
       {!hideNav && <BottomNav unreadMessages={unread} />}

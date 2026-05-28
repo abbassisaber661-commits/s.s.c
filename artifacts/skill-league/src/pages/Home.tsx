@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { useT } from "@/lib/i18n";
 import { Link } from "wouter";
@@ -13,6 +13,8 @@ import { getVerificationStatus } from "@/lib/verified";
 import { getNotifications, unreadCount } from "@/lib/messages";
 import { getActiveLockTier } from "@/lib/pi-lock";
 import { motion } from "framer-motion";
+import { getJourneyTier, getNextJourneyTier, journeyProgress } from "@/lib/journey";
+import { loadStreakData } from "@/lib/login-streak";
 
 export default function Home() {
   const {
@@ -23,6 +25,7 @@ export default function Home() {
     authUser, isGuest,
   } = useGame();
   const t = useT(language);
+  const game = useGame();
 
   const [unread, setUnread] = useState(0);
   useEffect(() => {
@@ -45,6 +48,12 @@ export default function Home() {
   const fameTitle    = getFameTitle(fame || 0);
   const verif        = getVerificationStatus((verificationLevel ?? 0) as 0 | 1 | 2);
   const activeLock   = getActiveLockTier(piLockTierId ?? null, piLockExpiry ?? null);
+
+  // Journey + Streak
+  const journeyTier  = useMemo(() => getJourneyTier(game as any), [elo, level, matchesPlayed]);
+  const nextJourney  = useMemo(() => getNextJourneyTier(journeyTier), [journeyTier]);
+  const jProgress    = useMemo(() => nextJourney ? journeyProgress(game as any, nextJourney) : null, [game, nextJourney]);
+  const streakData   = useMemo(() => loadStreakData(), []);
 
   const NavBtn = ({ href, icon, label, color, badge }: {
     href: string; icon: string; label: string; color?: string; badge?: number;
@@ -163,6 +172,44 @@ export default function Home() {
           </div>
         </motion.div>
 
+        {/* Journey + Streak banner */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+          <Link href="/journey" className="block">
+            <div className="rounded-2xl border border-border bg-card overflow-hidden active:scale-[0.98] transition-transform"
+              style={{ borderColor: journeyTier.color + '50', background: `linear-gradient(135deg, ${journeyTier.glow}, transparent)` }}>
+              <div className="flex items-center gap-3 p-3">
+                {/* Journey */}
+                <div className="text-3xl">{journeyTier.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-black" style={{ color: journeyTier.color }}>{journeyTier.ar}</span>
+                    {nextJourney && jProgress && (
+                      <span className="text-[10px] text-muted-foreground">← {nextJourney.icon} {nextJourney.ar}</span>
+                    )}
+                    {!nextJourney && <span className="text-[10px] text-yellow-400">🏆 أعلى مرتبة!</span>}
+                  </div>
+                  {nextJourney && jProgress && (
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-1">
+                      <div className="h-full rounded-full transition-all" style={{
+                        width: `${jProgress.overall}%`,
+                        background: `linear-gradient(90deg, ${journeyTier.color}, ${nextJourney.color})`,
+                      }} />
+                    </div>
+                  )}
+                </div>
+                {/* Streak */}
+                <div className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-500/15 rounded-xl border border-orange-500/30">
+                  <span className="text-lg">🔥</span>
+                  <div className="text-center">
+                    <div className="text-base font-black text-orange-400 tabular-nums leading-none">{streakData.currentStreak}</div>
+                    <div className="text-[9px] text-muted-foreground leading-none mt-0.5">يوم</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+
         {/* PLAY button */}
         <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.08 }}>
           <Link href="/leagues" className="w-full block">
@@ -181,7 +228,7 @@ export default function Home() {
             <NavBtn href="/rooms"      icon="🏟️" label="Rooms" />
             <NavBtn href="/community"  icon="💬" label="Feed"       color="#3AB4FF" />
             <NavBtn href="/messages"   icon="🔔" label="Messages"   color="#FF9B3A" badge={unread} />
-            <NavBtn href="/profile"    icon="👤" label="Profile" />
+            <NavBtn href="/journey"    icon="🗺️" label="رحلتي"     color="#60a5fa" />
           </div>
         </motion.div>
 

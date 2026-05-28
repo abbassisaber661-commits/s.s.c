@@ -22,6 +22,7 @@ import { checkVerification } from '../lib/verified';
 import { addNotification, createLevelUpNotif, createTrophyNotif } from '../lib/messages';
 import { addTransaction } from '../lib/wallet';
 import type { VerificationLevel } from '../lib/verified';
+import { checkAndUpdateStreak } from '../lib/login-streak';
 
 interface GameState extends PlayerData {
   user: PiUser | null;
@@ -91,6 +92,33 @@ export function GameProvider({ children }: { children: ReactNode }) {
     document.documentElement.dir  = isRTL(data.language) ? 'rtl' : 'ltr';
     document.documentElement.lang = data.language;
   }, [data.language]);
+
+  // Check and update daily login streak on mount
+  useEffect(() => {
+    const result = checkAndUpdateStreak();
+    if (result.isNewDay && (result.rewardCoins > 0 || result.rewardXp > 0)) {
+      const d = storage.get();
+      const updated = {
+        ...d,
+        coins: d.coins + result.rewardCoins,
+        xp: d.xp + result.rewardXp,
+        totalCoinsEarned: d.totalCoinsEarned + result.rewardCoins,
+      };
+      setData(updated);
+      storage.save(updated);
+      const streak = result.updated.currentStreak;
+      const milestoneMsg = result.milestoneReached
+        ? ` 🎉 ${result.milestoneReached} أيام متتالية!` : '';
+      addNotification({
+        type: 'season_reward',
+        icon: '🔥',
+        title: `سلسلة ${streak} ${streak === 1 ? 'يوم' : 'أيام'}!${milestoneMsg}`,
+        body: `مكافأة الدخول اليومي: +${result.rewardCoins}🪙 +${result.rewardXp} XP`,
+        actionUrl: '/journey',
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Remove auto Pi login on mount — auth is now handled by AuthScreen
 
