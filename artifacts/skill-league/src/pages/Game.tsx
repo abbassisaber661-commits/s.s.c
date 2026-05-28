@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useParams } from 'wouter';
 import { useGame } from '@/contexts/GameContext';
-import { useT } from '@/lib/i18n';
+import { useT, isRTL } from '@/lib/i18n';
 import {
   COLORS, Color, Challenge,
   generateChallenge, getPoints,
@@ -14,14 +14,11 @@ type Phase = 'waiting' | 'playing' | 'memory_show' | 'memory_input' | 'feedback_
 
 const GAME_DURATION = 30;
 
-const LEAGUE_LABELS: Record<string, string> = {
-  training: 'تدريب', bronze: 'برونز', silver: 'فضة', elite: 'نخبة',
+const LEAGUE_NAME_KEY: Record<string, 'league_training' | 'league_bronze' | 'league_silver' | 'league_elite'> = {
+  training: 'league_training', bronze: 'league_bronze', silver: 'league_silver', elite: 'league_elite',
 };
-
-const CHALLENGE_LABELS: Record<string, string> = {
-  reaction: 'اضغط على اللون الصحيح',
-  decision: 'طابق اللون المستهدف',
-  memory:   'كرّر التسلسل',
+const DIFF_KEY: Record<number, 'difficulty_easy' | 'difficulty_medium' | 'difficulty_hard' | 'difficulty_very_hard'> = {
+  1: 'difficulty_easy', 2: 'difficulty_medium', 3: 'difficulty_hard', 4: 'difficulty_very_hard',
 };
 
 export default function Game() {
@@ -31,6 +28,7 @@ export default function Game() {
   const ctx = useGame();
   const { language, recordMatch } = ctx;
   const t = useT(language);
+  const rtl = isRTL(language);
   const config = LEAGUES[league];
 
   const [phase,         setPhase]         = useState<Phase>('waiting');
@@ -166,10 +164,7 @@ export default function Game() {
     playTick();
     setTimeout(() => { setCountdownNum(2); playTick(); }, 1000);
     setTimeout(() => { setCountdownNum(1); playTick(); }, 2000);
-    setTimeout(() => {
-      setCountdownNum(null);
-      startGame();
-    }, 3000);
+    setTimeout(() => { setCountdownNum(null); startGame(); }, 3000);
   };
 
   const startGame = () => {
@@ -209,12 +204,20 @@ export default function Game() {
 
   if (!config) return null;
 
-  const pct        = (timeLeft / GAME_DURATION) * 100;
+  const pct      = (timeLeft / GAME_DURATION) * 100;
   const isFeedback = phase === 'feedback_good' || phase === 'feedback_bad';
   const isUrgent   = timeLeft <= 5 && phase !== 'waiting' && phase !== 'done';
+  const leagueName = t(LEAGUE_NAME_KEY[league] ?? 'league_training');
+  const diffKey    = DIFF_KEY[config.difficulty] ?? 'difficulty_medium';
+
+  const CHALLENGE_LABEL: Record<string, string> = {
+    reaction: t('challenge_tap_correct'),
+    decision: t('challenge_match_target'),
+    memory:   t('challenge_repeat_seq'),
+  };
 
   return (
-    <div dir="rtl"
+    <div dir={rtl ? 'rtl' : 'ltr'}
       className="min-h-screen flex flex-col select-none overflow-hidden transition-colors duration-200"
       style={{
         background:
@@ -225,21 +228,16 @@ export default function Game() {
     >
       {/* ── Header ── */}
       <div className="px-4 pt-safe pt-4 pb-3 flex items-center gap-3">
-        {/* League badge */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold"
           style={{ background: config.themeColor + '22', color: config.themeColor, border: `1px solid ${config.themeColor}50` }}>
-          {LEAGUE_LABELS[league] ?? league}
+          {leagueName}
         </div>
-
-        {/* Timer */}
         <div className="relative flex-1 h-3 bg-card rounded-full overflow-hidden">
           <motion.div className="h-full rounded-full transition-all duration-1000"
             style={{ width: `${pct}%`, background: isUrgent ? '#FF3A5E' : config.themeColor }}
             animate={isUrgent ? { opacity: [1, 0.5, 1] } : {}}
             transition={isUrgent ? { repeat: Infinity, duration: 0.5 } : {}} />
         </div>
-
-        {/* Timer number */}
         <motion.div
           animate={isUrgent ? { scale: [1, 1.15, 1] } : {}}
           transition={isUrgent ? { repeat: Infinity, duration: 0.5 } : {}}
@@ -253,15 +251,13 @@ export default function Game() {
       <div className="flex items-center justify-between px-5 pb-3">
         <div className="flex items-center gap-2">
           {streak >= 3 && (
-            <motion.div
-              initial={{ scale: 0 }} animate={{ scale: 1 }}
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
               className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40">
               <span className="text-orange-400 text-xs font-black">🔥 ×{streak}</span>
             </motion.div>
           )}
         </div>
-        <motion.div
-          key={score}
+        <motion.div key={score}
           initial={{ scale: 1.3, color: config.themeColor }}
           animate={{ scale: 1, color: 'hsl(var(--foreground))' }}
           transition={{ duration: 0.25 }}
@@ -270,21 +266,17 @@ export default function Game() {
         </motion.div>
       </div>
 
-      {/* ── Main Content ── */}
+      {/* ── Main ── */}
       <div className="flex-1 flex flex-col items-center justify-center px-5 pb-8 gap-6">
 
-        {/* COUNTDOWN OVERLAY */}
+        {/* COUNTDOWN */}
         <AnimatePresence>
           {countdownNum !== null && (
-            <motion.div
-              key={countdownNum}
-              initial={{ scale: 2, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              transition={{ duration: 0.4 }}
+            <motion.div key={countdownNum}
+              initial={{ scale: 2, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.4 }}
               className="absolute inset-0 flex items-center justify-center z-50 bg-background/80 backdrop-blur-sm">
-              <span className="text-9xl font-black" style={{ color: config.themeColor,
-                textShadow: `0 0 60px ${config.themeColor}88` }}>
+              <span className="text-9xl font-black" style={{ color: config.themeColor, textShadow: `0 0 60px ${config.themeColor}88` }}>
                 {countdownNum}
               </span>
             </motion.div>
@@ -293,53 +285,41 @@ export default function Game() {
 
         {/* WAITING */}
         {phase === 'waiting' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
+          <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center gap-6">
-            {/* League info card */}
             <div className="rounded-2xl border p-4 text-center space-y-1 max-w-xs w-full"
               style={{ borderColor: config.themeColor + '40', background: config.themeColor + '0D' }}>
-              <div className="text-xs text-muted-foreground uppercase tracking-widest">اختبار المهارة</div>
-              <div className="text-xl font-black" style={{ color: config.themeColor }}>
-                {LEAGUE_LABELS[league] ?? league}
-              </div>
-              <div className="text-xs text-muted-foreground">30 ثانية · {config.difficulty === 4 ? 'صعب جداً' : config.difficulty === 3 ? 'صعب' : config.difficulty === 2 ? 'متوسط' : 'سهل'}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-widest">{t('game_skill_test')}</div>
+              <div className="text-xl font-black" style={{ color: config.themeColor }}>{leagueName}</div>
+              <div className="text-xs text-muted-foreground">30 {t('sec')} · {t(diffKey)}</div>
             </div>
-
-            {/* Play button */}
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={doCountdown}
-              className="w-40 h-40 rounded-full text-white text-2xl font-black uppercase tracking-wider"
+            <motion.button whileTap={{ scale: 0.92 }} onClick={doCountdown}
+              className="w-40 h-40 rounded-full text-white text-2xl font-black"
               style={{ background: `radial-gradient(circle, ${config.themeColor}dd, ${config.themeColor})`,
                 boxShadow: `0 0 60px ${config.themeColor}55, 0 0 120px ${config.themeColor}22` }}>
               <span className="block text-3xl mb-1">🎮</span>
-              العب
+              {t('play')}
             </motion.button>
           </motion.div>
         )}
 
         {/* REACTION / DECISION */}
         {(phase === 'playing' || isFeedback) && challenge && challenge.type !== 'memory' && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="w-full flex flex-col items-center gap-6">
             <div className="text-center space-y-4">
               <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">
-                {CHALLENGE_LABELS[challenge.type] ?? t('tap_this')}
+                {CHALLENGE_LABEL[challenge.type] ?? t('tap_this')}
               </p>
-              <motion.div
-                key={challenge.target.id}
+              <motion.div key={challenge.target.id}
                 initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                 className="w-36 h-36 rounded-[28px] mx-auto"
-                style={{ backgroundColor: challenge.target.hex,
-                  boxShadow: `0 0 60px ${challenge.target.hex}88, 0 8px 32px ${challenge.target.hex}44` }} />
+                style={{ backgroundColor: challenge.target.hex, boxShadow: `0 0 60px ${challenge.target.hex}88, 0 8px 32px ${challenge.target.hex}44` }} />
             </div>
             <div className="grid gap-3 w-full max-w-xs"
               style={{ gridTemplateColumns: `repeat(${Math.min(challenge.options.length, 2)}, 1fr)` }}>
               {challenge.options.map(c => (
-                <motion.button key={c.id}
-                  whileTap={{ scale: 0.88 }}
+                <motion.button key={c.id} whileTap={{ scale: 0.88 }}
                   onClick={() => handleTap(c)} disabled={isFeedback}
                   className="h-28 rounded-2xl disabled:opacity-50 transition-opacity"
                   style={{ backgroundColor: c.hex, boxShadow: `0 6px 28px ${c.hex}55` }} />
@@ -349,13 +329,13 @@ export default function Game() {
         )}
 
         {/* MEMORY SHOW */}
-        {phase === 'memory_show' && challenge && challenge.type === 'memory' && (
+        {phase === 'memory_show' && challenge?.type === 'memory' && (
           <div className="flex flex-col items-center gap-5 w-full">
             <div className="text-center space-y-1">
               <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                {memoryShowIdx === -1 ? 'استعد...' : `اللون ${memoryShowIdx + 1} من ${challenge.sequence.length}`}
+                {memoryShowIdx === -1 ? t('memory_get_ready') : `${memoryShowIdx + 1} ${t('seq_index')} ${challenge.sequence.length}`}
               </p>
-              <p className="text-xs text-muted-foreground">شاهد التسلسل بعناية</p>
+              <p className="text-xs text-muted-foreground">{t('memory_watch_carefully')}</p>
             </div>
             <div className="grid grid-cols-5 gap-3 w-full max-w-xs">
               {COLORS.map(c => {
@@ -379,10 +359,10 @@ export default function Game() {
         )}
 
         {/* MEMORY INPUT */}
-        {(phase === 'memory_input' || (isFeedback && challenge?.type === 'memory')) && challenge && challenge.type === 'memory' && (
+        {(phase === 'memory_input' || (isFeedback && challenge?.type === 'memory')) && challenge?.type === 'memory' && (
           <div className="flex flex-col items-center gap-5 w-full">
             <div className="text-center">
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">كرّر التسلسل</p>
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{t('memory_repeat_label')}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{memoryInput.length} / {challenge.sequence.length}</p>
             </div>
             <div className="flex gap-2">
@@ -396,8 +376,7 @@ export default function Game() {
             </div>
             <div className="grid grid-cols-5 gap-3 w-full max-w-xs">
               {COLORS.map(c => (
-                <motion.button key={c.id}
-                  whileTap={{ scale: 0.85 }}
+                <motion.button key={c.id} whileTap={{ scale: 0.85 }}
                   onClick={() => handleTap(c)} disabled={isFeedback}
                   className="aspect-square rounded-xl disabled:opacity-50"
                   style={{ backgroundColor: c.hex, boxShadow: `0 4px 16px ${c.hex}55` }} />
@@ -408,29 +387,24 @@ export default function Game() {
 
         {/* DONE */}
         {phase === 'done' && (
-          <motion.p
-            animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }}
+          <motion.p animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }}
             className="text-muted-foreground text-lg font-bold">
-            جاري حساب نتائجك...
+            {t('calculating_results')}
           </motion.p>
         )}
       </div>
 
-      {/* ── Feedback flash overlay ── */}
+      {/* Feedback flash */}
       <AnimatePresence>
         {isFeedback && (
-          <motion.div
-            key={phase}
+          <motion.div key={phase}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1.5, opacity: 0 }}
+            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1.5, opacity: 0 }}
               transition={{ duration: 0.35 }}
               className="w-32 h-32 rounded-full"
-              style={{ backgroundColor: phase === 'feedback_good' ? '#2EE87A' : '#FF3A5E' }}
-            />
+              style={{ backgroundColor: phase === 'feedback_good' ? '#2EE87A' : '#FF3A5E' }} />
           </motion.div>
         )}
       </AnimatePresence>

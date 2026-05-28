@@ -6,37 +6,45 @@ import { isUnlocked, meetsScoreRequirement, canAffordCoinUnlock, canAffordEntry 
 import { Lock, Coins, Zap, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { playTap } from "@/lib/sounds";
+import { useT, isRTL } from "@/lib/i18n";
+import type { TranslationKey } from "@/lib/i18n";
 
-const LEAGUE_META: Record<string, { ar: string; desc: string; emoji: string }> = {
-  training: { ar: 'تدريب',  desc: 'ابدأ رحلتك — مجاني وبلا شروط',           emoji: '🎯' },
-  bronze:   { ar: 'برونز',  desc: 'أول اختبار حقيقي للمهارة',               emoji: '🥉' },
-  silver:   { ar: 'فضة',    desc: 'مستوى متوسط — لمن تجاوز البرونز',         emoji: '🥈' },
-  elite:    { ar: 'نخبة',   desc: 'فقط لأفضل اللاعبين — تحدٍ حقيقي',       emoji: '👑' },
+const LEAGUE_NAME_KEYS: Record<string, TranslationKey> = {
+  training: 'league_training', bronze: 'league_bronze', silver: 'league_silver', elite: 'league_elite',
+};
+const LEAGUE_DESC_KEYS: Record<string, TranslationKey> = {
+  training: 'league_training_desc', bronze: 'league_bronze_desc',
+  silver: 'league_silver_desc', elite: 'league_elite_desc',
+};
+const LEAGUE_EMOJI: Record<string, string> = {
+  training: '🎯', bronze: '🥉', silver: '🥈', elite: '👑',
+};
+const DIFF_KEYS: Record<number, TranslationKey> = {
+  1: 'difficulty_easy', 2: 'difficulty_medium', 3: 'difficulty_hard', 4: 'difficulty_very_hard',
 };
 
-const DIFF_LABELS = ['', 'سهل', 'متوسط', 'صعب', 'صعب جداً'];
-
-function DifficultyDots({ level, color }: { level: number; color: string }) {
+function DifficultyDots({ level, color, label }: { level: number; color: string; label: string }) {
   return (
     <div className="flex gap-1.5 items-center">
       {[1, 2, 3, 4].map(i => (
         <div key={i} className="w-2.5 h-2.5 rounded-full transition-colors"
           style={{ backgroundColor: i <= level ? color : `${color}25` }} />
       ))}
-      <span className="text-xs text-muted-foreground mr-1">{DIFF_LABELS[level]}</span>
+      <span className="text-xs text-muted-foreground ml-1">{label}</span>
     </div>
   );
 }
 
 export default function LeagueSelect() {
   const ctx = useGame();
-  const { coins, highScores, unlockedLeagues, unlockLeagueWithCoins } = ctx;
+  const { coins, highScores, unlockedLeagues, unlockLeagueWithCoins, language } = ctx;
   const [, setLocation] = useLocation();
   const [unlocking, setUnlocking] = useState<string | null>(null);
+  const t = useT(language);
+  const rtl = isRTL(language);
 
   const handlePlay = (id: LeagueId) => {
-    const data = ctx as any;
-    if (!canAffordEntry(id, data)) return;
+    if (!canAffordEntry(id, ctx as any)) return;
     playTap();
     setLocation(`/game/${id}`);
   };
@@ -51,15 +59,15 @@ export default function LeagueSelect() {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background pb-24">
+    <div dir={rtl ? 'rtl' : 'ltr'} className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/60 px-4 py-3 flex items-center gap-3">
         <Link href="/">
           <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={playTap}>
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} />
           </button>
         </Link>
-        <h1 className="text-lg font-black flex-1">اختر الدوري</h1>
+        <h1 className="text-lg font-black flex-1">{t('select_league')}</h1>
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/15 border border-yellow-500/30 rounded-xl text-sm font-black text-yellow-400">
           {coins} 🪙
         </div>
@@ -70,16 +78,18 @@ export default function LeagueSelect() {
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-primary/25 bg-primary/8 p-3 flex items-center gap-2 text-sm text-muted-foreground">
           <Zap className="w-4 h-4 text-primary flex-shrink-0" />
-          <span>اختر الدوري المناسب لمستواك وابدأ اللعب</span>
+          <span>{t('league_select_info')}</span>
         </motion.div>
 
         {LEAGUE_ORDER.map((id, idx) => {
           const cfg      = LEAGUES[id];
-          const meta     = LEAGUE_META[id] ?? { ar: id, desc: '', emoji: '🎮' };
           const unlocked = isUnlocked(id, ctx as any);
           const coinOk   = canAffordCoinUnlock(id, ctx as any);
           const canEnter = unlocked && canAffordEntry(id, ctx as any);
           const best     = highScores[id] ?? 0;
+          const nameKey  = LEAGUE_NAME_KEYS[id] ?? 'league_training';
+          const descKey  = LEAGUE_DESC_KEYS[id] ?? 'league_training_desc';
+          const diffKey  = DIFF_KEYS[cfg.difficulty] ?? 'difficulty_medium';
 
           return (
             <motion.div key={id}
@@ -93,33 +103,27 @@ export default function LeagueSelect() {
                 borderColor: `${cfg.themeColor}${unlocked ? '55' : '20'}`,
                 background: `linear-gradient(135deg, ${cfg.themeColor}0A, transparent)`,
               }}>
-              {/* Card body */}
               <div className="p-5">
                 <div className="flex items-start gap-4">
-                  {/* Emoji icon */}
                   <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
                     style={{ background: cfg.themeColor + '20' }}>
-                    {meta.emoji}
+                    {LEAGUE_EMOJI[id] ?? '🎮'}
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-black text-xl" style={{ color: cfg.themeColor }}>{meta.ar}</span>
+                      <span className="font-black text-xl" style={{ color: cfg.themeColor }}>{t(nameKey)}</span>
                       {unlocked && (
                         <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                           style={{ background: cfg.themeColor + '20', color: cfg.themeColor }}>
-                          مفتوح ✓
+                          ✓
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2 leading-snug">{meta.desc}</p>
-                    <DifficultyDots level={cfg.difficulty} color={cfg.themeColor} />
+                    <p className="text-xs text-muted-foreground mb-2 leading-snug">{t(descKey)}</p>
+                    <DifficultyDots level={cfg.difficulty} color={cfg.themeColor} label={t(diffKey)} />
                   </div>
-
-                  {/* Best score */}
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-[10px] text-muted-foreground uppercase mb-0.5">أفضل</div>
+                  <div className={`flex-shrink-0 ${rtl ? 'text-left' : 'text-right'}`}>
+                    <div className="text-[10px] text-muted-foreground uppercase mb-0.5">{t('best')}</div>
                     <div className="font-mono font-black text-xl tabular-nums"
                       style={{ color: best > 0 ? cfg.themeColor : 'hsl(var(--muted-foreground))' }}>
                       {best}
@@ -127,78 +131,58 @@ export default function LeagueSelect() {
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div className="flex justify-between items-center mt-4 pt-3 border-t text-sm"
                   style={{ borderColor: cfg.themeColor + '20' }}>
                   <div className="flex items-center gap-1.5 text-muted-foreground">
                     {cfg.entryCost === 0 ? (
-                      <span className="text-green-400 font-bold text-xs">مجاني 🆓</span>
+                      <span className="text-green-400 font-bold text-xs">{t('free_entry_label')}</span>
                     ) : (
                       <span className="flex items-center gap-1 text-xs">
                         <Coins className="w-3.5 h-3.5 text-yellow-400" />
                         <span className="text-yellow-400 font-bold">{cfg.entryCost}</span>
-                        <span className="text-muted-foreground">رسوم دخول</span>
+                        <span className="text-muted-foreground">{t('entry_fee_suffix')}</span>
                         {!canEnter && unlocked && (
-                          <span className="text-red-400">(رصيد غير كافٍ)</span>
+                          <span className="text-red-400">({t('insufficient_balance')})</span>
                         )}
                       </span>
                     )}
                   </div>
                   {cfg.rewardBase > 0 && (
                     <div className="flex items-center gap-1 text-green-400 font-bold text-xs">
-                      <span>مكافأة +{cfg.rewardBase}</span>
-                      <span>🪙</span>
+                      <span>+{cfg.rewardBase} 🪙</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* LOCKED overlay */}
+              {/* Locked overlay */}
               <AnimatePresence>
                 {!unlocked && (
-                  <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     className="absolute inset-0 bg-background/85 backdrop-blur-[3px] flex flex-col items-center justify-center gap-3 p-5 z-10">
                     <div className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center">
                       <Lock className="w-6 h-6 text-muted-foreground" />
                     </div>
-
                     {cfg.prevLeague && (
-                      <div className="text-center text-xs text-muted-foreground max-w-[200px]">
-                        <span>احصل على </span>
-                        <span className="font-black text-foreground">{cfg.unlockScore}+ نقطة</span>
-                        <span> في دوري </span>
+                      <div className="text-center text-xs text-muted-foreground max-w-[220px]">
+                        {t('score_to_unlock')} <span className="font-black text-foreground">{cfg.unlockScore}+</span>{' '}
+                        {t('in_league')}{' '}
                         <span className="font-bold" style={{ color: LEAGUES[cfg.prevLeague].themeColor }}>
-                          {LEAGUE_META[cfg.prevLeague]?.ar ?? cfg.prevLeague}
+                          {t(LEAGUE_NAME_KEYS[cfg.prevLeague] ?? 'league_training')}
                         </span>
                       </div>
                     )}
-
                     {cfg.unlockCoinsCost > 0 && (
                       <div className="flex flex-col items-center gap-2">
-                        <span className="text-xs text-muted-foreground">أو</span>
-                        <motion.button
-                          whileTap={{ scale: 0.92 }}
+                        <span className="text-xs text-muted-foreground">{t('or_label')}</span>
+                        <motion.button whileTap={{ scale: 0.92 }}
                           onClick={(e) => handleUnlock(id, e)}
                           disabled={!coinOk || unlocking === id}
                           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-40 transition-all border"
-                          style={{
-                            backgroundColor: `${cfg.themeColor}20`,
-                            color: cfg.themeColor,
-                            borderColor: `${cfg.themeColor}50`,
-                          }}>
-                          {unlocking === id ? (
-                            <span>✓ مفتوح!</span>
-                          ) : (
-                            <>
-                              <Coins className="w-4 h-4" />
-                              <span>افتح بـ {cfg.unlockCoinsCost} عملة</span>
-                            </>
-                          )}
+                          style={{ backgroundColor: `${cfg.themeColor}20`, color: cfg.themeColor, borderColor: `${cfg.themeColor}50` }}>
+                          {unlocking === id ? '✓' : <><Coins className="w-4 h-4" /><span>{t('unlock_for')} {cfg.unlockCoinsCost} {t('coin_label')}</span></>}
                         </motion.button>
-                        {!coinOk && (
-                          <div className="text-xs text-muted-foreground">رصيد غير كافٍ</div>
-                        )}
+                        {!coinOk && <div className="text-xs text-muted-foreground">{t('insufficient_balance')}</div>}
                       </div>
                     )}
                   </motion.div>
@@ -208,17 +192,17 @@ export default function LeagueSelect() {
           );
         })}
 
-        {/* PvP Quick Access */}
+        {/* PvP */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
           <Link href="/pvp" className="block">
             <button onClick={playTap}
               className="w-full rounded-2xl border-2 border-red-500/40 bg-red-500/8 p-4 flex items-center gap-4 active:scale-[0.98] transition-all hover:bg-red-500/12">
               <div className="w-14 h-14 rounded-2xl bg-red-500/20 flex items-center justify-center text-3xl flex-shrink-0">⚔️</div>
-              <div className="flex-1 text-right">
-                <div className="font-black text-lg text-red-400">مباراة PvP</div>
-                <div className="text-xs text-muted-foreground">العب ضد لاعبين حقيقيين أو بوت ذكي</div>
+              <div className={`flex-1 ${rtl ? 'text-right' : 'text-left'}`}>
+                <div className="font-black text-lg text-red-400">{t('pvp_quick')}</div>
+                <div className="text-xs text-muted-foreground">{t('pvp_quick_desc')}</div>
               </div>
-              <div className="text-red-400/60 text-2xl">‹</div>
+              <div className="text-red-400/60 text-2xl">{rtl ? '›' : '‹'}</div>
             </button>
           </Link>
         </motion.div>
