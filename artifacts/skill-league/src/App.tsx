@@ -5,30 +5,36 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { GameProvider } from "@/contexts/GameContext";
 import NotFound from "@/pages/not-found";
 
-import Home           from "@/pages/Home";
-import LeagueSelect   from "@/pages/LeagueSelect";
-import Game           from "@/pages/Game";
-import Results        from "@/pages/Results";
-import Rules          from "@/pages/Rules";
-import Profile        from "@/pages/Profile";
-import Leaderboard    from "@/pages/Leaderboard";
-import Achievements   from "@/pages/Achievements";
+import Home            from "@/pages/Home";
+import LeagueSelect    from "@/pages/LeagueSelect";
+import Game            from "@/pages/Game";
+import Results         from "@/pages/Results";
+import Rules           from "@/pages/Rules";
+import Profile         from "@/pages/Profile";
+import Leaderboard     from "@/pages/Leaderboard";
+import Achievements    from "@/pages/Achievements";
 import DailyChallenges from "@/pages/DailyChallenges";
+import PvP             from "@/pages/PvP";
+import Rooms           from "@/pages/Rooms";
+import Tournament      from "@/pages/Tournament";
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
     <Switch>
-      <Route path="/"                component={Home} />
-      <Route path="/leagues"         component={LeagueSelect} />
-      <Route path="/game/:league"    component={Game} />
-      <Route path="/results"         component={Results} />
-      <Route path="/rules"           component={Rules} />
-      <Route path="/profile"         component={Profile} />
-      <Route path="/leaderboard"     component={Leaderboard} />
-      <Route path="/achievements"    component={Achievements} />
-      <Route path="/daily-challenges" component={DailyChallenges} />
+      <Route path="/"                  component={Home} />
+      <Route path="/leagues"           component={LeagueSelect} />
+      <Route path="/game/:league"      component={Game} />
+      <Route path="/results"           component={Results} />
+      <Route path="/rules"             component={Rules} />
+      <Route path="/profile"           component={Profile} />
+      <Route path="/leaderboard"       component={Leaderboard} />
+      <Route path="/achievements"      component={Achievements} />
+      <Route path="/daily-challenges"  component={DailyChallenges} />
+      <Route path="/pvp"               component={PvP} />
+      <Route path="/rooms"             component={Rooms} />
+      <Route path="/tournament"        component={Tournament} />
       <Route component={NotFound} />
     </Switch>
   );

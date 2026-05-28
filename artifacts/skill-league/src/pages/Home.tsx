@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDailyChallenges, todayString } from "@/lib/challenges";
 import { computeTitle } from "@/lib/elo";
+import { getLevelTitle, xpProgressInLevel } from "@/lib/xp";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const { user, login, logout, language, setLanguage, coins, elo,
-    skillSpeed, skillAccuracy, skillMemory, matchesPlayed, dailyChallenge } = useGame();
+    skillSpeed, skillAccuracy, skillMemory, matchesPlayed, dailyChallenge,
+    xp, level, pvpWins, pvpLosses } = useGame();
   const t = useT(language);
 
   const today         = todayString();
@@ -17,6 +20,8 @@ export default function Home() {
   const completedToday = dailyChallenge.date === today ? dailyChallenge.completed : [];
   const pendingCount  = challenges.length - completedToday.length;
   const title         = computeTitle(elo, matchesPlayed, skillMemory, skillSpeed);
+  const { pct: xpPct } = xpProgressInLevel(xp);
+  const { title: levelTitle, color: levelColor } = getLevelTitle(level);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -44,15 +49,38 @@ export default function Home() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10 space-y-10">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10 space-y-8">
 
         {/* Logo */}
-        <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-accent shadow-[0_0_40px_rgba(var(--primary),0.5)] mb-2">
             <Zap className="w-12 h-12 text-white" />
           </div>
           <h1 className="text-5xl font-black tracking-tight">{t('app_name')}</h1>
           <p className="text-sm text-muted-foreground uppercase tracking-widest">{t('tagline')}</p>
+        </div>
+
+        {/* Level + XP bar */}
+        <div className="w-full animate-in fade-in zoom-in-95 duration-700 delay-100">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-black tabular-nums" style={{ color: levelColor }}>{level}</span>
+              <div>
+                <div className="text-sm font-bold leading-none" style={{ color: levelColor }}>{levelTitle}</div>
+                <div className="text-xs text-muted-foreground leading-none mt-0.5">Level</div>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground tabular-nums">{xpPct}% to next</div>
+          </div>
+          <div className="h-2 bg-card rounded-full overflow-hidden border border-border/50">
+            <motion.div
+              className="h-full rounded-full"
+              style={{ backgroundColor: levelColor }}
+              initial={{ width: 0 }}
+              animate={{ width: `${xpPct}%` }}
+              transition={{ duration: 1.2, ease: 'easeOut', delay: 0.5 }}
+            />
+          </div>
         </div>
 
         {/* ELO + coins row */}
@@ -68,8 +96,8 @@ export default function Home() {
           </div>
           <div className="w-px h-10 bg-border" />
           <div className="flex flex-col items-center gap-1">
-            <div className="text-sm font-bold text-center leading-tight">{title}</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">{t('rank_title')}</div>
+            <div className="text-sm font-bold text-center leading-tight">{pvpWins}W / {pvpLosses}L</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">PvP</div>
           </div>
         </div>
 
@@ -80,6 +108,28 @@ export default function Home() {
               {t('play')}
             </Button>
           </Link>
+
+          {/* PvP Row */}
+          <div className="grid grid-cols-3 gap-2">
+            <Link href="/pvp" className="block col-span-1">
+              <button className="w-full h-14 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-red-500/20 active:scale-95 transition-all">
+                <span className="text-lg">⚔️</span>
+                <span className="text-red-400 text-xs">PvP</span>
+              </button>
+            </Link>
+            <Link href="/rooms" className="block col-span-1">
+              <button className="w-full h-14 rounded-xl border border-border bg-card text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-card/80 active:scale-95 transition-all">
+                <span className="text-lg">🏟️</span>
+                <span className="text-xs text-muted-foreground">Rooms</span>
+              </button>
+            </Link>
+            <Link href="/tournament" className="block col-span-1">
+              <button className="w-full h-14 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-yellow-500/20 active:scale-95 transition-all">
+                <span className="text-lg">🏆</span>
+                <span className="text-yellow-400 text-xs">Cup</span>
+              </button>
+            </Link>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <Link href="/daily-challenges" className="block">

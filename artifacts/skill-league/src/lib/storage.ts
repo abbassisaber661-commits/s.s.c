@@ -19,6 +19,11 @@ export interface DailyChallengeState {
   completed: string[];
 }
 
+export interface TrophyUnlock {
+  id: string;
+  date: string;
+}
+
 export interface PlayerData {
   username: string;
   coins: number;
@@ -37,6 +42,17 @@ export interface PlayerData {
   achievements: AchievementUnlock[];
   dailyChallenge: DailyChallengeState;
   dailyChallengesCompleted: number;
+  // Phase 4
+  xp: number;
+  level: number;
+  pvpWins: number;
+  pvpLosses: number;
+  pvpWinStreak: number;
+  bestPvpStreak: number;
+  tournamentWins: number;
+  trophies: TrophyUnlock[];
+  totalCoinsEarned: number;
+  totalCoinsSpent: number;
 }
 
 const ADJECTIVES = ['Swift', 'Bright', 'Sharp', 'Bold', 'Quick', 'Smart', 'Fast', 'Keen'];
@@ -78,6 +94,16 @@ export const DEFAULTS: PlayerData = {
   achievements: [],
   dailyChallenge: { date: '', completed: [] },
   dailyChallengesCompleted: 0,
+  xp: 0,
+  level: 1,
+  pvpWins: 0,
+  pvpLosses: 0,
+  pvpWinStreak: 0,
+  bestPvpStreak: 0,
+  tournamentWins: 0,
+  trophies: [],
+  totalCoinsEarned: 0,
+  totalCoinsSpent: 0,
 };
 
 export const storage = {
