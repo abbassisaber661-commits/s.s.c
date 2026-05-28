@@ -2,6 +2,7 @@ import type { Language } from './i18n';
 import { detectBrowserLanguage } from './i18n';
 import type { WeeklyChallengeState } from './weekly-challenges';
 import type { SeasonRecord } from './seasons';
+import type { VerificationLevel } from './verified';
 
 export interface LeaderboardEntry {
   score: number;
@@ -64,6 +65,16 @@ export interface PlayerData {
   xpBoostUntil: number | null;
   vipAvatar: boolean;
   lastPostTime: number | null;
+  // Phase 6
+  verificationLevel: VerificationLevel;
+  piLockTierId: string | null;
+  piLockExpiry: number | null;
+  piTotalLocked: number;
+  notifPushMatch: boolean;
+  notifPushCommunity: boolean;
+  notifPushTrophy: boolean;
+  soundEnabled: boolean;
+  vibrationEnabled: boolean;
 }
 
 const ADJECTIVES = ['Swift', 'Bright', 'Sharp', 'Bold', 'Quick', 'Smart', 'Fast', 'Keen'];
@@ -115,7 +126,6 @@ export const DEFAULTS: PlayerData = {
   trophies: [],
   totalCoinsEarned: 0,
   totalCoinsSpent: 0,
-  // Phase 5
   fame: 0,
   weeklyChallenge: { week: '', completedIds: [], progress: {} },
   seasonHistory: [],
@@ -124,6 +134,16 @@ export const DEFAULTS: PlayerData = {
   xpBoostUntil: null,
   vipAvatar: false,
   lastPostTime: null,
+  // Phase 6
+  verificationLevel: 0,
+  piLockTierId: null,
+  piLockExpiry: null,
+  piTotalLocked: 0,
+  notifPushMatch: true,
+  notifPushCommunity: true,
+  notifPushTrophy: true,
+  soundEnabled: true,
+  vibrationEnabled: true,
 };
 
 export const storage = {

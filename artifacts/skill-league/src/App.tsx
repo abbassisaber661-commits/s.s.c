@@ -21,6 +21,10 @@ import Seasons         from "@/pages/Seasons";
 import Community       from "@/pages/Community";
 import Store           from "@/pages/Store";
 import WeeklyMissions  from "@/pages/WeeklyMissions";
+import Messages        from "@/pages/Messages";
+import Wallet          from "@/pages/Wallet";
+import PiLock          from "@/pages/PiLock";
+import Settings        from "@/pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +47,10 @@ function Router() {
       <Route path="/community"         component={Community} />
       <Route path="/store"             component={Store} />
       <Route path="/weekly-missions"   component={WeeklyMissions} />
+      <Route path="/messages"          component={Messages} />
+      <Route path="/wallet"            component={Wallet} />
+      <Route path="/pi-lock"           component={PiLock} />
+      <Route path="/settings"          component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );
