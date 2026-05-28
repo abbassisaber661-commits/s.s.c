@@ -46,6 +46,7 @@ export default function Profile() {
     fame, verificationLevel, piLockTierId, piLockExpiry,
     dailyChallengesCompleted, xpBoostUntil,
     avatarThemeId, setAvatarTheme, addCoins,
+    authUser, isGuest,
   } = ctx;
   const t = useT(language);
 
@@ -186,6 +187,28 @@ export default function Profile() {
         )}
         <div className="text-sm font-bold" style={{ color: levelColor }}>{levelTitle}</div>
         <div className="text-xs text-muted-foreground">{title}</div>
+
+        {/* Auth badge */}
+        {authUser && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+            style={{
+              background: authUser.authMode === 'google' ? 'rgba(66,133,244,0.15)' : authUser.authMode === 'pi' ? 'rgba(124,58,237,0.15)' : 'rgba(107,114,128,0.15)',
+              border: `1px solid ${authUser.authMode === 'google' ? 'rgba(66,133,244,0.4)' : authUser.authMode === 'pi' ? 'rgba(124,58,237,0.4)' : 'rgba(107,114,128,0.4)'}`,
+              color: authUser.authMode === 'google' ? '#4285F4' : authUser.authMode === 'pi' ? '#a78bfa' : '#9ca3af',
+            }}>
+            {authUser.authMode === 'google' && <><span>🔵</span><span>Google Account</span></>}
+            {authUser.authMode === 'pi' && <><span>π</span><span>Pi Network</span></>}
+            {authUser.authMode === 'guest' && <><span>👤</span><span>وضع الضيف</span></>}
+          </div>
+        )}
+
+        {/* Verification */}
+        {verif.badge && (
+          <div className="flex items-center gap-1 text-sm font-bold" style={{ color: verif.color }}>
+            <span>{verif.badge}</span>
+            <span>{verif.label}</span>
+          </div>
+        )}
       </div>
 
       {/* XP Bar */}

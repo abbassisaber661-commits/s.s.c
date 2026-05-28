@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { PlayerData, AchievementUnlock, LeaderboardEntry, TrophyUnlock, storage } from '../lib/storage';
 import { PiUser, getCurrentUser, loginWithPi, logoutPi } from '../lib/pi-auth';
+import { AuthUser, loadAuthUser, saveAuthUser, clearAuthUser, createGoogleUser, createGuestUser, createPiUser, isGuestUser } from '../lib/auth';
 import { Language, isRTL } from '../lib/i18n';
 import { LEAGUES, LeagueId, calculateReward } from '../lib/game-engine';
 import { addLeaderboardEntry } from '../lib/progression';
@@ -24,8 +25,14 @@ import type { VerificationLevel } from '../lib/verified';
 
 interface GameState extends PlayerData {
   user: PiUser | null;
+  authUser: AuthUser | null;
+  isGuest: boolean;
+  isAuthenticated: boolean;
   login: () => Promise<void>;
   logout: () => void;
+  loginWithGoogle: (name: string, email: string) => Promise<void>;
+  loginWithPiNetwork: () => Promise<void>;
+  loginAsGuest: () => void;
   setLanguage: (lang: Language) => void;
   updateUsername: (name: string) => void;
   recordMatch: (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => void;
@@ -64,6 +71,7 @@ const GameContext = createContext<GameState | undefined>(undefined);
 export function GameProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PlayerData>(storage.get());
   const [user, setUser] = useState<PiUser | null>(getCurrentUser());
+  const [authUser, setAuthUser] = useState<AuthUser | null>(loadAuthUser());
 
   const [lastScore,               setLScore]     = useState(0);
   const [lastAccuracy,            setLAccuracy]  = useState(0);
@@ -84,7 +92,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = data.language;
   }, [data.language]);
 
-  useEffect(() => { loginWithPi().then(u => { if (u) setUser(u); }); }, []);
+  // Remove auto Pi login on mount — auth is now handled by AuthScreen
 
   useEffect(() => {
     const season = getCurrentSeason();
@@ -149,7 +157,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const persist = (d: PlayerData) => { setData(d); storage.save(d); };
   const login   = async () => { const u = await loginWithPi(); if (u) setUser(u); };
-  const logout  = () => { logoutPi(); setUser(null); };
+  const logout  = () => {
+    logoutPi();
+    clearAuthUser();
+    setUser(null);
+    setAuthUser(null);
+  };
+
+  const loginWithGoogle = async (name: string, email: string) => {
+    const au = createGoogleUser(name, email);
+    saveAuthUser(au);
+    setAuthUser(au);
+    persist({ ...data, username: name.trim().slice(0, 20) || data.username });
+  };
+
+  const loginWithPiNetwork = async () => {
+    const u = await loginWithPi();
+    if (u) {
+      setUser(u);
+      const au = createPiUser(u.uid, u.username);
+      saveAuthUser(au);
+      setAuthUser(au);
+      persist({ ...data, username: u.username || data.username });
+    }
+  };
+
+  const loginAsGuest = () => {
+    const au = createGuestUser();
+    saveAuthUser(au);
+    setAuthUser(au);
+  };
 
   const setLanguage    = (lang: Language) => persist({ ...data, language: lang });
   const updateUsername = (name: string)   => persist({ ...data, username: name.trim().slice(0, 20) || data.username });
@@ -533,9 +570,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  const isGuest = isGuestUser(authUser);
+  const isAuthenticated = authUser !== null;
+
   return (
     <GameContext.Provider value={{
-      ...data, user, login, logout,
+      ...data, user, authUser, isGuest, isAuthenticated,
+      login, logout, loginWithGoogle, loginWithPiNetwork, loginAsGuest,
       setLanguage, updateUsername, setAvatarTheme,
       recordMatch, recordPvpResult, recordTournamentWin,
       spendCoins, addCoins, unlockLeagueWithCoins,

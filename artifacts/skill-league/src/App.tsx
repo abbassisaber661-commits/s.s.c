@@ -8,6 +8,7 @@ import BottomNav from "@/components/BottomNav";
 import { getNotifications, unreadCount } from "@/lib/messages";
 import { useState, useEffect } from "react";
 import NotFound from "@/pages/not-found";
+import AuthScreen from "@/pages/AuthScreen";
 
 import Home            from "@/pages/Home";
 import LeagueSelect    from "@/pages/LeagueSelect";
@@ -38,12 +39,17 @@ const NO_NAV_PATHS = ['/game/', '/results'];
 function AppShell() {
   const [location] = useLocation();
   const [unread, setUnread] = useState(0);
+  const { isAuthenticated } = useGame();
 
   useEffect(() => {
     setUnread(unreadCount(getNotifications()));
   }, [location]);
 
   const hideNav = NO_NAV_PATHS.some(p => location.startsWith(p));
+
+  if (!isAuthenticated) {
+    return <AuthScreen />;
+  }
 
   return (
     <>

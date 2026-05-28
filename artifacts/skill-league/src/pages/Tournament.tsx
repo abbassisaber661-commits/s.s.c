@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft, Trophy, Zap } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
+import GuestBanner from '@/components/GuestBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   createTournamentBracket,
@@ -26,7 +27,7 @@ const TOURNAMENT_SIZES = [
 const PLACE_LABELS: Record<number, string> = { 1: '🥇 Champion', 2: '🥈 Runner-up', 3: '🥉 Third Place', 4: '4th Place' };
 
 export default function Tournament() {
-  const { username, coins, level, recordTournamentWin, spendCoins } = useGame();
+  const { username, coins, level, recordTournamentWin, spendCoins, isGuest } = useGame();
   const [phase, setPhase] = useState<Phase>('select');
   const [bracket, setBracket] = useState<TournamentBracket | null>(null);
   const [selectedSize, setSelectedSize] = useState<8 | 16>(8);
@@ -195,9 +196,10 @@ export default function Tournament() {
       <div className="min-h-screen bg-background flex flex-col p-5 max-w-md mx-auto pb-10">
         <div className="flex items-center gap-3 mb-6">
           <Link href="/"><button className="p-2 rounded-full hover:bg-card"><ArrowLeft className="w-5 h-5" /></button></Link>
-          <h1 className="text-2xl font-bold flex-1">Tournaments</h1>
+          <h1 className="text-2xl font-bold flex-1">البطولات</h1>
           <Trophy className="w-6 h-6 text-yellow-400" />
         </div>
+        <GuestBanner message="البطولات متاحة فقط للأعضاء المسجّلين. سجّل دخولك للمشاركة والتنافس." />
 
         <div className="bg-card border border-border rounded-2xl p-4 mb-5">
           <div className="flex items-center gap-3">

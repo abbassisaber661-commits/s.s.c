@@ -20,6 +20,7 @@ export default function Home() {
     coins, elo, matchesPlayed, dailyChallenge,
     xp, level, pvpWins, pvpLosses, fame,
     weeklyChallenge, verificationLevel, piLockTierId, piLockExpiry,
+    authUser, isGuest,
   } = useGame();
   const t = useT(language);
 
@@ -74,13 +75,16 @@ export default function Home() {
               <span className="text-yellow-400">🪙</span>
             </button>
           </Link>
-          {user ? (
-            <Button variant="outline" size="sm" onClick={logout} className="text-xs">{t('logout')}</Button>
-          ) : (
-            <Button onClick={login} variant="outline" size="sm" className="border-primary/50 text-primary hover:bg-primary/10 text-xs">
-              {t('sign_in_pi')}
-            </Button>
+          {/* Auth badge */}
+          {authUser && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-border bg-card text-xs font-medium max-w-[90px] overflow-hidden">
+              {authUser.authMode === 'google' && <span>🔵</span>}
+              {authUser.authMode === 'pi' && <span>π</span>}
+              {authUser.authMode === 'guest' && <span>👤</span>}
+              <span className="truncate text-muted-foreground">{isGuest ? 'ضيف' : authUser.username}</span>
+            </div>
           )}
+          <Button variant="outline" size="sm" onClick={logout} className="text-xs">خروج</Button>
         </div>
       </div>
 

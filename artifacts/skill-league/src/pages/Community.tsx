@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Link } from "wouter";
+import GuestBanner from "@/components/GuestBanner";
 import { ArrowLeft, Flame, Heart, Zap, Plus, Send, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,7 +24,7 @@ function emptyReactions(postId: string): PostReactions {
 }
 
 export default function Community() {
-  const { coins, username, level, fame, spendCoins, lastPostTime, setLastPostTime, addFame } = useGame();
+  const { coins, username, level, fame, spendCoins, lastPostTime, setLastPostTime, addFame, isGuest } = useGame();
   const [posts, setPosts]             = useState<CommunityPost[]>([]);
   const [composing, setComposing]     = useState(false);
   const [draft, setDraft]             = useState('');
@@ -115,7 +116,7 @@ export default function Community() {
             <ArrowLeft className="w-5 h-5" />
           </button>
         </Link>
-        <h1 className="text-lg font-bold flex-1">Community</h1>
+        <h1 className="text-lg font-bold flex-1">المجتمع</h1>
         <div className="flex items-center gap-1 text-sm">
           <span>{fameTitle.icon}</span>
           <span className="font-bold tabular-nums" style={{ color: fameTitle.color }}>{fame}</span>
