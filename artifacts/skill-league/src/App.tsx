@@ -17,6 +17,10 @@ import DailyChallenges from "@/pages/DailyChallenges";
 import PvP             from "@/pages/PvP";
 import Rooms           from "@/pages/Rooms";
 import Tournament      from "@/pages/Tournament";
+import Seasons         from "@/pages/Seasons";
+import Community       from "@/pages/Community";
+import Store           from "@/pages/Store";
+import WeeklyMissions  from "@/pages/WeeklyMissions";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +39,10 @@ function Router() {
       <Route path="/pvp"               component={PvP} />
       <Route path="/rooms"             component={Rooms} />
       <Route path="/tournament"        component={Tournament} />
+      <Route path="/seasons"           component={Seasons} />
+      <Route path="/community"         component={Community} />
+      <Route path="/store"             component={Store} />
+      <Route path="/weekly-missions"   component={WeeklyMissions} />
       <Route component={NotFound} />
     </Switch>
   );

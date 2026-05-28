@@ -1,5 +1,7 @@
 import type { Language } from './i18n';
 import { detectBrowserLanguage } from './i18n';
+import type { WeeklyChallengeState } from './weekly-challenges';
+import type { SeasonRecord } from './seasons';
 
 export interface LeaderboardEntry {
   score: number;
@@ -53,6 +55,15 @@ export interface PlayerData {
   trophies: TrophyUnlock[];
   totalCoinsEarned: number;
   totalCoinsSpent: number;
+  // Phase 5
+  fame: number;
+  weeklyChallenge: WeeklyChallengeState;
+  seasonHistory: SeasonRecord[];
+  currentSeasonNumber: number;
+  ownedItems: string[];
+  xpBoostUntil: number | null;
+  vipAvatar: boolean;
+  lastPostTime: number | null;
 }
 
 const ADJECTIVES = ['Swift', 'Bright', 'Sharp', 'Bold', 'Quick', 'Smart', 'Fast', 'Keen'];
@@ -104,6 +115,15 @@ export const DEFAULTS: PlayerData = {
   trophies: [],
   totalCoinsEarned: 0,
   totalCoinsSpent: 0,
+  // Phase 5
+  fame: 0,
+  weeklyChallenge: { week: '', completedIds: [], progress: {} },
+  seasonHistory: [],
+  currentSeasonNumber: 0,
+  ownedItems: [],
+  xpBoostUntil: null,
+  vipAvatar: false,
+  lastPostTime: null,
 };
 
 export const storage = {

@@ -5,23 +5,32 @@ import { Zap, Info, User, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDailyChallenges, todayString } from "@/lib/challenges";
+import { getWeeklyMissions, getWeekString } from "@/lib/weekly-challenges";
 import { computeTitle } from "@/lib/elo";
 import { getLevelTitle, xpProgressInLevel } from "@/lib/xp";
+import { getFameTitle } from "@/lib/fame";
 import { motion } from "framer-motion";
 
 export default function Home() {
   const { user, login, logout, language, setLanguage, coins, elo,
     skillSpeed, skillAccuracy, skillMemory, matchesPlayed, dailyChallenge,
-    xp, level, pvpWins, pvpLosses } = useGame();
+    xp, level, pvpWins, pvpLosses, fame, weeklyChallenge } = useGame();
   const t = useT(language);
 
-  const today         = todayString();
-  const challenges    = getDailyChallenges(today);
+  const today          = todayString();
+  const challenges     = getDailyChallenges(today);
   const completedToday = dailyChallenge.date === today ? dailyChallenge.completed : [];
-  const pendingCount  = challenges.length - completedToday.length;
+  const pendingDaily   = challenges.length - completedToday.length;
+
+  const thisWeek      = getWeekString();
+  const weeklyMissions = getWeeklyMissions(thisWeek);
+  const wc             = weeklyChallenge?.week === thisWeek ? weeklyChallenge : { week: thisWeek, completedIds: [], progress: {} };
+  const pendingWeekly  = weeklyMissions.length - wc.completedIds.length;
+
   const title         = computeTitle(elo, matchesPlayed, skillMemory, skillSpeed);
   const { pct: xpPct } = xpProgressInLevel(xp);
   const { title: levelTitle, color: levelColor } = getLevelTitle(level);
+  const fameTitle     = getFameTitle(fame || 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -49,7 +58,7 @@ export default function Home() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10 space-y-8">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10 space-y-6">
 
         {/* Logo */}
         <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -70,7 +79,15 @@ export default function Home() {
                 <div className="text-xs text-muted-foreground leading-none mt-0.5">Level</div>
               </div>
             </div>
-            <div className="text-xs text-muted-foreground tabular-nums">{xpPct}% to next</div>
+            <div className="flex items-center gap-3">
+              {(fame || 0) > 0 && (
+                <div className="flex items-center gap-1 text-xs" style={{ color: fameTitle.color }}>
+                  <span>{fameTitle.icon}</span>
+                  <span className="font-bold">{fame}</span>
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground tabular-nums">{xpPct}% to next</div>
+            </div>
           </div>
           <div className="h-2 bg-card rounded-full overflow-hidden border border-border/50">
             <motion.div
@@ -83,7 +100,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ELO + coins row */}
+        {/* Stats row */}
         <div className="flex items-center gap-6 animate-in fade-in zoom-in-95 duration-700 delay-150">
           <div className="flex flex-col items-center gap-1">
             <div className="text-3xl font-black tabular-nums text-yellow-400">{coins}</div>
@@ -102,28 +119,28 @@ export default function Home() {
         </div>
 
         {/* Actions */}
-        <div className="w-full space-y-3 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+        <div className="w-full space-y-2.5 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
           <Link href="/leagues" className="w-full block">
             <Button size="lg" className="w-full h-16 text-xl font-bold shadow-[0_0_20px_rgba(var(--primary),0.3)] active:scale-95">
               {t('play')}
             </Button>
           </Link>
 
-          {/* PvP Row */}
+          {/* PvP / Rooms / Cup */}
           <div className="grid grid-cols-3 gap-2">
-            <Link href="/pvp" className="block col-span-1">
+            <Link href="/pvp" className="block">
               <button className="w-full h-14 rounded-xl border border-red-500/30 bg-red-500/10 text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-red-500/20 active:scale-95 transition-all">
                 <span className="text-lg">⚔️</span>
                 <span className="text-red-400 text-xs">PvP</span>
               </button>
             </Link>
-            <Link href="/rooms" className="block col-span-1">
+            <Link href="/rooms" className="block">
               <button className="w-full h-14 rounded-xl border border-border bg-card text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-card/80 active:scale-95 transition-all">
                 <span className="text-lg">🏟️</span>
                 <span className="text-xs text-muted-foreground">Rooms</span>
               </button>
             </Link>
-            <Link href="/tournament" className="block col-span-1">
+            <Link href="/tournament" className="block">
               <button className="w-full h-14 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-yellow-500/20 active:scale-95 transition-all">
                 <span className="text-lg">🏆</span>
                 <span className="text-yellow-400 text-xs">Cup</span>
@@ -131,13 +148,35 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Social / Seasons / Store */}
+          <div className="grid grid-cols-3 gap-2">
+            <Link href="/community" className="block">
+              <button className="w-full h-14 rounded-xl border border-blue-500/30 bg-blue-500/10 text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-blue-500/20 active:scale-95 transition-all">
+                <span className="text-lg">💬</span>
+                <span className="text-blue-400 text-xs">Feed</span>
+              </button>
+            </Link>
+            <Link href="/seasons" className="block">
+              <button className="w-full h-14 rounded-xl border border-purple-500/30 bg-purple-500/10 text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-purple-500/20 active:scale-95 transition-all">
+                <span className="text-lg">🌀</span>
+                <span className="text-purple-400 text-xs">Season</span>
+              </button>
+            </Link>
+            <Link href="/store" className="block">
+              <button className="w-full h-14 rounded-xl border border-green-500/30 bg-green-500/10 text-sm font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-green-500/20 active:scale-95 transition-all">
+                <span className="text-lg">🛒</span>
+                <span className="text-green-400 text-xs">Store</span>
+              </button>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
             <Link href="/daily-challenges" className="block">
               <button className="relative w-full h-12 rounded-xl border border-border bg-card text-sm font-semibold flex items-center justify-center gap-2 hover:bg-card/80 active:scale-95 transition-transform">
                 📅 {t('daily_challenges')}
-                {pendingCount > 0 && (
+                {(pendingDaily + pendingWeekly) > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
-                    {pendingCount}
+                    {pendingDaily + pendingWeekly}
                   </span>
                 )}
               </button>
@@ -149,7 +188,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             <Link href="/rules" className="block">
               <Button variant="outline" size="lg" className="w-full h-12 font-semibold gap-2">
                 <Info className="w-4 h-4" /> {t('rules')}
