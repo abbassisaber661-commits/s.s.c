@@ -2,7 +2,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
 
-type Step = 'welcome' | 'google-form';
+type Step = 'welcome' | 'google-form' | 'verify-email';
+
+function generateCode(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 export default function AuthScreen() {
   const { loginWithGoogle, loginWithPiNetwork, loginAsGuest } = useGame();
@@ -11,14 +15,37 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [verifyCode, setVerifyCode] = useState('');
+  const [sentCode, setSentCode] = useState('');
+  const [codeInput, setCodeInput] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
 
   const handleGoogle = async () => {
     setError('');
     if (!name.trim()) { setError('يرجى إدخال اسمك'); return; }
     if (!email.trim() || !email.includes('@')) { setError('يرجى إدخال بريد إلكتروني صحيح'); return; }
+    const code = generateCode();
+    setSentCode(code);
+    setCodeSent(true);
+    setStep('verify-email');
+  };
+
+  const handleVerifyCode = async () => {
+    setError('');
+    if (codeInput.trim() !== sentCode) {
+      setError('الرمز غير صحيح، يرجى المحاولة مرة أخرى');
+      return;
+    }
     setLoading('google');
     await loginWithGoogle(name.trim(), email.trim());
     setLoading(null);
+  };
+
+  const handleResendCode = () => {
+    const code = generateCode();
+    setSentCode(code);
+    setCodeInput('');
+    setError('');
   };
 
   const handlePi = async () => {
@@ -306,6 +333,97 @@ export default function AuthScreen() {
             <p className="text-white/30 text-xs text-center">
               بياناتك محفوظة محلياً فقط ولن تُشارك مع أي جهة خارجية
             </p>
+          </motion.div>
+        )}
+
+        {step === 'verify-email' && (
+          <motion.div
+            key="verify-email"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -40 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-sm px-6 flex flex-col gap-5"
+          >
+            <button
+              onClick={() => { setStep('google-form'); setError(''); setCodeInput(''); }}
+              className="self-start flex items-center gap-2 text-white/60 text-sm active:scale-95 transition-transform"
+            >
+              <span>→</span>
+              <span>رجوع</span>
+            </button>
+
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="w-16 h-16 rounded-3xl bg-green-500/20 flex items-center justify-center text-4xl">
+                📧
+              </div>
+              <h2 className="text-white font-bold text-xl">تحقق من بريدك</h2>
+              <p className="text-white/60 text-sm leading-relaxed">
+                تم إرسال رمز التحقق إلى
+                <br />
+                <span className="text-white/80 font-medium" dir="ltr">{email}</span>
+              </p>
+            </div>
+
+            {/* Demo mode - show code */}
+            <div className="rounded-2xl p-4 text-center"
+              style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)' }}>
+              <p className="text-yellow-400/70 text-xs mb-1">وضع تجريبي — الرمز الخاص بك:</p>
+              <p className="text-yellow-300 text-3xl font-black tracking-[0.3em]" dir="ltr">{sentCode}</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+                <label className="text-white/70 text-sm font-medium">أدخل رمز التحقق (6 أرقام)</label>
+                <input
+                  type="text"
+                  value={codeInput}
+                  onChange={e => setCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="_ _ _ _ _ _"
+                  dir="ltr"
+                  maxLength={6}
+                  className="w-full h-14 px-4 rounded-2xl text-white text-center outline-none font-black text-2xl tracking-[0.3em]"
+                  style={{
+                    background: 'rgba(255,255,255,0.08)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                  }}
+                />
+              </div>
+
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-400 text-sm text-center"
+                >
+                  {error}
+                </motion.p>
+              )}
+
+              <button
+                onClick={handleVerifyCode}
+                disabled={loading === 'google' || codeInput.length < 6}
+                className="w-full h-14 rounded-2xl flex items-center justify-center gap-2 font-bold text-base transition-all active:scale-95 disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: 'white' }}
+              >
+                {loading === 'google' ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="w-6 h-6 rounded-full border-2 border-white/30 border-t-white"
+                  />
+                ) : (
+                  <><span>✓</span><span>تأكيد الرمز والدخول</span></>
+                )}
+              </button>
+
+              <button
+                onClick={handleResendCode}
+                className="text-white/40 text-sm text-center hover:text-white/70 transition-colors"
+              >
+                لم تصلك الرسالة؟ إعادة إرسال الرمز
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
