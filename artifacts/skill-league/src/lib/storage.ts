@@ -9,6 +9,16 @@ export interface LeaderboardEntry {
   date: string;
 }
 
+export interface AchievementUnlock {
+  id: string;
+  date: string;
+}
+
+export interface DailyChallengeState {
+  date: string;
+  completed: string[];
+}
+
 export interface PlayerData {
   username: string;
   coins: number;
@@ -19,6 +29,14 @@ export interface PlayerData {
   matchesWon: number;
   bestStreak: number;
   language: Language;
+  // Phase 3
+  elo: number;
+  skillSpeed: number;
+  skillAccuracy: number;
+  skillMemory: number;
+  achievements: AchievementUnlock[];
+  dailyChallenge: DailyChallengeState;
+  dailyChallengesCompleted: number;
 }
 
 const ADJECTIVES = ['Swift', 'Bright', 'Sharp', 'Bold', 'Quick', 'Smart', 'Fast', 'Keen'];
@@ -43,7 +61,7 @@ function migrateOld(old: any): Partial<PlayerData> {
   return out;
 }
 
-const DEFAULTS: PlayerData = {
+export const DEFAULTS: PlayerData = {
   username: '',
   coins: 100,
   highScores: {},
@@ -53,6 +71,13 @@ const DEFAULTS: PlayerData = {
   matchesWon: 0,
   bestStreak: 0,
   language: 'en',
+  elo: 1000,
+  skillSpeed: 50,
+  skillAccuracy: 50,
+  skillMemory: 50,
+  achievements: [],
+  dailyChallenge: { date: '', completed: [] },
+  dailyChallengesCompleted: 0,
 };
 
 export const storage = {
@@ -63,12 +88,7 @@ export const storage = {
         const p = JSON.parse(raw);
         const isOld = typeof p.trainingCoins === 'number' || !p.username;
         if (isOld) {
-          return {
-            ...DEFAULTS,
-            username: generateUsername(),
-            language: detectBrowserLanguage(),
-            ...migrateOld(p),
-          };
+          return { ...DEFAULTS, username: generateUsername(), language: detectBrowserLanguage(), ...migrateOld(p) };
         }
         return { ...DEFAULTS, ...p };
       }

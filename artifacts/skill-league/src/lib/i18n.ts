@@ -60,6 +60,11 @@ const T = {
     rules_decision_title:'Decision', rules_decision_desc:'A target color is shown. Pick the matching button from the choices.',
     rules_memory_title:'Memory',   rules_memory_desc:'Watch a sequence of colors flash. Then repeat the exact order.',
     rules_scoring_title:'Scoring', rules_scoring_desc:'Reaction/Decision correct: +10 pts\nMemory full sequence: +20 pts\nStreak bonus: +5 pts every 3 in a row',
+    achievements:'Achievements', new_achievement:'Achievement Unlocked!',
+    rank_title:'Title', elo_rating:'ELO Rating', skills:'Skills',
+    skill_speed:'Speed', skill_accuracy:'Accuracy', skill_memory:'Memory',
+    daily_challenges:'Daily Challenges', today:'Today',
+    completed:'Completed', pending:'Pending', see_all:'See All',
   },
   ar: {
     app_name:'سكيل ليج', tagline:'غريزة نقية. سرعة خالصة.',
@@ -89,6 +94,11 @@ const T = {
     rules_decision_title:'القرار', rules_decision_desc:'يظهر لون مستهدف. اختر الزر المطابق.',
     rules_memory_title:'الذاكرة', rules_memory_desc:'شاهد تسلسل الألوان. ثم كرر الترتيب الصحيح.',
     rules_scoring_title:'التسجيل', rules_scoring_desc:'ردة فعل/قرار صحيح: +10\nتسلسل ذاكرة: +20\nمكافأة سلسلة: +5 لكل 3',
+    achievements:'الإنجازات', new_achievement:'تم فتح إنجاز!',
+    rank_title:'اللقب', elo_rating:'تقييم ELO', skills:'المهارات',
+    skill_speed:'السرعة', skill_accuracy:'الدقة', skill_memory:'الذاكرة',
+    daily_challenges:'التحديات اليومية', today:'اليوم',
+    completed:'مكتمل', pending:'قيد الانتظار', see_all:'عرض الكل',
   },
   fr: {
     app_name:'SkillLeague', tagline:'Instinct pur. Vitesse pure.',

@@ -4,10 +4,19 @@ import { Link } from "wouter";
 import { Zap, Info, User, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LanguageSelector from "@/components/LanguageSelector";
+import { getDailyChallenges, todayString } from "@/lib/challenges";
+import { computeTitle } from "@/lib/elo";
 
 export default function Home() {
-  const { user, login, logout, language, setLanguage, coins } = useGame();
+  const { user, login, logout, language, setLanguage, coins, elo,
+    skillSpeed, skillAccuracy, skillMemory, matchesPlayed, dailyChallenge } = useGame();
   const t = useT(language);
+
+  const today         = todayString();
+  const challenges    = getDailyChallenges(today);
+  const completedToday = dailyChallenge.date === today ? dailyChallenge.completed : [];
+  const pendingCount  = challenges.length - completedToday.length;
+  const title         = computeTitle(elo, matchesPlayed, skillMemory, skillSpeed);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -16,7 +25,6 @@ export default function Home() {
       {/* Top bar */}
       <div className="w-full max-w-md flex justify-between items-center absolute top-0 pt-5 px-5 z-10">
         <LanguageSelector current={language} onChange={setLanguage} />
-
         <div className="flex items-center gap-2">
           <Link href="/profile">
             <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card text-sm font-medium hover:bg-card/80 active:scale-95 transition-transform">
@@ -36,44 +44,69 @@ export default function Home() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10 space-y-12">
+      <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md z-10 space-y-10">
 
+        {/* Logo */}
         <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-accent shadow-[0_0_40px_rgba(var(--primary),0.5)] mb-4">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-accent shadow-[0_0_40px_rgba(var(--primary),0.5)] mb-2">
             <Zap className="w-12 h-12 text-white" />
           </div>
-          <h1 className="text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-            {t('app_name')}
-          </h1>
-          <p className="text-lg text-muted-foreground font-medium uppercase tracking-widest">
-            {t('tagline')}
-          </p>
+          <h1 className="text-5xl font-black tracking-tight">{t('app_name')}</h1>
+          <p className="text-sm text-muted-foreground uppercase tracking-widest">{t('tagline')}</p>
         </div>
 
-        {/* Coin balance */}
-        <div className="flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-700 delay-150">
-          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-card border border-border shadow-lg">
-            <Coins className="w-7 h-7 text-yellow-400" />
+        {/* ELO + coins row */}
+        <div className="flex items-center gap-6 animate-in fade-in zoom-in-95 duration-700 delay-150">
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-3xl font-black tabular-nums text-yellow-400">{coins}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">{t('coins')}</div>
           </div>
-          <span className="text-3xl font-black tabular-nums">{coins}</span>
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">{t('coins')}</span>
+          <div className="w-px h-10 bg-border" />
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-3xl font-black tabular-nums text-primary">{elo}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">ELO</div>
+          </div>
+          <div className="w-px h-10 bg-border" />
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-sm font-bold text-center leading-tight">{title}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">{t('rank_title')}</div>
+          </div>
         </div>
 
         {/* Actions */}
         <div className="w-full space-y-3 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
           <Link href="/leagues" className="w-full block">
-            <Button size="lg" className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 shadow-[0_0_20px_rgba(var(--primary),0.3)] transition-all active:scale-95">
+            <Button size="lg" className="w-full h-16 text-xl font-bold shadow-[0_0_20px_rgba(var(--primary),0.3)] active:scale-95">
               {t('play')}
             </Button>
           </Link>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/daily-challenges" className="block">
+              <button className="relative w-full h-12 rounded-xl border border-border bg-card text-sm font-semibold flex items-center justify-center gap-2 hover:bg-card/80 active:scale-95 transition-transform">
+                📅 {t('daily_challenges')}
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">
+                    {pendingCount}
+                  </span>
+                )}
+              </button>
+            </Link>
+            <Link href="/achievements" className="block">
+              <button className="w-full h-12 rounded-xl border border-border bg-card text-sm font-semibold flex items-center justify-center gap-2 hover:bg-card/80 active:scale-95 transition-transform">
+                🏅 {t('achievements')}
+              </button>
+            </Link>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <Link href="/rules" className="block">
-              <Button variant="outline" size="lg" className="w-full h-12 font-semibold gap-2 border-border/50 hover:bg-card">
+              <Button variant="outline" size="lg" className="w-full h-12 font-semibold gap-2">
                 <Info className="w-4 h-4" /> {t('rules')}
               </Button>
             </Link>
             <Link href="/leaderboard" className="block">
-              <Button variant="outline" size="lg" className="w-full h-12 font-semibold gap-2 border-border/50 hover:bg-card">
+              <Button variant="outline" size="lg" className="w-full h-12 font-semibold gap-2">
                 🏆 {t('leaderboard')}
               </Button>
             </Link>
