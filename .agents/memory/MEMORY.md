@@ -1,0 +1,1 @@
+- [Phase 18 backend arch](phase18-backend.md) — JWT auth, anti-cheat, Pi payments, DB schema all wired and tested; API server runs on PORT env var.

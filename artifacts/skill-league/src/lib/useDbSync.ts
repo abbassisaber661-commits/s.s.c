@@ -1,12 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { api } from './apiClient';
+import { api, setToken, getToken, setStoredPlayerId } from './apiClient';
 import type { PlayerData } from './storage';
 import type { AuthUser } from './auth';
 
 const SYNC_DELAY = 4000;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 
-function mapToApiPayload(d: PlayerData, uid: string) {
+function mapToApiPayload(d: PlayerData) {
   return {
     coins:          d.coins,
     xp:             d.xp,
@@ -35,6 +35,15 @@ function mapToApiPayload(d: PlayerData, uid: string) {
   };
 }
 
+async function ensureJwt(guestId: string, username: string): Promise<void> {
+  if (getToken()) return;
+  try {
+    const res = await api.auth.guest(guestId, username);
+    setToken(res.token);
+    setStoredPlayerId(res.player.id);
+  } catch { /* offline — continue without JWT */ }
+}
+
 export function useDbSync(
   data: PlayerData,
   authUser: AuthUser | null,
@@ -49,12 +58,13 @@ export function useDbSync(
 
   const doSync = useCallback(async (d: PlayerData, id: string) => {
     try {
-      await api.players.sync(id, mapToApiPayload(d, id));
-    } catch {}
+      await api.players.sync(id, mapToApiPayload(d));
+    } catch { /* offline — fail silently */ }
   }, []);
 
   const ensurePlayer = useCallback(async (d: PlayerData, id: string, username: string) => {
     try {
+      await ensureJwt(id, username || d.username || 'Player');
       await api.players.create({
         id,
         username: username || d.username || 'Player',
@@ -62,7 +72,7 @@ export function useDbSync(
         avatar: '🎮',
       });
       syncedRef.current = true;
-    } catch {}
+    } catch { /* offline — fail silently */ }
   }, []);
 
   useEffect(() => {

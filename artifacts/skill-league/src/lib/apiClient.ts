@@ -1,23 +1,38 @@
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
 const API_BASE = BASE + '/api-server/api';
 
+const TOKEN_KEY = 'sl_jwt_token';
+const PLAYER_ID_KEY = 'sl_player_id';
+
+export function getToken(): string | null { return localStorage.getItem(TOKEN_KEY); }
+export function setToken(t: string) { localStorage.setItem(TOKEN_KEY, t); }
+export function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+export function getStoredPlayerId(): string | null { return localStorage.getItem(PLAYER_ID_KEY); }
+export function setStoredPlayerId(id: string) { localStorage.setItem(PLAYER_ID_KEY, id); }
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   try {
-    const res = await fetch(API_BASE + path, {
-      headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
-      ...options,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(API_BASE + path, { ...options, headers });
+    if (res.status === 401) { clearToken(); throw new Error('Unauthorized'); }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error((body as any).error || `HTTP ${res.status}`);
+    }
     return res.json() as Promise<T>;
-  } catch {
-    throw new Error(`API error: ${path}`);
+  } catch (e) {
+    throw e instanceof Error ? e : new Error(`API error: ${path}`);
   }
 }
 
 function post<T>(path: string, body: unknown): Promise<T> {
   return apiFetch<T>(path, { method: 'POST', body: JSON.stringify(body) });
 }
-
 function patch<T>(path: string, body: unknown): Promise<T> {
   return apiFetch<T>(path, { method: 'PATCH', body: JSON.stringify(body) });
 }
@@ -32,7 +47,10 @@ export type ApiPlayer = {
   tournamentWins: number; bestStreak: number; skillSpeed: number; skillAccuracy: number;
   skillMemory: number; language: string; verificationStatus: string;
   piUid?: string; lastActiveAt: string; createdAt: string; updatedAt: string;
+  dailyChallengesCompleted?: number;
 };
+
+export type AuthResponse = { token: string; player: ApiPlayer };
 
 export type ApiPost = {
   id: string; authorId: string; username: string; level: number;
@@ -62,6 +80,19 @@ export type ApiTournament = {
 };
 
 export const api = {
+  auth: {
+    register: (username: string, password: string, language = 'en') =>
+      post<AuthResponse>('/auth/register', { username, password, language }),
+    login: (username: string, password: string) =>
+      post<AuthResponse>('/auth/login', { username, password }),
+    guest: (guestId: string, username: string) =>
+      post<AuthResponse>('/auth/guest', { guestId, username }),
+    pi: (piUid: string, username: string, accessToken?: string) =>
+      post<AuthResponse>('/auth/pi', { piUid, username, accessToken }),
+    refresh: () => post<AuthResponse>('/auth/refresh', {}),
+    logout: () => post<{ ok: boolean }>('/auth/logout', {}),
+  },
+
   players: {
     get:    (id: string)                           => apiFetch<ApiPlayer>(`/players/${id}`),
     create: (data: Partial<ApiPlayer> & { id?: string; username: string }) => post<ApiPlayer>('/players', data),
@@ -70,71 +101,104 @@ export const api = {
   },
 
   matches: {
-    list:    (playerId?: string, limit = 20)  => apiFetch<unknown[]>(`/matches?${playerId ? `playerId=${playerId}&` : ''}limit=${limit}`),
-    create:  (data: Record<string, unknown>)  => post<unknown>('/matches', data),
+    list:   (playerId?: string, limit = 20) => apiFetch<unknown[]>(`/matches?${playerId ? `playerId=${playerId}&` : ''}limit=${limit}`),
+    create: (data: Record<string, unknown>) => post<unknown>('/matches', data),
   },
 
   tournaments: {
-    list: ()                                  => apiFetch<ApiTournament[]>('/tournaments'),
+    list:   ()                                => apiFetch<ApiTournament[]>('/tournaments'),
     create: (data: Record<string, unknown>)   => post<ApiTournament>('/tournaments', data),
-    join: (id: string, playerId: string)      => post<ApiTournament>(`/tournaments/${id}/join`, { playerId }),
+    join:   (id: string, playerId: string)    => post<ApiTournament>(`/tournaments/${id}/join`, { playerId }),
   },
 
   community: {
-    posts:   (limit = 30)                     => apiFetch<ApiPost[]>(`/community/posts?limit=${limit}`),
-    create:  (data: Partial<ApiPost>)         => post<ApiPost>('/community/posts', data),
-    like:    (postId: string, playerId: string) => post<{ liked: boolean }>(`/community/posts/${postId}/like`, { playerId }),
-    comments:(postId: string)                 => apiFetch<unknown[]>(`/community/posts/${postId}/comments`),
-    comment: (postId: string, data: Record<string, unknown>) => post<unknown>(`/community/posts/${postId}/comments`, data),
+    posts:    (limit = 30)                              => apiFetch<ApiPost[]>(`/community/posts?limit=${limit}`),
+    create:   (data: Partial<ApiPost>)                  => post<ApiPost>('/community/posts', data),
+    like:     (postId: string, playerId: string)        => post<{ liked: boolean }>(`/community/posts/${postId}/like`, { playerId }),
+    comments: (postId: string)                          => apiFetch<unknown[]>(`/community/posts/${postId}/comments`),
+    comment:  (postId: string, d: Record<string, unknown>) => post<unknown>(`/community/posts/${postId}/comments`, d),
   },
 
   economy: {
     transactions: (playerId: string, limit = 50) => apiFetch<ApiCoinTx[]>(`/economy/${playerId}/transactions?limit=${limit}`),
-    transaction:  (data: Record<string, unknown>)   => post<{ transaction: ApiCoinTx; newBalance: number }>('/economy/transaction', data),
-    purchases:    (playerId: string)             => apiFetch<unknown[]>(`/economy/${playerId}/purchases`),
-    purchase:     (data: Record<string, unknown>)   => post<unknown>('/economy/purchase', data),
-    boost:        (data: Record<string, unknown>)   => post<unknown>('/economy/boost', data),
-    seasons:      ()                             => apiFetch<unknown[]>('/seasons'),
+    transaction:  (data: Record<string, unknown>) => post<{ transaction: ApiCoinTx; newBalance: number }>('/economy/transaction', data),
+    purchases:    (playerId: string)              => apiFetch<unknown[]>(`/economy/${playerId}/purchases`),
+    purchase:     (data: Record<string, unknown>) => post<unknown>('/economy/purchase', data),
+    boost:        (data: Record<string, unknown>) => post<unknown>('/economy/boost', data),
+    seasons:      ()                              => apiFetch<unknown[]>('/seasons'),
+  },
+
+  pi: {
+    create:   (data: { playerId: string; amount: number; memo: string; metadata?: Record<string, unknown> }) =>
+      post<{ paymentId: string }>('/pi/payment/create', data),
+    approve:  (paymentId: string, piPaymentId: string) =>
+      post<{ ok: boolean }>('/pi/payment/approve', { paymentId, piPaymentId }),
+    complete: (paymentId: string, piTxId: string) =>
+      post<{ ok: boolean }>('/pi/payment/complete', { paymentId, piTxId }),
+  },
+
+  security: {
+    report: (data: { playerId: string; type: string; details: Record<string, unknown> }) =>
+      post<{ ok: boolean }>('/security/report', data),
+  },
+
+  admin: {
+    logs:       (limit = 100) => apiFetch<unknown[]>(`/admin/logs?limit=${limit}`),
+    suspicious: (limit = 50)  => apiFetch<unknown[]>(`/admin/suspicious?limit=${limit}`),
+    stats:      ()            => apiFetch<Record<string, unknown>>('/admin/stats'),
   },
 
   notifications: {
-    list:    (playerId: string, limit = 30)    => apiFetch<ApiNotification[]>(`/notifications/${playerId}?limit=${limit}`),
-    create:  (data: Record<string, unknown>)   => post<ApiNotification>('/notifications', data),
-    markRead:(id: string)                      => patch<{ ok: boolean }>(`/notifications/${id}/read`, {}),
-    readAll: (playerId: string)                => patch<{ ok: boolean }>(`/notifications/${playerId}/read-all`, {}),
+    list:    (playerId: string, limit = 30) => apiFetch<ApiNotification[]>(`/notifications/${playerId}?limit=${limit}`),
+    create:  (data: Record<string, unknown>) => post<ApiNotification>('/notifications', data),
+    markRead:(id: string)                    => patch<{ ok: boolean }>(`/notifications/${id}/read`, {}),
+    readAll: (playerId: string)              => patch<{ ok: boolean }>(`/notifications/${playerId}/read-all`, {}),
   },
 
   messages: {
-    inbox:   (playerId: string)                => apiFetch<ApiMessage[]>(`/messages/inbox/${playerId}`),
-    thread:  (a: string, b: string)            => apiFetch<ApiMessage[]>(`/messages/thread/${a}/${b}`),
-    send:    (data: Record<string, unknown>)   => post<ApiMessage>('/messages', data),
-    read:    (id: string)                      => patch<{ ok: boolean }>(`/messages/${id}/read`, {}),
-    block:   (blockerId: string, blockedId: string) => post<{ ok: boolean }>('/messages/block', { blockerId, blockedId }),
-    unblock: (blockerId: string, blockedId: string) => post<{ ok: boolean }>('/messages/unblock', { blockerId, blockedId }),
+    inbox:   (playerId: string)                         => apiFetch<ApiMessage[]>(`/messages/inbox/${playerId}`),
+    thread:  (a: string, b: string)                     => apiFetch<ApiMessage[]>(`/messages/thread/${a}/${b}`),
+    send:    (data: Record<string, unknown>)            => post<ApiMessage>('/messages', data),
+    read:    (id: string)                               => patch<{ ok: boolean }>(`/messages/${id}/read`, {}),
+    block:   (blockerId: string, blockedId: string)     => post<{ ok: boolean }>('/messages/block', { blockerId, blockedId }),
+    unblock: (blockerId: string, blockedId: string)     => post<{ ok: boolean }>('/messages/unblock', { blockerId, blockedId }),
   },
 
   health: () => apiFetch<{ status: string }>('/healthz'),
 
   analytics: {
     dashboard: () => apiFetch<Record<string, unknown>>('/analytics/dashboard'),
-    event: (data: Record<string, unknown>) => post<{ ok: boolean }>('/analytics/event', data),
+    event:     (data: Record<string, unknown>) => post<{ ok: boolean }>('/analytics/event', data),
   },
 
   followers: {
     get:      (id: string, viewerId?: string) => apiFetch<unknown>(`/followers/${id}${viewerId ? `?viewerId=${viewerId}` : ''}`),
     follow:   (id: string, followerId: string) => post<{ ok: boolean }>(`/followers/${id}/follow`, { followerId }),
-    unfollow: (id: string, followerId: string) => fetch(API_BASE + `/followers/${id}/unfollow`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ followerId }) }).then(r => r.json()),
-    following:(id: string) => apiFetch<unknown[]>(`/following/${id}`),
+    unfollow: (id: string, followerId: string) =>
+      fetch(API_BASE + `/followers/${id}/unfollow`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ followerId }),
+      }).then(r => r.json()),
+    following: (id: string) => apiFetch<unknown[]>(`/following/${id}`),
   },
 
   marketplace: {
-    list:    (type?: string, maxPrice?: number) => apiFetch<unknown[]>(`/marketplace${type || maxPrice ? `?${type ? `type=${type}` : ''}${maxPrice ? `&maxPrice=${maxPrice}` : ''}` : ''}`),
-    create:  (data: Record<string, unknown>)   => post<unknown>('/marketplace', data),
-    buy:     (id: string, buyerId: string)     => post<{ ok: boolean }>(`/marketplace/${id}/buy`, { buyerId }),
-    cancel:  (id: string, sellerId: string)    => fetch(API_BASE + `/marketplace/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sellerId }) }).then(r => r.json()),
+    list:   (type?: string, maxPrice?: number) =>
+      apiFetch<unknown[]>(`/marketplace${type || maxPrice ? `?${type ? `type=${type}` : ''}${maxPrice ? `&maxPrice=${maxPrice}` : ''}` : ''}`),
+    create: (data: Record<string, unknown>) => post<unknown>('/marketplace', data),
+    buy:    (id: string, buyerId: string)   => post<{ ok: boolean }>(`/marketplace/${id}/buy`, { buyerId }),
+    cancel: (id: string, sellerId: string)  =>
+      fetch(API_BASE + `/marketplace/${id}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sellerId }),
+      }).then(r => r.json()),
   },
 
   betaFeedback: {
     submit: (data: Record<string, unknown>) => post<{ ok: boolean }>('/beta-feedback', data),
   },
 };
+
+export async function isApiAvailable(): Promise<boolean> {
+  return fetch(`${API_BASE}/healthz`).then(r => r.ok).catch(() => false);
+}
