@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { useT } from "@/lib/i18n";
-import { Link } from "wouter";
-import { ArrowLeft, Coins, Zap, Swords, Trophy, Copy, CheckCircle2, Share2 } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { ArrowLeft, Coins, Zap, Swords, Trophy, Copy, CheckCircle2, Share2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCurrentLeague } from "@/lib/progression";
 import { LEAGUES, LeagueId } from "@/lib/game-engine";
@@ -46,9 +46,15 @@ export default function Profile() {
     fame, verificationLevel, piLockTierId, piLockExpiry,
     dailyChallengesCompleted, xpBoostUntil,
     avatarThemeId, setAvatarTheme, addCoins,
-    authUser, isGuest,
+    authUser, isGuest, logout,
   } = ctx;
   const t = useT(language);
+  const [, setLocation] = useLocation();
+
+  const handleLogout = () => {
+    logout();
+    setLocation("/");
+  };
 
   const [editing, setEditing]       = useState(false);
   const [nameInput, setNameInput]   = useState(username);
@@ -467,6 +473,17 @@ export default function Profile() {
           )}
         </div>
       </Link>
+
+      {/* Logout */}
+      <div className="mt-4 bg-card border border-border rounded-2xl p-4">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-semibold text-sm hover:bg-red-500/20 active:scale-[0.98] transition-all"
+        >
+          <LogOut className="w-4 h-4" />
+          تسجيل الخروج
+        </button>
+      </div>
     </div>
   );
 }
