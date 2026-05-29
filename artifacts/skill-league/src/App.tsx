@@ -34,6 +34,9 @@ import PiLock          from "@/pages/PiLock";
 import Settings        from "@/pages/Settings";
 import Journey         from "@/pages/Journey";
 import Notifications   from "@/pages/Notifications";
+import Analytics       from "@/pages/Analytics";
+import Marketplace     from "@/pages/Marketplace";
+import BetaFeedbackWidget from "@/components/BetaFeedbackWidget";
 
 const queryClient = new QueryClient();
 
@@ -80,9 +83,12 @@ function AppShell() {
         <Route path="/settings"          component={Settings} />
         <Route path="/journey"           component={Journey} />
         <Route path="/notifications"     component={Notifications} />
+        <Route path="/analytics"         component={Analytics} />
+        <Route path="/marketplace"       component={Marketplace} />
         <Route component={NotFound} />
       </Switch>
       {!hideNav && <BottomNav unreadMessages={unread} />}
+      <BetaFeedbackWidget />
     </>
   );
 }

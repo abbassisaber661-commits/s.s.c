@@ -114,4 +114,27 @@ export const api = {
   },
 
   health: () => apiFetch<{ status: string }>('/healthz'),
+
+  analytics: {
+    dashboard: () => apiFetch<Record<string, unknown>>('/analytics/dashboard'),
+    event: (data: Record<string, unknown>) => post<{ ok: boolean }>('/analytics/event', data),
+  },
+
+  followers: {
+    get:      (id: string, viewerId?: string) => apiFetch<unknown>(`/followers/${id}${viewerId ? `?viewerId=${viewerId}` : ''}`),
+    follow:   (id: string, followerId: string) => post<{ ok: boolean }>(`/followers/${id}/follow`, { followerId }),
+    unfollow: (id: string, followerId: string) => fetch(API_BASE + `/followers/${id}/unfollow`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ followerId }) }).then(r => r.json()),
+    following:(id: string) => apiFetch<unknown[]>(`/following/${id}`),
+  },
+
+  marketplace: {
+    list:    (type?: string, maxPrice?: number) => apiFetch<unknown[]>(`/marketplace${type || maxPrice ? `?${type ? `type=${type}` : ''}${maxPrice ? `&maxPrice=${maxPrice}` : ''}` : ''}`),
+    create:  (data: Record<string, unknown>)   => post<unknown>('/marketplace', data),
+    buy:     (id: string, buyerId: string)     => post<{ ok: boolean }>(`/marketplace/${id}/buy`, { buyerId }),
+    cancel:  (id: string, sellerId: string)    => fetch(API_BASE + `/marketplace/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sellerId }) }).then(r => r.json()),
+  },
+
+  betaFeedback: {
+    submit: (data: Record<string, unknown>) => post<{ ok: boolean }>('/beta-feedback', data),
+  },
 };

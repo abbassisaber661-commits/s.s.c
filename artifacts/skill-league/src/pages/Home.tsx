@@ -263,12 +263,25 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* ── Group 4: Extra ────────────────────────────── */}
+        {/* ── Group 4: Beta Features ───────────────────── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.19 }}>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">More</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
+            Beta
+            <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">New</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <NavBtn href="/marketplace" icon="🛒" label="سوق"      color="#a855f7" />
+            <NavBtn href="/analytics"   icon="📈" label="تحليلات"  color="#3b82f6" />
+            <NavBtn href="/settings"    icon="⚙️" label="إعدادات" />
+          </div>
+        </motion.div>
+
+        {/* ── Group 5: Extra ────────────────────────────── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">حسابي</div>
           <div className="grid grid-cols-2 gap-2">
-            <NavBtn href="/pi-lock"   icon={verif.badge || "✓"} label="Verified" color={verif.color} />
-            <NavBtn href="/settings"  icon="⚙️" label="Settings" />
+            <NavBtn href="/pi-lock"  icon={verif.badge || "✓"} label="موثق" color={verif.color} />
+            <NavBtn href="/profile"  icon="👤" label="ملفي" />
           </div>
         </motion.div>
 

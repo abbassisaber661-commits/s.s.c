@@ -131,10 +131,12 @@ export default function Settings() {
           className="rounded-2xl border border-border bg-card p-4 space-y-1">
           <div className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Quick Links</div>
           {[
-            { icon: '💰', label: 'Coins Wallet', href: '/wallet' },
-            { icon: '🔒', label: 'Pi Lock System', href: '/pi-lock' },
-            { icon: '📊', label: 'Leaderboard', href: '/leaderboard' },
-            { icon: '🌀', label: 'Seasons', href: '/seasons' },
+            { icon: '💰', label: 'محفظة العملات', href: '/wallet' },
+            { icon: '🔒', label: 'نظام Pi Lock', href: '/pi-lock' },
+            { icon: '📊', label: 'قائمة المتصدرين', href: '/leaderboard' },
+            { icon: '🌀', label: 'المواسم', href: '/seasons' },
+            { icon: '🛒', label: 'السوق الداخلي', href: '/marketplace' },
+            { icon: '📈', label: 'لوحة التحليلات', href: '/analytics' },
           ].map(r => (
             <Link key={r.href} href={r.href}>
               <button className="w-full flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-muted/30 transition-colors">
@@ -146,7 +148,7 @@ export default function Settings() {
           ))}
         </motion.div>
 
-        <div className="text-center text-xs text-muted-foreground/50 py-2">SkillLeague v6.0 · Powered by Pi Network</div>
+        <div className="text-center text-xs text-muted-foreground/50 py-2">SkillLeague v15.0 Beta · Powered by Pi Network</div>
       </div>
     </div>
   );

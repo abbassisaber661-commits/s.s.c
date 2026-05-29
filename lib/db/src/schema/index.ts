@@ -4,3 +4,6 @@ export * from './community';
 export * from './economy';
 export * from './notifications';
 export * from './messages';
+export * from './analytics';
+export * from './social';
+export * from './marketplace';
