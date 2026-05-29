@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Link } from "wouter";
-import { ChevronLeft, Crown, Check, Zap } from "lucide-react";
+import { ChevronLeft, Crown, Check, Zap, Loader2, Pi, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { playTap, playCoin } from "@/lib/sounds";
 import { isRTL } from "@/lib/i18n";
 import { VIP_TIERS, getVIPData, getActiveVIPTier, activateVIP, type VIPTier } from "@/lib/vip";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { trackFeatureUse } from "@/lib/sessionTracker";
 
 export default function VIP() {
-  const { language } = useGame();
+  const { language, authUser } = useGame();
   const rtl = isRTL(language);
 
   const [activeTier, setActiveTier]   = useState(getActiveVIPTier());
@@ -17,35 +19,64 @@ export default function VIP() {
   const [buying, setBuying]           = useState<string | null>(null);
   const [selected, setSelected]       = useState<VIPTier>(VIP_TIERS[2]);
   const [toast, setToast]             = useState<{ msg: string; ok: boolean } | null>(null);
+  const [testMode, setTestMode]       = useState(false);
+
+  const playerId = authUser?.uid ?? getStoredPlayerId() ?? 'unknown';
 
   function showToast(msg: string, ok: boolean) {
     setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   }
 
   async function handleBuy(tier: VIPTier) {
     if (buying) return;
     playTap();
     setBuying(tier.id);
-    await new Promise(r => setTimeout(r, 800));
+    trackFeatureUse(playerId, 'vip_buy_attempt', { tier: tier.id, price: tier.piCost });
+
     try {
-      const Pi = (window as any).Pi;
-      if (Pi) {
-        Pi.createPayment({
-          amount: tier.piCost,
-          memo: `SkillLeague VIP — ${tier.name}`,
-          metadata: { tierId: tier.id },
+      // Step 1: Create payment record on our backend
+      const { paymentId } = await api.pi.create({
+        playerId,
+        amount:   tier.piCost,
+        memo:     `SkillLeague VIP — ${tier.name}`,
+        metadata: { tierId: tier.id, productId: `vip_${tier.id}` },
+      });
+
+      const PiSDK = (window as any).Pi;
+
+      if (PiSDK && !testMode) {
+        // Real Pi Network payment
+        PiSDK.createPayment({
+          amount:   tier.piCost,
+          memo:     `SkillLeague VIP — ${tier.name}`,
+          metadata: { tierId: tier.id, paymentId },
         }, {
-          onReadyForServerApproval: () => {},
-          onReadyForServerCompletion: () => { finishBuy(tier); },
+          onReadyForServerApproval: async (piPaymentId: string) => {
+            await api.pi.approve(paymentId, piPaymentId).catch(() => {});
+          },
+          onReadyForServerCompletion: async (piPaymentId: string, piTxId: string) => {
+            try {
+              await api.pi.complete(paymentId, piTxId);
+              finishBuy(tier);
+            } catch {
+              showToast(language === 'ar' ? '⚠️ خطأ في إتمام الدفع' : '⚠️ Payment completion failed', false);
+              setBuying(null);
+            }
+          },
           onCancel: () => setBuying(null),
-          onError:  () => setBuying(null),
+          onError:  () => { showToast(language === 'ar' ? '⚠️ خطأ في الدفع' : '⚠️ Payment error', false); setBuying(null); },
         });
       } else {
+        // Test mode / no Pi SDK — approve and complete immediately
+        await api.pi.approve(paymentId, `test_pi_${Date.now()}`);
+        await new Promise(r => setTimeout(r, 800));
+        await api.pi.complete(paymentId, `test_tx_${Date.now()}`);
         finishBuy(tier);
       }
     } catch {
-      finishBuy(tier);
+      showToast(language === 'ar' ? '⚠️ حدث خطأ. حاول مجددًا' : '⚠️ Error. Please try again.', false);
+      setBuying(null);
     }
   }
 
@@ -55,23 +86,33 @@ export default function VIP() {
     setVipData(getVIPData());
     setBuying(null);
     playCoin();
-    showToast(`👑 ${tier.name} ${language === 'ar' ? 'مُفعَّل!' : 'activated!'}`, true);
+    trackFeatureUse(playerId, 'vip_activated', { tier: tier.id });
+    showToast(`👑 ${language === 'ar' ? tier.nameAr : tier.name} ${language === 'ar' ? 'مُفعَّل!' : 'activated!'}`, true);
   }
 
-  const expiry = vipData.expiresAt;
+  const expiry   = vipData.expiresAt;
   const daysLeft = expiry ? Math.max(0, Math.ceil((expiry - Date.now()) / 86400000)) : 0;
+  const hasPiSDK = !!(window as any).Pi;
 
   return (
     <div dir={rtl ? 'rtl' : 'ltr'} className="min-h-screen bg-background text-foreground pb-24">
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/60 px-4 py-3 flex items-center gap-3">
         <Link href="/"><button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={playTap}><ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} /></button></Link>
         <h1 className="text-lg font-black flex-1">👑 VIP</h1>
-        {activeTier && (
-          <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold"
-            style={{ background: activeTier.glowColor, color: activeTier.color, border: `1px solid ${activeTier.color}40` }}>
-            {activeTier.badge} {language === 'ar' ? activeTier.nameAr : activeTier.name}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {!hasPiSDK && (
+            <button onClick={() => setTestMode(t => !t)}
+              className={`text-[10px] px-2 py-1 rounded-lg border font-bold transition-colors ${testMode ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-muted border-border text-muted-foreground'}`}>
+              {testMode ? '🧪 Test' : 'Test'}
+            </button>
+          )}
+          {activeTier && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold"
+              style={{ background: activeTier.glowColor, color: activeTier.color, border: `1px solid ${activeTier.color}40` }}>
+              {activeTier.badge} {language === 'ar' ? activeTier.nameAr : activeTier.name}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="max-w-md mx-auto px-4 pt-4 space-y-4">
@@ -95,6 +136,19 @@ export default function VIP() {
                 className="ml-auto text-2xl opacity-60">✨</motion.div>
             </div>
           </motion.div>
+        )}
+
+        {/* Pi payment notice */}
+        {!hasPiSDK && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 flex items-center gap-3">
+            <Shield size={16} className="text-amber-400 shrink-0" />
+            <div>
+              <p className="text-xs font-bold text-amber-400">{language === 'ar' ? 'وضع التجربة' : 'Test Mode'}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {language === 'ar' ? 'تطبيق Pi غير متصل. يمكنك تفعيل VIP تجريبيًا بالضغط على "Test".' : 'Pi app not connected. Enable Test mode to try VIP for free.'}
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Hero banner */}
@@ -147,12 +201,13 @@ export default function VIP() {
                 <div className="text-xs text-muted-foreground">{selected.durationDays} {language === 'ar' ? 'يوم' : 'days'}</div>
               </div>
               <div className="ml-auto text-right">
-                <div className="text-lg font-black" style={{ color: selected.color }}>π {selected.piCost}</div>
+                <div className="text-lg font-black flex items-center gap-1" style={{ color: selected.color }}>
+                  <Pi size={14} /> {selected.piCost}
+                </div>
                 <div className="text-[10px] text-muted-foreground">Pi Network</div>
               </div>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-2 gap-2">
               <div className="p-3 rounded-xl text-center" style={{ background: selected.color + '10' }}>
                 <div className="text-lg font-black" style={{ color: selected.color }}>+{selected.coinBonus}%</div>
@@ -164,7 +219,6 @@ export default function VIP() {
               </div>
             </div>
 
-            {/* Perks */}
             <div className="space-y-2">
               <p className="text-xs font-bold text-muted-foreground">{language === 'ar' ? 'المزايا:' : 'Perks:'}</p>
               {(language === 'ar' ? selected.perksAr : selected.perks).map((perk, i) => (
@@ -181,15 +235,18 @@ export default function VIP() {
                 ✅ {language === 'ar' ? 'نشط' : 'Currently Active'} · {daysLeft} {language === 'ar' ? 'يوم متبقٍ' : 'days left'}
               </div>
             ) : (
-              <Button onClick={() => handleBuy(selected)} disabled={buying === selected.id}
-                className="w-full font-bold py-3" style={{ background: selected.color, color: '#fff' }}>
-                {buying === selected.id ? '⌛' : `${language === 'ar' ? 'فعّل' : 'Activate'} ${language === 'ar' ? selected.nameAr : selected.name} — π ${selected.piCost}`}
+              <Button onClick={() => handleBuy(selected)} disabled={!!buying}
+                className="w-full font-bold py-3 flex items-center justify-center gap-2"
+                style={{ background: selected.color, color: '#fff' }}>
+                {buying === selected.id
+                  ? <><Loader2 size={16} className="animate-spin" /> {language === 'ar' ? 'جاري المعالجة…' : 'Processing…'}</>
+                  : <><Zap size={14} /> {language === 'ar' ? 'فعّل' : 'Activate'} {language === 'ar' ? selected.nameAr : selected.name} — π {selected.piCost}{testMode ? ' 🧪' : ''}</>
+                }
               </Button>
             )}
           </div>
         </motion.div>
 
-        {/* All tiers comparison */}
         <div className="rounded-2xl border border-border bg-card p-4">
           <p className="text-xs font-bold text-muted-foreground mb-3">{language === 'ar' ? '📊 مقارنة الفئات' : '📊 Tier Comparison'}</p>
           <div className="space-y-2">

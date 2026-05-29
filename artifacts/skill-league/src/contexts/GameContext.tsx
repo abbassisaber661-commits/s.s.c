@@ -18,6 +18,7 @@ import { fameForPvpWin, fameForTournamentPlace, fameForLevelUp } from '../lib/fa
 import { getCurrentSeason } from '../lib/seasons';
 import { recordSubmission, isScorePlausible, checkRateLimit } from '../lib/anti-cheat';
 import { api, setToken, setStoredPlayerId } from '../lib/apiClient';
+import { startSession, endSession, trackPageView, trackFeatureUse } from '../lib/sessionTracker';
 import { STORE_ITEMS, type StoreItem } from '../lib/store';
 import type { PiLockTier } from '../lib/pi-lock';
 import { checkVerification } from '../lib/verified';
@@ -612,6 +613,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   useDbSync(data, authUser);
+
+  useEffect(() => {
+    startSession();
+    return () => endSession(authUser?.uid ?? null);
+  }, []);
+
+  useEffect(() => {
+    if (authUser?.uid) trackPageView(authUser.uid, 'app_open');
+  }, [authUser?.uid]);
 
   const isGuest = isGuestUser(authUser);
   const isAuthenticated = authUser !== null;

@@ -38,6 +38,7 @@ import Notifications   from "@/pages/Notifications";
 import Analytics       from "@/pages/Analytics";
 import Marketplace     from "@/pages/Marketplace";
 import BetaFeedbackWidget from "@/components/BetaFeedbackWidget";
+import BetaBanner         from "@/components/BetaBanner";
 
 // Phase 16 & 17 pages
 import Clans           from "@/pages/Clans";
@@ -48,6 +49,8 @@ import News            from "@/pages/News";
 import VIP             from "@/pages/VIP";
 import Career          from "@/pages/Career";
 import AICoach         from "@/pages/AICoach";
+// Phase 19
+import BetaDashboard   from "@/pages/BetaDashboard";
 
 const queryClient = new QueryClient();
 
@@ -105,9 +108,12 @@ function AppShell() {
         <Route path="/vip"               component={VIP} />
         <Route path="/career"            component={Career} />
         <Route path="/ai-coach"          component={AICoach} />
+        {/* Phase 19 */}
+        <Route path="/beta-dashboard"    component={BetaDashboard} />
         <Route component={NotFound} />
       </Switch>
       {!hideNav && <BottomNav unreadMessages={unread} />}
+      <BetaBanner />
       <BetaFeedbackWidget />
     </>
   );

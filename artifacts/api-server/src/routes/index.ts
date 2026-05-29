@@ -13,6 +13,7 @@ import followersRouter     from "./followers.js";
 import marketplaceRouter   from "./marketplace.js";
 import securityRouter      from "./security.js";
 import piPaymentsRouter    from "./pi-payments.js";
+import betaRouter          from "./beta.js";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(followersRouter);
 router.use(marketplaceRouter);
 router.use(securityRouter);
 router.use(piPaymentsRouter);
+router.use(betaRouter);
 
 export default router;
