@@ -4,11 +4,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GameProvider } from "@/contexts/GameContext";
 import { useGame } from "@/contexts/GameContext";
+import { RealtimeProvider } from "@/contexts/RealtimeContext";
 import BottomNav from "@/components/BottomNav";
 import { getNotifications, unreadCount } from "@/lib/messages";
 import { useState, useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
+import LiveNotifToast from "@/components/LiveNotifToast";
 
 import Home            from "@/pages/Home";
 import LeagueSelect    from "@/pages/LeagueSelect";
@@ -35,7 +37,6 @@ import Notifications   from "@/pages/Notifications";
 
 const queryClient = new QueryClient();
 
-// Pages that should NOT show BottomNav
 const NO_NAV_PATHS = ['/game/', '/results'];
 
 function AppShell() {
@@ -55,6 +56,7 @@ function AppShell() {
 
   return (
     <>
+      <LiveNotifToast />
       <Switch>
         <Route path="/"                  component={Home} />
         <Route path="/leagues"           component={LeagueSelect} />
@@ -85,13 +87,25 @@ function AppShell() {
   );
 }
 
+function AuthenticatedProviders({ children }: { children: React.ReactNode }) {
+  const { authUser } = useGame();
+  const playerId = authUser?.id ?? null;
+  return (
+    <RealtimeProvider playerId={playerId}>
+      {children}
+    </RealtimeProvider>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <GameProvider>
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <AppShell />
+            <AuthenticatedProviders>
+              <AppShell />
+            </AuthenticatedProviders>
           </WouterRouter>
           <Toaster />
         </TooltipProvider>

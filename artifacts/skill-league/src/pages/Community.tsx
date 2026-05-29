@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGame } from "@/contexts/GameContext";
+import { useRealtime } from "@/contexts/RealtimeContext";
+import { getSocket } from "@/lib/socket";
 import { Link } from "wouter";
 import GuestBanner from "@/components/GuestBanner";
-import { ArrowLeft, Flame, Heart, Zap, Plus, Send, MessageCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Flame, Heart, Zap, Plus, Send, MessageCircle, ChevronDown, ChevronUp, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,6 +27,8 @@ function emptyReactions(postId: string): PostReactions {
 
 export default function Community() {
   const { coins, username, level, fame, spendCoins, lastPostTime, setLastPostTime, addFame, isGuest } = useGame();
+  const { subscribeCommunity, connected } = useRealtime();
+
   const [posts, setPosts]             = useState<CommunityPost[]>([]);
   const [composing, setComposing]     = useState(false);
   const [draft, setDraft]             = useState('');
@@ -35,12 +39,52 @@ export default function Community() {
   const [expanded, setExpanded]       = useState<string | null>(null);
   const [comments, setComments]       = useState<Comment[]>([]);
   const [commentDraft, setCommentDraft] = useState('');
+  const [liveIndicator, setLiveIndicator] = useState(false);
+  const feedRef = useRef<HTMLDivElement>(null);
+
   const fameTitle = getFameTitle(fame);
 
   useEffect(() => {
     setPosts(getCommunityPosts());
     setCommentCounts(getCommentCounts());
     setReactions(getAllReactions());
+    subscribeCommunity();
+  }, []);
+
+  // Real-time community feed updates
+  useEffect(() => {
+    const s = getSocket();
+
+    s.on("community:new_post", (post: any) => {
+      const localPost: CommunityPost = {
+        id: post.id,
+        authorId: post.authorId,
+        authorName: post.username ?? post.authorName ?? "Player",
+        authorLevel: post.level ?? 1,
+        content: post.content,
+        type: post.type ?? "text",
+        likes: 0,
+        likedByMe: false,
+        boosted: false,
+        timestamp: post.createdAt ? new Date(post.createdAt).getTime() : Date.now(),
+      };
+      setPosts(prev => [localPost, ...prev]);
+      setLiveIndicator(true);
+      setTimeout(() => setLiveIndicator(false), 2000);
+    });
+
+    s.on("community:like_update", (data: { postId: string; playerId: string; liked: boolean }) => {
+      setPosts(prev => prev.map(p => {
+        if (p.id !== data.postId) return p;
+        const delta = data.liked ? 1 : -1;
+        return { ...p, likes: Math.max(0, p.likes + delta) };
+      }));
+    });
+
+    return () => {
+      s.off("community:new_post");
+      s.off("community:like_update");
+    };
   }, []);
 
   const sorted = tab === 'hot'
@@ -55,7 +99,10 @@ export default function Community() {
     const updated = likePost(postId);
     setPosts(updated);
     const post = updated.find(p => p.id === postId);
-    if (post?.likedByMe) addFame(1);
+    if (post) {
+      getSocket().emit("community:like", { postId, playerId: username, liked: post.likedByMe });
+      if (post.likedByMe) addFame(1);
+    }
   }
 
   function handleBoost(postId: string) {
@@ -76,6 +123,15 @@ export default function Community() {
     setComposing(false);
     setError(null);
     setLastPostTime(Date.now());
+
+    // Broadcast to real-time channel
+    getSocket().emit("community:post", {
+      authorId: username,
+      username,
+      level,
+      content: post.content,
+      type: post.type,
+    });
   }
 
   function handleReaction(postId: string, r: ReactionType) {
@@ -117,6 +173,23 @@ export default function Community() {
           </button>
         </Link>
         <h1 className="text-lg font-bold flex-1">المجتمع</h1>
+
+        {/* Live indicator */}
+        <AnimatePresence>
+          {liveIndicator && (
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+              className="flex items-center gap-1 text-xs text-green-400 bg-green-400/10 px-2 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" />
+              منشور جديد!
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${connected ? 'bg-green-500/10 text-green-400' : 'bg-muted text-muted-foreground'}`}>
+          <Wifi className="w-3 h-3" />
+          {connected ? 'مباشر' : 'غير متصل'}
+        </div>
+
         <div className="flex items-center gap-1 text-sm">
           <span>{fameTitle.icon}</span>
           <span className="font-bold tabular-nums" style={{ color: fameTitle.color }}>{fame}</span>
@@ -124,7 +197,7 @@ export default function Community() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 pt-4 space-y-3">
+      <div className="max-w-md mx-auto px-4 pt-4 space-y-3" ref={feedRef}>
         {/* My Fame Bar */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl border border-border bg-card p-4">
@@ -159,18 +232,18 @@ export default function Community() {
               exit={{ opacity: 0, height: 0 }}
               className="rounded-2xl border border-border bg-card p-4 space-y-3 overflow-hidden"
             >
-              <div className="text-sm font-bold">Share with the community</div>
+              <div className="text-sm font-bold">شارك المجتمع</div>
               <textarea value={draft} onChange={e => setDraft(e.target.value)}
-                placeholder="What's on your mind? Share a win, tip, or challenge..."
+                placeholder="شارك انتصارًا، نصيحة، أو تحديًا..."
                 className="w-full bg-muted/40 border border-border rounded-xl px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-1 focus:ring-primary"
                 maxLength={280} />
               {error && <p className="text-xs text-red-400">{error}</p>}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{draft.length}/280</span>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setComposing(false); setDraft(''); setError(null); }}>Cancel</Button>
+                  <Button variant="outline" size="sm" onClick={() => { setComposing(false); setDraft(''); setError(null); }}>إلغاء</Button>
                   <Button size="sm" onClick={handlePost} disabled={draft.trim().length < 3} className="gap-1">
-                    <Send className="w-3.5 h-3.5" /> Post
+                    <Send className="w-3.5 h-3.5" /> نشر
                   </Button>
                 </div>
               </div>
@@ -180,7 +253,7 @@ export default function Community() {
               onClick={() => setComposing(true)}
               className="w-full rounded-2xl border border-dashed border-border bg-card/60 p-3 text-sm text-muted-foreground flex items-center gap-2 hover:bg-card active:scale-[0.99] transition-all">
               <Plus className="w-4 h-4" />
-              Share a match result, tip or achievement…
+              شارك نتيجة مباراة أو نصيحة أو إنجاز…
             </motion.button>
           )}
         </AnimatePresence>
@@ -278,7 +351,7 @@ export default function Community() {
                     >
                       <div className="p-3 space-y-2">
                         {comments.length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-2">No comments yet — be first!</p>
+                          <p className="text-xs text-muted-foreground text-center py-2">لا تعليقات بعد — كن الأول!</p>
                         )}
                         {comments.map(c => (
                           <div key={c.id} className="flex items-start gap-2">
@@ -295,10 +368,9 @@ export default function Community() {
                             </div>
                           </div>
                         ))}
-                        {/* Add comment */}
                         <div className="flex gap-2 pt-1">
                           <input value={commentDraft} onChange={e => setCommentDraft(e.target.value)}
-                            placeholder="Add a comment…"
+                            placeholder="أضف تعليقًا…"
                             maxLength={200}
                             onKeyDown={e => { if (e.key === 'Enter') handleAddComment(post.id); }}
                             className="flex-1 bg-background border border-border rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />

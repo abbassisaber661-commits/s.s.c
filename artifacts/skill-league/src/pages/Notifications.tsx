@@ -4,9 +4,10 @@ import { useGame } from "@/contexts/GameContext";
 import { useT, isRTL } from "@/lib/i18n";
 import { api, type ApiNotification } from "@/lib/apiClient";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Bell, BellOff, CheckCheck } from "lucide-react";
+import { ChevronLeft, Bell, BellOff, CheckCheck, Wifi } from "lucide-react";
 import { playTap } from "@/lib/sounds";
 import { getNotifications, markAllRead, markRead, type Notification } from "@/lib/messages";
+import { useRealtime } from "@/contexts/RealtimeContext";
 
 const TYPE_ICON: Record<string, string> = {
   match:        '⚔️',
@@ -40,11 +41,17 @@ export default function Notifications() {
   const { language, authUser } = useGame();
   const t = useT(language);
   const rtl = isRTL(language);
+  const { pushNotifs, connected } = useRealtime();
 
   const [localNotifs, setLocalNotifs] = useState<Notification[]>(getNotifications());
   const [dbNotifs, setDbNotifs]       = useState<ApiNotification[]>([]);
   const [loading, setLoading]         = useState(false);
   const [dbReadIds, setDbReadIds]     = useState<Set<string>>(new Set());
+
+  // Refresh local notifications when real-time push arrives
+  useEffect(() => {
+    setLocalNotifs(getNotifications());
+  }, [pushNotifs.length]);
 
   useEffect(() => {
     if (!authUser?.uid) return;
