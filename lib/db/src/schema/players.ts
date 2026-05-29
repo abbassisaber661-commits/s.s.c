@@ -33,6 +33,7 @@ export const playersTable = pgTable('players', {
   verificationStatus:text('verification_status').notNull().default('unverified'),
   piUid:             text('pi_uid'),
   language:          text('language').notNull().default('en'),
+  passwordHash:      text('password_hash'),
   lastActiveAt:      timestamp('last_active_at').notNull().defaultNow(),
   createdAt:         timestamp('created_at').notNull().defaultNow(),
   updatedAt:         timestamp('updated_at').notNull().defaultNow(),

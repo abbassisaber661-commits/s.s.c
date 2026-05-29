@@ -17,6 +17,7 @@ import {
 import { fameForPvpWin, fameForTournamentPlace, fameForLevelUp } from '../lib/fame';
 import { getCurrentSeason } from '../lib/seasons';
 import { recordSubmission, isScorePlausible, checkRateLimit } from '../lib/anti-cheat';
+import { api, setToken, setStoredPlayerId } from '../lib/apiClient';
 import { STORE_ITEMS, type StoreItem } from '../lib/store';
 import type { PiLockTier } from '../lib/pi-lock';
 import { checkVerification } from '../lib/verified';
@@ -208,6 +209,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       saveAuthUser(au);
       setAuthUser(au);
       persist({ ...data, username: u.username || data.username });
+      try {
+        const authRes = await api.auth.pi(u.uid, u.username);
+        setToken(authRes.token);
+        setStoredPlayerId(authRes.player.id);
+      } catch { /* offline */ }
     }
   };
 
@@ -215,6 +221,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const au = createGuestUser();
     saveAuthUser(au);
     setAuthUser(au);
+    try {
+      api.auth.guest(au.uid, data.username || 'Guest').then(res => {
+        setToken(res.token);
+        setStoredPlayerId(res.player.id);
+      }).catch(() => { /* offline */ });
+    } catch { /* offline */ }
   };
 
   const setLanguage    = (lang: Language) => persist({ ...data, language: lang });
