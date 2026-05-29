@@ -101,6 +101,7 @@ const T = {
     skill_speed:'Speed', skill_accuracy:'Accuracy', skill_memory:'Memory',
     daily_challenges:'Daily Challenges', today:'Today',
     completed:'Completed', pending:'Pending', see_all:'See All',
+    notifications_title:'Notifications', no_notifications:'No notifications yet',
   },
   ar: {
     app_name:'سكيل ليج', tagline:'غريزة نقية. سرعة خالصة.',
@@ -169,6 +170,7 @@ const T = {
     skill_speed:'السرعة', skill_accuracy:'الدقة', skill_memory:'الذاكرة',
     daily_challenges:'التحديات اليومية', today:'اليوم',
     completed:'مكتمل', pending:'قيد الانتظار', see_all:'عرض الكل',
+    notifications_title:'الإشعارات', no_notifications:'لا إشعارات بعد',
   },
   fr: {
     app_name:'SkillLeague', tagline:'Instinct pur. Vitesse pure.',
@@ -237,6 +239,7 @@ const T = {
     skill_speed:'Vitesse', skill_accuracy:'Précision', skill_memory:'Mémoire',
     daily_challenges:'Défis quotidiens', today:'Aujourd\'hui',
     completed:'Terminé', pending:'En attente', see_all:'Voir tout',
+    notifications_title:'Notifications', no_notifications:'Aucune notification',
   },
   es: {
     app_name:'SkillLeague', tagline:'Instinto puro. Velocidad pura.',
@@ -305,6 +308,7 @@ const T = {
     skill_speed:'Velocidad', skill_accuracy:'Precisión', skill_memory:'Memoria',
     daily_challenges:'Desafíos diarios', today:'Hoy',
     completed:'Completado', pending:'Pendiente', see_all:'Ver todo',
+    notifications_title:'Notificaciones', no_notifications:'Sin notificaciones aún',
   },
   de: {
     app_name:'SkillLeague', tagline:'Reiner Instinkt. Reine Geschwindigkeit.',
@@ -373,6 +377,7 @@ const T = {
     skill_speed:'Geschwindigkeit', skill_accuracy:'Genauigkeit', skill_memory:'Gedächtnis',
     daily_challenges:'Tägliche Herausforderungen', today:'Heute',
     completed:'Abgeschlossen', pending:'Ausstehend', see_all:'Alle anzeigen',
+    notifications_title:'Benachrichtigungen', no_notifications:'Noch keine Benachrichtigungen',
   },
   pt: {
     app_name:'SkillLeague', tagline:'Instinto puro. Velocidade pura.',
@@ -441,6 +446,7 @@ const T = {
     skill_speed:'Velocidade', skill_accuracy:'Precisão', skill_memory:'Memória',
     daily_challenges:'Desafios diários', today:'Hoje',
     completed:'Concluído', pending:'Pendente', see_all:'Ver tudo',
+    notifications_title:'Notificações', no_notifications:'Sem notificações ainda',
   },
   tr: {
     app_name:'SkillLeague', tagline:'Saf içgüdü. Saf hız.',
@@ -509,6 +515,7 @@ const T = {
     skill_speed:'Hız', skill_accuracy:'Doğruluk', skill_memory:'Hafıza',
     daily_challenges:'Günlük Görevler', today:'Bugün',
     completed:'Tamamlandı', pending:'Beklemede', see_all:'Tümünü gör',
+    notifications_title:'Bildirimler', no_notifications:'Henüz bildirim yok',
   },
   hi: {
     app_name:'SkillLeague', tagline:'शुद्ध प्रवृत्ति। शुद्ध गति।',
@@ -577,6 +584,7 @@ const T = {
     skill_speed:'गति', skill_accuracy:'सटीकता', skill_memory:'स्मृति',
     daily_challenges:'दैनिक चुनौतियां', today:'आज',
     completed:'पूर्ण', pending:'लंबित', see_all:'सभी देखें',
+    notifications_title:'सूचनाएं', no_notifications:'अभी कोई सूचना नहीं',
   },
   zh: {
     app_name:'SkillLeague', tagline:'纯粹本能。纯粹速度。',
@@ -645,6 +653,7 @@ const T = {
     skill_speed:'速度', skill_accuracy:'准确率', skill_memory:'记忆力',
     daily_challenges:'每日挑战', today:'今天',
     completed:'已完成', pending:'待完成', see_all:'查看全部',
+    notifications_title:'通知', no_notifications:'暂无通知',
   },
   ru: {
     app_name:'SkillLeague', tagline:'Чистый инстинкт. Чистая скорость.',
@@ -713,6 +722,7 @@ const T = {
     skill_speed:'Скорость', skill_accuracy:'Точность', skill_memory:'Память',
     daily_challenges:'Ежедневные задания', today:'Сегодня',
     completed:'Завершено', pending:'Ожидает', see_all:'Показать все',
+    notifications_title:'Уведомления', no_notifications:'Нет уведомлений',
   },
 } as const;
 

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { useT } from "@/lib/i18n";
 import { Link } from "wouter";
-import { Zap } from "lucide-react";
+import { Zap, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LanguageSelector from "@/components/LanguageSelector";
 import { getDailyChallenges, todayString } from "@/lib/challenges";
@@ -78,6 +78,16 @@ export default function Home() {
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border/50 px-4 py-2.5 flex justify-between items-center">
         <LanguageSelector current={language} onChange={setLanguage} />
         <div className="flex items-center gap-2">
+          <Link href="/notifications">
+            <button className="relative p-2 rounded-xl border border-border bg-card hover:bg-card/80 active:scale-95 transition-transform">
+              <Bell className="w-4 h-4 text-muted-foreground" />
+              {unread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center px-0.5">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+          </Link>
           <Link href="/wallet">
             <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border bg-card text-sm font-medium hover:bg-card/80 active:scale-95 transition-transform">
               <span className="font-black tabular-nums text-yellow-400">{coins}</span>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useDbSync } from '../lib/useDbSync';
 import { PlayerData, AchievementUnlock, LeaderboardEntry, TrophyUnlock, storage } from '../lib/storage';
 import { PiUser, getCurrentUser, loginWithPi, logoutPi } from '../lib/pi-auth';
 import { AuthUser, loadAuthUser, saveAuthUser, clearAuthUser, createGoogleUser, createGuestUser, createPiUser, isGuestUser } from '../lib/auth';
@@ -597,6 +598,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     persist({ ...data, coins: data.coins - config.unlockCoinsCost, totalCoinsSpent: data.totalCoinsSpent + config.unlockCoinsCost, unlockedLeagues: [...data.unlockedLeagues, leagueId] });
     return true;
   };
+
+  useDbSync(data, authUser);
 
   const isGuest = isGuestUser(authUser);
   const isAuthenticated = authUser !== null;
