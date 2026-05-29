@@ -124,11 +124,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Auto-trigger Pi authentication on mount when running inside the Pi Browser.
+  // Always authenticate with Pi when the SDK is present — cached sessions must
+  // NOT prevent this, as Pi App Studio requires Pi.authenticate() to be called
+  // at runtime to confirm the integration is live.
   useEffect(() => {
     if (!hasPiSDK()) return;
-    // Only auto-auth if the user has not yet signed in with any method.
-    const alreadyAuthed = loadAuthUser();
-    if (alreadyAuthed) return;
     loginWithPiNetwork();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
