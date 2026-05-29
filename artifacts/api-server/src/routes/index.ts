@@ -14,6 +14,8 @@ import marketplaceRouter   from "./marketplace.js";
 import securityRouter      from "./security.js";
 import piPaymentsRouter    from "./pi-payments.js";
 import betaRouter          from "./beta.js";
+import monitorRouter       from "./monitor.js";
+import releaseRouter       from "./release.js";
 
 const router: IRouter = Router();
 
@@ -32,5 +34,7 @@ router.use(marketplaceRouter);
 router.use(securityRouter);
 router.use(piPaymentsRouter);
 router.use(betaRouter);
+router.use(monitorRouter);
+router.use(releaseRouter);
 
 export default router;

@@ -137,11 +137,6 @@ export const api = {
       post<{ ok: boolean }>('/pi/payment/complete', { paymentId, piTxId }),
   },
 
-  security: {
-    report: (data: { playerId: string; type: string; details: Record<string, unknown> }) =>
-      post<{ ok: boolean }>('/security/report', data),
-  },
-
   admin: {
     logs:       (limit = 100) => apiFetch<unknown[]>(`/admin/logs?limit=${limit}`),
     suspicious: (limit = 50)  => apiFetch<unknown[]>(`/admin/suspicious?limit=${limit}`),
@@ -196,6 +191,26 @@ export const api = {
 
   betaFeedback: {
     submit: (data: Record<string, unknown>) => post<{ ok: boolean }>('/beta-feedback', data),
+  },
+
+  monitor: {
+    live:      () => apiFetch<Record<string, unknown>>('/monitor/live'),
+    retention: () => apiFetch<unknown[]>('/monitor/retention'),
+    features:  () => apiFetch<unknown[]>('/monitor/features'),
+    bots:      () => apiFetch<unknown[]>('/monitor/bots'),
+    economy:   () => apiFetch<Record<string, unknown>>('/monitor/economy'),
+  },
+
+  release: {
+    status: () => apiFetch<Record<string, unknown>>('/release/status'),
+    ping:   (data: { platform: string; version?: string }) => post<Record<string, unknown>>('/release/ping', data),
+  },
+
+  security: {
+    report:      (data: { playerId: string; type: string; details: Record<string, unknown> }) =>
+      post<{ ok: boolean }>('/security/report', data),
+    scanPlayer:  (playerId: string) =>
+      post<{ clean: boolean; flags: string[] }>('/security/scan-player', { playerId }),
   },
 };
 

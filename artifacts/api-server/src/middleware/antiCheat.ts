@@ -1,8 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import { db } from "@workspace/db";
 
-const MAX_SCORE_PER_SECOND = 50;
-const MAX_COINS_PER_TX     = 10_000;
+// Phase 20: Tightened limits based on real beta data
+const MAX_SCORE_PER_SECOND = 40;   // was 50 — reduced after beta analysis
+const MAX_COINS_PER_TX     = 5_000; // was 10000 — prevents bulk inflation
+const MAX_WIN_RATE_THRESHOLD = 0.92; // flag accounts above this in auto-review
 
 export function getClientIp(req: Request): string {
   const fwd = req.headers["x-forwarded-for"];
@@ -38,6 +40,31 @@ export async function detectMultiAccount(ip: string, playerId: string): Promise<
       [ip, playerId] as never,
     ) as unknown as { rows: Array<{ cnt: string }> };
     return Number(result.rows?.[0]?.cnt ?? 0) >= 3;
+  } catch { return false; }
+}
+
+export async function detectSuspiciousWinRate(playerId: string): Promise<boolean> {
+  try {
+    const result = await db.execute(
+      `SELECT matches_played, matches_won FROM players WHERE id = $1` as never,
+      [playerId] as never,
+    ) as unknown as { rows: Array<{ matches_played: number; matches_won: number }> };
+    const row = result.rows?.[0];
+    if (!row || row.matches_played < 15) return false;
+    const winRate = row.matches_won / row.matches_played;
+    return winRate > MAX_WIN_RATE_THRESHOLD;
+  } catch { return false; }
+}
+
+export async function detectRapidRegistration(ip: string): Promise<boolean> {
+  try {
+    const result = await db.execute(
+      `SELECT COUNT(*) as cnt FROM players
+       WHERE id IN (SELECT DISTINCT player_id FROM ip_fingerprints WHERE ip_address = $1)
+         AND created_at > NOW() - INTERVAL '1 hour'` as never,
+      [ip] as never,
+    ) as unknown as { rows: Array<{ cnt: string }> };
+    return Number(result.rows?.[0]?.cnt ?? 0) >= 5;
   } catch { return false; }
 }
 

@@ -51,6 +51,9 @@ import Career          from "@/pages/Career";
 import AICoach         from "@/pages/AICoach";
 // Phase 19
 import BetaDashboard   from "@/pages/BetaDashboard";
+// Phase 20
+import MonitorDashboard from "@/pages/MonitorDashboard";
+import ReleasePage      from "@/pages/ReleasePage";
 
 const queryClient = new QueryClient();
 
@@ -110,6 +113,9 @@ function AppShell() {
         <Route path="/ai-coach"          component={AICoach} />
         {/* Phase 19 */}
         <Route path="/beta-dashboard"    component={BetaDashboard} />
+        {/* Phase 20 */}
+        <Route path="/monitor"           component={MonitorDashboard} />
+        <Route path="/release"           component={ReleasePage} />
         <Route component={NotFound} />
       </Switch>
       {!hideNav && <BottomNav unreadMessages={unread} />}
