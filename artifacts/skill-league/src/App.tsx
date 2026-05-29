@@ -7,6 +7,7 @@ import { useGame } from "@/contexts/GameContext";
 import { RealtimeProvider } from "@/contexts/RealtimeContext";
 import BottomNav from "@/components/BottomNav";
 import { getNotifications, unreadCount } from "@/lib/messages";
+import { getUnreadCount as getNewsUnread } from "@/lib/news";
 import { useState, useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import AuthScreen from "@/pages/AuthScreen";
@@ -38,9 +39,19 @@ import Analytics       from "@/pages/Analytics";
 import Marketplace     from "@/pages/Marketplace";
 import BetaFeedbackWidget from "@/components/BetaFeedbackWidget";
 
+// Phase 16 & 17 pages
+import Clans           from "@/pages/Clans";
+import LootBoxes       from "@/pages/LootBoxes";
+import DailyRewards    from "@/pages/DailyRewards";
+import Events          from "@/pages/Events";
+import News            from "@/pages/News";
+import VIP             from "@/pages/VIP";
+import Career          from "@/pages/Career";
+import AICoach         from "@/pages/AICoach";
+
 const queryClient = new QueryClient();
 
-const NO_NAV_PATHS = ['/game/', '/results'];
+const NO_NAV_PATHS = ['/game/', '/results', '/ai-coach'];
 
 function AppShell() {
   const [location] = useLocation();
@@ -85,6 +96,15 @@ function AppShell() {
         <Route path="/notifications"     component={Notifications} />
         <Route path="/analytics"         component={Analytics} />
         <Route path="/marketplace"       component={Marketplace} />
+        {/* Phase 16 & 17 */}
+        <Route path="/clans"             component={Clans} />
+        <Route path="/loot-boxes"        component={LootBoxes} />
+        <Route path="/daily-rewards"     component={DailyRewards} />
+        <Route path="/events"            component={Events} />
+        <Route path="/news"              component={News} />
+        <Route path="/vip"               component={VIP} />
+        <Route path="/career"            component={Career} />
+        <Route path="/ai-coach"          component={AICoach} />
         <Route component={NotFound} />
       </Switch>
       {!hideNav && <BottomNav unreadMessages={unread} />}

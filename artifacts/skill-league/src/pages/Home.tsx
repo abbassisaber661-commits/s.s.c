@@ -15,6 +15,9 @@ import { getActiveLockTier } from "@/lib/pi-lock";
 import { motion } from "framer-motion";
 import { getJourneyTier, getNextJourneyTier, journeyProgress } from "@/lib/journey";
 import { loadStreakData } from "@/lib/login-streak";
+import { getUnreadCount as getNewsUnread } from "@/lib/news";
+import { getActiveVIPTier } from "@/lib/vip";
+import { canOpenDailyBox } from "@/lib/loot-boxes";
 
 export default function Home() {
   const {
@@ -28,8 +31,11 @@ export default function Home() {
   const game = useGame();
 
   const [unread, setUnread] = useState(0);
+  const [newsUnread, setNewsUnread] = useState(0);
+
   useEffect(() => {
     setUnread(unreadCount(getNotifications()));
+    setNewsUnread(getNewsUnread());
   }, []);
 
   const today         = todayString();
@@ -48,6 +54,8 @@ export default function Home() {
   const fameTitle    = getFameTitle(fame || 0);
   const verif        = getVerificationStatus((verificationLevel ?? 0) as 0 | 1 | 2);
   const activeLock   = getActiveLockTier(piLockTierId ?? null, piLockExpiry ?? null);
+  const activeVIP    = getActiveVIPTier();
+  const dailyBoxReady = canOpenDailyBox();
 
   // Journey + Streak
   const journeyTier  = useMemo(() => getJourneyTier(game as any), [elo, level, matchesPlayed]);
@@ -78,6 +86,16 @@ export default function Home() {
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border/50 px-4 py-2.5 flex justify-between items-center">
         <LanguageSelector current={language} onChange={setLanguage} />
         <div className="flex items-center gap-2">
+          <Link href="/news">
+            <button className="relative p-2 rounded-xl border border-border bg-card hover:bg-card/80 active:scale-95 transition-transform">
+              <span className="text-sm">📰</span>
+              {newsUnread > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-blue-500 text-white text-[9px] font-black flex items-center justify-center px-0.5">
+                  {newsUnread > 9 ? '9+' : newsUnread}
+                </span>
+              )}
+            </button>
+          </Link>
           <Link href="/notifications">
             <button className="relative p-2 rounded-xl border border-border bg-card hover:bg-card/80 active:scale-95 transition-transform">
               <Bell className="w-4 h-4 text-muted-foreground" />
@@ -94,7 +112,6 @@ export default function Home() {
               <span className="text-yellow-400">🪙</span>
             </button>
           </Link>
-          {/* Auth badge */}
           {authUser && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl border border-border bg-card text-xs font-medium max-w-[90px] overflow-hidden">
               {authUser.authMode === 'google' && <span>🔵</span>}
@@ -116,13 +133,14 @@ export default function Home() {
             <Zap className="w-9 h-9 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h1 className="text-2xl font-black">SkillLeague</h1>
               {verif.badge && (
                 <span className="text-sm font-bold" style={{ color: verif.color }}>{verif.badge}</span>
               )}
-              {activeLock && (
-                <span className="text-sm">{activeLock.icon}</span>
+              {activeLock && <span className="text-sm">{activeLock.icon}</span>}
+              {activeVIP && (
+                <span className="text-sm font-bold" style={{ color: activeVIP.color }}>{activeVIP.badge}</span>
               )}
             </div>
             <p className="text-xs text-muted-foreground uppercase tracking-widest truncate">{t('tagline')}</p>
@@ -188,7 +206,6 @@ export default function Home() {
             <div className="rounded-2xl border border-border bg-card overflow-hidden active:scale-[0.98] transition-transform"
               style={{ borderColor: journeyTier.color + '50', background: `linear-gradient(135deg, ${journeyTier.glow}, transparent)` }}>
               <div className="flex items-center gap-3 p-3">
-                {/* Journey */}
                 <div className="text-3xl">{journeyTier.icon}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -207,7 +224,6 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                {/* Streak */}
                 <div className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 bg-orange-500/15 rounded-xl border border-orange-500/30">
                   <span className="text-lg">🔥</span>
                   <div className="text-center">
@@ -242,8 +258,31 @@ export default function Home() {
           </div>
         </motion.div>
 
+        {/* ── Phase 16: New Systems ──────────────────────── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
+            {language === 'ar' ? 'جديد — المرحلة 16' : 'New — Phase 16'}
+            <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            <NavBtn href="/clans"        icon="🏰" label={language === 'ar' ? 'الفرق' : 'Clans'}       color="#f97316" />
+            <NavBtn href="/events"       icon="🌍" label={language === 'ar' ? 'أحداث' : 'Events'}      color="#8b5cf6" />
+            <NavBtn href="/daily-rewards" icon="🎁" label={language === 'ar' ? 'يومي' : 'Rewards'}    color="#10b981" badge={dailyBoxReady ? 1 : 0} />
+            <NavBtn href="/loot-boxes"   icon="📦" label={language === 'ar' ? 'صناديق' : 'Boxes'}     color="#06b6d4" />
+          </div>
+        </motion.div>
+
+        {/* ── Phase 16: VIP + Career ──────────────────────── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
+          <div className="grid grid-cols-3 gap-2">
+            <NavBtn href="/vip"          icon="👑" label="VIP"                                    color="#f59e0b" />
+            <NavBtn href="/career"       icon="🛣️" label={language === 'ar' ? 'مسيرة' : 'Career'} color="#3b82f6" />
+            <NavBtn href="/ai-coach"     icon="🤖" label={language === 'ar' ? 'مدرب AI' : 'Coach'} color="#a855f7" />
+          </div>
+        </motion.div>
+
         {/* ── Group 2: Economy ──────────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13 }}>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
           <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">Economy</div>
           <div className="grid grid-cols-4 gap-2">
             <NavBtn href="/store"     icon="🛒"  label="Store"   color="#2EE87A" />
@@ -254,7 +293,7 @@ export default function Home() {
         </motion.div>
 
         {/* ── Group 3: Competition ──────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
           <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">Competition</div>
           <div className="grid grid-cols-3 gap-2">
             <NavBtn href="/leaderboard"     icon="📊" label="Leaderboard" />
@@ -263,25 +302,23 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* ── Group 4: Beta Features ───────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.19 }}>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1 flex items-center gap-2">
-            Beta
-            <span className="text-[9px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold">New</span>
-          </div>
+        {/* ── Group 4: News + Extras ───────────────────── */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">Info</div>
           <div className="grid grid-cols-3 gap-2">
-            <NavBtn href="/marketplace" icon="🛒" label="سوق"      color="#a855f7" />
-            <NavBtn href="/analytics"   icon="📈" label="تحليلات"  color="#3b82f6" />
-            <NavBtn href="/settings"    icon="⚙️" label="إعدادات" />
+            <NavBtn href="/news"        icon="📰" label={language === 'ar' ? 'أخبار' : 'News'}    color="#3b82f6" badge={newsUnread} />
+            <NavBtn href="/marketplace" icon="🛒" label={language === 'ar' ? 'سوق' : 'Market'}    color="#a855f7" />
+            <NavBtn href="/analytics"   icon="📈" label={language === 'ar' ? 'تحليلات' : 'Stats'} color="#3b82f6" />
           </div>
         </motion.div>
 
-        {/* ── Group 5: Extra ────────────────────────────── */}
+        {/* ── Group 5: My Account ────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
           <div className="text-xs text-muted-foreground uppercase tracking-wider mb-2 px-1">حسابي</div>
-          <div className="grid grid-cols-2 gap-2">
-            <NavBtn href="/pi-lock"  icon={verif.badge || "✓"} label="موثق" color={verif.color} />
-            <NavBtn href="/profile"  icon="👤" label="ملفي" />
+          <div className="grid grid-cols-3 gap-2">
+            <NavBtn href="/pi-lock"      icon={verif.badge || "✓"} label="موثق"     color={verif.color} />
+            <NavBtn href="/profile"      icon="👤"                 label="ملفي" />
+            <NavBtn href="/settings"     icon="⚙️"                label="إعدادات" />
           </div>
         </motion.div>
 
