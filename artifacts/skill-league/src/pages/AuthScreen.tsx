@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
+import { hasPiSDK } from "@/lib/pi-auth";
 
 type Step = 'welcome' | 'google-form' | 'verify-email';
 
@@ -19,6 +20,19 @@ export default function AuthScreen() {
   const [sentCode, setSentCode] = useState('');
   const [codeInput, setCodeInput] = useState('');
   const [codeSent, setCodeSent] = useState(false);
+  // true only when inside the Pi Browser and auto-auth is in progress on first render
+  const [piAutoAuthDone, setPiAutoAuthDone] = useState(false);
+
+  // Show a "connecting…" overlay while the auto-auth triggered by GameContext
+  // is running — this runs in parallel with the GameContext useEffect.
+  useEffect(() => {
+    if (!hasPiSDK()) return;
+    setPiAutoAuthDone(false);
+    // Auto-auth fires in GameContext — we just wait briefly then clear the overlay
+    // so the user sees the welcome screen if auth failed or was cancelled.
+    const t = setTimeout(() => setPiAutoAuthDone(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleGoogle = async () => {
     setError('');
@@ -57,6 +71,48 @@ export default function AuthScreen() {
   const handleGuest = () => {
     loginAsGuest();
   };
+
+  // Pi Browser auto-auth connecting overlay
+  if (hasPiSDK() && !piAutoAuthDone) {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-6"
+        style={{ background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)' }}
+        dir="rtl"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col items-center gap-5"
+        >
+          {/* Pi logo */}
+          <div
+            className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl shadow-2xl"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+              boxShadow: '0 0 50px rgba(124,58,237,0.6)',
+            }}
+          >
+            π
+          </div>
+
+          {/* Spinner */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+            className="w-10 h-10 rounded-full border-4"
+            style={{ borderColor: 'rgba(167,139,250,0.3)', borderTopColor: '#a78bfa' }}
+          />
+
+          <div className="text-center">
+            <p className="text-white font-bold text-xl">جارٍ الاتصال بـ Pi Network</p>
+            <p className="text-white/50 text-sm mt-1">يرجى الانتظار…</p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div

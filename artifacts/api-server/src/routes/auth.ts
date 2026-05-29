@@ -125,11 +125,36 @@ router.post("/auth/guest", strictRateLimit, async (req, res) => {
 });
 
 router.post("/auth/pi", strictRateLimit, async (req, res) => {
-  const { piUid, username, accessToken } = req.body as Record<string, unknown>;
-  if (typeof piUid !== "string") { res.status(400).json({ error: "piUid required" }); return; }
+  const { accessToken } = req.body as Record<string, unknown>;
+  if (typeof accessToken !== "string" || !accessToken) {
+    res.status(400).json({ error: "accessToken required" });
+    return;
+  }
 
   const ip = getClientIp(req);
   const fingerprint = getDeviceFingerprint(req);
+
+  // Validate the access token against Pi Network — this is the authoritative
+  // source of uid/username; we never trust client-supplied values.
+  let piUid: string;
+  let piUsername: string;
+  try {
+    const piRes = await fetch("https://api.minepi.com/v2/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!piRes.ok) {
+      req.log.warn({ status: piRes.status }, "Pi /v2/me rejected access token");
+      res.status(401).json({ error: "invalid_pi_token" });
+      return;
+    }
+    const piUser = (await piRes.json()) as { uid: string; username: string };
+    piUid     = piUser.uid;
+    piUsername = piUser.username ?? `Pi_${piUser.uid.slice(0, 6)}`;
+  } catch (err) {
+    req.log.error({ err }, "Pi token validation request failed");
+    res.status(502).json({ error: "pi_validation_failed" });
+    return;
+  }
 
   try {
     const [existing] = await db.select().from(playersTable)
@@ -138,12 +163,13 @@ router.post("/auth/pi", strictRateLimit, async (req, res) => {
     let player: typeof playersTable.$inferSelect;
     if (existing) {
       await db.update(playersTable).set({
-        lastActiveAt: new Date(), verificationStatus: "verified",
-        ...(typeof username === "string" && { username: username.trim().slice(0, 20) }),
+        lastActiveAt: new Date(),
+        verificationStatus: "verified",
+        username: piUsername.trim().slice(0, 20),
       }).where(eq(playersTable.id, existing.id));
-      player = { ...existing, verificationStatus: "verified" };
+      player = { ...existing, verificationStatus: "verified", username: piUsername.trim().slice(0, 20) };
     } else {
-      const safeUsername = (typeof username === "string" ? username.trim() : "").slice(0, 20) || `Pi_${nanoid().slice(0, 6)}`;
+      const safeUsername = piUsername.trim().slice(0, 20) || `Pi_${nanoid().slice(0, 6)}`;
       const [created] = await db.insert(playersTable).values({
         id: nanoid(), username: safeUsername, piUid, verificationStatus: "verified",
       }).returning();

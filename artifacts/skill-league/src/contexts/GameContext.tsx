@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useDbSync } from '../lib/useDbSync';
 import { PlayerData, AchievementUnlock, LeaderboardEntry, TrophyUnlock, storage } from '../lib/storage';
-import { PiUser, getCurrentUser, loginWithPi, logoutPi } from '../lib/pi-auth';
+import { PiUser, getCachedPiUser, loginWithPi, logoutPi, cachePiUser, hasPiSDK } from '../lib/pi-auth';
 import { AuthUser, loadAuthUser, saveAuthUser, clearAuthUser, createGoogleUser, createGuestUser, createPiUser, isGuestUser } from '../lib/auth';
 import { Language, isRTL } from '../lib/i18n';
 import { LEAGUES, LeagueId, calculateReward } from '../lib/game-engine';
@@ -74,7 +74,7 @@ const GameContext = createContext<GameState | undefined>(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<PlayerData>(storage.get());
-  const [user, setUser] = useState<PiUser | null>(getCurrentUser());
+  const [user, setUser] = useState<PiUser | null>(getCachedPiUser());
   const [authUser, setAuthUser] = useState<AuthUser | null>(loadAuthUser());
 
   const [lastScore,               setLScore]     = useState(0);
@@ -123,7 +123,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Remove auto Pi login on mount — auth is now handled by AuthScreen
+  // Auto-trigger Pi authentication on mount when running inside the Pi Browser.
+  useEffect(() => {
+    if (!hasPiSDK()) return;
+    // Only auto-auth if the user has not yet signed in with any method.
+    const alreadyAuthed = loadAuthUser();
+    if (alreadyAuthed) return;
+    loginWithPiNetwork();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const season = getCurrentSeason();
@@ -187,7 +195,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const persist = (d: PlayerData) => { setData(d); storage.save(d); };
-  const login   = async () => { const u = await loginWithPi(); if (u) setUser(u); };
+  const login   = async () => { const r = await loginWithPi(); if (r) { cachePiUser(r.user); setUser(r.user); } };
   const logout  = () => {
     logoutPi();
     clearAuthUser();
@@ -203,18 +211,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const loginWithPiNetwork = async () => {
-    const u = await loginWithPi();
-    if (u) {
-      setUser(u);
-      const au = createPiUser(u.uid, u.username);
-      saveAuthUser(au);
-      setAuthUser(au);
-      persist({ ...data, username: u.username || data.username });
-      try {
-        const authRes = await api.auth.pi(u.uid, u.username);
-        setToken(authRes.token);
-        setStoredPlayerId(authRes.player.id);
-      } catch { /* offline */ }
+    // loginWithPi() awaits Pi.init() as a Promise then calls Pi.authenticate().
+    const result = await loginWithPi();
+    if (!result) return;
+
+    const { accessToken, user: piUser } = result;
+
+    // Cache the Pi user locally so the UI reflects it immediately.
+    cachePiUser(piUser);
+    setUser(piUser);
+
+    const au = createPiUser(piUser.uid, piUser.username);
+    saveAuthUser(au);
+    setAuthUser(au);
+    persist({ ...data, username: piUser.username || data.username });
+
+    // Send accessToken to backend — backend validates via GET /v2/me before
+    // issuing a JWT + creating/updating the player record.
+    try {
+      const authRes = await api.auth.pi(accessToken);
+      setToken(authRes.token);
+      setStoredPlayerId(authRes.player.id);
+    } catch {
+      /* backend unreachable — local session still valid */
     }
   };
 

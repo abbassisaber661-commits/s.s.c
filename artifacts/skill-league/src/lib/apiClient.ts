@@ -87,8 +87,8 @@ export const api = {
       post<AuthResponse>('/auth/login', { username, password }),
     guest: (guestId: string, username: string) =>
       post<AuthResponse>('/auth/guest', { guestId, username }),
-    pi: (piUid: string, username: string, accessToken?: string) =>
-      post<AuthResponse>('/auth/pi', { piUid, username, accessToken }),
+    pi: (accessToken: string) =>
+      post<AuthResponse>('/auth/pi', { accessToken }),
     refresh: () => post<AuthResponse>('/auth/refresh', {}),
     logout: () => post<{ ok: boolean }>('/auth/logout', {}),
   },
