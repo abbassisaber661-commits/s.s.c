@@ -46,7 +46,7 @@ export default function Profile() {
     fame, verificationLevel, piLockTierId, piLockExpiry,
     dailyChallengesCompleted, xpBoostUntil,
     avatarThemeId, setAvatarTheme, addCoins,
-    authUser, isGuest, logout,
+    authUser, isGuest, logout, vipAvatar,
   } = ctx;
   const t = useT(language);
   const [, setLocation] = useLocation();
