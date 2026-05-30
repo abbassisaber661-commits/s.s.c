@@ -48,7 +48,7 @@ router.get("/release/status", async (req, res) => {
         overallStatus: readiness >= 90 ? "ready" : readiness >= 70 ? "almost_ready" : "in_progress",
       },
       deploymentTargets: [
-        { id: "web",    label: "Web",            status: "live",    url: "/" },
+        { id: "web",    label: "Web (Replit)",   status: "live",    url: "skill-league.replit.app" },
         { id: "mobile", label: "Mobile PWA",     status: "ready",   url: "قابل للتثبيت كـ PWA" },
         { id: "pi",     label: "Pi Apps",        status: "pending", url: "في انتظار مراجعة Pi Network" },
       ],

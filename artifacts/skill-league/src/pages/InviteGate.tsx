@@ -114,7 +114,9 @@ export default function InviteGate({ onGranted }: Props) {
 
         <p className="text-center text-xs text-muted-foreground">
           لا يوجد رمز دعوة؟{' '}
-          <span className="text-purple-400">تواصل مع المجتمع للحصول على رمز دعوة</span>
+          <a href="https://t.me/skillleague" target="_blank" rel="noreferrer" className="text-purple-400 hover:underline">
+            انضم للقائمة الانتظار
+          </a>
         </p>
       </motion.div>
     </div>
