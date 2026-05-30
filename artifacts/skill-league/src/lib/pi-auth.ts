@@ -15,6 +15,9 @@ export interface PiAuthResult {
 // Single shared init promise so concurrent callers don't double-init.
 let initPromise: Promise<void> | null = null;
 
+// Prevent concurrent Pi.authenticate() calls — only one at a time.
+let authInFlight = false;
+
 /**
  * Awaits Pi.init() as a Promise before any authenticate call.
  * Returns true when the SDK is ready, false when not in Pi browser.
@@ -26,7 +29,6 @@ export async function ensurePiInitialized(): Promise<boolean> {
     initPromise = Promise.resolve(
       Pi.init({ version: "2.0", sandbox: import.meta.env.DEV }),
     ).catch((err: unknown) => {
-      // Reset so it can be retried.
       initPromise = null;
       throw err;
     });
@@ -45,25 +47,45 @@ export function hasPiSDK(): boolean {
 
 /**
  * Initialises the SDK then calls Pi.authenticate(["username"]).
- * Returns the raw { accessToken, user } from the SDK — the caller is
- * responsible for sending the accessToken to the backend for validation.
+ * Includes a 15-second timeout so the promise never hangs forever.
+ * If a call is already in progress, the second caller awaits the same result.
  */
+let authPromise: Promise<PiAuthResult | null> | null = null;
+
 export async function loginWithPi(): Promise<PiAuthResult | null> {
+  // If auth is already in flight, return the same promise instead of a second call.
+  if (authInFlight && authPromise) return authPromise;
+
+  authInFlight = true;
+  authPromise = _doAuth().finally(() => {
+    authInFlight = false;
+    authPromise = null;
+  });
+  return authPromise;
+}
+
+async function _doAuth(): Promise<PiAuthResult | null> {
   try {
     const ready = await ensurePiInitialized();
     if (!ready) return null;
 
     const Pi = (window as any).Pi;
 
-    const result = await Pi.authenticate(
-      ["username"],
-      // onIncompletePaymentFound — acknowledge and move on so auth isn't blocked.
-      (_incompletePayment: unknown) => {
-        console.warn("[Pi] Incomplete payment found during auth — ignored.");
-      },
-    );
+    // Wrap Pi.authenticate() with a 15-second timeout so it never hangs forever.
+    const authWithTimeout = Promise.race([
+      Pi.authenticate(
+        ["username"],
+        (_incompletePayment: unknown) => {
+          console.warn("[Pi] Incomplete payment found during auth — ignored.");
+        },
+      ),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Pi.authenticate() timed out after 15s")), 15000)
+      ),
+    ]);
 
-    // Normalise: SDK can return either result.user or result directly.
+    const result = await authWithTimeout;
+
     const user: PiUser = PiUserSchema.parse(
       result?.user ?? result,
     );

@@ -63,9 +63,15 @@ export default function AuthScreen() {
   };
 
   const handlePi = async () => {
+    setError('');
     setLoading('pi');
-    await loginWithPiNetwork();
-    setLoading(null);
+    try {
+      await loginWithPiNetwork();
+    } catch {
+      setError('فشل الاتصال بـ Pi Network، يرجى المحاولة مرة أخرى');
+    } finally {
+      setLoading(null);
+    }
   };
 
   const handleGuest = () => {
@@ -226,6 +232,16 @@ export default function AuthScreen() {
                 </svg>
                 <span>تسجيل الدخول بـ Google</span>
               </button>
+
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-400 text-sm text-center px-2"
+                >
+                  {error}
+                </motion.p>
+              )}
 
               {/* Pi Network */}
               <button
