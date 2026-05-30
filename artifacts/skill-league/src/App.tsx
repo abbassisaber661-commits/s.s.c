@@ -51,6 +51,7 @@ import Career          from "@/pages/Career";
 import AICoach         from "@/pages/AICoach";
 // Phase 19
 import BetaDashboard   from "@/pages/BetaDashboard";
+import MatchArena      from "@/pages/MatchArena";
 
 const queryClient = new QueryClient();
 
@@ -67,7 +68,8 @@ function AppShell() {
 
   const hideNav = NO_NAV_PATHS.some(p => location.startsWith(p));
 
-  if (!isAuthenticated) {
+  const PUBLIC_PATHS = ['/match-arena'];
+  if (!isAuthenticated && !PUBLIC_PATHS.some(p => location.startsWith(p))) {
     return <AuthScreen />;
   }
 
@@ -110,6 +112,7 @@ function AppShell() {
         <Route path="/ai-coach"          component={AICoach} />
         {/* Phase 19 */}
         <Route path="/beta-dashboard"    component={BetaDashboard} />
+        <Route path="/match-arena"       component={MatchArena} />
         <Route component={NotFound} />
       </Switch>
       {!hideNav && <BottomNav unreadMessages={unread} />}

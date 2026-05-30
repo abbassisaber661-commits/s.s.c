@@ -81,6 +81,34 @@ export default function LeagueSelect() {
           <span>{t('league_select_info')}</span>
         </motion.div>
 
+        {/* Match Arena entry card */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}
+          onClick={() => { playTap(); setLocation('/match-arena'); }}
+          className="relative rounded-2xl border-2 overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
+          style={{ borderColor: '#B44FFF55', background: 'linear-gradient(135deg,#B44FFF0A,transparent)' }}>
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: 'linear-gradient(90deg,#B44FFF08,#3AB4FF08)' }} />
+          <div className="p-4 flex items-center gap-4 relative">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+              style={{ background: '#B44FFF20' }}>⚔️</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="font-black text-base" style={{ color: '#B44FFF' }}>Match Arena</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                  style={{ background: '#B44FFF20', color: '#B44FFF' }}>NEW</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-snug">5 challenge types · Speed bonus · Streak combos</p>
+              <div className="flex gap-1 mt-2">
+                {['Color', 'Shape', 'Pattern', 'Category', 'Pair'].map(tag => (
+                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-md font-bold text-white/50"
+                    style={{ background: '#ffffff08' }}>{tag}</span>
+                ))}
+              </div>
+            </div>
+            <div className="text-white/30 text-lg">›</div>
+          </div>
+        </motion.div>
+
         {LEAGUE_ORDER.map((id, idx) => {
           const cfg      = LEAGUES[id];
           const unlocked = isUnlocked(id, ctx as any);
