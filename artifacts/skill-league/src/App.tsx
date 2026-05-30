@@ -52,6 +52,8 @@ import AICoach         from "@/pages/AICoach";
 // Phase 19
 import BetaDashboard   from "@/pages/BetaDashboard";
 import MatchArena      from "@/pages/MatchArena";
+// Phase 20 — League Progression
+import LeagueHub       from "@/pages/LeagueHub";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +70,7 @@ function AppShell() {
 
   const hideNav = NO_NAV_PATHS.some(p => location.startsWith(p));
 
-  const PUBLIC_PATHS = ['/match-arena'];
+  const PUBLIC_PATHS = ['/match-arena', '/league-hub'];
   if (!isAuthenticated && !PUBLIC_PATHS.some(p => location.startsWith(p))) {
     return <AuthScreen />;
   }
@@ -113,6 +115,7 @@ function AppShell() {
         {/* Phase 19 */}
         <Route path="/beta-dashboard"    component={BetaDashboard} />
         <Route path="/match-arena"       component={MatchArena} />
+        <Route path="/league-hub"        component={LeagueHub} />
         <Route component={NotFound} />
       </Switch>
       {!hideNav && <BottomNav unreadMessages={unread} />}

@@ -7,6 +7,11 @@ import {
   generateMatchQuestions, calcScore, simulateBotQuestion,
   MATCH_BOTS, type Question, type Option,
 } from '@/lib/match-engine';
+import {
+  loadLeagueStats, calcLpChange, applyLpChange, saveLeagueStats,
+  getTier, getLpInTier, getTierRange, LEAGUE_DEFS,
+  type LpChange,
+} from '@/lib/league-progression';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -186,6 +191,7 @@ export default function MatchArena() {
   const [botScores, setBotScores] = useState([0, 0, 0, 0]);
   const [answers,   setAnswers]   = useState<AnswerRecord[]>([]);
   const [finalRows, setFinalRows] = useState<PlayerRow[]>([]);
+  const [lpChange,  setLpChange]  = useState<LpChange | null>(null);
 
   // Mutable refs — safe to read inside callbacks without stale closures
   const questionsRef   = useRef<Question[]>([]);
@@ -221,6 +227,27 @@ export default function MatchArena() {
     setFinalRows(rows);
     const playerRankPos = [...rows].sort((a, b) => b.score - a.score).findIndex(r => r.isPlayer);
     if (playerRankPos === 0) playWin(); else playLose();
+
+    // ── League Progression ────────────────────────────────────────────────
+    const rec = answersRef.current;
+    const bst = rec.reduce((best, _, i, arr) => {
+      let s = 0, mx = 0;
+      for (let j = 0; j <= i; j++) { s = arr[j]?.correct ? s + 1 : 0; mx = Math.max(mx, s); }
+      return mx;
+    }, 0);
+    const matchResult = {
+      score:      scoreRef.current,
+      rank:       playerRankPos + 1,
+      bestStreak: bst,
+      correctPct: rec.length > 0 ? rec.filter(a => a.correct).length / rec.length : 0,
+    };
+    const prevStats  = loadLeagueStats();
+    const change     = calcLpChange(prevStats, matchResult);
+    const nextStats  = applyLpChange(prevStats, change, matchResult);
+    saveLeagueStats(nextStats);
+    setLpChange(change);
+    // ─────────────────────────────────────────────────────────────────────
+
     setPhase('results');
     phaseRef.current = 'results';
   }
@@ -662,6 +689,106 @@ export default function MatchArena() {
           ))}
         </motion.div>
 
+        {/* LP Change card */}
+        {lpChange && (
+          <motion.div initial={{ opacity: 0, y: 10, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.5, type: 'spring', stiffness: 220, damping: 20 }}
+            className="mx-4 mb-4 rounded-2xl overflow-hidden border"
+            style={{
+              borderColor: lpChange.delta >= 0 ? LEAGUE_DEFS[lpChange.newTier].color + '50' : '#FF3A5E50',
+              background: lpChange.delta >= 0 ? LEAGUE_DEFS[lpChange.newTier].color + '0E' : 'rgba(255,58,94,0.06)',
+            }}>
+            {/* Colored top accent */}
+            <div className="h-1" style={{
+              background: lpChange.promoted ? 'linear-gradient(90deg,#FFD93D,#FF8C42)'
+                : lpChange.delta >= 0 ? LEAGUE_DEFS[lpChange.newTier].color
+                : '#FF3A5E',
+            }} />
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-0.5">League Points</div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.65, type: 'spring', stiffness: 280, damping: 18 }}
+                    className="text-3xl font-black tabular-nums"
+                    style={{ color: lpChange.delta >= 0 ? LEAGUE_DEFS[lpChange.newTier].color : '#FF3A5E' }}>
+                    {lpChange.delta >= 0 ? '+' : ''}{lpChange.delta} LP
+                  </motion.div>
+                </div>
+                <div className="text-right">
+                  {lpChange.promoted && (
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 }}
+                      className="text-sm font-black px-3 py-1.5 rounded-full"
+                      style={{ background: 'rgba(255,217,61,0.15)', color: '#FFD93D',
+                        border: '1px solid rgba(255,217,61,0.4)' }}>
+                      🎉 PROMOTED!
+                    </motion.div>
+                  )}
+                  {lpChange.demoted && (
+                    <div className="text-sm font-black text-red-400 px-3 py-1.5 rounded-full"
+                      style={{ background: 'rgba(255,58,94,0.15)', border: '1px solid rgba(255,58,94,0.4)' }}>
+                      ⬇ Demoted
+                    </div>
+                  )}
+                  {!lpChange.promoted && !lpChange.demoted && (
+                    <div className="text-right">
+                      <div className="text-xs font-black" style={{ color: LEAGUE_DEFS[lpChange.newTier].color }}>
+                        {LEAGUE_DEFS[lpChange.newTier].emoji} {LEAGUE_DEFS[lpChange.newTier].name}
+                      </div>
+                      <div className="text-[10px] text-white/30">{lpChange.newLp} LP total</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* LP breakdown pills */}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {lpChange.breakdown.map((b, i) => (
+                  <motion.span key={i}
+                    initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 + i * 0.07 }}
+                    className="text-[10px] font-black px-2 py-0.5 rounded-full"
+                    style={{
+                      background: b.pts >= 0 ? 'rgba(46,232,122,0.15)' : 'rgba(255,58,94,0.15)',
+                      color: b.pts >= 0 ? '#2EE87A' : '#FF3A5E',
+                      border: `1px solid ${b.pts >= 0 ? '#2EE87A30' : '#FF3A5E30'}`,
+                    }}>
+                    {b.pts >= 0 ? '+' : ''}{b.pts} {b.label}
+                  </motion.span>
+                ))}
+              </div>
+
+              {/* LP progress bar */}
+              {(() => {
+                const tier  = lpChange.newTier;
+                const def   = LEAGUE_DEFS[tier];
+                const inT   = getLpInTier(lpChange.newLp);
+                const range = getTierRange(tier);
+                const pct   = tier === 'champion' ? Math.min(100, inT) : Math.min(100, (inT / range) * 100);
+                return (
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px]">
+                      <span style={{ color: def.color }}>{def.emoji} {def.name}</span>
+                      <span className="text-white/40 tabular-nums">
+                        {inT}{tier !== 'champion' ? ` / ${range}` : '+'} LP
+                      </span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                      <motion.div className="h-full rounded-full"
+                        initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+                        transition={{ duration: 1.0, ease: 'easeOut', delay: 0.85 }}
+                        style={{ background: `linear-gradient(90deg,${def.color},${def.color}aa)`,
+                          boxShadow: `0 0 8px ${def.color}60` }} />
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </motion.div>
+        )}
+
         {/* Final leaderboard */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}
           className="mx-4 mb-6">
@@ -688,15 +815,16 @@ export default function MatchArena() {
 
         {/* Actions */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
-          className="flex gap-3 px-4">
+          className="flex flex-col gap-2 px-4">
           <button onClick={enterMatch}
-            className="flex-1 py-4 rounded-2xl font-black text-sm"
+            className="w-full py-4 rounded-2xl font-black text-sm"
             style={{ background: 'linear-gradient(135deg,#B44FFF,#3AB4FF)', boxShadow: '0 0 30px rgba(180,79,255,0.4)' }}>
             ⚔️ Play Again
           </button>
-          <button onClick={() => setLocation('/leagues')}
-            className="flex-1 py-4 rounded-2xl font-black text-sm bg-white/10 border border-white/15">
-            🏆 Leagues
+          <button onClick={() => setLocation('/league-hub')}
+            className="w-full py-4 rounded-2xl font-black text-sm border"
+            style={{ background: 'rgba(255,217,61,0.08)', borderColor: 'rgba(255,217,61,0.3)', color: '#FFD93D' }}>
+            🏆 League Hub
           </button>
         </motion.div>
       </div>

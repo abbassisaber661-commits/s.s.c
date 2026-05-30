@@ -1,2 +1,1 @@
-- [Phase 18 backend arch](phase18-backend.md) — JWT auth, anti-cheat, Pi payments, DB schema all wired and tested; API server runs on PORT env var.
-- [Phase 19 beta launch](phase19-beta.md) — invite codes, beta dashboard, session tracking, Pi VIP payments, game balance constants, BetaBanner.
+- [League Progression System](league-progression.md) — LP-based 4-tier system (Training/Coin/Pro/Champion) wired into MatchArena results; localStorage key `sl_league_v2`.
