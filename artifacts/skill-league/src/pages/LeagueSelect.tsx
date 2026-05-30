@@ -109,6 +109,32 @@ export default function LeagueSelect() {
           </div>
         </motion.div>
 
+        {/* League Hub entry card */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+          onClick={() => { playTap(); setLocation('/league-hub'); }}
+          className="relative rounded-2xl border-2 overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
+          style={{ borderColor: '#FFD93D50', background: 'linear-gradient(135deg,#FFD93D08,transparent)' }}>
+          <div className="p-4 flex items-center gap-4 relative">
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+              style={{ background: '#FFD93D18' }}>🏆</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="font-black text-base" style={{ color: '#FFD93D' }}>League Hub</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                  style={{ background: '#FFD93D18', color: '#FFD93D' }}>NEW</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-snug">LP ranking · Promotions · Global leaderboard</p>
+              <div className="flex gap-1 mt-2">
+                {['Training', 'Coin', 'Pro', 'Champion'].map(tag => (
+                  <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-md font-bold text-white/50"
+                    style={{ background: '#ffffff08' }}>{tag}</span>
+                ))}
+              </div>
+            </div>
+            <div className="text-white/30 text-lg">›</div>
+          </div>
+        </motion.div>
+
         {LEAGUE_ORDER.map((id, idx) => {
           const cfg      = LEAGUES[id];
           const unlocked = isUnlocked(id, ctx as any);
