@@ -704,9 +704,9 @@ export default function LeaguesHub() {
   const handleEnter = () => {
     if (!selected) return;
     handleClose();
-    if (selected === "training") go("/game/training");
-    else if (selected === "coin")     go("/game/bronze");
-    else if (selected === "pro")      go("/game/gold");
+    if (selected === "training")  go("/match-entry/training");
+    else if (selected === "coin") go("/match-entry/bronze");
+    else if (selected === "pro")  go("/match-entry/gold");
   };
 
   return (

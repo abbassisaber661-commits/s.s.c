@@ -16,6 +16,7 @@ import LiveNotifToast from "@/components/LiveNotifToast";
 import HomeScreen      from "@/pages/HomeScreen";
 import CinematicIntro  from "@/pages/CinematicIntro";
 import LeaguesHub      from "@/pages/LeaguesHub";
+import MatchEntry      from "@/pages/MatchEntry";
 import Home            from "@/pages/Home";
 import LeagueSelect    from "@/pages/LeagueSelect";
 import Game            from "@/pages/Game";
@@ -60,7 +61,7 @@ import ReleasePage      from "@/pages/ReleasePage";
 
 const queryClient = new QueryClient();
 
-const NO_NAV_PATHS = ['/game/', '/results', '/ai-coach', '/intro', '/hub'];
+const NO_NAV_PATHS = ['/game/', '/results', '/ai-coach', '/intro', '/hub', '/match-entry/'];
 
 function AppShell() {
   const [location] = useLocation();
@@ -86,7 +87,8 @@ function AppShell() {
         <Route path="/hub"               component={LeaguesHub} />
         <Route path="/dashboard"         component={Home} />
         <Route path="/leagues"           component={LeagueSelect} />
-        <Route path="/game/:league"      component={Game} />
+        <Route path="/match-entry/:league" component={MatchEntry} />
+        <Route path="/game/:league"       component={Game} />
         <Route path="/results"           component={Results} />
         <Route path="/rules"             component={Rules} />
         <Route path="/profile"           component={Profile} />

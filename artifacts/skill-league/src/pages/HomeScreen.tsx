@@ -387,16 +387,31 @@ export default function HomeScreen() {
           >
             One button. Infinite competition.
           </motion.p>
+
+          {/* ↓ Scroll indicator — visible right below PLAY */}
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: [0, 0.7, 0], y: [0, 8, 0] }}
+            transition={{ delay: 1.5, duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className="flex flex-col items-center gap-1"
+          >
+            <span className="text-xs font-medium tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.3)" }}>
+              More
+            </span>
+            <svg width="20" height="12" viewBox="0 0 20 12" fill="none">
+              <path d="M2 2L10 10L18 2" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </motion.div>
         </div>
 
-        {/* Scroll hint */}
+        {/* Scroll hint at very bottom of hero */}
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.5, 0] }}
-          transition={{ delay: 2, duration: 2, repeat: Infinity }}
+          animate={{ opacity: [0, 0.4, 0] }}
+          transition={{ delay: 2.5, duration: 2.2, repeat: Infinity }}
           className="absolute bottom-5 left-0 right-0 flex justify-center"
         >
-          <span className="text-white/30 text-lg">↓</span>
+          <span className="text-white/20 text-base">↓</span>
         </motion.div>
       </div>
 
