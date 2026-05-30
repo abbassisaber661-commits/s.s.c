@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
-import { getClientIp, getDeviceFingerprint, logSuspicious, validateScoreAntiCheat, validateCoinAmount, logAudit } from "../middleware/antiCheat.js";
+import { getClientIp, getDeviceFingerprint, logSuspicious, validateScoreAntiCheat, validateCoinAmount, logAudit, detectSuspiciousWinRate, detectRapidRegistration } from "../middleware/antiCheat.js";
 import { strictRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
@@ -21,6 +21,33 @@ router.post("/security/report", requireAuth, strictRateLimit, async (req, res) =
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }, "security report error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+
+// Phase 20: Automated bot/fake-account detection scan
+router.post("/security/scan-player", requireAuth, async (req, res) => {
+  const { playerId } = req.body as { playerId?: string };
+  if (!playerId) { res.status(400).json({ error: "playerId_required" }); return; }
+  const ip = getClientIp(req);
+  const fingerprint = getDeviceFingerprint(req);
+  try {
+    const [suspiciousWinRate, rapidReg] = await Promise.all([
+      detectSuspiciousWinRate(playerId),
+      detectRapidRegistration(ip),
+    ]);
+    const flags: string[] = [];
+    if (suspiciousWinRate) {
+      flags.push("suspicious_win_rate");
+      await logSuspicious(playerId, ip, fingerprint, "suspicious_win_rate", "high", { autoDetected: true });
+    }
+    if (rapidReg) {
+      flags.push("rapid_registration");
+      await logSuspicious(playerId, ip, fingerprint, "rapid_registration", "medium", { autoDetected: true });
+    }
+    res.json({ clean: flags.length === 0, flags });
+  } catch (err) {
+    req.log.error({ err }, "scan-player error");
     res.status(500).json({ error: "internal" });
   }
 });

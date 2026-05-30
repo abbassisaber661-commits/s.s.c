@@ -78,10 +78,10 @@ export async function guestSync(
 }
 
 export async function piSync(
-  piUid: string, username: string, accessToken?: string
+  accessToken: string
 ): Promise<{ token: string; player: ApiPlayer } | null> {
   try {
-    const res = await api.auth.pi(piUid, username, accessToken);
+    const res = await api.auth.pi(accessToken);
     setStoredPlayerId(res.player.id);
     return res;
   } catch {

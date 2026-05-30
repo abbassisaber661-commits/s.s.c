@@ -1,413 +1,455 @@
-import { useState, useEffect, useRef } from 'react';
-import { useLocation, useParams } from 'wouter';
-import { useGame } from '@/contexts/GameContext';
-import { useT, isRTL } from '@/lib/i18n';
-import {
-  COLORS, Color, Challenge,
-  generateChallenge, getPoints,
-  LEAGUES, LeagueId,
-} from '@/lib/game-engine';
-import { motion, AnimatePresence } from 'framer-motion';
-import { playCorrect, playWrong, playStreak, playTick, playWin, playLose } from '@/lib/sounds';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useLocation, useRoute } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import { useGame } from "@/contexts/GameContext";
 
-type Phase = 'waiting' | 'playing' | 'memory_show' | 'memory_input' | 'feedback_good' | 'feedback_bad' | 'done';
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-const GAME_DURATION = 30;
+const TOTAL_QUESTIONS = 10;
 
-const LEAGUE_NAME_KEY: Record<string, 'league_training' | 'league_bronze' | 'league_silver' | 'league_elite'> = {
-  training: 'league_training', bronze: 'league_bronze', silver: 'league_silver', elite: 'league_elite',
+const COLORS = [
+  { name: "Red",    hex: "#ef4444" },
+  { name: "Blue",   hex: "#3b82f6" },
+  { name: "Green",  hex: "#22c55e" },
+  { name: "Yellow", hex: "#eab308" },
+  { name: "Purple", hex: "#a855f7" },
+  { name: "Orange", hex: "#f97316" },
+  { name: "Pink",   hex: "#ec4899" },
+  { name: "Cyan",   hex: "#06b6d4" },
+];
+
+const SHAPES = [
+  { name: "Circle",   symbol: "●" },
+  { name: "Square",   symbol: "■" },
+  { name: "Triangle", symbol: "▲" },
+  { name: "Diamond",  symbol: "◆" },
+  { name: "Star",     symbol: "★" },
+];
+
+const LEAGUE_META: Record<string, { name: string; color: string; icon: string }> = {
+  training: { name: "Training", color: "#22d3ee", icon: "🥉" },
+  bronze:   { name: "Coin",     color: "#f59e0b", icon: "🥈" },
+  gold:     { name: "Pro",      color: "#f43f5e", icon: "🥇" },
 };
-const DIFF_KEY: Record<number, 'difficulty_easy' | 'difficulty_medium' | 'difficulty_hard' | 'difficulty_very_hard'> = {
-  1: 'difficulty_easy', 2: 'difficulty_medium', 3: 'difficulty_hard', 4: 'difficulty_very_hard',
-};
+
+const FAKE_NAMES = [
+  "Ahmed_π","Nour99","PiMaster","Khalid88","Zara_x","Leo2024","FastHand","ByteWolf","CobraK","SkyKing",
+];
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type QType = "color_match" | "shape_match" | "quick_pick";
+
+interface Option { label: string; color?: string; shape?: string; isCorrect: boolean }
+interface Question {
+  id: number;
+  type: QType;
+  prompt: string;
+  target?: { color?: string; shape?: string; label: string };
+  options: Option[];
+  timeLimit: number;
+}
+interface Opponent { name: string; score: number }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function pick<T>(arr: T[], n: number): T[] { return shuffle(arr).slice(0, n); }
+
+// ── Question Generator ────────────────────────────────────────────────────────
+
+function generateQuestions(): Question[] {
+  const qs: Question[] = [];
+  const types: QType[] = ["color_match", "shape_match", "quick_pick"];
+  for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+    const type = types[i % types.length];
+    const timeLimit = 3 + Math.floor(Math.random() * 4);
+
+    if (type === "color_match") {
+      const correct = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const wrong   = pick(COLORS.filter((c) => c.name !== correct.name), 3);
+      const opts    = shuffle([
+        { label: correct.name, color: correct.hex, isCorrect: true },
+        ...wrong.map((c) => ({ label: c.name, color: c.hex, isCorrect: false })),
+      ]);
+      qs.push({ id: i, type, prompt: "Match this color →", target: { color: correct.hex, label: correct.name }, options: opts, timeLimit });
+    } else if (type === "shape_match") {
+      const correct = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      const wrong   = pick(SHAPES.filter((s) => s.name !== correct.name), 3);
+      const opts    = shuffle([
+        { label: correct.symbol, shape: correct.name, isCorrect: true },
+        ...wrong.map((s) => ({ label: s.symbol, shape: s.name, isCorrect: false })),
+      ]);
+      qs.push({ id: i, type, prompt: "Find the matching shape →", target: { shape: correct.name, label: correct.symbol }, options: opts, timeLimit });
+    } else {
+      const tc = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const ts = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      const dc = pick(COLORS.filter((c) => c.name !== tc.name), 3);
+      const ds = shuffle(SHAPES.filter((s) => s.name !== ts.name));
+      const opts = shuffle([
+        { label: ts.symbol, color: tc.hex, isCorrect: true },
+        { label: ds[0].symbol, color: dc[0].hex, isCorrect: false },
+        { label: ds[1].symbol, color: dc[1].hex, isCorrect: false },
+        { label: ds[2].symbol, color: dc[2].hex, isCorrect: false },
+      ]);
+      qs.push({ id: i, type, prompt: `Find the ${tc.name} ${ts.name} →`, target: { color: tc.hex, label: ts.symbol }, options: opts, timeLimit });
+    }
+  }
+  return shuffle(qs);
+}
+
+// ── Circular Timer ────────────────────────────────────────────────────────────
+
+function CircularTimer({ total, elapsed, color }: { total: number; elapsed: number; color: string }) {
+  const R   = 34;
+  const C   = 2 * Math.PI * R;
+  const pct = Math.max(0, 1 - elapsed / total);
+  const rem = Math.max(0, total - elapsed);
+  const urgent = pct < 0.35;
+  return (
+    <div className="relative w-[76px] h-[76px] flex items-center justify-center">
+      <svg className="absolute inset-0 -rotate-90" width="76" height="76">
+        <circle cx="38" cy="38" r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="5" />
+        <motion.circle
+          cx="38" cy="38" r={R} fill="none"
+          stroke={urgent ? "#ef4444" : color}
+          strokeWidth="5" strokeLinecap="round"
+          strokeDasharray={C}
+          animate={{ strokeDashoffset: C * (1 - pct) }}
+          transition={{ duration: 0.12, ease: "linear" }}
+        />
+      </svg>
+      <motion.span
+        animate={urgent ? { scale: [1, 1.1, 1] } : {}}
+        transition={urgent ? { duration: 0.5, repeat: Infinity } : {}}
+        className="text-xl font-black tabular-nums relative z-10"
+        style={{ color: urgent ? "#fca5a5" : "white" }}
+      >
+        {rem.toFixed(1)}
+      </motion.span>
+    </div>
+  );
+}
+
+// ── Live Rank Panel ───────────────────────────────────────────────────────────
+
+function LiveRank({ opponents, myScore, myName, color }: { opponents: Opponent[]; myScore: number; myName: string; color: string }) {
+  const all = [...opponents, { name: myName, score: myScore }].sort((a, b) => b.score - a.score);
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      className="absolute right-3 top-[74px] z-20 w-[128px] rounded-2xl overflow-hidden"
+      style={{ background: "rgba(0,0,0,0.88)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}
+    >
+      <div className="px-3 py-1.5 text-[9px] font-bold tracking-widest uppercase" style={{ color, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+        LIVE
+      </div>
+      {all.slice(0, 6).map((p, i) => (
+        <div key={p.name} className="flex items-center gap-1.5 px-3 py-1" style={{ background: p.name === myName ? `${color}15` : "transparent" }}>
+          <span className="text-[9px] font-black w-4 tabular-nums" style={{ color: i === 0 ? "#ffd700" : "rgba(255,255,255,0.35)" }}>
+            {i + 1}
+          </span>
+          <span className="text-[9px] truncate flex-1" style={{ color: p.name === myName ? color : "rgba(255,255,255,0.6)", fontWeight: p.name === myName ? 700 : 400 }}>
+            {p.name === myName ? "You" : p.name}
+          </span>
+          <span className="text-[9px] tabular-nums font-bold" style={{ color: "rgba(255,255,255,0.45)" }}>
+            {p.score}
+          </span>
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function Game() {
-  const params = useParams<{ league: string }>();
-  const league = params.league as LeagueId;
-  const [, setLocation] = useLocation();
-  const ctx = useGame();
-  const { language, recordMatch } = ctx;
-  const t = useT(language);
-  const rtl = isRTL(language);
-  const config = LEAGUES[league];
+  const [, go]     = useLocation();
+  const [, params] = useRoute<{ league: string }>("/game/:league");
+  const league     = params?.league ?? "bronze";
+  const meta       = LEAGUE_META[league] ?? LEAGUE_META.bronze;
+  const { user, authUser, isGuest, recordMatch } = useGame();
+  const playerName = user?.username || authUser?.username || (isGuest ? "Champion" : "Player");
 
-  const [phase,         setPhase]         = useState<Phase>('waiting');
-  const [timeLeft,      setTimeLeft]      = useState(GAME_DURATION);
-  const [score,         setScore]         = useState(0);
-  const [streak,        setStreak]        = useState(0);
-  const [challenge,     setChallenge]     = useState<Challenge | null>(null);
-  const [memoryShowIdx, setMemoryShowIdx] = useState(-1);
-  const [memoryInput,   setMemoryInput]   = useState<string[]>([]);
-  const [countdownNum,  setCountdownNum]  = useState<number | null>(null);
+  const [questions]   = useState<Question[]>(() => generateQuestions());
+  const [qIdx, setQIdx]       = useState(0);
+  const [score, setScore]     = useState(0);
+  const [combo, setCombo]     = useState(0);
+  const [correct, setCorrect] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
+  const [chosen, setChosen]   = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const [showRank, setShowRank] = useState(false);
+  const [done, setDone]       = useState(false);
+  const [lastPts, setLastPts] = useState(0);
 
-  const phaseRef    = useRef<Phase>('waiting');
-  const scoreRef    = useRef(0);
-  const streakRef   = useRef(0);
-  const bestRef     = useRef(0);
-  const correctRef  = useRef(0);
-  const totalRef    = useRef(0);
-  const doneRef     = useRef(false);
-  const challengeRef= useRef<Challenge | null>(null);
-  const memInRef    = useRef<string[]>([]);
-  const recordRef   = useRef(recordMatch);
-  recordRef.current = recordMatch;
+  const [opponents] = useState<Opponent[]>(() =>
+    pick(FAKE_NAMES, 5 + Math.floor(Math.random() * 4)).map((name) => ({ name, score: 0 })),
+  );
+  const opRef = useRef(opponents);
 
-  const gameTickRef = useRef<ReturnType<typeof setInterval>  | null>(null);
-  const actionRef   = useRef<ReturnType<typeof setTimeout>   | null>(null);
-  const seqRef      = useRef<ReturnType<typeof setTimeout>   | null>(null);
-  const nextFnRef   = useRef<() => void>(() => {});
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const nextRef  = useRef<ReturnType<typeof setTimeout>  | null>(null);
+  const q = questions[qIdx];
 
-  useEffect(() => {
-    if (!config) setLocation('/leagues');
-    return () => {
-      if (gameTickRef.current) clearInterval(gameTickRef.current);
-      if (actionRef.current)   clearTimeout(actionRef.current);
-      if (seqRef.current)      clearTimeout(seqRef.current);
-    };
+  // ── Timer ──
+  const startTimer = useCallback(() => {
+    setElapsed(0);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setElapsed((e) => +(e + 0.1).toFixed(1)), 100);
+  }, []);
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
 
-  const clearAction = () => {
-    if (actionRef.current) { clearTimeout(actionRef.current); actionRef.current = null; }
-    if (seqRef.current)    { clearTimeout(seqRef.current);    seqRef.current    = null; }
-  };
+  // ── Advance ──
+  const advance = useCallback(() => {
+    setChosen(null); setFeedback(null); setShowRank(false); setLastPts(0);
+    const next = qIdx + 1;
+    if (next >= TOTAL_QUESTIONS) { setDone(true); stopTimer(); return; }
+    setQIdx(next);
+    startTimer();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qIdx]);
 
-  const addScore = (pts: number) => { scoreRef.current += pts; setScore(scoreRef.current); };
+  // ── Timeout ──
+  useEffect(() => {
+    if (!done && chosen === null && elapsed >= q.timeLimit) {
+      stopTimer(); setCombo(0); setFeedback("wrong"); setShowRank(true);
+      nextRef.current = setTimeout(advance, 1300);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [elapsed]);
 
-  const recordAnswer = (correct: boolean, type: Challenge['type']) => {
-    totalRef.current += 1;
-    if (correct) {
-      correctRef.current += 1;
-      const s = streakRef.current + 1;
-      streakRef.current = s;
-      if (s > bestRef.current) bestRef.current = s;
-      setStreak(s);
-      addScore(getPoints(type, s));
-      playCorrect();
-      if (s > 0 && s % 3 === 0) playStreak(s);
+  // ── Opponent ticker ──
+  useEffect(() => {
+    const iv = setInterval(() => {
+      opRef.current.forEach((o) => { if (Math.random() > 0.4) o.score += 60 + Math.floor(Math.random() * 140); });
+    }, 2200 + Math.random() * 1800);
+    return () => clearInterval(iv);
+  }, []);
+
+  // ── Start ──
+  useEffect(() => {
+    startTimer();
+    return () => { stopTimer(); if (nextRef.current) clearTimeout(nextRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Navigate to results ──
+  useEffect(() => {
+    if (!done) return;
+    const accuracy = Math.round((correct / TOTAL_QUESTIONS) * 100);
+    sessionStorage.setItem("sl_match_result", JSON.stringify({
+      league, leagueName: meta.name, leagueColor: meta.color, leagueIcon: meta.icon,
+      playerName, score, correct, accuracy, total: TOTAL_QUESTIONS,
+      opponents: opRef.current.map((o) => ({ ...o })),
+    }));
+    try { recordMatch(league, score, accuracy, combo, correct); } catch (_) { /* ignore */ }
+    setTimeout(() => go("/results"), 700);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
+
+  // ── Answer ──
+  const handleAnswer = (idx: number) => {
+    if (chosen !== null || feedback !== null) return;
+    stopTimer();
+    setChosen(idx);
+    const isCorrect = q.options[idx].isCorrect;
+    if (isCorrect) {
+      const newCombo   = combo + 1;
+      const speedBonus = Math.floor(Math.max(0, q.timeLimit - elapsed) * 12);
+      const mult       = newCombo >= 5 ? 2 : newCombo >= 3 ? 1.5 : 1;
+      const pts        = Math.round((100 + speedBonus) * mult);
+      setCombo(newCombo); setCorrect((c) => c + 1); setScore((s) => s + pts); setLastPts(pts);
+      setFeedback("correct");
     } else {
-      streakRef.current = 0;
-      setStreak(0);
-      playWrong();
+      setCombo(0); setFeedback("wrong");
     }
+    setShowRank(true);
+    nextRef.current = setTimeout(advance, 1200);
   };
 
-  const doFeedback = (good: boolean) => {
-    const p: Phase = good ? 'feedback_good' : 'feedback_bad';
-    phaseRef.current = p;
-    setPhase(p);
-    setTimeout(() => { if (!doneRef.current) nextFnRef.current(); }, 320);
-  };
+  // ── Done flash ──
+  if (done) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "#000" }}>
+        <motion.p initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+          className="text-3xl font-black tracking-widest" style={{ color: meta.color }}>
+          MATCH COMPLETE
+        </motion.p>
+      </div>
+    );
+  }
 
-  const runSequence = (seq: Color[], idx: number) => {
-    if (doneRef.current) return;
-    if (idx >= seq.length) {
-      setMemoryShowIdx(-1);
-      phaseRef.current = 'memory_input';
-      setPhase('memory_input');
-      actionRef.current = setTimeout(() => {
-        if (phaseRef.current !== 'memory_input' || doneRef.current) return;
-        recordAnswer(false, 'memory');
-        doFeedback(false);
-      }, seq.length * 3000);
-      return;
-    }
-    setMemoryShowIdx(idx);
-    seqRef.current = setTimeout(() => {
-      setMemoryShowIdx(-1);
-      seqRef.current = setTimeout(() => runSequence(seq, idx + 1), 150);
-    }, 700);
-  };
-
-  const nextChallenge = () => {
-    if (doneRef.current) return;
-    clearAction();
-    const c = generateChallenge(config?.memorySeqLen ?? 4);
-    challengeRef.current = c;
-    setChallenge(c);
-    memInRef.current = [];
-    setMemoryInput([]);
-    if (c.type === 'memory') {
-      phaseRef.current = 'memory_show';
-      setPhase('memory_show');
-      setMemoryShowIdx(-1);
-      seqRef.current = setTimeout(() => runSequence(c.sequence, 0), 600);
-    } else {
-      phaseRef.current = 'playing';
-      setPhase('playing');
-      const timeout = config?.challengeTimeout ?? 2500;
-      actionRef.current = setTimeout(() => {
-        if (phaseRef.current !== 'playing' || doneRef.current) return;
-        recordAnswer(false, c.type);
-        doFeedback(false);
-      }, timeout);
-    }
-  };
-
-  nextFnRef.current = nextChallenge;
-
-  const finishGame = () => {
-    if (doneRef.current) return;
-    doneRef.current = true;
-    if (gameTickRef.current) { clearInterval(gameTickRef.current); gameTickRef.current = null; }
-    clearAction();
-    phaseRef.current = 'done';
-    setPhase('done');
-    const s   = scoreRef.current;
-    const acc = totalRef.current > 0 ? Math.round((correctRef.current / totalRef.current) * 100) : 0;
-    recordRef.current(league, s, acc, bestRef.current, correctRef.current);
-    if (acc >= 60 && s > 0) playWin(); else playLose();
-    setTimeout(() => setLocation('/results'), 700);
-  };
-
-  const doCountdown = () => {
-    setCountdownNum(3);
-    playTick();
-    setTimeout(() => { setCountdownNum(2); playTick(); }, 1000);
-    setTimeout(() => { setCountdownNum(1); playTick(); }, 2000);
-    setTimeout(() => { setCountdownNum(null); startGame(); }, 3000);
-  };
-
-  const startGame = () => {
-    doneRef.current = false;
-    scoreRef.current = streakRef.current = bestRef.current = correctRef.current = totalRef.current = 0;
-    setScore(0); setStreak(0); setTimeLeft(GAME_DURATION);
-    let time = GAME_DURATION;
-    gameTickRef.current = setInterval(() => {
-      time -= 1;
-      setTimeLeft(time);
-      if (time <= 5 && time > 0) playTick(true);
-      if (time <= 0) finishGame();
-    }, 1000);
-    nextFnRef.current();
-  };
-
-  const handleTap = (color: Color) => {
-    if (doneRef.current) return;
-    const c = challengeRef.current;
-    if (!c) return;
-    if ((c.type === 'reaction' || c.type === 'decision') && phaseRef.current === 'playing') {
-      clearAction();
-      recordAnswer(color.id === c.target.id, c.type);
-      doFeedback(color.id === c.target.id);
-    } else if (c.type === 'memory' && phaseRef.current === 'memory_input') {
-      const next = [...memInRef.current, color.id];
-      memInRef.current = next;
-      setMemoryInput([...next]);
-      const expected = c.sequence[next.length - 1].id;
-      if (color.id !== expected) {
-        clearAction(); recordAnswer(false, 'memory'); doFeedback(false);
-      } else if (next.length === c.sequence.length) {
-        clearAction(); recordAnswer(true, 'memory'); doFeedback(true);
-      }
-    }
-  };
-
-  if (!config) return null;
-
-  const pct      = (timeLeft / GAME_DURATION) * 100;
-  const isFeedback = phase === 'feedback_good' || phase === 'feedback_bad';
-  const isUrgent   = timeLeft <= 5 && phase !== 'waiting' && phase !== 'done';
-  const leagueName = t(LEAGUE_NAME_KEY[league] ?? 'league_training');
-  const diffKey    = DIFF_KEY[config.difficulty] ?? 'difficulty_medium';
-
-  const CHALLENGE_LABEL: Record<string, string> = {
-    reaction: t('challenge_tap_correct'),
-    decision: t('challenge_match_target'),
-    memory:   t('challenge_repeat_seq'),
-  };
+  const comboLabel = combo >= 5 ? "×2 COMBO 🔥🔥" : combo >= 3 ? "×1.5 COMBO 🔥" : null;
 
   return (
-    <div dir={rtl ? 'rtl' : 'ltr'}
-      className="min-h-screen flex flex-col select-none overflow-hidden transition-colors duration-200"
-      style={{
-        background:
-          phase === 'feedback_good' ? 'radial-gradient(circle at center,#2EE87A1A,hsl(var(--background)) 65%)' :
-          phase === 'feedback_bad'  ? 'radial-gradient(circle at center,#FF3A5E1A,hsl(var(--background)) 65%)' :
-          'hsl(var(--background))',
-      }}
-    >
-      {/* ── Header ── */}
-      <div className="px-4 pt-safe pt-4 pb-3 flex items-center gap-3">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold"
-          style={{ background: config.themeColor + '22', color: config.themeColor, border: `1px solid ${config.themeColor}50` }}>
-          {leagueName}
-        </div>
-        <div className="relative flex-1 h-3 bg-card rounded-full overflow-hidden">
-          <motion.div className="h-full rounded-full transition-all duration-1000"
-            style={{ width: `${pct}%`, background: isUrgent ? '#FF3A5E' : config.themeColor }}
-            animate={isUrgent ? { opacity: [1, 0.5, 1] } : {}}
-            transition={isUrgent ? { repeat: Infinity, duration: 0.5 } : {}} />
-        </div>
-        <motion.div
-          animate={isUrgent ? { scale: [1, 1.15, 1] } : {}}
-          transition={isUrgent ? { repeat: Infinity, duration: 0.5 } : {}}
-          className="w-10 text-center text-2xl font-black font-mono tabular-nums"
-          style={{ color: isUrgent ? '#FF3A5E' : 'hsl(var(--foreground))' }}>
-          {timeLeft}
-        </motion.div>
-      </div>
+    <div className="fixed inset-0 flex flex-col overflow-hidden"
+      style={{ background: `radial-gradient(ellipse at 50% 0%, ${meta.color}14 0%, #050010 55%, #000 100%)` }}>
 
-      {/* ── Score + Streak ── */}
-      <div className="flex items-center justify-between px-5 pb-3">
+      {/* TOP BAR */}
+      <div className="flex items-center justify-between px-4 h-16 shrink-0"
+        style={{ borderBottom: `1px solid ${meta.color}25` }}>
         <div className="flex items-center gap-2">
-          {streak >= 3 && (
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40">
-              <span className="text-orange-400 text-xs font-black">🔥 ×{streak}</span>
-            </motion.div>
-          )}
+          <span className="text-xl">{meta.icon}</span>
+          <div>
+            <p className="text-xs font-bold leading-none" style={{ color: meta.color }}>{meta.name} League</p>
+            <p className="text-[10px] leading-none mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>{playerName}</p>
+          </div>
         </div>
-        <motion.div key={score}
-          initial={{ scale: 1.3, color: config.themeColor }}
-          animate={{ scale: 1, color: 'hsl(var(--foreground))' }}
-          transition={{ duration: 0.25 }}
-          className="text-3xl font-black tabular-nums">
-          {score}
+
+        <motion.div key={score} initial={{ scale: 1.3 }} animate={{ scale: 1 }} className="flex flex-col items-center">
+          <span className="text-2xl font-black tabular-nums text-white">{score}</span>
+          <span className="text-[9px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.3)" }}>Score</span>
         </motion.div>
+
+        <div className="flex flex-col items-end">
+          <span className="text-sm font-black text-white">
+            {qIdx + 1}<span style={{ color: "rgba(255,255,255,0.3)" }}>/{TOTAL_QUESTIONS}</span>
+          </span>
+          <span className="text-[9px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.3)" }}>Q</span>
+        </div>
       </div>
 
-      {/* ── Main ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 pb-8 gap-6">
-
-        {/* COUNTDOWN */}
-        <AnimatePresence>
-          {countdownNum !== null && (
-            <motion.div key={countdownNum}
-              initial={{ scale: 2, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }} transition={{ duration: 0.4 }}
-              className="absolute inset-0 flex items-center justify-center z-50 bg-background/80 backdrop-blur-sm">
-              <span className="text-9xl font-black" style={{ color: config.themeColor, textShadow: `0 0 60px ${config.themeColor}88` }}>
-                {countdownNum}
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* WAITING */}
-        {phase === 'waiting' && (
-          <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-6">
-            <div className="rounded-2xl border p-4 text-center space-y-1 max-w-xs w-full"
-              style={{ borderColor: config.themeColor + '40', background: config.themeColor + '0D' }}>
-              <div className="text-xs text-muted-foreground uppercase tracking-widest">{t('game_skill_test')}</div>
-              <div className="text-xl font-black" style={{ color: config.themeColor }}>{leagueName}</div>
-              <div className="text-xs text-muted-foreground">30 {t('sec')} · {t(diffKey)}</div>
-            </div>
-            <motion.button whileTap={{ scale: 0.92 }} onClick={doCountdown}
-              className="w-40 h-40 rounded-full text-white text-2xl font-black"
-              style={{ background: `radial-gradient(circle, ${config.themeColor}dd, ${config.themeColor})`,
-                boxShadow: `0 0 60px ${config.themeColor}55, 0 0 120px ${config.themeColor}22` }}>
-              <span className="block text-3xl mb-1">🎮</span>
-              {t('play')}
-            </motion.button>
-          </motion.div>
-        )}
-
-        {/* REACTION / DECISION */}
-        {(phase === 'playing' || isFeedback) && challenge && challenge.type !== 'memory' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="w-full flex flex-col items-center gap-6">
-            <div className="text-center space-y-4">
-              <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">
-                {CHALLENGE_LABEL[challenge.type] ?? t('tap_this')}
-              </p>
-              <motion.div key={challenge.target.id}
-                initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="w-36 h-36 rounded-[28px] mx-auto"
-                style={{ backgroundColor: challenge.target.hex, boxShadow: `0 0 60px ${challenge.target.hex}88, 0 8px 32px ${challenge.target.hex}44` }} />
-            </div>
-            <div className="grid gap-3 w-full max-w-xs"
-              style={{ gridTemplateColumns: `repeat(${Math.min(challenge.options.length, 2)}, 1fr)` }}>
-              {challenge.options.map(c => (
-                <motion.button key={c.id} whileTap={{ scale: 0.88 }}
-                  onClick={() => handleTap(c)} disabled={isFeedback}
-                  className="h-28 rounded-2xl disabled:opacity-50 transition-opacity"
-                  style={{ backgroundColor: c.hex, boxShadow: `0 6px 28px ${c.hex}55` }} />
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* MEMORY SHOW */}
-        {phase === 'memory_show' && challenge?.type === 'memory' && (
-          <div className="flex flex-col items-center gap-5 w-full">
-            <div className="text-center space-y-1">
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                {memoryShowIdx === -1 ? t('memory_get_ready') : `${memoryShowIdx + 1} ${t('seq_index')} ${challenge.sequence.length}`}
-              </p>
-              <p className="text-xs text-muted-foreground">{t('memory_watch_carefully')}</p>
-            </div>
-            <div className="grid grid-cols-5 gap-3 w-full max-w-xs">
-              {COLORS.map(c => {
-                const active = memoryShowIdx >= 0 && challenge.sequence[memoryShowIdx]?.id === c.id;
-                return (
-                  <motion.div key={c.id}
-                    animate={{ scale: active ? 1.28 : 1, opacity: active ? 1 : 0.18 }}
-                    transition={{ duration: 0.15 }}
-                    className="aspect-square rounded-xl"
-                    style={{ backgroundColor: c.hex, boxShadow: active ? `0 0 32px ${c.hex}` : 'none' }} />
-                );
-              })}
-            </div>
-            <div className="flex gap-2">
-              {challenge.sequence.map((c, i) => (
-                <motion.div key={i} animate={{ backgroundColor: i <= memoryShowIdx ? c.hex : 'transparent' }}
-                  className="w-3 h-3 rounded-full" style={{ border: `2px solid ${c.hex}` }} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* MEMORY INPUT */}
-        {(phase === 'memory_input' || (isFeedback && challenge?.type === 'memory')) && challenge?.type === 'memory' && (
-          <div className="flex flex-col items-center gap-5 w-full">
-            <div className="text-center">
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{t('memory_repeat_label')}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{memoryInput.length} / {challenge.sequence.length}</p>
-            </div>
-            <div className="flex gap-2">
-              {challenge.sequence.map((c, i) => (
-                <motion.div key={i}
-                  animate={{ scale: memoryInput[i] ? 1.2 : 1, opacity: memoryInput[i] ? 1 : 0.35 }}
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: memoryInput[i] ? challenge.sequence[i].hex : 'transparent',
-                    border: `2px solid ${challenge.sequence[i].hex}` }} />
-              ))}
-            </div>
-            <div className="grid grid-cols-5 gap-3 w-full max-w-xs">
-              {COLORS.map(c => (
-                <motion.button key={c.id} whileTap={{ scale: 0.85 }}
-                  onClick={() => handleTap(c)} disabled={isFeedback}
-                  className="aspect-square rounded-xl disabled:opacity-50"
-                  style={{ backgroundColor: c.hex, boxShadow: `0 4px 16px ${c.hex}55` }} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* DONE */}
-        {phase === 'done' && (
-          <motion.p animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1 }}
-            className="text-muted-foreground text-lg font-bold">
-            {t('calculating_results')}
-          </motion.p>
-        )}
+      {/* Q PROGRESS */}
+      <div className="h-1 shrink-0" style={{ background: "rgba(255,255,255,0.05)" }}>
+        <motion.div className="h-full" animate={{ width: `${(qIdx / TOTAL_QUESTIONS) * 100}%` }}
+          transition={{ duration: 0.4 }}
+          style={{ background: `linear-gradient(90deg, ${meta.color}, ${meta.color}80)`, boxShadow: `0 0 6px ${meta.color}80` }} />
       </div>
 
-      {/* Feedback flash */}
+      {/* COMBO BANNER */}
       <AnimatePresence>
-        {isFeedback && (
-          <motion.div key={phase}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1.5, opacity: 0 }}
-              transition={{ duration: 0.35 }}
-              className="w-32 h-32 rounded-full"
-              style={{ backgroundColor: phase === 'feedback_good' ? '#2EE87A' : '#FF3A5E' }} />
+        {comboLabel && feedback === "correct" && (
+          <motion.div key={`c${combo}`} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="absolute top-[72px] left-0 right-0 flex justify-center z-30 pointer-events-none">
+            <span className="text-sm font-black px-4 py-1.5 rounded-full"
+              style={{ background: `${meta.color}30`, border: `1px solid ${meta.color}60`, color: meta.color }}>
+              {comboLabel}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* LIVE RANK */}
+      <AnimatePresence>
+        {showRank && <LiveRank opponents={opRef.current} myScore={score} myName={playerName} color={meta.color} />}
+      </AnimatePresence>
+
+      {/* QUESTION AREA */}
+      <div className="flex-1 flex flex-col items-center justify-center px-5 gap-6 min-h-0">
+        <AnimatePresence mode="wait">
+          <motion.div key={qIdx} initial={{ opacity: 0, y: 40, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.95 }} transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full max-w-sm flex flex-col items-center gap-5">
+
+            {/* Prompt */}
+            <p className="text-xl font-black text-center leading-tight"
+              style={{ background: "linear-gradient(135deg,#fff,rgba(255,255,255,0.75))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              {q.prompt}
+            </p>
+
+            {/* Target */}
+            {q.target && (
+              <motion.div initial={{ scale: 0.65 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 320, damping: 18 }}>
+                {q.type === "color_match" && (
+                  <div className="w-24 h-24 rounded-3xl shadow-2xl"
+                    style={{ background: q.target.color, boxShadow: `0 0 50px ${q.target.color}90` }} />
+                )}
+                {q.type === "shape_match" && (
+                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl"
+                    style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)" }}>
+                    {q.target.label}
+                  </div>
+                )}
+                {q.type === "quick_pick" && (
+                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl"
+                    style={{ background: `${q.target.color}28`, border: `2px solid ${q.target.color}70`, boxShadow: `0 0 30px ${q.target.color}50`, color: q.target.color }}>
+                    {q.target.label}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Options */}
+            <div className="grid grid-cols-2 gap-3 w-full">
+              {q.options.map((opt, i) => {
+                const isChosen  = chosen === i;
+                const isCorrect = opt.isCorrect;
+                const revealed  = chosen !== null;
+                let borderC = "rgba(255,255,255,0.12)";
+                let bg      = "rgba(255,255,255,0.06)";
+                let shadow  = "none";
+                if (revealed && isCorrect)            { borderC = "#22c55e"; bg = "rgba(34,197,94,0.2)";  shadow = "0 0 20px rgba(34,197,94,0.4)"; }
+                if (revealed && isChosen && !isCorrect){ borderC = "#ef4444"; bg = "rgba(239,68,68,0.2)";  shadow = "0 0 20px rgba(239,68,68,0.35)"; }
+                return (
+                  <motion.button key={i} onClick={() => handleAnswer(i)} disabled={chosen !== null}
+                    whileTap={chosen === null ? { scale: 0.93 } : {}}
+                    className="h-[68px] rounded-2xl flex items-center justify-center gap-2.5 font-bold text-base transition-all"
+                    style={{ background: bg, border: `2px solid ${borderC}`, boxShadow: shadow, cursor: chosen !== null ? "default" : "pointer" }}>
+                    {q.type === "color_match" && opt.color && (
+                      <div className="w-8 h-8 rounded-xl shrink-0" style={{ background: opt.color }} />
+                    )}
+                    {q.type === "shape_match" && (
+                      <span className="text-3xl text-white">{opt.label}</span>
+                    )}
+                    {q.type === "quick_pick" && (
+                      <span className="text-4xl" style={{ color: opt.color }}>{opt.label}</span>
+                    )}
+                    {q.type !== "quick_pick" && (
+                      <span className="text-sm" style={{
+                        color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.75)" }}>
+                        {q.type === "color_match" ? opt.label : opt.shape}
+                      </span>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* FEEDBACK OVERLAY */}
+      <AnimatePresence>
+        {feedback && (
+          <motion.div key={`fb${qIdx}`} className="absolute inset-0 pointer-events-none flex items-center justify-center z-20"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+            <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} exit={{ scale: 1.15, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
+              className="px-8 py-5 rounded-3xl text-center"
+              style={{
+                background: feedback === "correct" ? "rgba(34,197,94,0.28)" : "rgba(239,68,68,0.28)",
+                border: `2px solid ${feedback === "correct" ? "rgba(34,197,94,0.65)" : "rgba(239,68,68,0.55)"}`,
+                backdropFilter: "blur(8px)",
+              }}>
+              <p className="text-4xl mb-1">{feedback === "correct" ? "✓" : "✗"}</p>
+              <p className="text-xl font-black" style={{ color: feedback === "correct" ? "#4ade80" : "#f87171" }}>
+                {feedback === "correct" ? `+${lastPts}` : "Miss!"}
+              </p>
+              {feedback === "correct" && combo >= 2 && (
+                <p className="text-xs mt-1 font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>{combo} in a row</p>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* BOTTOM TIMER */}
+      <div className="flex items-center justify-center py-4 shrink-0"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <CircularTimer total={q.timeLimit} elapsed={elapsed} color={meta.color} />
+      </div>
     </div>
   );
 }

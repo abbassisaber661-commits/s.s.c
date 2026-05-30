@@ -87,8 +87,8 @@ export const api = {
       post<AuthResponse>('/auth/login', { username, password }),
     guest: (guestId: string, username: string) =>
       post<AuthResponse>('/auth/guest', { guestId, username }),
-    pi: (piUid: string, username: string, accessToken?: string) =>
-      post<AuthResponse>('/auth/pi', { piUid, username, accessToken }),
+    pi: (accessToken: string) =>
+      post<AuthResponse>('/auth/pi', { accessToken }),
     refresh: () => post<AuthResponse>('/auth/refresh', {}),
     logout: () => post<{ ok: boolean }>('/auth/logout', {}),
   },
@@ -135,11 +135,6 @@ export const api = {
       post<{ ok: boolean }>('/pi/payment/approve', { paymentId, piPaymentId }),
     complete: (paymentId: string, piTxId: string) =>
       post<{ ok: boolean }>('/pi/payment/complete', { paymentId, piTxId }),
-  },
-
-  security: {
-    report: (data: { playerId: string; type: string; details: Record<string, unknown> }) =>
-      post<{ ok: boolean }>('/security/report', data),
   },
 
   admin: {
@@ -196,6 +191,26 @@ export const api = {
 
   betaFeedback: {
     submit: (data: Record<string, unknown>) => post<{ ok: boolean }>('/beta-feedback', data),
+  },
+
+  monitor: {
+    live:      () => apiFetch<Record<string, unknown>>('/monitor/live'),
+    retention: () => apiFetch<unknown[]>('/monitor/retention'),
+    features:  () => apiFetch<unknown[]>('/monitor/features'),
+    bots:      () => apiFetch<unknown[]>('/monitor/bots'),
+    economy:   () => apiFetch<Record<string, unknown>>('/monitor/economy'),
+  },
+
+  release: {
+    status: () => apiFetch<Record<string, unknown>>('/release/status'),
+    ping:   (data: { platform: string; version?: string }) => post<Record<string, unknown>>('/release/ping', data),
+  },
+
+  security: {
+    report:      (data: { playerId: string; type: string; details: Record<string, unknown> }) =>
+      post<{ ok: boolean }>('/security/report', data),
+    scanPlayer:  (playerId: string) =>
+      post<{ clean: boolean; flags: string[] }>('/security/scan-player', { playerId }),
   },
 };
 

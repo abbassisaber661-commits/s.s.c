@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Shield, Users, AlertTriangle, Clock, Wifi, WifiOff,
   BarChart3, Bug, CheckCircle, XCircle, RefreshCw, Pi, Activity,
-  Key, Copy, Plus, Trash2, TrendingUp,
+  Key, Copy, Plus, Trash2, TrendingUp, Monitor, Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGame } from '@/contexts/GameContext';
@@ -115,6 +115,7 @@ export default function BetaDashboard() {
     { id: 'security', label: 'الأمان', icon: Shield },
     { id: 'invites',  label: 'الدعوات', icon: Key },
     { id: 'my',       label: 'جلستي', icon: Activity },
+    { id: 'tools',    label: 'الأدوات', icon: Monitor },
   ] as const;
 
   return (
@@ -254,6 +255,42 @@ export default function BetaDashboard() {
                 <p>لا توجد رموز دعوة (تحتاج صلاحيات المشرف)</p>
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'tools' && (
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm text-muted-foreground px-1">أدوات المطور — Phase 20</h3>
+            {[
+              { href: '/monitor', icon: Monitor, label: 'مراقبة مباشرة', desc: 'أداء السيرفر، الأخطاء، والجلسات النشطة', color: '#22c55e' },
+              { href: '/release', icon: Rocket,  label: 'نسخة RC الإصدار',desc: 'قائمة جاهزية الإطلاق ومنصات النشر',   color: '#3b82f6' },
+              { href: '/analytics', icon: BarChart3, label: 'تحليلات اللاعبين', desc: 'سلوك المستخدمين والميزات الأكثر استخدامًا', color: '#a855f7' },
+            ].map(tool => (
+              <Link key={tool.href} href={tool.href}>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 transition-colors">
+                  <div className="p-2.5 rounded-xl" style={{ background: tool.color + '20' }}>
+                    <tool.icon size={18} style={{ color: tool.color }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm">{tool.label}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{tool.desc}</div>
+                  </div>
+                  <ArrowLeft size={14} className="text-muted-foreground rotate-180" />
+                </motion.div>
+              </Link>
+            ))}
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mt-2">
+              <p className="text-xs text-blue-400 font-bold mb-1">📊 ميزات Phase 20</p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>✅ مراقبة مباشرة للخادم</li>
+                <li>✅ كشف البوتات والحسابات الوهمية</li>
+                <li>✅ تحليل اقتصاد العملات</li>
+                <li>✅ نسخة RC جاهزة للإطلاق</li>
+                <li>✅ تفعيل Pi بشكل شبه كامل</li>
+                <li>✅ توازن الصناديق ومكافحة التضخم</li>
+              </ul>
+            </div>
           </div>
         )}
 

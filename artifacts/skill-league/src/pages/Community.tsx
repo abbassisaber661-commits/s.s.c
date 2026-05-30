@@ -4,7 +4,7 @@ import { useRealtime } from "@/contexts/RealtimeContext";
 import { getSocket } from "@/lib/socket";
 import { Link } from "wouter";
 import GuestBanner from "@/components/GuestBanner";
-import { ArrowLeft, Flame, Heart, Zap, Plus, Send, MessageCircle, ChevronDown, ChevronUp, Wifi, TrendingUp, Users, UserPlus, UserCheck } from "lucide-react";
+import { ArrowLeft, Flame, Heart, Zap, Plus, Send, MessageCircle, ChevronDown, ChevronUp, Wifi, TrendingUp, Users, UserPlus, UserCheck, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -216,8 +216,23 @@ export default function Community() {
     <div className="min-h-screen bg-background text-foreground pb-24">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 space-y-3">
+
+        {/* Messages shortcut bar */}
+        <Link href="/messages">
+          <motion.div
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-primary/10 border border-primary/25 cursor-pointer hover:bg-primary/15 transition-colors"
+          >
+            <div className="relative">
+              <MessageCircle className="w-5 h-5 text-primary" />
+            </div>
+            <span className="flex-1 text-sm font-bold text-primary">الرسائل والإشعارات</span>
+            <Bell className="w-4 h-4 text-primary/60" />
+            <ArrowLeft className="w-4 h-4 text-primary/60 rotate-180" />
+          </motion.div>
+        </Link>
+
         <div className="flex items-center gap-3">
-          <Link href="/"><button className="p-1.5 rounded-lg hover:bg-card transition"><ArrowLeft className="w-5 h-5" /></button></Link>
           <h1 className="text-lg font-bold flex-1">المجتمع</h1>
           <AnimatePresence>
             {liveIndicator && (
