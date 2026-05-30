@@ -26,6 +26,7 @@ import { addNotification, createLevelUpNotif, createTrophyNotif } from '../lib/m
 import { addTransaction } from '../lib/wallet';
 import type { VerificationLevel } from '../lib/verified';
 import { checkAndUpdateStreak } from '../lib/login-streak';
+import { loadLeagueStats, saveLeagueStats, calcLpChange, applyLpChange } from '../lib/league-progression';
 
 interface GameState extends PlayerData {
   user: PiUser | null;
@@ -595,6 +596,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const didLevelUp        = newLevel > data.level;
     const fameGain          = fameForTournamentPlace(place);
 
+    // ── ELO gain based on tournament placement ──────────────────────────────
+    const TOURNAMENT_ELO: Record<number, number> = { 1: 50, 2: 20, 3: 8, 4: 5 };
+    const eloGain = TOURNAMENT_ELO[Math.min(place, 4)] ?? 0;
+
+    // ── LP update via league-progression system ─────────────────────────────
+    const lpRank   = Math.min(place, 4) as 1 | 2 | 3 | 4;
+    const lpScore  = place === 1 ? 800 : place === 2 ? 500 : place <= 4 ? 250 : 100;
+    const lpResult = { score: lpScore, rank: lpRank, bestStreak: 0, correctPct: place === 1 ? 0.85 : place === 2 ? 0.75 : 0.55 };
+    const leagStats = loadLeagueStats();
+    const lpChange  = calcLpChange(leagStats, lpResult);
+    saveLeagueStats(applyLpChange(leagStats, lpChange, lpResult));
+    if (lpChange.promoted) {
+      addNotification({
+        type: 'season_reward', icon: '🏆',
+        title: `Promoted to ${lpChange.newTier.charAt(0).toUpperCase() + lpChange.newTier.slice(1)}!`,
+        body:  `Tournament placement earned +${Math.max(0, lpChange.delta)} LP`,
+        actionUrl: '/hub',
+      });
+    }
+
     if (boostedCoins > 0) addTransaction({ type: 'earn_tournament', amount: boostedCoins, label: `Tournament ${place === 1 ? '1st place' : `top ${place}`}` });
 
     let mid: PlayerData = {
@@ -602,6 +623,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       tournamentWins: newTournamentWins,
       coins: data.coins + boostedCoins, totalCoinsEarned: data.totalCoinsEarned + boostedCoins,
       xp: newXp, level: newLevel, fame: (data.fame || 0) + fameGain,
+      elo: Math.max(0, data.elo + eloGain),
     };
 
     const wc = ensureWeekState(data.weeklyChallenge);
@@ -619,6 +641,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     persist(updated);
     setLXp(xpEarned + weekXp); setLLevelUp(didLevelUp); setLTrophies(newTrophies);
     setLCoins(boostedCoins + weekCoins); setLWeekly(weeklyDone);
+    setLElo(eloGain);
   };
 
   const unlockLeagueWithCoins = (leagueId: string): boolean => {

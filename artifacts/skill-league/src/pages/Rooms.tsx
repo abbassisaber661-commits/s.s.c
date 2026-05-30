@@ -98,12 +98,12 @@ export default function Rooms() {
               </div>
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>{room.players}/{room.maxPlayers} players · {room.stake} 🪙 stake</span>
-                <Link href="/pvp">
+                <Link href={room.type === 'tournament' ? '/tournament' : '/pvp'}>
                   <button
                     className="px-3 py-1.5 rounded-xl text-xs font-bold text-white"
                     style={{ backgroundColor: leagueColor(room.league) }}
                   >
-                    Join
+                    {room.type === 'tournament' ? 'Enter' : 'Join'}
                   </button>
                 </Link>
               </div>
@@ -186,9 +186,9 @@ export default function Rooms() {
                 {copied ? 'Copied!' : 'Copy Code'}
               </button>
               <div className="text-xs text-muted-foreground">Share this code with your opponent</div>
-              <Link href="/pvp">
+              <Link href={selectedType === 'tournament' ? '/tournament' : '/pvp'}>
                 <button className="w-full h-12 rounded-xl bg-primary text-white font-bold">
-                  Start Battle
+                  {selectedType === 'tournament' ? 'Enter Tournament' : 'Start Battle'}
                 </button>
               </Link>
             </motion.div>
