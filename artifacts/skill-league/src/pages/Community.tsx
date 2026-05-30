@@ -99,8 +99,8 @@ export default function Community() {
     if (check.spam) return;
 
     const post = createPost(username, level, fame, content, "text");
-    const withImage = imageUrl ? { ...post, imageUrl } : post;
-    const updated = addPost(withImage as CommunityPost);
+    const withImage: CommunityPost = imageUrl ? { ...post, imageUrl } : post;
+    const updated = addPost(withImage);
     setPosts(updated);
     setLastPostTime(Date.now());
     addFame(2);

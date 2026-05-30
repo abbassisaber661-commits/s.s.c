@@ -2,10 +2,12 @@ export type PostType = 'text' | 'achievement' | 'pvp_win' | 'tournament' | 'leve
 
 export interface CommunityPost {
   id: string;
+  authorId?: string;
   authorName: string;
   authorLevel: number;
   authorFame: number;
   content: string;
+  imageUrl?: string;
   type: PostType;
   timestamp: number;
   likes: number;

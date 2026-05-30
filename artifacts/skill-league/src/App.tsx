@@ -26,6 +26,9 @@ import Store from "@/pages/Store";
 import Wallet from "@/pages/Wallet";
 import Settings from "@/pages/Settings";
 
+// Social Hub
+import Community from "@/pages/Community";
+
 // Beta / System Pages
 import BetaDashboard from "@/pages/BetaDashboard";
 import MonitorDashboard from "@/pages/MonitorDashboard";
@@ -92,6 +95,9 @@ function AppShell() {
         <Route path="/store" component={Store} />
         <Route path="/wallet" component={Wallet} />
         <Route path="/settings" component={Settings} />
+
+        {/* Social Hub */}
+        <Route path="/community" component={Community} />
 
         {/* Beta System */}
         <Route path="/beta-dashboard" component={BetaDashboard} />

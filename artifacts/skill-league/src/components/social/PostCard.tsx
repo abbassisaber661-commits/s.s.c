@@ -118,9 +118,9 @@ export default function PostCard({
         <p className="text-sm text-foreground/90 leading-relaxed">{post.content}</p>
 
         {/* Optional image */}
-        {(post as any).imageUrl && (
+        {post.imageUrl && (
           <img
-            src={(post as any).imageUrl}
+            src={post.imageUrl}
             alt="post attachment"
             className="w-full max-h-52 object-cover rounded-xl"
           />
