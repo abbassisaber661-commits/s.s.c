@@ -14,7 +14,7 @@ import XPBar from "@/components/XPBar";
 import { motion, AnimatePresence } from "framer-motion";
 import { getReferral, buildShareText, buildResultShareText, REFERRAL_REWARD_PER_FRIEND, claimReferralReward } from "@/lib/referral";
 import { generateAiHints, type AiHint } from "@/lib/ai-hints";
-import { AVATAR_THEMES, getThemeById, getAvailableFrames, type AvatarTheme } from "@/lib/customization";
+import { FREE_FACES, VIP_FACES, getAvatarById, getAvailableFrames } from "@/lib/customization";
 import { getVerificationStatus } from "@/lib/verified";
 
 function SkillBar({ label, value, color }: { label: string; value: number; color: string }) {
@@ -65,7 +65,7 @@ export default function Profile() {
   const [hints, setHints]           = useState<AiHint[]>([]);
   const [claimMsg, setClaimMsg]     = useState<string | null>(null);
 
-  const currentTheme = getThemeById(avatarThemeId ?? 'blue');
+  const currentAvatar = getAvatarById(avatarThemeId ?? 'f1');
   const piLocked = !!(piLockTierId && piLockExpiry && piLockExpiry > Date.now());
   const availableFrames = getAvailableFrames(level, piLocked);
   const verif = getVerificationStatus((verificationLevel ?? 0) as 0 | 1 | 2);
@@ -154,9 +154,9 @@ export default function Profile() {
       {/* Avatar + Theme selector */}
       <div className="flex flex-col items-center gap-3 mb-5">
         <div className="relative">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-2xl font-black transition-all"
-            style={{ backgroundColor: currentTheme.bg, color: currentTheme.text, boxShadow: `0 0 32px ${currentTheme.glow}` }}>
-            {initials}
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-5xl transition-all select-none"
+            style={{ background: currentAvatar.bg, boxShadow: `0 0 32px ${currentAvatar.glow}` }}>
+            {currentAvatar.emoji}
           </div>
           <div className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full text-xs font-black"
             style={{ backgroundColor: levelColor, color: '#000' }}>{level}</div>
@@ -166,13 +166,43 @@ export default function Profile() {
           )}
         </div>
 
-        {/* Theme color picker */}
-        <div className="flex items-center gap-1.5">
-          {AVATAR_THEMES.map(theme => (
-            <button key={theme.id} onClick={() => setAvatarTheme(theme.id)}
-              className={`w-6 h-6 rounded-full border-2 transition-all active:scale-90 ${avatarThemeId === theme.id ? 'border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-              style={{ backgroundColor: theme.text }} />
-          ))}
+        {/* Avatar face picker */}
+        <div className="w-full max-w-xs space-y-2">
+          {/* Free section */}
+          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">مجاني</div>
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {FREE_FACES.map(face => (
+              <button key={face.id} onClick={() => setAvatarTheme(face.id)}
+                className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all active:scale-90 ${avatarThemeId === face.id ? 'scale-110 ring-2 ring-white' : 'opacity-60 hover:opacity-90'}`}
+                style={{ background: face.bg, boxShadow: avatarThemeId === face.id ? `0 0 14px ${face.glow}` : 'none' }}
+                title={face.name}>
+                {face.emoji}
+              </button>
+            ))}
+          </div>
+
+          {/* VIP section */}
+          <div className="flex items-center gap-1.5 px-0.5">
+            <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-wider">VIP</span>
+            <span className="text-yellow-400 text-[10px]">💎</span>
+            {!vipAvatar && <span className="text-[10px] text-muted-foreground ml-1">🔒 يتطلب VIP</span>}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {VIP_FACES.map(face => (
+              <button key={face.id}
+                onClick={() => { if (vipAvatar) setAvatarTheme(face.id); }}
+                className={`relative flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl transition-all active:scale-90 ${!vipAvatar ? 'opacity-35 cursor-not-allowed' : avatarThemeId === face.id ? 'scale-110 ring-2 ring-yellow-400' : 'opacity-80 hover:opacity-100'}`}
+                style={{ background: face.bg, boxShadow: avatarThemeId === face.id ? `0 0 18px ${face.glow}` : !vipAvatar ? 'none' : `0 0 6px ${face.glow}44` }}
+                title={face.name}>
+                {face.emoji}
+                {!vipAvatar && (
+                  <div className="absolute inset-0 rounded-2xl flex items-center justify-center bg-black/30">
+                    <span className="text-xs">🔒</span>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         {editing ? (
