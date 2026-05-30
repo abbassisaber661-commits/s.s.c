@@ -7,8 +7,8 @@ export interface Comment {
   timestamp: number;
 }
 
-export type ReactionType = '❤️' | '🔥' | '😂' | '💪' | '🤯' | '👏';
-export const REACTION_TYPES: ReactionType[] = ['❤️', '🔥', '😂', '💪', '🤯', '👏'];
+export type ReactionType = '❤️' | '🔥' | '😂' | '💪' | '🤯' | '👏' | '👍';
+export const REACTION_TYPES: ReactionType[] = ['❤️', '🔥', '😂', '💪', '🤯', '👏', '👍'];
 
 export interface PostReactions {
   postId: string;
