@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Swords, MessageCircle, ShoppingBag, User } from "lucide-react";
+import { Home, Swords, Rss, ShoppingBag, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
 import { useT, isRTL } from "@/lib/i18n";
@@ -17,7 +17,7 @@ export default function BottomNav({ unreadMessages = 0 }: BottomNavProps) {
   const NAV_ITEMS = [
     { href: '/',           icon: Home,        label: t('nav_home')       },
     { href: '/pvp',        icon: Swords,       label: t('nav_compete')   },
-    { href: '/messages',   icon: MessageCircle, label: t('nav_messages') },
+    { href: '/community',  icon: Rss,           label: t('nav_feed')     },
     { href: '/store',      icon: ShoppingBag, label: t('nav_store')      },
     { href: '/profile',    icon: User,        label: t('nav_profile')    },
   ];
