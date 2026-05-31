@@ -60,6 +60,10 @@ import Analytics     from "@/pages/Analytics";
 import AICoach       from "@/pages/AICoach";
 import PiLock        from "@/pages/PiLock";
 
+// Legal Pages
+import PrivacyPolicy   from "@/pages/PrivacyPolicy";
+import TermsOfService  from "@/pages/TermsOfService";
+
 // Beta / System Pages
 import BetaDashboard   from "@/pages/BetaDashboard";
 import MonitorDashboard from "@/pages/MonitorDashboard";
@@ -97,7 +101,7 @@ function AppShell() {
 
   const hideNav = NO_NAV_PATHS.some((p) => location.startsWith(p));
 
-  const PUBLIC_PATHS = ["/match-arena", "/league-hub"];
+  const PUBLIC_PATHS = ["/match-arena", "/league-hub", "/privacy", "/terms"];
 
   if (!isAuthenticated && !PUBLIC_PATHS.some((p) => location.startsWith(p))) {
     return <AuthScreen />;
@@ -160,6 +164,10 @@ function AppShell() {
         <Route path="/analytics"           component={Analytics} />
         <Route path="/ai-coach"            component={AICoach} />
         <Route path="/pi-lock"             component={PiLock} />
+
+        {/* ── Legal (public) ──────────────────────── */}
+        <Route path="/privacy"             component={PrivacyPolicy} />
+        <Route path="/terms"               component={TermsOfService} />
 
         {/* ── Beta / System ───────────────────────── */}
         <Route path="/beta-dashboard"      component={BetaDashboard} />
