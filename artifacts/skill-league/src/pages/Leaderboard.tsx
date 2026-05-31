@@ -29,6 +29,7 @@ export default function Leaderboard() {
       const t = setTimeout(() => setJustUpdated(false), 1500);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [liveLeaderboard]);
 
   const cfg = LEAGUES[selected];

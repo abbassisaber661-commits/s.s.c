@@ -35,7 +35,7 @@ export async function validateInviteCode(code: string): Promise<{
 }> {
   try {
     const res = await api.betaFeedback.submit({ action: 'validate_invite', code });
-    return res as { valid: boolean; tier?: string };
+    return res as unknown as { valid: boolean; tier?: string };
   } catch {
     if (BUILTIN_CODES[code.toUpperCase()]) {
       const tier = BUILTIN_CODES[code.toUpperCase()];

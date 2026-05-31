@@ -53,7 +53,7 @@ export default function Messages() {
 
   function handleSendChat() {
     if (!chatMsg.trim() || !chatTarget.trim()) return;
-    sendDm(chatTarget.trim(), chatTarget.trim(), authUser?.id ?? username, username, chatMsg.trim());
+    sendDm(chatTarget.trim(), chatTarget.trim(), authUser?.uid ?? username, username, chatMsg.trim());
     setChatMsg('');
   }
 
@@ -187,7 +187,7 @@ export default function Messages() {
                 </div>
               )}
               {dmMessages.map((msg, i) => {
-                const isMe = msg.fromId === (authUser?.id ?? username);
+                const isMe = msg.fromId === (authUser?.uid ?? username);
                 return (
                   <motion.div key={msg.id ?? i}
                     initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}

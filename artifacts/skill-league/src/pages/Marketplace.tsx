@@ -59,19 +59,19 @@ export default function Marketplace() {
   });
 
   const handleBuy = async (l: Listing) => {
-    if (!authUser?.id) return;
+    if (!authUser?.uid) return;
     if (coins < l.price) { showToast("❌ رصيدك غير كافٍ!"); return; }
     setBuying(l.id);
-    const d = await api.marketplace.buy(l.id, authUser.id);
+    const d = await api.marketplace.buy(l.id, authUser.uid);
     setBuying(null);
     if (d.ok) { showToast("✅ تم الشراء بنجاح!"); fetchListings(); }
     else showToast("❌ حدث خطأ أثناء الشراء");
   };
 
   const handleSell = async () => {
-    if (!authUser?.id) return;
+    if (!authUser?.uid) return;
     const d: any = await api.marketplace.create({
-      sellerId: authUser.id, itemId: sellItem.id, itemName: sellItem.name,
+      sellerId: authUser.uid, itemId: sellItem.id, itemName: sellItem.name,
       itemEmoji: sellItem.emoji, itemType: sellItem.type, price: sellPrice,
     });
     if (d?.id) { showToast("✅ تم نشر عرضك!"); setShowSell(false); fetchListings(); }
@@ -158,10 +158,10 @@ export default function Marketplace() {
                 <div className="text-xs text-muted-foreground text-center opacity-60">{TYPE_LABELS[l.itemType] || l.itemType} · {timeAgo(l.createdAt)}</div>
                 <div className="flex items-center justify-between mt-auto pt-1">
                   <span className="flex items-center gap-1 text-amber-400 font-bold text-sm"><Coins size={12} />{l.price.toLocaleString()}</span>
-                  <Button size="sm" disabled={buying === l.id || l.sellerId === authUser?.id}
+                  <Button size="sm" disabled={buying === l.id || l.sellerId === authUser?.uid}
                     onClick={() => handleBuy(l)}
                     className="text-xs h-7 px-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50">
-                    {buying === l.id ? "..." : l.sellerId === authUser?.id ? "عرضك" : "شراء"}
+                    {buying === l.id ? "..." : l.sellerId === authUser?.uid ? "عرضك" : "شراء"}
                   </Button>
                 </div>
               </motion.div>

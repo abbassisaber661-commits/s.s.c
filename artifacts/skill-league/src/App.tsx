@@ -186,7 +186,7 @@ function AppShell() {
 
 function AuthenticatedProviders({ children }: { children: React.ReactNode }) {
   const { authUser } = useGame();
-  const playerId = authUser?.id ?? null;
+  const playerId = authUser?.uid ?? null;
 
   return <RealtimeProvider playerId={playerId}>{children}</RealtimeProvider>;
 }

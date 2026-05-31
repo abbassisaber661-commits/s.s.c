@@ -71,7 +71,7 @@ export default function BetaDashboard() {
   const [flags,     setFlags]     = useState<SuspiciousItem[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState<string | null>(null);
-  const [tab,       setTab]       = useState<'overview' | 'security' | 'invites' | 'my'>('overview');
+  const [tab,       setTab]       = useState<'overview' | 'security' | 'invites' | 'my' | 'tools'>('overview');
   const [copied,    setCopied]    = useState<string | null>(null);
   const [newCode,   setNewCode]   = useState<string | null>(null);
 
@@ -83,7 +83,7 @@ export default function BetaDashboard() {
         api.admin.stats().catch(() => null),
         api.admin.suspicious().catch(() => []),
       ]);
-      if (s) setStats(s as BetaStats);
+      if (s) setStats(s as unknown as BetaStats);
       setFlags(f as SuspiciousItem[]);
     } catch (e: any) {
       setError('تعذّر تحميل البيانات');

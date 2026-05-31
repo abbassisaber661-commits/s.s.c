@@ -30,7 +30,7 @@ export default function BetaFeedbackWidget() {
     setSending(true);
     try {
       await api.betaFeedback.submit({
-        playerId: authUser?.id, username: username || "guest",
+        playerId: authUser?.uid, username: username || "guest",
         rating, category, message, page: location,
       });
       setSent(true);
