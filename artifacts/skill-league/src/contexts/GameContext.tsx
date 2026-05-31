@@ -41,7 +41,7 @@ interface GameState extends PlayerData {
   setLanguage: (lang: Language) => void;
   updateUsername: (name: string) => void;
   recordMatch: (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => void;
-  recordPvpResult: (won: boolean, opponentLevel: number, coinsEarned: number) => void;
+  recordPvpResult: (won: boolean, opponentLevel: number, coinsEarned: number, eloChange?: number) => void;
   recordTournamentWin: (place: number, coinsReward: number, xpReward: number) => void;
   spendCoins: (amount: number) => boolean;
   addCoins: (amount: number) => void;
@@ -545,7 +545,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // ─── recordPvpResult ─────────────────────────────────────────────────────
 
-  const recordPvpResult = (won: boolean, opponentLevel: number, coinsEarned: number) => {
+  const recordPvpResult = (won: boolean, opponentLevel: number, coinsEarned: number, eloChange = 0) => {
     const coinMult     = getCoinMultiplier();
     const boostedCoins = Math.round(coinsEarned * coinMult);
     const baseXp       = won ? xpForPvpWin(opponentLevel, data.level) : 20;
@@ -565,6 +565,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       pvpWinStreak: newWinStreak, bestPvpStreak: Math.max(data.bestPvpStreak, newWinStreak),
       coins: data.coins + boostedCoins, totalCoinsEarned: data.totalCoinsEarned + boostedCoins,
       xp: newXp, level: newLevel, fame: (data.fame || 0) + fameGain + (didLevelUp ? fameForLevelUp(newLevel) : 0),
+      elo: Math.max(0, data.elo + eloChange),
     };
 
     const wc = ensureWeekState(data.weeklyChallenge);
