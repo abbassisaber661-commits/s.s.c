@@ -271,7 +271,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const addCoins = (amount: number) => {
     persist({ ...data, coins: data.coins + amount, totalCoinsEarned: data.totalCoinsEarned + amount });
-    addTransaction({ type: 'earn_match', amount, label: 'Referral reward' });
+    addTransaction({ type: 'earn_match', amount, label: 'Coins earned' });
   };
 
   const addFame        = (amount: number) => persist({ ...data, fame: (data.fame || 0) + amount });

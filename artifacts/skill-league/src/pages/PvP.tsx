@@ -68,7 +68,7 @@ export default function PvP() {
     const mt: MatchType = matchEnd.isBot ? 'bot' : 'pvp';
     const coins = getPvpRewardCoins(stake, matchEnd.won, matchEnd.draw, mt);
     const xp    = getPvpRewardXp(matchEnd.won, matchEnd.draw, mt);
-    const eloChg = getEloChange(matchEnd.won, matchEnd.draw, elo * 100 + 800, elo, mt);
+    const eloChg = getEloChange(matchEnd.won, matchEnd.draw, elo, matchInfo?.playerB.elo ?? elo, mt);
     setCoinsEarned(coins);
     setXpEarned(xp);
     setEloChange(eloChg);
@@ -403,7 +403,7 @@ export default function PvP() {
   if (phase === 'finished' && matchEnd) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-5 pb-24" dir="rtl">
-        {showWinAnim && <WinAnimation />}
+        {showWinAnim && <WinAnimation show={showWinAnim} />}
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-sm space-y-5 text-center">
           <div className="text-6xl">{matchEnd.won ? '🏆' : matchEnd.draw ? '🤝' : '💀'}</div>
           <div className="text-3xl font-black">

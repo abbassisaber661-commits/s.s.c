@@ -1,1 +1,2 @@
 - [League Progression System](league-progression.md) — LP-based 4-tier system (Training/Coin/Pro/Champion) wired into MatchArena results; localStorage key `sl_league_v2`.
+- [Stabilization Fixes](stabilization-fixes.md) — Three confirmed bugs patched: Results.tsx missing recordMatch, PvP ELO wrong value, addCoins mislabeled transaction.

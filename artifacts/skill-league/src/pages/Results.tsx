@@ -74,7 +74,7 @@ function RankBadge({ rank }: { rank: number }) {
 
 export default function Results() {
   const [, go] = useLocation();
-  const { coins, addCoins } = useGame();
+  const { recordMatch } = useGame();
 
   const [result, setResult] = useState<MatchResult | null>(null);
   const [showBoard, setShowBoard] = useState(false);
@@ -87,11 +87,7 @@ export default function Results() {
         const r: MatchResult = JSON.parse(raw);
         setResult(r);
         sessionStorage.removeItem("sl_match_result");
-        const ranked = [...r.opponents, { name: r.playerName, score: r.score }]
-          .sort((a, b) => b.score - a.score);
-        const rank = ranked.findIndex((p) => p.name === r.playerName) + 1;
-        const prize = getPrize(rank, ranked.length, r.league);
-        if (prize > 0) addCoins(prize);
+        recordMatch(r.league, r.score, r.accuracy, 0, r.correct);
       } catch (_) { /* ignore */ }
     }
     // Show leaderboard after entrance
