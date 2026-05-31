@@ -38,7 +38,7 @@ const FAKE_NAMES = [
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type QType = "color_match" | "shape_match" | "quick_pick" | "math_quick" | "cultural_mcq" | "visual_pattern";
+type QType = "color_match" | "shape_match" | "quick_pick" | "math_quick" | "cultural_mcq" | "visual_pattern" | "odd_one_out" | "sequence_next" | "color_count";
 
 interface Option { label: string; color?: string; shape?: string; isCorrect: boolean }
 interface Question {
@@ -47,6 +47,7 @@ interface Question {
   prompt: string;
   target?: { color?: string; shape?: string; label: string };
   sequence?: string[];
+  items?: string[];
   options: Option[];
   timeLimit: number;
 }
@@ -199,9 +200,86 @@ function makeVisualPatternQuestion(id: number, difficulty: number): Question {
   };
 }
 
+function makeOddOneOutQuestion(id: number, difficulty: number): Question {
+  const majority = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  const rest     = SHAPES.filter(s => s.name !== majority.name);
+  const odd      = rest[Math.floor(Math.random() * rest.length)];
+  const total    = difficulty === 1 ? 5 : difficulty === 2 ? 7 : 9;
+  const seq: string[] = [];
+  for (let i = 0; i < total - 1; i++) seq.push(majority.symbol);
+  seq.push(odd.symbol);
+  const distractors = pick(rest.filter(s => s.name !== odd.name), Math.min(3, rest.length - 1));
+  while (distractors.length < 3) distractors.push(rest[(distractors.length) % rest.length]);
+  const opts: Option[] = shuffle([
+    { label: `${odd.symbol} ${odd.name}`, shape: odd.name, isCorrect: true },
+    ...distractors.map(s => ({ label: `${s.symbol} ${s.name}`, shape: s.name, isCorrect: false })),
+  ]);
+  return {
+    id, type: "odd_one_out",
+    prompt: "Find the odd one out!",
+    sequence: shuffle(seq),
+    options: opts,
+    timeLimit: difficulty === 1 ? 6 : difficulty === 2 ? 5 : 4,
+  };
+}
+
+function makeSequenceNextQuestion(id: number, difficulty: number): Question {
+  const patternSets: string[][] = difficulty === 1
+    ? [["AB"], ["AB"]]
+    : difficulty === 2
+    ? [["AB"], ["AAB"], ["ABB"]]
+    : [["AABB"], ["ABC"], ["ABAB"]];
+  const pattern  = patternSets[Math.floor(Math.random() * patternSets.length)][0];
+  const letters  = [...new Set(pattern.split(""))];
+  const shapePool = pick(SHAPES, letters.length);
+  const map: Record<string, typeof SHAPES[0]> = {};
+  letters.forEach((l, i) => { map[l] = shapePool[i]; });
+  const fullSeq    = (pattern + pattern + pattern).split("").map(l => map[l].symbol);
+  const shownCount = difficulty === 1 ? 4 : 5;
+  const shown      = fullSeq.slice(0, shownCount);
+  const correct    = fullSeq[shownCount];
+  const correctShape = shapePool.find(s => s.symbol === correct) ?? shapePool[0];
+  const distractors  = pick(SHAPES.filter(s => s.symbol !== correct), 3);
+  const opts: Option[] = shuffle([
+    { label: `${correctShape.symbol} ${correctShape.name}`, shape: correctShape.name, isCorrect: true },
+    ...distractors.map(s => ({ label: `${s.symbol} ${s.name}`, shape: s.name, isCorrect: false })),
+  ]);
+  return {
+    id, type: "sequence_next",
+    prompt: "What comes next?",
+    sequence: [...shown, "?"],
+    options: opts,
+    timeLimit: difficulty === 1 ? 7 : difficulty === 2 ? 6 : 5,
+  };
+}
+
+function makeColorCountQuestion(id: number, difficulty: number): Question {
+  const numColors  = difficulty === 1 ? 2 : difficulty === 2 ? 3 : 4;
+  const colorPool  = pick(COLORS, numColors);
+  const dominant   = colorPool[0];
+  const domCount   = difficulty === 1 ? 5 : difficulty === 2 ? 4 : 3;
+  const totalDots  = difficulty === 1 ? 8 : difficulty === 2 ? 10 : 12;
+  const items: string[] = [];
+  for (let i = 0; i < domCount; i++) items.push(dominant.hex);
+  const others = colorPool.slice(1);
+  for (let i = 0; i < totalDots - domCount; i++) items.push(others[i % others.length].hex);
+  const distractors = pick(COLORS.filter(c => c.name !== dominant.name), 3);
+  const opts: Option[] = shuffle([
+    { label: dominant.name, color: dominant.hex, isCorrect: true },
+    ...distractors.map(c => ({ label: c.name, color: c.hex, isCorrect: false })),
+  ]);
+  return {
+    id, type: "color_count",
+    prompt: "Which color appears most?",
+    items: shuffle(items),
+    options: opts,
+    timeLimit: difficulty === 1 ? 7 : difficulty === 2 ? 6 : 5,
+  };
+}
+
 function generateQuestions(): Question[] {
   const qs: Question[] = [];
-  const allTypes: QType[] = ["color_match", "shape_match", "quick_pick", "math_quick", "cultural_mcq", "visual_pattern"];
+  const allTypes: QType[] = ["color_match", "shape_match", "quick_pick", "math_quick", "cultural_mcq", "visual_pattern", "odd_one_out", "sequence_next", "color_count"];
 
   // Difficulty tiers: 4 easy → 3 medium → 3 hard, types randomly mixed within each tier
   const pool = [
@@ -249,6 +327,12 @@ function generateQuestions(): Question[] {
       qs.push(makeMathQuestion(i, difficulty));
     } else if (type === "cultural_mcq") {
       qs.push(makeCulturalQuestion(i, difficulty, usedCultural));
+    } else if (type === "odd_one_out") {
+      qs.push(makeOddOneOutQuestion(i, difficulty));
+    } else if (type === "sequence_next") {
+      qs.push(makeSequenceNextQuestion(i, difficulty));
+    } else if (type === "color_count") {
+      qs.push(makeColorCountQuestion(i, difficulty));
     } else {
       qs.push(makeVisualPatternQuestion(i, difficulty));
     }
@@ -542,7 +626,7 @@ export default function Game() {
               </motion.div>
             )}
 
-            {/* Target — visual pattern sequence */}
+            {/* Target — visual pattern sequence (most repeated) */}
             {q.type === "visual_pattern" && q.sequence && (
               <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: "spring", stiffness: 280, damping: 20 }}
@@ -550,6 +634,46 @@ export default function Game() {
                 style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
                 {q.sequence.map((sym, idx) => (
                   <span key={idx} className="text-3xl select-none leading-none">{sym}</span>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Target — odd one out: shuffled sequence of shapes */}
+            {q.type === "odd_one_out" && q.sequence && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex flex-wrap justify-center gap-2 px-5 py-3 rounded-2xl max-w-[300px]"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.sequence.map((sym, idx) => (
+                  <span key={idx} className="text-3xl select-none leading-none">{sym}</span>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Target — sequence next: pattern with ? at the end */}
+            {q.type === "sequence_next" && q.sequence && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex items-center gap-3 flex-wrap justify-center px-5 py-3 rounded-2xl"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.sequence.map((sym, idx) => (
+                  sym === "?"
+                    ? <span key={idx} className="text-3xl font-black select-none leading-none"
+                        style={{ color: meta.color, textShadow: `0 0 16px ${meta.color}80` }}>?</span>
+                    : <span key={idx} className="text-3xl select-none leading-none">{sym}</span>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Target — color count: grid of colored dots */}
+            {q.type === "color_count" && q.items && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex flex-wrap gap-2 justify-center px-5 py-3 rounded-2xl max-w-[240px]"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.items.map((hex, idx) => (
+                  <div key={idx} className="w-8 h-8 rounded-full shrink-0"
+                    style={{ background: hex, boxShadow: `0 0 8px ${hex}70` }} />
                 ))}
               </motion.div>
             )}
@@ -593,6 +717,15 @@ export default function Game() {
                     )}
                     {q.type === "visual_pattern" && (
                       <span className="text-base font-bold" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.85)" }}>{opt.label}</span>
+                    )}
+                    {(q.type === "odd_one_out" || q.type === "sequence_next") && (
+                      <span className="text-base font-bold" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.85)" }}>{opt.label}</span>
+                    )}
+                    {q.type === "color_count" && (
+                      <>
+                        {opt.color && <div className="w-7 h-7 rounded-full shrink-0" style={{ background: opt.color, boxShadow: `0 0 10px ${opt.color}80` }} />}
+                        <span className="text-sm font-bold" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.85)" }}>{opt.label}</span>
+                      </>
                     )}
                   </motion.button>
                 );
