@@ -41,7 +41,7 @@ interface GameState extends PlayerData {
   setLanguage: (lang: Language) => void;
   updateUsername: (name: string) => void;
   recordMatch: (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => void;
-  recordPvpResult: (won: boolean, opponentLevel: number, coinsEarned: number, eloChange?: number) => void;
+  recordPvpResult: (won: boolean, opponentLevel: number, coinsEarned: number, eloChange?: number, xpOverride?: number) => void;
   recordTournamentWin: (place: number, coinsReward: number, xpReward: number) => void;
   spendCoins: (amount: number) => boolean;
   addCoins: (amount: number) => void;
@@ -545,10 +545,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // ─── recordPvpResult ─────────────────────────────────────────────────────
 
-  const recordPvpResult = (won: boolean, opponentLevel: number, coinsEarned: number, eloChange = 0) => {
+  const recordPvpResult = (won: boolean, opponentLevel: number, coinsEarned: number, eloChange = 0, xpOverride = 0) => {
     const coinMult     = getCoinMultiplier();
     const boostedCoins = Math.round(coinsEarned * coinMult);
-    const baseXp       = won ? xpForPvpWin(opponentLevel, data.level) : 20;
+    const baseXp       = xpOverride > 0 ? xpOverride : (won ? xpForPvpWin(opponentLevel, data.level) : 20);
     const xpEarned     = isXpBoosted() ? baseXp * 2 : baseXp;
     const newXp        = data.xp + xpEarned;
     const newLevel     = Math.min(100, levelFromXp(newXp));

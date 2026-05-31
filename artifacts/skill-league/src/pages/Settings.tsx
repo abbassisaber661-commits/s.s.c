@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Link } from "wouter";
-import { ArrowLeft, Settings2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Settings2, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { LANGUAGES, type Language } from "@/lib/i18n";
 import { getVerificationStatus } from "@/lib/verified";
 import { validateUsername } from "@/lib/anti-cheat";
+
+export const APP_VERSION = '1.0.0';
 
 export default function Settings() {
   const {
@@ -17,9 +19,11 @@ export default function Settings() {
     toggleNotif, toggleSound, toggleVibration,
   } = useGame();
 
-  const [draft, setDraft]         = useState(username);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [saved, setSaved]         = useState(false);
+  const [draft, setDraft]           = useState(username);
+  const [nameError, setNameError]   = useState<string | null>(null);
+  const [saved, setSaved]           = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [tempsOpen, setTempsOpen]     = useState(false);
 
   const verif = getVerificationStatus((verificationLevel ?? 0) as 0 | 1 | 2);
 
@@ -126,6 +130,68 @@ export default function Settings() {
           {toggle('Vibration', vibrationEnabled ?? true, () => toggleVibration())}
         </motion.div>
 
+        {/* Privacy & Data */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}
+          className="rounded-2xl border border-border bg-card p-4 space-y-1">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Privacy & Data</div>
+
+          {/* Privacy */}
+          <div className="border-b border-border/40">
+            <button
+              onClick={() => setPrivacyOpen(v => !v)}
+              className="w-full flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-muted/30 transition-colors">
+              <span className="text-xl">🔐</span>
+              <span className="text-sm font-medium flex-1 text-left">Privacy</span>
+              {privacyOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </button>
+            {privacyOpen && (
+              <div className="px-3 pb-3 pt-1 space-y-2 text-sm text-muted-foreground">
+                <p className="text-xs leading-relaxed">
+                  SkillLeague stores your game progress locally on your device. No personal data is shared with third parties. Your Pi Network identity is only used for authentication.
+                </p>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                    <div className="font-semibold text-foreground mb-0.5">Data stored</div>
+                    <div>Device only (localStorage)</div>
+                  </div>
+                  <div className="rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                    <div className="font-semibold text-foreground mb-0.5">Shared data</div>
+                    <div>Username + scores (leaderboard)</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Temps */}
+          <div>
+            <button
+              onClick={() => setTempsOpen(v => !v)}
+              className="w-full flex items-center gap-3 py-2.5 px-2 rounded-xl hover:bg-muted/30 transition-colors">
+              <span className="text-xl">🗂️</span>
+              <span className="text-sm font-medium flex-1 text-left">Temporary Data</span>
+              {tempsOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </button>
+            {tempsOpen && (
+              <div className="px-3 pb-3 pt-1 space-y-2 text-sm text-muted-foreground">
+                <p className="text-xs leading-relaxed">
+                  Temporary data includes daily bot match counts and session caches. These reset automatically and do not affect your saved progress or wallet.
+                </p>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                    <div className="font-semibold text-foreground mb-0.5">Daily counters</div>
+                    <div>Reset at midnight</div>
+                  </div>
+                  <div className="rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                    <div className="font-semibold text-foreground mb-0.5">Session cache</div>
+                    <div>Cleared on app reload</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
         {/* Quick links */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
           className="rounded-2xl border border-border bg-card p-4 space-y-1">
@@ -148,7 +214,21 @@ export default function Settings() {
           ))}
         </motion.div>
 
-        <div className="text-center text-xs text-muted-foreground/50 py-2">SkillLeague v15.0 Beta · Powered by Pi Network</div>
+        {/* About */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}
+          className="rounded-2xl border border-border bg-card p-4">
+          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-3">About</div>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-sm text-muted-foreground">Version</span>
+            <span className="text-sm font-semibold tabular-nums">{APP_VERSION}</span>
+          </div>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-sm text-muted-foreground">Platform</span>
+            <span className="text-sm font-semibold">Pi Network</span>
+          </div>
+        </motion.div>
+
+        <div className="text-center text-xs text-muted-foreground/50 py-2">SkillLeague · Powered by Pi Network</div>
       </div>
     </div>
   );

@@ -73,7 +73,7 @@ export default function PvP() {
     setXpEarned(xp);
     setEloChange(eloChg);
     if (matchEnd.won) setTimeout(() => setShowWinAnim(true), 300);
-    recordPvpResult(matchEnd.won, matchEnd.scoreB / 10, coins, eloChg);
+    recordPvpResult(matchEnd.won, matchEnd.scoreB / 10, coins, eloChg, xp);
   }, [matchEnd]);
 
   const handleTap = (colorId: string) => {
