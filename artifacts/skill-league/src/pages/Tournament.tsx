@@ -14,7 +14,7 @@ import {
 } from '@/lib/pvp-engine';
 import { getLevelTitle } from '@/lib/xp';
 import WinAnimation from '@/components/WinAnimation';
-import { generateChallenge, LEAGUES, LeagueId, COLORS } from '@/lib/game-engine';
+import { generateChallenge, COLORS } from '@/lib/game-engine';
 import { getBotAccuracy, getBotReactionMs, scorePvpAnswer } from '@/lib/pvp-engine';
 
 type Phase = 'select' | 'bracket' | 'battle' | 'finished';
@@ -88,6 +88,12 @@ export default function Tournament() {
     if (battleRef.botTimer)     clearTimeout(battleRef.botTimer);
     if (battleRef.memShowTimer) clearTimeout(battleRef.memShowTimer);
   };
+
+  // Cleanup all timers when component unmounts (prevents setState on unmounted component)
+  useEffect(() => {
+    return () => { clearBattleTimers(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startTournament = (size: 8 | 16) => {
     const cfg = TOURNAMENT_SIZES.find(s => s.size === size)!;
