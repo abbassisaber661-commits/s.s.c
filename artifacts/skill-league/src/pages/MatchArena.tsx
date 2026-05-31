@@ -8,7 +8,7 @@ import {
   MATCH_BOTS, type Question, type Option,
 } from '@/lib/match-engine';
 import {
-  loadLeagueStats, calcLpChange, applyLpChange, saveLeagueStats,
+  loadLeagueStats, calcLpChange,
   getTier, getLpInTier, getTierRange, LEAGUE_DEFS,
   type LpChange,
 } from '@/lib/league-progression';
@@ -176,7 +176,7 @@ function RankStrip({ rows }: { rows: PlayerRow[] }) {
 
 export default function MatchArena() {
   const [, setLocation] = useLocation();
-  const { authUser }    = useGame();
+  const { authUser, recordMatch } = useGame();
   const playerName      = authUser?.username ?? 'You';
 
   const [phase,     setPhase]     = useState<Phase>('idle');
@@ -243,9 +243,12 @@ export default function MatchArena() {
     };
     const prevStats  = loadLeagueStats();
     const change     = calcLpChange(prevStats, matchResult);
-    const nextStats  = applyLpChange(prevStats, change, matchResult);
-    saveLeagueStats(nextStats);
     setLpChange(change);
+    recordMatch('training', scoreRef.current, Math.round(matchResult.correctPct * 100), matchResult.bestStreak, rec.filter(a => a.correct).length, {
+      lpRank:       matchResult.rank,
+      lpBestStreak: matchResult.bestStreak,
+      lpCorrectPct: matchResult.correctPct,
+    });
     // ─────────────────────────────────────────────────────────────────────
 
     setPhase('results');

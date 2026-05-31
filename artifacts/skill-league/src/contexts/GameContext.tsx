@@ -26,7 +26,7 @@ import { addNotification, createLevelUpNotif, createTrophyNotif } from '../lib/m
 import { addTransaction } from '../lib/wallet';
 import type { VerificationLevel } from '../lib/verified';
 import { checkAndUpdateStreak } from '../lib/login-streak';
-import { loadLeagueStats, saveLeagueStats, calcLpChange, applyLpChange } from '../lib/league-progression';
+import { loadLeagueStats, saveLeagueStats, calcLpChange, applyLpChange, type MatchResultInput } from '../lib/league-progression';
 
 interface GameState extends PlayerData {
   user: PiUser | null;
@@ -40,7 +40,7 @@ interface GameState extends PlayerData {
   loginAsGuest: () => void;
   setLanguage: (lang: Language) => void;
   updateUsername: (name: string) => void;
-  recordMatch: (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => void;
+  recordMatch: (leagueId: string, score: number, accuracy: number, streak: number, correct: number, extras?: { rankPrize?: number; lpRank?: number; lpBestStreak?: number; lpCorrectPct?: number }) => void;
   recordPvpResult: (won: boolean, opponentLevel: number, coinsEarned: number, eloChange?: number, xpOverride?: number) => void;
   recordTournamentWin: (place: number, coinsReward: number, xpReward: number) => void;
   spendCoins: (amount: number) => boolean;
@@ -431,7 +431,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // ─── recordMatch ─────────────────────────────────────────────────────────
 
-  const recordMatch = (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => {
+  const recordMatch = (leagueId: string, score: number, accuracy: number, streak: number, correct: number, extras?: { rankPrize?: number; lpRank?: number; lpBestStreak?: number; lpCorrectPct?: number }) => {
     const config = LEAGUES[leagueId as LeagueId];
     if (!config) return;
     if (!checkRateLimit().allowed) return;
@@ -441,6 +441,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const coinMult  = getCoinMultiplier();
     const earned    = Math.round(calculateReward(config, score) * coinMult);
     const net       = earned - config.entryCost;
+    const rankPrize = Math.max(0, extras?.rankPrize ?? 0);
     const eloChange = calculateEloChange(leagueId, score);
     const α = 0.15;
     const newSkillSpeed    = Math.min(100, Math.round((1-α)*data.skillSpeed    + α*Math.min(100, score/3)));
@@ -467,12 +468,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const newLevel = Math.min(100, levelFromXp(newXp));
     const didLevelUp = newLevel > oldLevel;
 
-    addTransaction({ type: 'earn_match', amount: Math.max(0, net), label: `${leagueId} match` });
+    addTransaction({ type: 'earn_match', amount: Math.max(0, net + rankPrize), label: `${leagueId} match` });
 
     let mid: PlayerData = {
       ...data,
-      coins:            Math.max(0, data.coins + net),
-      totalCoinsEarned: data.totalCoinsEarned + Math.max(0, earned),
+      coins:            Math.max(0, data.coins + net + rankPrize),
+      totalCoinsEarned: data.totalCoinsEarned + Math.max(0, earned + rankPrize),
       totalCoinsSpent:  data.totalCoinsSpent + config.entryCost,
       matchesPlayed:    data.matchesPlayed + 1,
       matchesWon:       data.matchesWon + (isWin ? 1 : 0),
@@ -527,6 +528,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
       xp: mid.xp + weekXp, level: Math.min(100, levelFromXp(mid.xp + weekXp)),
     };
 
+    // ── LP update (MatchArena / ranked modes) ─────────────────────────────────
+    let lpCoins = 0;
+    if (extras?.lpRank != null) {
+      const lpInput: MatchResultInput = {
+        score,
+        rank:       extras.lpRank,
+        bestStreak: extras.lpBestStreak ?? streak,
+        correctPct: extras.lpCorrectPct ?? (accuracy / 100),
+      };
+      const prevLpStats = loadLeagueStats();
+      const lpChg       = calcLpChange(prevLpStats, lpInput);
+      saveLeagueStats(applyLpChange(prevLpStats, lpChg, lpInput));
+      lpCoins = lpChg.coinsEarned;
+      if (lpCoins > 0) addTransaction({ type: 'earn_match', amount: lpCoins, label: 'Arena reward' });
+      mid = { ...mid, coins: Math.max(0, mid.coins + lpCoins), totalCoinsEarned: mid.totalCoinsEarned + lpCoins };
+    }
+
     if (didLevelUp) {
       mid = { ...mid, fame: (mid.fame || 0) + fameForLevelUp(newLevel) };
       if (data.notifPushTrophy !== false) addNotification(createLevelUpNotif(newLevel, mid.level.toString()));
@@ -536,7 +554,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     persist(finalMid);
 
     setLScore(score); setLAccuracy(accuracy);
-    setLCoins(earned + achCoins + chalCoins + weekCoins);
+    setLCoins(earned + rankPrize + lpCoins + achCoins + chalCoins + weekCoins);
     setLStreak(streak); setLCorrect(correct); setLUnlocked(unlockedLeague);
     setLElo(eloChange + achElo + chalElo); setLAchieves(newAchieves);
     setLChallenges(completedNow); setLXp(xpEarned + weekXp);

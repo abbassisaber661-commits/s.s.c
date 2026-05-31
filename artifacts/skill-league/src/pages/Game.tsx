@@ -65,6 +65,20 @@ function pick<T>(arr: T[], n: number): T[] { return shuffle(arr).slice(0, n); }
 
 // ── Question Generator ────────────────────────────────────────────────────────
 
+function calcRankPrize(rank: number, total: number, league: string): number {
+  if (league === 'training') return 0;
+  if (league === 'bronze' || league === 'coin') {
+    const paid = total <= 5 ? 2 : 4;
+    if (rank > paid) return 0;
+    return [50, 30, 20, 10][rank - 1] ?? 0;
+  }
+  if (league === 'gold' || league === 'pro') {
+    if (rank <= 4) return [120, 80, 50, 30][rank - 1] ?? 0;
+    return [15, 10, 8, 5][rank - 5] ?? 0;
+  }
+  return 0;
+}
+
 function generateQuestions(): Question[] {
   const qs: Question[] = [];
   const types: QType[] = ["color_match", "shape_match", "quick_pick"];
@@ -249,12 +263,15 @@ export default function Game() {
   useEffect(() => {
     if (!done) return;
     const accuracy = Math.round((correct / TOTAL_QUESTIONS) * 100);
+    const allFinal = [...opRef.current, { name: playerName, score }].sort((a, b) => b.score - a.score);
+    const myRank   = allFinal.findIndex(p => p.name === playerName) + 1;
+    const prize    = calcRankPrize(myRank, allFinal.length, league);
     sessionStorage.setItem("sl_match_result", JSON.stringify({
       league, leagueName: meta.name, leagueColor: meta.color, leagueIcon: meta.icon,
       playerName, score, correct, accuracy, total: TOTAL_QUESTIONS,
       opponents: opRef.current.map((o) => ({ ...o })),
     }));
-    try { recordMatch(league, score, accuracy, combo, correct); } catch (_) { /* ignore */ }
+    try { recordMatch(league, score, accuracy, combo, correct, { rankPrize: prize }); } catch (_) { /* ignore */ }
     setTimeout(() => go("/results"), 700);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
