@@ -38,7 +38,7 @@ const FAKE_NAMES = [
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type QType = "color_match" | "shape_match" | "quick_pick";
+type QType = "color_match" | "shape_match" | "quick_pick" | "math_quick" | "cultural_mcq" | "visual_pattern";
 
 interface Option { label: string; color?: string; shape?: string; isCorrect: boolean }
 interface Question {
@@ -46,6 +46,7 @@ interface Question {
   type: QType;
   prompt: string;
   target?: { color?: string; shape?: string; label: string };
+  sequence?: string[];
   options: Option[];
   timeLimit: number;
 }
@@ -63,6 +64,42 @@ function shuffle<T>(arr: T[]): T[] {
 }
 function pick<T>(arr: T[], n: number): T[] { return shuffle(arr).slice(0, n); }
 
+// ── Cultural MCQ Bank ─────────────────────────────────────────────────────────
+
+interface CulturalQ { q: string; correct: string; wrong: [string, string, string]; hard?: boolean }
+const CULTURAL_BANK: CulturalQ[] = [
+  { q: "Capital of France?",          correct: "Paris",         wrong: ["Berlin",          "Madrid",        "Rome"             ] },
+  { q: "Capital of Japan?",           correct: "Tokyo",         wrong: ["Beijing",         "Seoul",         "Bangkok"          ] },
+  { q: "Capital of Brazil?",          correct: "Brasília",      wrong: ["São Paulo",        "Rio de Janeiro","Buenos Aires"     ] },
+  { q: "Capital of Egypt?",           correct: "Cairo",         wrong: ["Alexandria",       "Luxor",         "Giza"             ] },
+  { q: "Largest planet?",             correct: "Jupiter",       wrong: ["Saturn",           "Neptune",       "Uranus"           ] },
+  { q: "Fastest land animal?",        correct: "Cheetah",       wrong: ["Lion",             "Greyhound",     "Gazelle"          ] },
+  { q: "Sides of a hexagon?",         correct: "6",             wrong: ["5",                "7",             "8"                ] },
+  { q: "Largest ocean?",              correct: "Pacific",       wrong: ["Atlantic",         "Indian",        "Arctic"           ] },
+  { q: "H₂O is the symbol for?",      correct: "Water",         wrong: ["Salt",             "Oxygen",        "Hydrogen"         ] },
+  { q: "Number of continents?",       correct: "7",             wrong: ["5",                "6",             "8"                ] },
+  { q: "Capital of Spain?",           correct: "Madrid",        wrong: ["Barcelona",        "Seville",       "Valencia"         ] },
+  { q: "Capital of China?",           correct: "Beijing",       wrong: ["Shanghai",         "Hong Kong",     "Guangzhou"        ] },
+  { q: "Largest continent?",          correct: "Asia",          wrong: ["Africa",           "Europe",        "N. America"       ] },
+  { q: "Colors in a rainbow?",        correct: "7",             wrong: ["5",                "6",             "8"                ] },
+  { q: "Capital of Italy?",           correct: "Rome",          wrong: ["Milan",            "Venice",        "Naples"           ] },
+  { q: "Boiling point of water?",     correct: "100 °C",        wrong: ["90 °C",            "80 °C",         "120 °C"           ] },
+  { q: "Capital of Germany?",         correct: "Berlin",        wrong: ["Munich",           "Hamburg",       "Frankfurt"        ] },
+  { q: "Capital of Russia?",          correct: "Moscow",        wrong: ["St. Petersburg",   "Kazan",         "Novosibirsk"      ] },
+  { q: "Largest desert?",             correct: "Sahara",        wrong: ["Gobi",             "Arabian",       "Patagonian"       ] },
+  { q: "Legs on a spider?",           correct: "8",             wrong: ["6",                "10",            "4"                ] },
+  { q: "Planets in Solar System?",    correct: "8",             wrong: ["7",                "9",             "10"               ] },
+  { q: "Capital of Mexico?",          correct: "Mexico City",   wrong: ["Cancún",           "Guadalajara",   "Tijuana"          ] },
+  { q: "Capital of India?",           correct: "New Delhi",     wrong: ["Mumbai",           "Kolkata",       "Chennai"          ] },
+  { q: "Hours in a day?",             correct: "24",            wrong: ["12",               "20",            "48"               ] },
+  { q: "Capital of Canada?",          correct: "Ottawa",        wrong: ["Toronto",          "Vancouver",     "Montréal"         ], hard: true },
+  { q: "Capital of Australia?",       correct: "Canberra",      wrong: ["Sydney",           "Melbourne",     "Brisbane"         ], hard: true },
+  { q: "Capital of South Korea?",     correct: "Seoul",         wrong: ["Busan",            "Incheon",       "Daegu"            ], hard: true },
+  { q: "Lightest element?",           correct: "Hydrogen",      wrong: ["Helium",           "Lithium",       "Carbon"           ], hard: true },
+  { q: "Capital of Turkey?",          correct: "Ankara",        wrong: ["Istanbul",         "Izmir",         "Bursa"            ], hard: true },
+  { q: "Closest star to Earth?",      correct: "The Sun",       wrong: ["Proxima Centauri", "Sirius",        "Alpha Centauri"   ], hard: true },
+];
+
 // ── Question Generator ────────────────────────────────────────────────────────
 
 function calcRankPrize(rank: number, total: number, league: string): number {
@@ -79,12 +116,106 @@ function calcRankPrize(rank: number, total: number, league: string): number {
   return 0;
 }
 
+function makeMathQuestion(id: number, difficulty: number): Question {
+  let a: number, b: number, op: string, answer: number;
+  if (difficulty === 1) {
+    a = 2 + Math.floor(Math.random() * 8);
+    b = 1 + Math.floor(Math.random() * 7);
+    op = Math.random() > 0.5 ? "+" : "−";
+    if (op === "−" && b > a) [a, b] = [b, a];
+    answer = op === "+" ? a + b : a - b;
+  } else if (difficulty === 2) {
+    a = 5 + Math.floor(Math.random() * 16);
+    b = 2 + Math.floor(Math.random() * 9);
+    const ops2 = ["+", "−", "×"];
+    op = ops2[Math.floor(Math.random() * ops2.length)];
+    if (op === "×") { a = 2 + Math.floor(Math.random() * 8); b = 2 + Math.floor(Math.random() * 8); }
+    else if (op === "−" && b > a) [a, b] = [b, a];
+    answer = op === "+" ? a + b : op === "−" ? a - b : a * b;
+  } else {
+    a = 4 + Math.floor(Math.random() * 8);
+    b = 3 + Math.floor(Math.random() * 8);
+    op = Math.random() > 0.45 ? "×" : "+";
+    answer = op === "×" ? a * b : a + b;
+  }
+  const range = difficulty === 1 ? 4 : difficulty === 2 ? 6 : 12;
+  const wrongs = new Set<number>();
+  while (wrongs.size < 3) {
+    const off  = 1 + Math.floor(Math.random() * range);
+    const cand = Math.random() > 0.5 ? answer + off : Math.max(0, answer - off);
+    if (cand !== answer) wrongs.add(cand);
+  }
+  const opts: Option[] = shuffle([
+    { label: String(answer), isCorrect: true },
+    ...[...wrongs].map(w => ({ label: String(w), isCorrect: false })),
+  ]);
+  return {
+    id, type: "math_quick",
+    prompt: "Solve it!",
+    target: { label: `${a} ${op} ${b} = ?` },
+    options: opts,
+    timeLimit: difficulty === 1 ? 6 : difficulty === 2 ? 5 : 4,
+  };
+}
+
+function makeCulturalQuestion(id: number, difficulty: number, used: Set<number>): Question {
+  const easyPool = CULTURAL_BANK.map((c, i) => ({ c, i })).filter(({ c, i }) => !used.has(i) && !c.hard);
+  const hardPool = CULTURAL_BANK.map((c, i) => ({ c, i })).filter(({ c, i }) => !used.has(i) && !!c.hard);
+  const allPool  = CULTURAL_BANK.map((c, i) => ({ c, i })).filter(({ i }) => !used.has(i));
+  const src      = difficulty < 3 ? (easyPool.length ? easyPool : allPool) : (hardPool.length ? hardPool : allPool);
+  const chosen   = src[Math.floor(Math.random() * src.length)] ?? allPool[0];
+  used.add(chosen.i);
+  const opts: Option[] = shuffle([
+    { label: chosen.c.correct, isCorrect: true },
+    ...chosen.c.wrong.map(w => ({ label: w, isCorrect: false })),
+  ]);
+  return {
+    id, type: "cultural_mcq",
+    prompt: chosen.c.q,
+    options: opts,
+    timeLimit: difficulty === 1 ? 8 : 6,
+  };
+}
+
+function makeVisualPatternQuestion(id: number, difficulty: number): Question {
+  const shapePool = SHAPES.slice(0, 4);
+  const dominant  = shapePool[Math.floor(Math.random() * shapePool.length)];
+  const others    = shapePool.filter(s => s.name !== dominant.name);
+  const seqLen    = difficulty === 1 ? 6 : difficulty === 2 ? 8 : 10;
+  const domCount  = difficulty === 1 ? 3 : 4;
+  const seq: string[] = [];
+  for (let i = 0; i < domCount; i++)    seq.push(dominant.symbol);
+  for (let i = domCount; i < seqLen; i++) seq.push(others[i % others.length].symbol);
+  const opts: Option[] = shuffle([
+    { label: `${dominant.symbol} ${dominant.name}`, shape: dominant.name, isCorrect: true },
+    ...pick(others, 3).map(s => ({ label: `${s.symbol} ${s.name}`, shape: s.name, isCorrect: false })),
+  ]);
+  return {
+    id, type: "visual_pattern",
+    prompt: "Which shape appears most?",
+    sequence: shuffle(seq),
+    options: opts,
+    timeLimit: difficulty === 1 ? 7 : difficulty === 2 ? 6 : 5,
+  };
+}
+
 function generateQuestions(): Question[] {
   const qs: Question[] = [];
-  const types: QType[] = ["color_match", "shape_match", "quick_pick"];
+  const allTypes: QType[] = ["color_match", "shape_match", "quick_pick", "math_quick", "cultural_mcq", "visual_pattern"];
+
+  // Difficulty tiers: 4 easy → 3 medium → 3 hard, types randomly mixed within each tier
+  const pool = [
+    ...shuffle([...allTypes]).slice(0, 4),
+    ...shuffle([...allTypes]).slice(0, 3),
+    ...shuffle([...allTypes]).slice(0, 3),
+  ];
+
+  const usedCultural = new Set<number>();
+
   for (let i = 0; i < TOTAL_QUESTIONS; i++) {
-    const type = types[i % types.length];
-    const timeLimit = 3 + Math.floor(Math.random() * 4);
+    const type       = pool[i];
+    const difficulty = i < 4 ? 1 : i < 7 ? 2 : 3;
+    const timeLimit  = 3 + Math.floor(Math.random() * 4);
 
     if (type === "color_match") {
       const correct = COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -102,7 +233,7 @@ function generateQuestions(): Question[] {
         ...wrong.map((s) => ({ label: s.symbol, shape: s.name, isCorrect: false })),
       ]);
       qs.push({ id: i, type, prompt: "Find the matching shape →", target: { shape: correct.name, label: correct.symbol }, options: opts, timeLimit });
-    } else {
+    } else if (type === "quick_pick") {
       const tc = COLORS[Math.floor(Math.random() * COLORS.length)];
       const ts = SHAPES[Math.floor(Math.random() * SHAPES.length)];
       const dc = pick(COLORS.filter((c) => c.name !== tc.name), 3);
@@ -114,9 +245,16 @@ function generateQuestions(): Question[] {
         { label: ds[2].symbol, color: dc[2].hex, isCorrect: false },
       ]);
       qs.push({ id: i, type, prompt: `Find the ${tc.name} ${ts.name} →`, target: { color: tc.hex, label: ts.symbol }, options: opts, timeLimit });
+    } else if (type === "math_quick") {
+      qs.push(makeMathQuestion(i, difficulty));
+    } else if (type === "cultural_mcq") {
+      qs.push(makeCulturalQuestion(i, difficulty, usedCultural));
+    } else {
+      qs.push(makeVisualPatternQuestion(i, difficulty));
     }
   }
-  return shuffle(qs);
+
+  return qs;
 }
 
 // ── Circular Timer ────────────────────────────────────────────────────────────
@@ -376,7 +514,7 @@ export default function Game() {
               {q.prompt}
             </p>
 
-            {/* Target */}
+            {/* Target — visual types */}
             {q.target && (
               <motion.div initial={{ scale: 0.65 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 320, damping: 18 }}>
                 {q.type === "color_match" && (
@@ -395,6 +533,24 @@ export default function Game() {
                     {q.target.label}
                   </div>
                 )}
+                {q.type === "math_quick" && (
+                  <div className="px-7 py-4 rounded-2xl flex items-center justify-center"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "2px solid rgba(255,255,255,0.18)", minWidth: "200px" }}>
+                    <span className="text-4xl font-black text-white tracking-wide tabular-nums">{q.target.label}</span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Target — visual pattern sequence */}
+            {q.type === "visual_pattern" && q.sequence && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex flex-wrap justify-center gap-2 px-5 py-3 rounded-2xl max-w-[280px]"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.sequence.map((sym, idx) => (
+                  <span key={idx} className="text-3xl select-none leading-none">{sym}</span>
+                ))}
               </motion.div>
             )}
 
@@ -414,20 +570,29 @@ export default function Game() {
                     whileTap={chosen === null ? { scale: 0.93 } : {}}
                     className="h-[68px] rounded-2xl flex items-center justify-center gap-2.5 font-bold text-base transition-all"
                     style={{ background: bg, border: `2px solid ${borderC}`, boxShadow: shadow, cursor: chosen !== null ? "default" : "pointer" }}>
-                    {q.type === "color_match" && opt.color && (
-                      <div className="w-8 h-8 rounded-xl shrink-0" style={{ background: opt.color }} />
+                    {q.type === "color_match" && (
+                      <>
+                        {opt.color && <div className="w-8 h-8 rounded-xl shrink-0" style={{ background: opt.color }} />}
+                        <span className="text-sm" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.75)" }}>{opt.label}</span>
+                      </>
                     )}
                     {q.type === "shape_match" && (
-                      <span className="text-3xl text-white">{opt.label}</span>
+                      <>
+                        <span className="text-3xl text-white">{opt.label}</span>
+                        <span className="text-sm" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.75)" }}>{opt.shape}</span>
+                      </>
                     )}
                     {q.type === "quick_pick" && (
                       <span className="text-4xl" style={{ color: opt.color }}>{opt.label}</span>
                     )}
-                    {q.type !== "quick_pick" && (
-                      <span className="text-sm" style={{
-                        color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.75)" }}>
-                        {q.type === "color_match" ? opt.label : opt.shape}
-                      </span>
+                    {q.type === "math_quick" && (
+                      <span className="text-2xl font-black tabular-nums" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "white" }}>{opt.label}</span>
+                    )}
+                    {q.type === "cultural_mcq" && (
+                      <span className="text-sm font-bold text-center leading-tight px-1" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.85)" }}>{opt.label}</span>
+                    )}
+                    {q.type === "visual_pattern" && (
+                      <span className="text-base font-bold" style={{ color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.85)" }}>{opt.label}</span>
                     )}
                   </motion.button>
                 );
