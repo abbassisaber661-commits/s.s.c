@@ -186,13 +186,16 @@ function genPairMatch(): Question {
 
 const GENERATORS = [genColorPickName, genColorTapColor, genShapeMatch, genPatternNext, genCategoryPick, genPairMatch];
 
-export function generateMatchQuestions(count = 10): Question[] {
+export function generateMatchQuestions(count = 10, timeFactor = 1): Question[] {
   const qs: Question[] = [];
   const pool = shuffle([...GENERATORS, ...GENERATORS]); // ensure variety
   for (let i = 0; i < count; i++) {
     qs.push(pool[i % pool.length]());
   }
-  return shuffle(qs);
+  const shuffled = shuffle(qs);
+  return timeFactor === 1
+    ? shuffled
+    : shuffled.map(q => ({ ...q, timeLimitMs: Math.round(q.timeLimitMs * timeFactor) }));
 }
 
 // ─── Scoring ──────────────────────────────────────────────────────────────────

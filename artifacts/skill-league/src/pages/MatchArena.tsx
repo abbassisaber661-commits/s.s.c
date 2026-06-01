@@ -337,7 +337,11 @@ export default function MatchArena() {
   function enterMatch() {
     playTap();
     clearAllTimers();
-    const qs = generateMatchQuestions(TOTAL_Q);
+    const _stats     = loadLeagueStats();
+    const _tier      = getTier(_stats.lp);
+    const TIME_FACTORS: Record<string, number> = { training: 1.0, coin: 0.9, pro: 0.8, champion: 0.7 };
+    const timeFactor = TIME_FACTORS[_tier] ?? 1.0;
+    const qs = generateMatchQuestions(TOTAL_Q, timeFactor);
     questionsRef.current  = qs;
     qIndexRef.current     = 0;
     scoreRef.current      = 0;
