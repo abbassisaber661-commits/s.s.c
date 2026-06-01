@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
+import { LEAGUES, LeagueId } from "@/lib/game-engine";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -65,12 +66,12 @@ function pick<T>(arr: T[], n: number): T[] { return shuffle(arr).slice(0, n); }
 
 // ── Question Generator ────────────────────────────────────────────────────────
 
-function generateQuestions(): Question[] {
+function generateQuestions(timeSec: number): Question[] {
   const qs: Question[] = [];
   const types: QType[] = ["color_match", "shape_match", "quick_pick"];
   for (let i = 0; i < TOTAL_QUESTIONS; i++) {
     const type = types[i % types.length];
-    const timeLimit = 3 + Math.floor(Math.random() * 4);
+    const timeLimit = timeSec;
 
     if (type === "color_match") {
       const correct = COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -177,10 +178,12 @@ export default function Game() {
   const [, params] = useRoute<{ league: string }>("/game/:league");
   const league     = params?.league ?? "bronze";
   const meta       = LEAGUE_META[league] ?? LEAGUE_META.bronze;
+  const leagueCfg  = LEAGUES[league as LeagueId];
+  const timeForLeague = leagueCfg ? leagueCfg.challengeTimeout / 1000 : 4;
   const { user, authUser, isGuest, recordMatch } = useGame();
   const playerName = user?.username || authUser?.username || (isGuest ? "Champion" : "Player");
 
-  const [questions]   = useState<Question[]>(() => generateQuestions());
+  const [questions]   = useState<Question[]>(() => generateQuestions(timeForLeague));
   const [qIdx, setQIdx]       = useState(0);
   const [score, setScore]     = useState(0);
   const [combo, setCombo]     = useState(0);
