@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
-import { LEAGUES, LeagueId } from "@/lib/game-engine";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -37,9 +36,45 @@ const FAKE_NAMES = [
   "Ahmed_π","Nour99","PiMaster","Khalid88","Zara_x","Leo2024","FastHand","ByteWolf","CobraK","SkyKing",
 ];
 
+// ── Cultural MCQ Bank ─────────────────────────────────────────────────────────
+
+interface CulturalQ { q: string; correct: string; wrong: [string, string, string]; hard?: boolean }
+const CULTURAL_BANK: CulturalQ[] = [
+  { q: "Capital of France?",          correct: "Paris",         wrong: ["Berlin",          "Madrid",        "Rome"             ] },
+  { q: "Capital of Japan?",           correct: "Tokyo",         wrong: ["Beijing",         "Seoul",         "Bangkok"          ] },
+  { q: "Capital of Brazil?",          correct: "Brasília",      wrong: ["São Paulo",        "Rio de Janeiro","Buenos Aires"     ] },
+  { q: "Capital of Egypt?",           correct: "Cairo",         wrong: ["Alexandria",       "Luxor",         "Giza"             ] },
+  { q: "Largest planet?",             correct: "Jupiter",       wrong: ["Saturn",           "Neptune",       "Uranus"           ] },
+  { q: "Fastest land animal?",        correct: "Cheetah",       wrong: ["Lion",             "Greyhound",     "Gazelle"          ] },
+  { q: "Sides of a hexagon?",         correct: "6",             wrong: ["5",                "7",             "8"                ] },
+  { q: "Largest ocean?",              correct: "Pacific",       wrong: ["Atlantic",         "Indian",        "Arctic"           ] },
+  { q: "H₂O is the symbol for?",      correct: "Water",         wrong: ["Salt",             "Oxygen",        "Hydrogen"         ] },
+  { q: "Number of continents?",       correct: "7",             wrong: ["5",                "6",             "8"                ] },
+  { q: "Capital of Spain?",           correct: "Madrid",        wrong: ["Barcelona",        "Seville",       "Valencia"         ] },
+  { q: "Capital of China?",           correct: "Beijing",       wrong: ["Shanghai",         "Hong Kong",     "Guangzhou"        ] },
+  { q: "Largest continent?",          correct: "Asia",          wrong: ["Africa",           "Europe",        "N. America"       ] },
+  { q: "Colors in a rainbow?",        correct: "7",             wrong: ["5",                "6",             "8"                ] },
+  { q: "Capital of Italy?",           correct: "Rome",          wrong: ["Milan",            "Venice",        "Naples"           ] },
+  { q: "Boiling point of water?",     correct: "100 °C",        wrong: ["90 °C",            "80 °C",         "120 °C"           ] },
+  { q: "Capital of Germany?",         correct: "Berlin",        wrong: ["Munich",           "Hamburg",       "Frankfurt"        ] },
+  { q: "Capital of Russia?",          correct: "Moscow",        wrong: ["St. Petersburg",   "Kazan",         "Novosibirsk"      ] },
+  { q: "Largest desert?",             correct: "Sahara",        wrong: ["Gobi",             "Arabian",       "Patagonian"       ] },
+  { q: "Legs on a spider?",           correct: "8",             wrong: ["6",                "10",            "4"                ] },
+  { q: "Planets in Solar System?",    correct: "8",             wrong: ["7",                "9",             "10"               ] },
+  { q: "Capital of Mexico?",          correct: "Mexico City",   wrong: ["Cancún",           "Guadalajara",   "Tijuana"          ] },
+  { q: "Capital of India?",           correct: "New Delhi",     wrong: ["Mumbai",           "Kolkata",       "Chennai"          ] },
+  { q: "Hours in a day?",             correct: "24",            wrong: ["12",               "20",            "48"               ] },
+  { q: "Capital of Canada?",          correct: "Ottawa",        wrong: ["Toronto",          "Vancouver",     "Montréal"         ], hard: true },
+  { q: "Capital of Australia?",       correct: "Canberra",      wrong: ["Sydney",           "Melbourne",     "Brisbane"         ], hard: true },
+  { q: "Capital of South Korea?",     correct: "Seoul",         wrong: ["Busan",            "Incheon",       "Daegu"            ], hard: true },
+  { q: "Lightest element?",           correct: "Hydrogen",      wrong: ["Helium",           "Lithium",       "Carbon"           ], hard: true },
+  { q: "Capital of Turkey?",          correct: "Ankara",        wrong: ["Istanbul",         "Izmir",         "Bursa"            ], hard: true },
+  { q: "Closest star to Earth?",      correct: "The Sun",       wrong: ["Proxima Centauri", "Sirius",        "Alpha Centauri"   ], hard: true },
+];
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type QType = "color_match" | "shape_match" | "quick_pick";
+type QType = "color_match" | "shape_match" | "quick_pick" | "math_quick" | "cultural_mcq" | "visual_pattern" | "odd_one_out" | "sequence_next" | "color_count";
 
 interface Option { label: string; color?: string; shape?: string; isCorrect: boolean }
 interface Question {
@@ -47,6 +82,8 @@ interface Question {
   type: QType;
   prompt: string;
   target?: { color?: string; shape?: string; label: string };
+  sequence?: string[];
+  items?: string[];
   options: Option[];
   timeLimit: number;
 }
@@ -64,14 +101,184 @@ function shuffle<T>(arr: T[]): T[] {
 }
 function pick<T>(arr: T[], n: number): T[] { return shuffle(arr).slice(0, n); }
 
-// ── Question Generator ────────────────────────────────────────────────────────
+// ── Question Generators ────────────────────────────────────────────────────────
 
-function generateQuestions(timeSec: number): Question[] {
+function makeMathQuestion(id: number, difficulty: number): Question {
+  let a: number, b: number, op: string, answer: number;
+  if (difficulty === 1) {
+    a = 2 + Math.floor(Math.random() * 8);
+    b = 1 + Math.floor(Math.random() * 7);
+    op = Math.random() > 0.5 ? "+" : "−";
+    if (op === "−" && b > a) [a, b] = [b, a];
+    answer = op === "+" ? a + b : a - b;
+  } else if (difficulty === 2) {
+    a = 5 + Math.floor(Math.random() * 16);
+    b = 2 + Math.floor(Math.random() * 9);
+    const ops2 = ["+", "−", "×"];
+    op = ops2[Math.floor(Math.random() * ops2.length)];
+    if (op === "×") { a = 2 + Math.floor(Math.random() * 8); b = 2 + Math.floor(Math.random() * 8); }
+    else if (op === "−" && b > a) [a, b] = [b, a];
+    answer = op === "+" ? a + b : op === "−" ? a - b : a * b;
+  } else {
+    a = 4 + Math.floor(Math.random() * 8);
+    b = 3 + Math.floor(Math.random() * 8);
+    op = Math.random() > 0.45 ? "×" : "+";
+    answer = op === "×" ? a * b : a + b;
+  }
+  const range = difficulty === 1 ? 4 : difficulty === 2 ? 6 : 12;
+  const wrongs = new Set<number>();
+  while (wrongs.size < 3) {
+    const off  = 1 + Math.floor(Math.random() * range);
+    const cand = Math.random() > 0.5 ? answer + off : Math.max(0, answer - off);
+    if (cand !== answer) wrongs.add(cand);
+  }
+  const opts: Option[] = shuffle([
+    { label: String(answer), isCorrect: true },
+    ...[...wrongs].map(w => ({ label: String(w), isCorrect: false })),
+  ]);
+  return {
+    id, type: "math_quick",
+    prompt: "Solve it!",
+    target: { label: `${a} ${op} ${b} = ?` },
+    options: opts,
+    timeLimit: difficulty === 1 ? 6 : difficulty === 2 ? 5 : 4,
+  };
+}
+
+function makeCulturalQuestion(id: number, difficulty: number, used: Set<number>): Question {
+  const easyPool = CULTURAL_BANK.map((c, i) => ({ c, i })).filter(({ c, i }) => !used.has(i) && !c.hard);
+  const hardPool = CULTURAL_BANK.map((c, i) => ({ c, i })).filter(({ c, i }) => !used.has(i) && !!c.hard);
+  const allPool  = CULTURAL_BANK.map((c, i) => ({ c, i })).filter(({ i }) => !used.has(i));
+  const src      = difficulty < 3 ? (easyPool.length ? easyPool : allPool) : (hardPool.length ? hardPool : allPool);
+  const chosen   = src[Math.floor(Math.random() * src.length)] ?? allPool[0];
+  used.add(chosen.i);
+  const opts: Option[] = shuffle([
+    { label: chosen.c.correct, isCorrect: true },
+    ...chosen.c.wrong.map(w => ({ label: w, isCorrect: false })),
+  ]);
+  return {
+    id, type: "cultural_mcq",
+    prompt: chosen.c.q,
+    options: opts,
+    timeLimit: difficulty === 1 ? 8 : 6,
+  };
+}
+
+function makeVisualPatternQuestion(id: number, difficulty: number): Question {
+  const shapePool = SHAPES.slice(0, 4);
+  const dominant  = shapePool[Math.floor(Math.random() * shapePool.length)];
+  const others    = shapePool.filter(s => s.name !== dominant.name);
+  const seqLen    = difficulty === 1 ? 6 : difficulty === 2 ? 8 : 10;
+  const domCount  = difficulty === 1 ? 3 : 4;
+  const seq: string[] = [];
+  for (let i = 0; i < domCount; i++)     seq.push(dominant.symbol);
+  for (let i = domCount; i < seqLen; i++) seq.push(others[i % others.length].symbol);
+  const opts: Option[] = shuffle([
+    { label: `${dominant.symbol} ${dominant.name}`, shape: dominant.name, isCorrect: true },
+    ...pick(others, 3).map(s => ({ label: `${s.symbol} ${s.name}`, shape: s.name, isCorrect: false })),
+  ]);
+  return {
+    id, type: "visual_pattern",
+    prompt: "Which shape appears most?",
+    sequence: shuffle(seq),
+    options: opts,
+    timeLimit: difficulty === 1 ? 7 : difficulty === 2 ? 6 : 5,
+  };
+}
+
+function makeOddOneOutQuestion(id: number, difficulty: number): Question {
+  const majority = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  const rest     = SHAPES.filter(s => s.name !== majority.name);
+  const odd      = rest[Math.floor(Math.random() * rest.length)];
+  const total    = difficulty === 1 ? 5 : difficulty === 2 ? 7 : 9;
+  const seq: string[] = [];
+  for (let i = 0; i < total - 1; i++) seq.push(majority.symbol);
+  seq.push(odd.symbol);
+  const distractors = pick(rest.filter(s => s.name !== odd.name), Math.min(3, rest.length - 1));
+  while (distractors.length < 3) distractors.push(rest[distractors.length % rest.length]);
+  const opts: Option[] = shuffle([
+    { label: `${odd.symbol} ${odd.name}`, shape: odd.name, isCorrect: true },
+    ...distractors.map(s => ({ label: `${s.symbol} ${s.name}`, shape: s.name, isCorrect: false })),
+  ]);
+  return {
+    id, type: "odd_one_out",
+    prompt: "Find the odd one out!",
+    sequence: shuffle(seq),
+    options: opts,
+    timeLimit: difficulty === 1 ? 6 : difficulty === 2 ? 5 : 4,
+  };
+}
+
+function makeSequenceNextQuestion(id: number, difficulty: number): Question {
+  const patternSets: string[][] = difficulty === 1
+    ? [["AB"], ["AB"]]
+    : difficulty === 2
+    ? [["AB"], ["AAB"], ["ABB"]]
+    : [["AABB"], ["ABC"], ["ABAB"]];
+  const pattern   = patternSets[Math.floor(Math.random() * patternSets.length)][0];
+  const letters   = [...new Set(pattern.split(""))];
+  const shapePool = pick(SHAPES, letters.length);
+  const map: Record<string, typeof SHAPES[0]> = {};
+  letters.forEach((l, i) => { map[l] = shapePool[i]; });
+  const fullSeq    = (pattern + pattern + pattern).split("").map(l => map[l].symbol);
+  const shownCount = difficulty === 1 ? 4 : 5;
+  const shown      = fullSeq.slice(0, shownCount);
+  const correct    = fullSeq[shownCount];
+  const correctShape = shapePool.find(s => s.symbol === correct) ?? shapePool[0];
+  const distractors  = pick(SHAPES.filter(s => s.symbol !== correct), 3);
+  const opts: Option[] = shuffle([
+    { label: `${correctShape.symbol} ${correctShape.name}`, shape: correctShape.name, isCorrect: true },
+    ...distractors.map(s => ({ label: `${s.symbol} ${s.name}`, shape: s.name, isCorrect: false })),
+  ]);
+  return {
+    id, type: "sequence_next",
+    prompt: "What comes next?",
+    sequence: [...shown, "?"],
+    options: opts,
+    timeLimit: difficulty === 1 ? 7 : difficulty === 2 ? 6 : 5,
+  };
+}
+
+function makeColorCountQuestion(id: number, difficulty: number): Question {
+  const numColors = difficulty === 1 ? 2 : difficulty === 2 ? 3 : 4;
+  const colorPool = pick(COLORS, numColors);
+  const dominant  = colorPool[0];
+  const domCount  = difficulty === 1 ? 5 : difficulty === 2 ? 4 : 3;
+  const totalDots = difficulty === 1 ? 8 : difficulty === 2 ? 10 : 12;
+  const items: string[] = [];
+  for (let i = 0; i < domCount; i++) items.push(dominant.hex);
+  const others = colorPool.slice(1);
+  for (let i = 0; i < totalDots - domCount; i++) items.push(others[i % others.length].hex);
+  const distractors = pick(COLORS.filter(c => c.name !== dominant.name), 3);
+  const opts: Option[] = shuffle([
+    { label: dominant.name, color: dominant.hex, isCorrect: true },
+    ...distractors.map(c => ({ label: c.name, color: c.hex, isCorrect: false })),
+  ]);
+  return {
+    id, type: "color_count",
+    prompt: "Which color appears most?",
+    items: shuffle(items),
+    options: opts,
+    timeLimit: difficulty === 1 ? 7 : difficulty === 2 ? 6 : 5,
+  };
+}
+
+function generateQuestions(): Question[] {
   const qs: Question[] = [];
-  const types: QType[] = ["color_match", "shape_match", "quick_pick"];
+  const allTypes: QType[] = ["color_match", "shape_match", "quick_pick", "math_quick", "cultural_mcq", "visual_pattern", "odd_one_out", "sequence_next", "color_count"];
+
+  const pool = [
+    ...shuffle([...allTypes]).slice(0, 4),
+    ...shuffle([...allTypes]).slice(0, 3),
+    ...shuffle([...allTypes]).slice(0, 3),
+  ];
+
+  const usedCultural = new Set<number>();
+
   for (let i = 0; i < TOTAL_QUESTIONS; i++) {
-    const type = types[i % types.length];
-    const timeLimit = timeSec;
+    const type       = pool[i];
+    const difficulty = i < 4 ? 1 : i < 7 ? 2 : 3;
+    const timeLimit  = 3 + Math.floor(Math.random() * 4);
 
     if (type === "color_match") {
       const correct = COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -89,7 +296,7 @@ function generateQuestions(timeSec: number): Question[] {
         ...wrong.map((s) => ({ label: s.symbol, shape: s.name, isCorrect: false })),
       ]);
       qs.push({ id: i, type, prompt: "Find the matching shape →", target: { shape: correct.name, label: correct.symbol }, options: opts, timeLimit });
-    } else {
+    } else if (type === "quick_pick") {
       const tc = COLORS[Math.floor(Math.random() * COLORS.length)];
       const ts = SHAPES[Math.floor(Math.random() * SHAPES.length)];
       const dc = pick(COLORS.filter((c) => c.name !== tc.name), 3);
@@ -101,9 +308,22 @@ function generateQuestions(timeSec: number): Question[] {
         { label: ds[2].symbol, color: dc[2].hex, isCorrect: false },
       ]);
       qs.push({ id: i, type, prompt: `Find the ${tc.name} ${ts.name} →`, target: { color: tc.hex, label: ts.symbol }, options: opts, timeLimit });
+    } else if (type === "math_quick") {
+      qs.push(makeMathQuestion(i, difficulty));
+    } else if (type === "cultural_mcq") {
+      qs.push(makeCulturalQuestion(i, difficulty, usedCultural));
+    } else if (type === "odd_one_out") {
+      qs.push(makeOddOneOutQuestion(i, difficulty));
+    } else if (type === "sequence_next") {
+      qs.push(makeSequenceNextQuestion(i, difficulty));
+    } else if (type === "color_count") {
+      qs.push(makeColorCountQuestion(i, difficulty));
+    } else {
+      qs.push(makeVisualPatternQuestion(i, difficulty));
     }
   }
-  return shuffle(qs);
+
+  return qs;
 }
 
 // ── Circular Timer ────────────────────────────────────────────────────────────
@@ -178,12 +398,10 @@ export default function Game() {
   const [, params] = useRoute<{ league: string }>("/game/:league");
   const league     = params?.league ?? "bronze";
   const meta       = LEAGUE_META[league] ?? LEAGUE_META.bronze;
-  const leagueCfg  = LEAGUES[league as LeagueId];
-  const timeForLeague = leagueCfg ? leagueCfg.challengeTimeout / 1000 : 4;
   const { user, authUser, isGuest, recordMatch } = useGame();
   const playerName = user?.username || authUser?.username || (isGuest ? "Champion" : "Player");
 
-  const [questions]   = useState<Question[]>(() => generateQuestions(timeForLeague));
+  const [questions]    = useState<Question[]>(() => generateQuestions());
   const [qIdx, setQIdx]       = useState(0);
   const [score, setScore]     = useState(0);
   const [combo, setCombo]     = useState(0);
@@ -362,7 +580,7 @@ export default function Game() {
               {q.prompt}
             </p>
 
-            {/* Target */}
+            {/* Target — color / shape / quick_pick / math */}
             {q.target && (
               <motion.div initial={{ scale: 0.65 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 320, damping: 18 }}>
                 {q.type === "color_match" && (
@@ -381,6 +599,64 @@ export default function Game() {
                     {q.target.label}
                   </div>
                 )}
+                {q.type === "math_quick" && (
+                  <div className="px-7 py-4 rounded-2xl flex items-center justify-center"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "2px solid rgba(255,255,255,0.18)", minWidth: "200px" }}>
+                    <span className="text-4xl font-black text-white tracking-wide tabular-nums">{q.target.label}</span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Target — visual pattern: most-repeated shape in sequence */}
+            {q.type === "visual_pattern" && q.sequence && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex flex-wrap justify-center gap-2 px-5 py-3 rounded-2xl max-w-[280px]"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.sequence.map((sym, idx) => (
+                  <span key={idx} className="text-3xl select-none leading-none">{sym}</span>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Target — odd one out: shuffled row of shapes */}
+            {q.type === "odd_one_out" && q.sequence && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex flex-wrap justify-center gap-2 px-5 py-3 rounded-2xl max-w-[300px]"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.sequence.map((sym, idx) => (
+                  <span key={idx} className="text-3xl select-none leading-none">{sym}</span>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Target — sequence next: pattern with ? at end */}
+            {q.type === "sequence_next" && q.sequence && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex items-center gap-3 flex-wrap justify-center px-5 py-3 rounded-2xl"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.sequence.map((sym, idx) => (
+                  sym === "?"
+                    ? <span key={idx} className="text-3xl font-black select-none leading-none"
+                        style={{ color: meta.color, textShadow: `0 0 16px ${meta.color}80` }}>?</span>
+                    : <span key={idx} className="text-3xl select-none leading-none">{sym}</span>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Target — color count: grid of colored dots */}
+            {q.type === "color_count" && q.items && (
+              <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 20 }}
+                className="flex flex-wrap gap-2 justify-center px-5 py-3 rounded-2xl max-w-[240px]"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                {q.items.map((hex, idx) => (
+                  <div key={idx} className="w-8 h-8 rounded-full shrink-0"
+                    style={{ background: hex, boxShadow: `0 0 8px ${hex}70` }} />
+                ))}
               </motion.div>
             )}
 
@@ -393,28 +669,61 @@ export default function Game() {
                 let borderC = "rgba(255,255,255,0.12)";
                 let bg      = "rgba(255,255,255,0.06)";
                 let shadow  = "none";
-                if (revealed && isCorrect)            { borderC = "#22c55e"; bg = "rgba(34,197,94,0.2)";  shadow = "0 0 20px rgba(34,197,94,0.4)"; }
+                if (revealed && isCorrect)             { borderC = "#22c55e"; bg = "rgba(34,197,94,0.2)";  shadow = "0 0 20px rgba(34,197,94,0.4)"; }
                 if (revealed && isChosen && !isCorrect){ borderC = "#ef4444"; bg = "rgba(239,68,68,0.2)";  shadow = "0 0 20px rgba(239,68,68,0.35)"; }
+                const labelColor = revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.75)";
                 return (
                   <motion.button key={i} onClick={() => handleAnswer(i)} disabled={chosen !== null}
                     whileTap={chosen === null ? { scale: 0.93 } : {}}
-                    className="h-[68px] rounded-2xl flex items-center justify-center gap-2.5 font-bold text-base transition-all"
+                    className="h-[68px] rounded-2xl flex items-center justify-center gap-2 font-bold text-base transition-all px-3"
                     style={{ background: bg, border: `2px solid ${borderC}`, boxShadow: shadow, cursor: chosen !== null ? "default" : "pointer" }}>
-                    {q.type === "color_match" && opt.color && (
-                      <div className="w-8 h-8 rounded-xl shrink-0" style={{ background: opt.color }} />
+
+                    {/* color_match: swatch + name */}
+                    {q.type === "color_match" && (
+                      <>
+                        {opt.color && <div className="w-7 h-7 rounded-lg shrink-0" style={{ background: opt.color }} />}
+                        <span className="text-sm" style={{ color: labelColor }}>{opt.label}</span>
+                      </>
                     )}
+
+                    {/* shape_match: large symbol + name */}
                     {q.type === "shape_match" && (
-                      <span className="text-3xl text-white">{opt.label}</span>
+                      <>
+                        <span className="text-3xl text-white">{opt.label}</span>
+                        <span className="text-xs" style={{ color: labelColor }}>{opt.shape}</span>
+                      </>
                     )}
+
+                    {/* quick_pick: colored symbol */}
                     {q.type === "quick_pick" && (
                       <span className="text-4xl" style={{ color: opt.color }}>{opt.label}</span>
                     )}
-                    {q.type !== "quick_pick" && (
-                      <span className="text-sm" style={{
-                        color: revealed && isCorrect ? "#4ade80" : revealed && isChosen ? "#f87171" : "rgba(255,255,255,0.75)" }}>
-                        {q.type === "color_match" ? opt.label : opt.shape}
+
+                    {/* math_quick / cultural_mcq: text only */}
+                    {(q.type === "math_quick" || q.type === "cultural_mcq") && (
+                      <span className="text-sm font-bold text-center leading-tight" style={{ color: labelColor }}>
+                        {opt.label}
                       </span>
                     )}
+
+                    {/* visual_pattern / odd_one_out / sequence_next: symbol + name */}
+                    {(q.type === "visual_pattern" || q.type === "odd_one_out" || q.type === "sequence_next") && (
+                      <>
+                        <span className="text-2xl leading-none">{opt.label.split(" ")[0]}</span>
+                        <span className="text-xs" style={{ color: labelColor }}>
+                          {opt.label.split(" ").slice(1).join(" ")}
+                        </span>
+                      </>
+                    )}
+
+                    {/* color_count: color dot + name */}
+                    {q.type === "color_count" && (
+                      <>
+                        {opt.color && <div className="w-6 h-6 rounded-full shrink-0" style={{ background: opt.color }} />}
+                        <span className="text-sm" style={{ color: labelColor }}>{opt.label}</span>
+                      </>
+                    )}
+
                   </motion.button>
                 );
               })}
