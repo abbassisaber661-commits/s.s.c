@@ -1,0 +1,24 @@
+{
+  "name": "SkillLeague - بطل المهارات",
+  "short_name": "SkillLeague",
+  "description": "تنافس، تطور، واثبت مهاراتك في أكبر منصة ألعاب مهارات",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f1a",
+  "theme_color": "#6366f1",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["games", "entertainment", "sports"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
