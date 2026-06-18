@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "e8fd6aa5-1437-4df9-9167-00172c1b9510",
+      "playerId": "test_oneleague",
+      "playerName": "OneLeagueTest",
+      "xp": 0,
+      "level": 1,
+      "streak": 0,
+      "bestStreak": 0,
+      "badges": [],
+      "arcadeCoins": 0,
+      "gems": 1,
+      "totalWins": 0,
+      "totalDraws": 0,
+      "totalLosses": 0,
+      "arcadePlays": 0,
+      "dailyClaimCount": 0,
+      "lastDailyAt": null,
+      "createdAt": "2026-06-09T15:51:41.218Z",
+      "updatedAt": "2026-06-09T15:51:58.886Z"
+    },
+    {
+      "id": "google_c2FiZXJAZ29v",
+      "playerId": "google_c2FiZXJAZ29v",
+      "playerName": "saber",
+      "xp": 0,
+      "level": 1,
+      "streak": 0,
+      "bestStreak": 0,
+      "badges": [],
+      "arcadeCoins": 0,
+      "gems": 0,
+      "totalWins": 0,
+      "totalDraws": 0,
+      "totalLosses": 0,
+      "arcadePlays": 0,
+      "dailyClaimCount": 0,
+      "lastDailyAt": null,
+      "createdAt": "2026-06-10T18:58:42.416Z",
+      "updatedAt": "2026-06-10T18:58:42.416Z"
+    }
+  ]
+}

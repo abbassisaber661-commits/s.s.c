@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "google_c2FiZXJAZ29v",
+      "playerId": "google_c2FiZXJAZ29v",
+      "playerName": "saber",
+      "xp": 0,
+      "level": 1,
+      "streak": 0,
+      "bestStreak": 0,
+      "badges": [],
+      "arcadeCoins": 0,
+      "gems": 2,
+      "totalWins": 0,
+      "totalDraws": 0,
+      "totalLosses": 0,
+      "arcadePlays": 0,
+      "dailyClaimCount": 0,
+      "lastDailyAt": null,
+      "createdAt": "2026-06-11T14:51:56.209Z",
+      "updatedAt": "2026-06-12T09:03:49.581Z"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+import { createServer } from "http";
+import app from "./app.js";
+import { setupSocketIO } from "./ws/socket-manager.js";
+import { logger } from "./lib/logger.js";
+import { runSeed, startDailyTournamentScheduler } from "./lib/seed.js";
+import { startBotSimulator } from "./lib/bot-simulator.js";
+import { initLeagueStore } from "./lib/league-store.js";
+import { startSeasonScheduler } from "./routes/league-system.js";
+
+const rawPort = process.env["PORT"];
+
+// Replit's artifact system injects PORT=8080; fallback to 8080 locally.
+const port = rawPort ? Number(rawPort) : 8080;
+
+if (Number.isNaN(port) || port <= 0) {
+  throw new Error(`Invalid PORT value: "${rawPort}"`);
+}
+
+const server = createServer(app);
+setupSocketIO(server);
+
+server.listen(port, "0.0.0.0", async () => {
+  logger.info({ port }, "Server listening (HTTP + WebSocket)");
+  await runSeed();
+  startDailyTournamentScheduler();
+  initLeagueStore();        // ensure leagues.json exists before bot-simulator reads it
+  startBotSimulator();      // bot match simulation + standings rounds
+  startSeasonScheduler();   // auto-advance expired seasons every hour
+});
+
+server.on("error", (err) => {
+  logger.error({ err }, "Server error");
+  process.exit(1);
+});
