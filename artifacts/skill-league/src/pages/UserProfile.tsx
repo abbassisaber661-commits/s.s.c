@@ -200,20 +200,19 @@ export default function UserProfile() {
         setIsFollowing(false);
         setFollowersCount(c => Math.max(0, c - 1));
       } else {
-  await api.followers.follow(targetPlayerId, myId);
-
-  await api.notifications.create({
-    playerId: targetPlayerId,
-    type: "follow",
-    title: "New follower",
-   body: "Someone started following you",
-  });
-
-  try {
-  setIsFollowing(true);
-  setFollowersCount(c => c + 1);
-} catch (error) {
-  console.error(error);
+        await api.followers.follow(targetPlayerId, myId);
+        await api.notifications.create({
+          playerId: targetPlayerId,
+          type: "follow",
+          title: "New follower",
+          body: "Someone started following you",
+        });
+        setIsFollowing(true);
+        setFollowersCount(c => c + 1);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const listItems: { id: string; username: string }[] = useMemo(() => {

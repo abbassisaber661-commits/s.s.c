@@ -539,7 +539,7 @@ function LeagueTop5Section({ top5 }: { top5: any[] }) {
 
             {/* Players list */}
             <div className="px-3 py-2 space-y-1">
-              {league.players.map((p) => {
+              {(league.players as { rank: number; name: string; score?: number; [k: string]: unknown }[]).map((p) => {
                 const medal = p.rank === 1 ? "🥇" : p.rank === 2 ? "🥈" : p.rank === 3 ? "🥉" : null;
                 return (
                   <div
@@ -569,7 +569,7 @@ function LeagueTop5Section({ top5 }: { top5: any[] }) {
                     {/* LP */}
                     <div className="text-right shrink-0">
                       <div className="text-[12px] font-black tabular-nums" style={{ color: league.color }}>
-                        {p.lp}
+                        {String(p.lp ?? "")}
                       </div>
                       <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>LP</div>
                     </div>

@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 
 import { GameProvider } from "@/contexts/GameContext";
-import { RealtimeProvider } from "@/contexts/RealtimeContext";
+import { RealtimeProvider } from "@/contexts/RealtimeProvider";
 import { useGame } from "@/contexts/GameContext";
 
 // Core Pages
@@ -18,7 +18,7 @@ import AuthScreen       from "@/pages/AuthScreen";
 import LeagueDashboard  from "@/pages/LeagueDashboard";
 
 // User System
-import Profile       from "@/pages/Profile";
+import Profile       from "@/pages/ProfilePage";
 import Leaderboard   from "@/pages/Leaderboard";
 import Store         from "@/pages/Store";
 import Wallet        from "@/pages/Wallet";

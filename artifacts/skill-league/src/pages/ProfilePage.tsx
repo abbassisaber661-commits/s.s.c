@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { useParams } from "react-router-dom";
-import toast from "react-hot-toast";
+import { useRoute } from "wouter";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ===== مكوناتنا =====
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
-import PostCard from "@/components/PostCard";
+import PostCard from "@/components/social/PostCard";
 import { PostModal } from "@/components/profile/PostModal";
 
 // ===== Hooks =====
@@ -14,14 +14,15 @@ import { useProfileData } from "@/hooks/useProfileData";
 import { useFollowUser } from "@/hooks/useFollowUser";
 
 // ===== أنواع =====
-import { Post } from "@/types/profile.types";
+import type { Post } from "@/types/profile";
 
 // ============================================================
 // المكون الرئيسي
 // ============================================================
 export default function ProfilePage() {
   // ===== المتغيرات =====
-  const { userId } = useParams<{ userId: string }>();
+  const [, routeParams] = useRoute("/profile/:userId");
+  const userId = routeParams?.userId;
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastPostRef = useRef<HTMLDivElement | null>(null);
 
@@ -40,18 +41,18 @@ export default function ProfilePage() {
   const handleFollowToggle = useCallback(() => {
     if (!profile) return;
     const action = profile.isFollowing ? "unfollow" : "follow";
-    followMutation.mutate({ action });
+    followMutation.mutate(action);
   }, [profile, followMutation]);
 
   // ===== دوال الهيدر =====
-  const handleAvatarClick = () => toast.info("📷 تغيير الصورة الشخصية");
-  const handleCoverClick = () => toast.info("🖼️ تغيير صورة الغلاف");
-  const handleEditProfile = () => toast.success("✏️ توجيه إلى صفحة التعديل");
-  const handleShare = () => toast.success("✅ تم نسخ الرابط");
+  const handleAvatarClick = () => toast("📷 تغيير الصورة الشخصية");
+  const handleCoverClick = () => toast("🖼️ تغيير صورة الغلاف");
+  const handleEditProfile = () => toast("✏️ توجيه إلى صفحة التعديل");
+  const handleShare = () => toast("✅ تم نسخ الرابط");
 
   // ===== دوال البوستات =====
-  const handleLikeChange = useCallback((postId: string, newLikes: number) => {
-    console.log(`📌 Post ${postId} likes: ${newLikes}`);
+  const handleLikeChange = useCallback((postId: string, _liked: boolean) => {
+    console.log(`📌 Post ${postId} liked`);
   }, []);
 
   const handleCommentCountChange = useCallback((postId: string, newCount: number) => {
@@ -127,14 +128,14 @@ export default function ProfilePage() {
             transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
           >
             <PostCard
-              post={post}
-              commentCount={post.comments || 0}
+              post={post as any}
+              index={index}
+              commentCount={(post as any).comments || 0}
               currentUser={profile?.username || "مستخدم"}
-              currentLevel={profile?.level}
+              currentLevel={profile?.level ?? 1}
               currentPlayerId={safePlayerId}
               onLikeChange={handleLikeChange}
               onCommentCountChange={handleCommentCountChange}
-              onPostClick={handlePostClick}
             />
           </motion.div>
         </div>
@@ -192,7 +193,7 @@ export default function ProfilePage() {
       {/* ===== رأس البروفايل ===== */}
       <ProfileHeader
         username={profile.username}
-        avatar={profile.avatar}
+        avatar={profile.avatar ?? ""}
         cover={profile.cover}
         bio={profile.bio}
         postsCount={profile.postsCount}

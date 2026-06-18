@@ -12,6 +12,10 @@ interface ProfileTabsProps {
   tabs?: ContentTab[];
   /** كلاس إضافي للتخصيص */
   className?: string;
+  /** عدادات اختيارية للأقسام (يُعرض كـ badge) */
+  postsCount?: number;
+  reelsCount?: number;
+  savedCount?: number;
 }
 
 export default function ProfileTabs({

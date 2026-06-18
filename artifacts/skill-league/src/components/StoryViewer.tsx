@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
-import StoryReactions from "./Story/StoryReactions";
+import StoryReactions from "@/components/social/StoryReactions";
 import { viewStoryAsync, getStoryAsync, Story } from "@/lib/stories";
-import { useAuth } from "@/contexts/GameContext";
+import { useGame } from "@/contexts/GameContext";
 import { io } from "socket.io-client";
 
 interface StoryViewerProps {
@@ -50,7 +50,7 @@ export default function StoryViewer({
   onClose,
   onStoryEnd,
 }: StoryViewerProps) {
-  const { authUser } = useAuth();
+  const { authUser } = useGame();
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [progress, setProgress] = useState(0);
@@ -256,7 +256,7 @@ export default function StoryViewer({
       id: `temp_${Date.now()}`,
       userId: authUser.uid,
       userName:
-        authUser.displayName ||
+        (authUser as any).displayName ||
         authUser.email?.split("@")[0] ||
         "مستخدم",
       text: replyText.trim(),
@@ -283,7 +283,7 @@ export default function StoryViewer({
           body: JSON.stringify({
             userId: authUser.uid,
             userName:
-              authUser.displayName ||
+              (authUser as any).displayName ||
               authUser.email?.split("@")[0] ||
               "مستخدم",
             text: originalText,
@@ -536,7 +536,7 @@ export default function StoryViewer({
         <StoryReactions
           storyId={story.id}
           initialLikes={reactionCount}
-          initialReactions={story.reactions}
+          initialReactions={story.reactions as any}
           onLikeChange={() => {}}
           onReply={() => setShowReplyBox(true)}
         />

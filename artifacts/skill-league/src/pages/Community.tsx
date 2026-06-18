@@ -7,7 +7,7 @@ import { useRealtime } from "@/contexts/RealtimeContext";
 import { getSocket } from "@/lib/socket";
 import GuestBanner from "@/components/GuestBanner";
 
-import ProfileBar from "@/components/social/ProfileBar";
+import ProfileBar from "@/components/profile/ProfileBar";
 import CreatePost from "@/components/social/CreatePost";
 import FeaturedPlayers from "@/components/social/FeaturedPlayers";
 import PostCard from "@/components/social/PostCard";
@@ -130,8 +130,10 @@ export default function Community() {
     });
   }
 
-  function handleLikeChange(updatedPosts: CommunityPost[]) {
-    setPosts(updatedPosts);
+  function handleLikeChange(postId: string, liked: boolean) {
+    setPosts(prev => prev.map(p =>
+      p.id === postId ? { ...p, likedByMe: liked, likes: liked ? p.likes + 1 : Math.max(0, p.likes - 1) } : p
+    ));
   }
 
   function handleCommentCountChange(postId: string, delta: number) {

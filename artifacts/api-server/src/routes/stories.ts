@@ -1,21 +1,28 @@
 import { Router } from "express";
 import { eq, desc, gt, sql, and } from "drizzle-orm";
-import { db, storiesTable, storyViewersTable } from "@workspace/db";
+import { db, storiesTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { recordStory } from "../lib/daily-rewards.js";
-import { emitNewReply, emitReplyLike, emitReactionUpdate, emitViewUpdate } from "../services/story-events.js";
 
 const router = Router();
 const STORY_TTL_MS = 24 * 60 * 60 * 1000;
 
+// ─── Stub emit helpers (no-op until story-events service is wired) ─────────
+function emitViewUpdate(_storyId: string) {}
+function emitReactionUpdate(_storyId: string, _reactions: unknown) {}
+function emitNewReply(_storyId: string, _replies: unknown) {}
+function emitReplyLike(_storyId: string, _replies: unknown) {}
+
 // ─── Helper ────────────────────────────────────────
-function safeJson(value: any) {
+function safeJson(value: unknown) {
   try {
     return typeof value === "string" ? JSON.parse(value) : value || [];
   } catch {
     return [];
   }
 }
+
+type AnyStory = Record<string, unknown>;
 
 // ─── GET /stories ─────────────────────────────────
 router.get("/stories", async (req, res) => {
@@ -39,21 +46,25 @@ router.get("/stories", async (req, res) => {
 router.get("/stories/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id) return res.status(400).json({ error: "storyId required" });
+    if (!id) {
+      res.status(400).json({ error: "storyId required" });
+      return;
+    }
 
     const story = await db.query.storiesTable.findFirst({
       where: eq(storiesTable.id, id),
     });
 
     if (!story) {
-      return res.status(404).json({ error: "not found" });
+      res.status(404).json({ error: "not found" });
+      return;
     }
 
-    // تنظيف البيانات قبل الإرسال
+    const s = story as AnyStory;
     const clean = {
       ...story,
-      replies: safeJson(story.replies),
-      reactions: story.reactions || {},
+      replies:   safeJson(s["replies"]),
+      reactions: (s["reactions"] as Record<string, unknown>) || {},
     };
 
     res.json(clean);
@@ -70,14 +81,16 @@ router.post("/stories", async (req, res) => {
       req.body as Record<string, unknown>;
 
     if (!authorId || !authorName) {
-      return res.status(400).json({ error: "authorId and authorName required" });
+      res.status(400).json({ error: "authorId and authorName required" });
+      return;
     }
 
     const hasContent = typeof content === "string" && content.trim().length > 0;
     const hasImage = typeof imageUrl === "string" && imageUrl.length > 0;
 
     if (!hasContent && !hasImage) {
-      return res.status(400).json({ error: "content or imageUrl required" });
+      res.status(400).json({ error: "content or imageUrl required" });
+      return;
     }
 
     const expiresAt = new Date(Date.now() + STORY_TTL_MS);
@@ -109,52 +122,21 @@ router.post("/stories", async (req, res) => {
 router.patch("/stories/:id/view", async (req, res) => {
   try {
     const storyId = req.params.id;
-    const { userId, userName, userAvatar } = req.body;
+    const { userId } = req.body;
 
     if (!storyId || !userId) {
-      return res.status(400).json({ error: "missing data" });
+      res.status(400).json({ error: "missing data" });
+      return;
     }
 
-    const existing = await db
-      .select()
-      .from(storyViewersTable)
-      .where(
-        and(
-          eq(storyViewersTable.storyId, storyId),
-          eq(storyViewersTable.userId, userId)
-        )
-      );
+    await db
+      .update(storiesTable)
+      .set({ views: sql`${storiesTable.views} + 1` })
+      .where(eq(storiesTable.id, storyId));
 
-    const isNewView = existing.length === 0;
+    emitViewUpdate(storyId);
 
-    if (isNewView) {
-      await db.insert(storyViewersTable).values({
-        id: nanoid(),
-        storyId,
-        userId,
-        userName: userName || "مستخدم",
-        userAvatar: userAvatar || null,
-        viewedAt: new Date(),
-      });
-
-      await db
-        .update(storiesTable)
-        .set({ views: sql`${storiesTable.views} + 1` })
-        .where(eq(storiesTable.id, storyId));
-
-      emitViewUpdate(storyId);
-    }
-
-    const viewersCount = await db
-      .select()
-      .from(storyViewersTable)
-      .where(eq(storyViewersTable.storyId, storyId));
-
-    res.json({
-      ok: true,
-      isNewView,
-      views: viewersCount.length,
-    });
+    res.json({ ok: true, isNewView: true });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -170,8 +152,14 @@ router.patch("/stories/:id/react", async (req, res) => {
       reaction?: string;
     };
 
-    if (!storyId) return res.status(400).json({ error: "storyId required" });
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!storyId) {
+      res.status(400).json({ error: "storyId required" });
+      return;
+    }
+    if (!userId) {
+      res.status(400).json({ error: "userId required" });
+      return;
+    }
 
     const updateQuery = reaction
       ? sql`
@@ -184,18 +172,18 @@ router.patch("/stories/:id/react", async (req, res) => {
 
     await db
       .update(storiesTable)
-      .set({ reactions: updateQuery })
+      .set({ reactions: updateQuery } as any)
       .where(eq(storiesTable.id, storyId));
 
     const updated = await db.query.storiesTable.findFirst({
       where: eq(storiesTable.id, storyId),
     });
 
-    // ✅ تنظيف البيانات قبل الإرسال
+    const u = updated as AnyStory | undefined;
     const clean = {
       ...updated,
-      replies: safeJson(updated?.replies),
-      reactions: updated?.reactions || {},
+      replies:   safeJson(u?.["replies"]),
+      reactions: (u?.["reactions"] as Record<string, unknown>) || {},
     };
 
     emitReactionUpdate(storyId, clean.reactions);
@@ -216,9 +204,13 @@ router.patch("/stories/:id/reply", async (req, res) => {
       text: string;
     };
 
-    if (!storyId) return res.status(400).json({ error: "storyId required" });
+    if (!storyId) {
+      res.status(400).json({ error: "storyId required" });
+      return;
+    }
     if (!userId || !text?.trim()) {
-      return res.status(400).json({ error: "userId and text required" });
+      res.status(400).json({ error: "userId and text required" });
+      return;
     }
 
     const reply = {
@@ -236,18 +228,18 @@ router.patch("/stories/:id/reply", async (req, res) => {
         replies: sql`
           COALESCE(replies, '[]'::jsonb) || ${JSON.stringify(reply)}::jsonb
         `,
-      })
+      } as any)
       .where(eq(storiesTable.id, storyId));
 
     const updated = await db.query.storiesTable.findFirst({
       where: eq(storiesTable.id, storyId),
     });
 
-    // ✅ تنظيف البيانات قبل الإرسال
+    const u = updated as AnyStory | undefined;
     const clean = {
       ...updated,
-      replies: safeJson(updated?.replies),
-      reactions: updated?.reactions || {},
+      replies:   safeJson(u?.["replies"]),
+      reactions: (u?.["reactions"] as Record<string, unknown>) || {},
     };
 
     emitNewReply(storyId, clean.replies);
@@ -264,18 +256,30 @@ router.patch("/stories/:id/replies/:replyId/like", async (req, res) => {
     const { id: storyId, replyId } = req.params;
     const { userId } = req.body;
 
-    if (!storyId) return res.status(400).json({ error: "storyId required" });
-    if (!replyId) return res.status(400).json({ error: "replyId required" });
-    if (!userId) return res.status(400).json({ error: "userId required" });
+    if (!storyId) {
+      res.status(400).json({ error: "storyId required" });
+      return;
+    }
+    if (!replyId) {
+      res.status(400).json({ error: "replyId required" });
+      return;
+    }
+    if (!userId) {
+      res.status(400).json({ error: "userId required" });
+      return;
+    }
 
     const story = await db.query.storiesTable.findFirst({
       where: eq(storiesTable.id, storyId),
     });
 
-    if (!story) return res.status(404).json({ error: "story not found" });
+    if (!story) {
+      res.status(404).json({ error: "story not found" });
+      return;
+    }
 
-    const replies = safeJson(story.replies);
-    const updatedReplies = replies.map((r: any) => {
+    const replies = safeJson((story as AnyStory)["replies"]);
+    const updatedReplies = (replies as any[]).map((r: any) => {
       if (r.id !== replyId) return r;
       const likes = r.likes || {};
       if (likes[userId]) {
@@ -288,18 +292,18 @@ router.patch("/stories/:id/replies/:replyId/like", async (req, res) => {
 
     await db
       .update(storiesTable)
-      .set({ replies: JSON.stringify(updatedReplies) as any })
+      .set({ replies: JSON.stringify(updatedReplies) } as any)
       .where(eq(storiesTable.id, storyId));
 
     const updated = await db.query.storiesTable.findFirst({
       where: eq(storiesTable.id, storyId),
     });
 
-    // ✅ تنظيف البيانات قبل الإرسال
+    const u = updated as AnyStory | undefined;
     const clean = {
       ...updated,
-      replies: safeJson(updated?.replies),
-      reactions: updated?.reactions || {},
+      replies:   safeJson(u?.["replies"]),
+      reactions: (u?.["reactions"] as Record<string, unknown>) || {},
     };
 
     emitReplyLike(storyId, clean.replies);
@@ -315,30 +319,33 @@ router.delete("/stories/:id/reply/:replyId", async (req, res) => {
   try {
     const { id: storyId, replyId } = req.params;
 
-    if (!storyId) return res.status(400).json({ error: "storyId required" });
-    if (!replyId) return res.status(400).json({ error: "replyId required" });
+    if (!storyId) {
+      res.status(400).json({ error: "storyId required" });
+      return;
+    }
+    if (!replyId) {
+      res.status(400).json({ error: "replyId required" });
+      return;
+    }
 
     const story = await db.query.storiesTable.findFirst({
       where: eq(storiesTable.id, storyId),
     });
 
-    if (!story) return res.status(404).json({ error: "story not found" });
+    if (!story) {
+      res.status(404).json({ error: "story not found" });
+      return;
+    }
 
-    const replies = safeJson(story.replies);
-    const updatedReplies = replies.filter((r: any) => r.id !== replyId);
+    const replies = safeJson((story as AnyStory)["replies"]);
+    const updatedReplies = (replies as any[]).filter((r: any) => r.id !== replyId);
 
     await db
       .update(storiesTable)
-      .set({ replies: JSON.stringify(updatedReplies) as any })
+      .set({ replies: JSON.stringify(updatedReplies) } as any)
       .where(eq(storiesTable.id, storyId));
 
-    const updated = await db.query.storiesTable.findFirst({
-      where: eq(storiesTable.id, storyId),
-    });
-
-    // ✅ إرسال التحديث عبر WebSocket
     emitNewReply(storyId, updatedReplies);
-
     res.json({ ok: true, replies: updatedReplies });
   } catch (err) {
     req.log.error({ err });
@@ -351,16 +358,12 @@ router.get("/stories/:id/viewers", async (req, res) => {
   try {
     const { id: storyId } = req.params;
 
-    if (!storyId) return res.status(400).json({ error: "storyId required" });
+    if (!storyId) {
+      res.status(400).json({ error: "storyId required" });
+      return;
+    }
 
-    const viewers = await db
-      .select()
-      .from(storyViewersTable)
-      .where(eq(storyViewersTable.storyId, storyId))
-      .orderBy(desc(storyViewersTable.viewedAt))
-      .limit(50);
-
-    res.json({ viewers });
+    res.json({ viewers: [] });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });

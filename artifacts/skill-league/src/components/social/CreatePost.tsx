@@ -51,10 +51,9 @@ export default function CreatePost({ onPost, username, onAvatarClick }: CreatePo
 
   // ✅ تحسين: إعادة تعيين حالة "تم النشر" تلقائياً مع تنظيف المؤقت
   useEffect(() => {
-    if (posted) {
-      const timer = setTimeout(() => setPosted(false), 3000);
-      return () => clearTimeout(timer);
-    }
+    if (!posted) return;
+    const timer = setTimeout(() => setPosted(false), 3000);
+    return () => clearTimeout(timer);
   }, [posted]);
 
   async function handleImagePick(e: React.ChangeEvent<HTMLInputElement>) {

@@ -5,7 +5,6 @@ import React, {
   useCallback,
   useRef,
   memo,
-  unstable_batchedUpdates,
   useLayoutEffect,
   useReducer,
 } from "react";
@@ -25,7 +24,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useRealtime } from "@/contexts/RealtimeContext";
-import { useChat } from "@/contexts/ChatContext";
+// ChatContext removed — not available in this build
 import { Button } from "@/components/ui/button";
 import { getDailyChallenges, todayString } from "@/lib/challenges";
 import { getWeeklyMissions, getWeekString } from "@/lib/weekly-challenges";
@@ -34,8 +33,7 @@ import { getNotifications, unreadCount } from "@/lib/messages";
 import { motion } from "framer-motion";
 import { getCurrentSeason, getSeasonTier } from "@/lib/seasons";
 import StoryFeed from "@/components/StoryFeed";
-import CreatePost from "@/components/CreatePost";
-import debounce from "lodash/debounce";
+import CreatePost from "@/components/social/CreatePost";
 import { toast } from "sonner";
 
 /* ─── Types ─── */
@@ -256,7 +254,7 @@ const PostItem = memo(({ post, comments, onReaction, onComment }: any) => {
       <p>{post.content}</p>
 
       <button onClick={() => onReaction(post.id, "like")}>
-        👍 {Object.values(post.reactions || {}).reduce((a, b) => a + b, 0)}
+        👍 {(Object.values(post.reactions || {}).reduce((a: number, b: unknown) => a + (b as number), 0) as number)}
       </button>
 
       {grouped.map((c: Comment) => (

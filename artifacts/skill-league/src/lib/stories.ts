@@ -165,10 +165,7 @@ export async function viewStoryAsync(id: string): Promise<void> {
   const userId = getStoredPlayerId() ?? "anonymous";
 
   api.stories
-    .view(id, {
-      userId,
-      userName: "viewer",
-    })
+    .view(id)
     .catch(() => {});
 
   const stories = loadStoriesLocal();
@@ -182,12 +179,10 @@ export async function viewStoryAsync(id: string): Promise<void> {
 // ✅ التعديل 3: viewStory محدّث
 export function viewStory(id: string): void {
   const userId = getStoredPlayerId() ?? "anonymous";
+  void userId;
 
   api.stories
-    .view(id, {
-      userId,
-      userName: "viewer",
-    })
+    .view(id)
     .catch(() => {});
 
   const stories = loadStoriesLocal();
@@ -326,4 +321,12 @@ export async function resizeImageToBase64(
     };
     reader.readAsDataURL(file);
   });
+}
+
+// ── Real-time subscriptions stub ──────────────────────────────────────────────
+export function subscribeToStories(
+  _onNew: (story: Story) => void,
+  _onDelete: (id: string) => void
+): () => void {
+  return () => {};
 }

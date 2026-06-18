@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Image, Smile, Send, Loader2 } from "lucide-react";
 import { addStoryAsync, resizeImageToBase64 } from "@/lib/stories";
-import { useAuth } from "@/contexts/GameContext";
+import { useGame } from "@/contexts/GameContext";
 
 interface StoryModalProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ interface StoryModalProps {
 const EMOJI_LIST = ["⚡", "🔥", "💪", "🎯", "🧠", "🌟", "😎", "🎮", "🚀", "💯", "🏆", "👑"];
 
 export default function StoryModal({ isOpen, onClose, onSuccess }: StoryModalProps) {
-  const { authUser } = useAuth();
+  const { authUser } = useGame();
 
   const [content, setContent] = useState("");
   const [selectedEmoji, setSelectedEmoji] = useState("⚡");
@@ -83,8 +83,8 @@ export default function StoryModal({ isOpen, onClose, onSuccess }: StoryModalPro
     setLoading(true);
 
     try {
-      const authorName = authUser.displayName || authUser.email?.split("@")[0] || "مستخدم";
-      const authorLevel = authUser.level || 1;
+      const authorName = (authUser as any).displayName || authUser.email?.split("@")[0] || "مستخدم";
+      const authorLevel = (authUser as any).level || 1;
 
       await addStoryAsync(
         authorName,

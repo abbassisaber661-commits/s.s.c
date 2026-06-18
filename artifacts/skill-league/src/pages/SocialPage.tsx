@@ -21,6 +21,7 @@ import {
   type CommunityPost, type PostType,
 } from "@/lib/community";
 import { checkPostSpam } from "@/lib/anti-cheat";
+import { useFeed } from "@/hooks/social/useFeed";
 import { getCommentCounts } from "@/lib/comments";
 import { seedPostMeta } from "@/lib/postMeta";
 
@@ -76,7 +77,7 @@ export default function SocialPage() {
   const usernameRef = useRef(username);
   useEffect(() => { usernameRef.current = username; }, [username]);
 
-  const { posts, loading, reload } = useFeed();
+  const { posts, setPosts, loading, reload } = useFeed();
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [liveFlash, setLiveFlash]         = useState(false);
   const [trendingHashtags, setTrendingHashtags] = useState<{ tag: string; postCount: number }[]>([]);
@@ -180,9 +181,9 @@ export default function SocialPage() {
     // Send a placeholder imageUrl for socket (skip raw base64 to keep payload small)
     getSocket().emit("community:post", {
       authorId, username, level,
-      content: post.content,
+      content: withImage.content,
       imageUrl: hasImage ? "[image]" : null,
-      type: post.type,
+      type: withImage.type,
     });
 
     setTimeout(() => {
@@ -329,7 +330,9 @@ export default function SocialPage() {
                 <HashtagPill
                   key={h.tag}
                   tag={h.tag}
-                  count={huseState
+                  count={h.postCount}
+                  onClick={() => navigate(`/hashtag/${encodeURIComponent(h.tag.replace(/^#/, ""))}`)}
+                />
               ))}
             </div>
           </section>

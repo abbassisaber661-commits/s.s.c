@@ -43,14 +43,14 @@ export default function StoryBar() {
   // ── الاشتراك في الستوريات الجديدة/المحذوفة (Real-time) ──
   useEffect(() => {
     const unsubscribe = subscribeToStories(
-      (newStory) => {
+      (newStory: Story) => {
         setStories((prev) => {
           // منع التكرار
           if (prev.some((s) => s.id === newStory.id)) return prev;
           return [newStory, ...prev];
         });
       },
-      (deletedId) => {
+      (deletedId: string) => {
         setStories((prev) => prev.filter((s) => s.id !== deletedId));
       }
     );

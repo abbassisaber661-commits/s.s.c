@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Heart, Laugh, ThumbsUp, Angry, AlertCircle, MessageCircle } from "lucide-react";
-import { useAuth } from "@/contexts/GameContext";
+import { useGame } from "@/contexts/GameContext";
 
 type ReactionType = "like" | "love" | "haha" | "wow" | "angry";
 
@@ -29,7 +29,7 @@ export default function StoryReactions({
   onLikeChange,
   onReply,
 }: Props) {
-  const { authUser } = useAuth();
+  const { authUser } = useGame();
 
   const [count, setCount] = useState(initialLikes);
   const [selected, setSelected] = useState<ReactionType | null>(null);

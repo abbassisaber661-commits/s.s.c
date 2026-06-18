@@ -167,7 +167,7 @@ export default function DailyRewards() {
     if (!playerId) { setLoading(false); return; }
     try {
       const data = await api.daily.status(playerId);
-      setStatus(data);
+      setStatus(data as unknown as DailyStatus);
     } catch {
       // silent — show cached state
     } finally {

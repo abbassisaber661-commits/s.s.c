@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from "react";
+import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, MessageCircle, Bookmark, BookmarkCheck, Send, Eye, Repeat2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -129,7 +130,7 @@ export default function PostCard({
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState("");
-  const [views, setViews] = useState(() => post.views ?? getPostMeta(post.id).views);
+  const [views, setViews] = useState(() => getPostMeta(post.id).views);
   const [shares, setShares] = useState(() => getPostMeta(post.id).shares);
   const [submittingComment, setSubmittingComment] = useState(false);
 
@@ -166,8 +167,8 @@ export default function PostCard({
 
             try {
               if (currentPlayerId) {
-                const result = await api.community.view(post.id, currentPlayerId);
-                const viewCount = result?.views ?? result?.data?.views ?? 0;
+                const result = await (api.community as any).view?.(post.id, currentPlayerId);
+                const viewCount = (result as any)?.views ?? (result as any)?.data?.views ?? 0;
                 if (viewCount > 0) setViews(viewCount);
                 else {
                   const meta = incrementView(post.id);
@@ -440,7 +441,7 @@ export default function PostCard({
                   {post.authorName}
                 </span>
                 <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                  {post.time ?? getPostAge(post.timestamp)}
+                  {getPostAge(post.timestamp)}
                 </span>
               </div>
             </button>
@@ -499,7 +500,7 @@ export default function PostCard({
         )}
 
         {/* ── أزرار التفاعل ── */}
-        {!post.videoUrl && (
+        {!(post as any).videoUrl && (
           <div className="flex items-center gap-1 pt-2 border-t border-gray-200 dark:border-gray-700">
             <motion.button
               onClick={handleHeart}

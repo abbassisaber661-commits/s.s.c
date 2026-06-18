@@ -393,7 +393,7 @@ router.get("/social/analytics", async (req, res) => {
     const [postsTotal]    = await db.select({ cnt: count() }).from(postsTable);
     const [commentsTotal] = await db.select({ cnt: count() }).from(postCommentsTable);
     const [likesTotal]    = await db.select({ cnt: count() }).from(postLikesTable);
-    const [storiesTotal]  = await db.select({ cnt: sql<number>`0` }); // stories are client-side
+    const storiesTotal  = { cnt: 0 }; // stories are client-side
 
     const [posts24h]   = await db.select({ cnt: count() }).from(postsTable).where(gte(postsTable.createdAt, since24h));
     const [players24h] = await db

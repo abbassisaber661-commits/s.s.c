@@ -1,5 +1,6 @@
 import { createServer } from "http";
 import app from "./app.js";
+import profileRoutes from "./routes/profile.js";
 import { setupSocketIO } from "./ws/socket-manager.js";
 import { logger } from "./lib/logger.js";
 import { runSeed, startDailyTournamentScheduler } from "./lib/seed.js";
@@ -19,13 +20,18 @@ if (Number.isNaN(port) || port <= 0) {
 const server = createServer(app);
 setupSocketIO(server);
 
+// ===============================
+// 🟢 API Routes
+// ===============================
+app.use("/profile", profileRoutes);
+
 server.listen(port, "0.0.0.0", async () => {
   logger.info({ port }, "Server listening (HTTP + WebSocket)");
   await runSeed();
   startDailyTournamentScheduler();
-  initLeagueStore();        // ensure leagues.json exists before bot-simulator reads it
-  startBotSimulator();      // bot match simulation + standings rounds
-  startSeasonScheduler();   // auto-advance expired seasons every hour
+  initLeagueStore();
+  startBotSimulator();
+  startSeasonScheduler();
 });
 
 server.on("error", (err) => {
