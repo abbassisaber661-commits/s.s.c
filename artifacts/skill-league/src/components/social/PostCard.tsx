@@ -15,6 +15,7 @@ import { getPostMeta, incrementView, incrementShare } from "@/lib/postMeta";
 import Avatar from "@/components/Avatar";
 import { api } from "@/lib/apiClient";
 import { getSocket } from "@/lib/socket";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ==================================================
 // Types
@@ -72,6 +73,7 @@ const RichContent = memo(({ content, onHashtag }: any) => {
 // Friend Button (memo)
 // ==================================================
 const FriendButton = memo(({ me, them }: any) => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<FriendStatus>(() => getFriendStatus(me, them));
 
   if (!me || me === them) return null;
@@ -81,23 +83,23 @@ const FriendButton = memo(({ me, them }: any) => {
       if (status === "none") {
         await sendFriendRequest(me, them);
         setStatus("pending_sent");
-        toast.success("تم إرسال طلب الصداقة");
+        toast.success(t('postCard.friendRequestSent'));
       } else if (status === "friends") {
         await unfriend(me, them);
         setStatus("none");
-        toast.success("تم حذف الصديق");
+        toast.success(t('postCard.friendRemoved'));
       }
     } catch {
-      toast.error("حدث خطأ");
+      toast.error(t('postCard.friendError'));
     }
   };
 
   const label =
     status === "none"
-      ? "+ صديق"
+      ? t('postCard.friendAdd')
       : status === "pending_sent"
-      ? "⏳"
-      : "✔";
+      ? t('postCard.friendPending')
+      : t('postCard.friendAdded');
 
   return (
     <button onClick={handle} className="text-xs px-2 py-1 rounded bg-blue-600 text-white">
@@ -119,6 +121,7 @@ export default function PostCard({
   onCommentCountChange,
   index,
 }: PostCardProps) {
+  const { t } = useTranslation();
   const [, navigate] = useLocation();
   const postRef = useRef<HTMLDivElement>(null);
   const socket = getSocket();
@@ -175,7 +178,7 @@ export default function PostCard({
   // ================= LIKE =================
   const handleLike = useCallback(async () => {
     if (!currentPlayerId) {
-      toast.error("سجل الدخول");
+      toast.error(t('postCard.loginRequired'));
       return;
     }
 
@@ -189,9 +192,9 @@ export default function PostCard({
       await api.community.like(post.id, currentPlayerId);
       socket.emit("community:like", { postId: post.id, liked: newLiked });
     } catch {
-      toast.error("فشل اللايك");
+      toast.error(t('postCard.likeFailed'));
     }
-  }, [liked, currentPlayerId]);
+  }, [liked, currentPlayerId, post.id, onLikeChange, socket, t]);
 
   // ================= SHARE =================
   const handleShare = useCallback(async () => {
@@ -201,12 +204,12 @@ export default function PostCard({
       await navigator.share({ title: "Post", url });
     } else {
       await navigator.clipboard.writeText(url);
-      toast.success("Copied");
+      toast.success(t('postCard.copied'));
     }
 
     const meta = incrementShare(post.id);
     setShares(meta.shares);
-  }, [post.id]);
+  }, [post.id, t]);
 
   // ================= COMMENT =================
   const handleAddComment = useCallback(async () => {
@@ -237,7 +240,7 @@ export default function PostCard({
       setComments((prev) =>
         prev.map((c) =>
           c.id === temp.id
-            ? { ...c, id: res.id, timestamp: Date.now() }
+            ? { ...c, id: (res as any)?.id ?? c.id, timestamp: Date.now() }
             : c
         )
       );
@@ -247,9 +250,9 @@ export default function PostCard({
         comment: { username: currentUser, content: text },
       });
     } catch {
-      toast.error("فشل التعليق");
+      toast.error(t('postCard.commentFailed'));
     }
-  }, [draft]);
+  }, [draft, post.id, currentUser, currentLevel, currentPlayerId, onCommentCountChange, socket, t]);
 
   // ================= RENDER =================
   const league = getSocialLeague(post.authorLevel);
@@ -279,12 +282,18 @@ export default function PostCard({
 
       {/* ACTIONS */}
       <div className="flex justify-between text-sm">
-        <button onClick={handleLike}>❤️ {likeCount}</button>
-        <button onClick={() => setExpanded((v) => !v)}>
+        <button onClick={handleLike} className="flex items-center gap-1">
+          ❤️ {likeCount}
+        </button>
+        <button onClick={() => setExpanded((v) => !v)} className="flex items-center gap-1">
           💬 {commentCount}
         </button>
-        <button onClick={handleShare}>🔁 {shares}</button>
-        <span>👁 {views}</span>
+        <button onClick={handleShare} className="flex items-center gap-1">
+          🔁 {shares}
+        </button>
+        <span className="flex items-center gap-1">
+          👁 {views}
+        </span>
       </div>
 
       {/* COMMENTS */}
@@ -302,8 +311,11 @@ export default function PostCard({
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 className="flex-1 border px-2 py-1 text-xs"
+                placeholder={t('postCard.commentPlaceholder')}
               />
-              <button onClick={handleAddComment}>Send</button>
+              <button onClick={handleAddComment} className="text-xs bg-blue-500 text-white px-3 py-1 rounded">
+                {t('postCard.send')}
+              </button>
             </div>
           </div>
         )}

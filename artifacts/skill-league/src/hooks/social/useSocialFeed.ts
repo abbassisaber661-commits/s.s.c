@@ -77,7 +77,7 @@ export function useSocialFeed(options: UseSocialFeedOptions = {}) {
       if (toTranslate.length === 0) return postsList;
 
       // نبحث في cache أولاً
-      const needApi = [];
+      const needApi: TranslatedPost[] = [];
       const translatedMap = new Map<string, string>();
 
       for (const post of toTranslate) {
@@ -139,7 +139,7 @@ export function useSocialFeed(options: UseSocialFeedOptions = {}) {
         if (reset) pageRef.current = 1;
 
         const [postsData, hashtags, notifs] = await Promise.all([
-          fetchPosts(limit, pageRef.current, signal),
+          fetchPosts(limit),
           fetchTrendingHashtags(),
           fetchNotifications(),
         ]);
@@ -288,12 +288,13 @@ export function useSocialFeed(options: UseSocialFeedOptions = {}) {
   const createPost = useCallback(
     async (content: string, imageUrl?: string) => {
       try {
-        const newPost = await apiCreatePost({ content, imageUrl, username, level });
+        const newPost = await apiCreatePost({ content, imageUrl }) as any;
         // المنشور الجديد بلغة المستخدم، نضيفه فوراً
         const normalized: TranslatedPost = {
           ...newPost,
           originalContent: content,
           language: currentLanguage,
+          likedByMe: false,
         };
         setPosts((prev) => [normalized, ...prev]);
         addFame(2);

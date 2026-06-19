@@ -1,7 +1,9 @@
+// src/components/profile/ProfileTabs.tsx
 import React, { useCallback } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { CONTENT_TABS, ContentTab } from "@/lib/profile-constants";
+import { useTranslation } from "@/hooks/useTranslation"; // ✅ إضافة الترجمة
 
 interface ProfileTabsProps {
   /** التبويب النشط حالياً */
@@ -18,12 +20,24 @@ interface ProfileTabsProps {
   savedCount?: number;
 }
 
+// ✅ خريطة لربط معرف التبويب بمفتاح الترجمة
+const tabTranslationKeys: Record<ContentTab, string> = {
+  posts: 'profilePage.tabs.posts',
+  reels: 'profilePage.tabs.reels',
+  saved: 'profilePage.tabs.saved',
+};
+
 export default function ProfileTabs({
   currentTab,
   onTabChange,
   tabs,
   className,
+  postsCount,
+  reelsCount,
+  savedCount,
 }: ProfileTabsProps) {
+  const { t } = useTranslation(); // ✅ استخدم الترجمة
+
   // تحديد التبويبات المعروضة (إذا لم تُمرر، نأخذ الكل)
   const activeTabs = tabs ?? CONTENT_TABS.map((t) => t.id);
 
@@ -35,6 +49,16 @@ export default function ProfileTabs({
     [onTabChange]
   );
 
+  // دالة للحصول على العدد المناسب لكل تبويب
+  const getCount = (tabId: ContentTab): number | undefined => {
+    switch (tabId) {
+      case 'posts': return postsCount;
+      case 'reels': return reelsCount;
+      case 'saved': return savedCount;
+      default: return undefined;
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -44,13 +68,16 @@ export default function ProfileTabs({
         className
       )}
       role="tablist"
-      aria-label="Profile tabs"
+      aria-label={t('profilePage.tabs.ariaLabel') || "Profile tabs"}
     >
       {activeTabs.map((tabId) => {
         const tabConfig = CONTENT_TABS.find((t) => t.id === tabId);
         if (!tabConfig) return null;
 
         const isActive = currentTab === tabId;
+        const labelKey = tabTranslationKeys[tabId];
+        const label = t(labelKey); // ✅ ترجمة التسمية
+        const count = getCount(tabId);
 
         return (
           <button
@@ -71,7 +98,12 @@ export default function ProfileTabs({
           >
             {/* عرض الأيقونة إن وجدت */}
             {tabConfig.icon && <span className="mr-1.5">{tabConfig.icon}</span>}
-            {tabConfig.label}
+            {label}
+            {count !== undefined && count > 0 && (
+              <span className="ml-1.5 text-xs bg-white/20 dark:bg-black/20 px-1.5 py-0.5 rounded-full">
+                {count}
+              </span>
+            )}
 
             {/* المؤشر المتحرك للتبويب النشط */}
             {isActive && (

@@ -73,19 +73,6 @@ export function useProfileData(userId: string) {
         throw new Error("الملف الشخصي غير موجود");
       }
 
-      let postsRes;
-      try {
-        postsRes = await api.social.postsByUser(userId, { page: 1, limit: 10 });
-      } catch {
-        postsRes = await api.social.search({
-          q: userId,
-          type: "posts",
-          sort: "latest",
-          page: 1,
-          limit: 10,
-        });
-      }
-
       const mappedProfile: ProfileData = {
         id: profileRes.playerId,
         username: profileRes.username ?? "مستخدم",
@@ -93,30 +80,20 @@ export function useProfileData(userId: string) {
         postsCount: profileRes.postsCount ?? 0,
         followers: profileRes.followersCount ?? 0,
         following: profileRes.followingCount ?? 0,
-        avatar: profileRes.avatar,
-        cover: profileRes.cover,
-        bio: profileRes.bio,
-        reelsCount: profileRes.reelsCount ?? 0,
-        savedCount: profileRes.savedCount ?? 0,
-        isFollowing: profileRes.isFollowing ?? false,
+        avatar: undefined,
+        cover: undefined,
+        bio: undefined,
+        reelsCount: 0,
+        savedCount: 0,
+        isFollowing: false,
       };
 
       profileCache.set(userId, { data: mappedProfile, timestamp: Date.now() });
       setProfile(mappedProfile);
 
-      const posts: Post[] = postsRes?.items ?? postsRes ?? [];
-
-      // ========== استبدال منطق hasNext ==========
-      const hasNext =
-        typeof postsRes?.hasNext === "boolean"
-          ? postsRes.hasNext
-          : Array.isArray(postsRes?.items)
-            ? postsRes.items.length === 10
-            : !!postsRes?.nextPageToken;
-
       setPostsState({
-        pages: [posts],
-        hasNextPage: hasNext,
+        pages: [],
+        hasNextPage: false,
         isFetchingNextPage: false,
       });
 
@@ -142,32 +119,9 @@ export function useProfileData(userId: string) {
       // ========== حساب nextPage من عدد الصفحات الحالية ==========
       const nextPage = postsState.pages.length + 1;
 
-      let res;
-      try {
-        res = await api.social.postsByUser(userId, { page: nextPage, limit: 10 });
-      } catch {
-        res = await api.social.search({
-          q: userId,
-          type: "posts",
-          sort: "latest",
-          page: nextPage,
-          limit: 10,
-        });
-      }
-
-      const newPosts: Post[] = res?.items ?? res ?? [];
-
-      // ========== استبدال منطق hasNext ==========
-      const hasNext =
-        typeof res?.hasNext === "boolean"
-          ? res.hasNext
-          : Array.isArray(res?.items)
-            ? res.items.length === 10
-            : !!res?.nextPageToken;
-
       setPostsState((prev) => ({
-        pages: [...prev.pages, newPosts],
-        hasNextPage: hasNext,
+        ...prev,
+        hasNextPage: false,
         isFetchingNextPage: false,
       }));
 

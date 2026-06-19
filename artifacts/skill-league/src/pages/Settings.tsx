@@ -1,3 +1,4 @@
+// src/pages/Settings.tsx
 import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Link, useLocation } from "wouter";
@@ -5,6 +6,7 @@ import { ArrowLeft, Settings2, CheckCircle2, LogOut, ChevronRight } from "lucide
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { validateUsername } from "@/lib/anti-cheat";
+import { useTranslation } from "@/hooks/useTranslation"; // ✅ إضافة الترجمة
 
 export const APP_VERSION = '1.1.0';
 
@@ -17,6 +19,7 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 }
 
 export default function Settings() {
+  const { t } = useTranslation(); // ✅ استخدم الترجمة
   const { username, updateUsername, logout } = useGame();
   const [, setLocation] = useLocation();
 
@@ -27,7 +30,10 @@ export default function Settings() {
 
   function handleSaveName() {
     const { valid, reason } = validateUsername(draft);
-    if (!valid) { setNameError(reason ?? 'Invalid username'); return; }
+    if (!valid) { 
+      setNameError(reason ?? t('settingsPage.usernameError')); 
+      return; 
+    }
     updateUsername(draft);
     setNameError(null);
     setSaved(true);
@@ -53,14 +59,16 @@ export default function Settings() {
           </button>
         </Link>
         <Settings2 className="w-5 h-5" style={{ color: '#1877F2' }} />
-        <h1 className="text-lg font-black flex-1" style={{ color: '#050505' }}>الإعدادات</h1>
+        <h1 className="text-lg font-black flex-1" style={{ color: '#050505' }}>
+          {t('settingsPage.title')}
+        </h1>
       </div>
 
       <div className="max-w-md mx-auto px-4 pt-5 space-y-5">
 
         {/* ══ 1. ACCOUNT ══ */}
         <div>
-          <SectionHeader>👤 Account</SectionHeader>
+          <SectionHeader>{t('settingsPage.accountSection')}</SectionHeader>
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
             className="rounded-2xl overflow-hidden"
@@ -73,8 +81,12 @@ export default function Settings() {
                 className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 active:bg-gray-100 text-left"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold" style={{ color: '#050505' }}>Change Username</div>
-                  <div className="text-xs mt-0.5" style={{ color: '#65676B' }}>@{username}</div>
+                  <div className="text-sm font-semibold" style={{ color: '#050505' }}>
+                    {t('settingsPage.changeUsername')}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: '#65676B' }}>
+                    @{username}
+                  </div>
                 </div>
                 <ChevronRight
                   className="w-4 h-4 shrink-0 transition-transform duration-200"
@@ -90,10 +102,10 @@ export default function Settings() {
                       className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                       style={{ background: '#F0F2F5', border: '1px solid #E4E6EB', color: '#050505' }}
                       maxLength={20}
-                      placeholder="Username"
+                      placeholder={t('settingsPage.usernamePlaceholder')}
                     />
                     <Button size="sm" onClick={handleSaveName} className="px-4">
-                      {saved ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : 'Save'}
+                      {saved ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : t('common.save')}
                     </Button>
                   </div>
                   {nameError && <p className="text-xs text-red-500">{nameError}</p>}
@@ -107,7 +119,9 @@ export default function Settings() {
               className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-red-50 active:bg-red-100 text-left"
             >
               <div className="flex-1">
-                <div className="text-sm font-semibold" style={{ color: '#E41E3F' }}>Log Out</div>
+                <div className="text-sm font-semibold" style={{ color: '#E41E3F' }}>
+                  {t('common.logout')}
+                </div>
               </div>
               <LogOut className="w-4 h-4 shrink-0" style={{ color: '#E41E3F' }} />
             </button>
@@ -116,7 +130,7 @@ export default function Settings() {
 
         {/* ══ 2. PRIVACY & LEGAL ══ */}
         <div>
-          <SectionHeader>🌐 Privacy & Legal</SectionHeader>
+          <SectionHeader>{t('settingsPage.privacySection')}</SectionHeader>
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
             className="rounded-2xl overflow-hidden"
@@ -124,17 +138,18 @@ export default function Settings() {
           >
             {/* Device Data */}
             <div className="px-4 py-3.5" style={{ borderBottom: '1px solid #E4E6EB' }}>
-              <div className="text-sm font-semibold mb-1" style={{ color: '#050505' }}>Device Data</div>
+              <div className="text-sm font-semibold mb-1" style={{ color: '#050505' }}>
+                {t('settingsPage.deviceDataTitle')}
+              </div>
               <div className="text-xs leading-relaxed mb-2" style={{ color: '#65676B' }}>
-                Data stored on device only (localStorage). No personal data is shared with third parties.
-                Pi Network identity is used for authentication only.
+                {t('settingsPage.deviceDataDescription')}
               </div>
               <div className="flex gap-2 flex-wrap">
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: '#E7F3E8', color: '#2D8A3E' }}>
-                  ✓ Device only
+                  {t('settingsPage.deviceDataTag1')}
                 </span>
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: '#F0E9FF', color: '#7B2FF7' }}>
-                  Username + scores
+                  {t('settingsPage.deviceDataTag2')}
                 </span>
               </div>
             </div>
@@ -145,7 +160,9 @@ export default function Settings() {
                 className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
                 style={{ borderBottom: '1px solid #E4E6EB' }}
               >
-                <div className="flex-1 text-sm font-semibold" style={{ color: '#1877F2' }}>Privacy Policy</div>
+                <div className="flex-1 text-sm font-semibold" style={{ color: '#1877F2' }}>
+                  {t('settingsPage.privacyPolicy')}
+                </div>
                 <ChevronRight className="w-4 h-4 shrink-0" style={{ color: '#65676B' }} />
               </div>
             </Link>
@@ -153,7 +170,9 @@ export default function Settings() {
             {/* Terms of Service */}
             <Link href="/terms">
               <div className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
-                <div className="flex-1 text-sm font-semibold" style={{ color: '#1877F2' }}>Terms of Service</div>
+                <div className="flex-1 text-sm font-semibold" style={{ color: '#1877F2' }}>
+                  {t('settingsPage.termsOfService')}
+                </div>
                 <ChevronRight className="w-4 h-4 shrink-0" style={{ color: '#65676B' }} />
               </div>
             </Link>
@@ -162,16 +181,16 @@ export default function Settings() {
 
         {/* ══ 3. APP INFO ══ */}
         <div>
-          <SectionHeader>📊 App Info</SectionHeader>
+          <SectionHeader>{t('settingsPage.appInfoSection')}</SectionHeader>
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
             className="rounded-2xl overflow-hidden"
             style={{ background: '#FFFFFF', border: '1px solid #E4E6EB' }}
           >
             {[
-              { label: 'Version',    value: APP_VERSION },
-              { label: 'Platform',   value: 'Pi Network' },
-              { label: 'Powered by', value: 'SkillLeague / Pi Network' },
+              { label: t('settingsPage.versionLabel'),    value: APP_VERSION },
+              { label: t('settingsPage.platformLabel'),   value: 'Pi Network' },
+              { label: t('settingsPage.poweredByLabel'), value: 'SkillLeague / Pi Network' },
             ].map((row, i, arr) => (
               <div
                 key={row.label}

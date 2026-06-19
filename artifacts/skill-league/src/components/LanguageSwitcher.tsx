@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Globe } from "lucide-react";
-import { useGame } from "@/contexts/GameContext";
+import { useTranslation } from "@/hooks/useTranslation";
 import { LANGUAGES, type Language } from "@/lib/i18n";
 
 const PRIMARY: Language[] = ['en', 'ar', 'fr', 'es', 'pt'];
@@ -10,7 +10,8 @@ interface Props {
 }
 
 export default function LanguageSwitcher({ compact = false }: Props) {
-  const { language, setLanguage } = useGame();
+  // استخدام hook الترجمة الجديد
+  const { currentLanguage, changeLanguage } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -22,9 +23,9 @@ export default function LanguageSwitcher({ compact = false }: Props) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  const current = LANGUAGES.find(l => l.code === language);
+  const current = LANGUAGES.find(l => l.code === currentLanguage);
   const primary = LANGUAGES.filter(l => PRIMARY.includes(l.code));
-  const others  = LANGUAGES.filter(l => !PRIMARY.includes(l.code));
+  const others = LANGUAGES.filter(l => !PRIMARY.includes(l.code));
 
   return (
     <div ref={ref} className="relative">
@@ -47,13 +48,13 @@ export default function LanguageSwitcher({ compact = false }: Props) {
           {primary.map(lang => (
             <button
               key={lang.code}
-              onClick={() => { setLanguage(lang.code); setOpen(false); }}
+              onClick={() => { changeLanguage(lang.code); setOpen(false); }}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted transition-colors ${
-                language === lang.code ? 'text-primary font-bold' : 'text-foreground'
+                currentLanguage === lang.code ? 'text-primary font-bold' : 'text-foreground'
               }`}
             >
-              {language === lang.code && <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />}
-              {language !== lang.code && <span className="w-1.5 h-1.5 inline-block" />}
+              {currentLanguage === lang.code && <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />}
+              {currentLanguage !== lang.code && <span className="w-1.5 h-1.5 inline-block" />}
               <span>{lang.native}</span>
             </button>
           ))}
@@ -63,13 +64,13 @@ export default function LanguageSwitcher({ compact = false }: Props) {
               {others.map(lang => (
                 <button
                   key={lang.code}
-                  onClick={() => { setLanguage(lang.code); setOpen(false); }}
+                  onClick={() => { changeLanguage(lang.code); setOpen(false); }}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted transition-colors ${
-                    language === lang.code ? 'text-primary font-bold' : 'text-foreground'
+                    currentLanguage === lang.code ? 'text-primary font-bold' : 'text-foreground'
                   }`}
                 >
-                  {language === lang.code && <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />}
-                  {language !== lang.code && <span className="w-1.5 h-1.5 inline-block" />}
+                  {currentLanguage === lang.code && <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block" />}
+                  {currentLanguage !== lang.code && <span className="w-1.5 h-1.5 inline-block" />}
                   <span>{lang.native}</span>
                 </button>
               ))}

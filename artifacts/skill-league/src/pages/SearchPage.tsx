@@ -1,3 +1,4 @@
+// src/pages/SearchPage.tsx
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -5,6 +6,7 @@ import { Search, X, ArrowLeft, Hash, User, FileText, TrendingUp } from "lucide-r
 import { api } from "@/lib/apiClient";
 import Avatar from "@/components/Avatar";
 import { playTap } from "@/lib/sounds";
+import { useTranslation } from "@/hooks/useTranslation"; // ✅ إضافة الترجمة
 
 type SearchTab = "all" | "users" | "posts" | "hashtags";
 type SortMode  = "relevant" | "recent" | "engagement";
@@ -13,14 +15,16 @@ interface SearchUser   { id: string; username: string; level: number; elo: numbe
 interface SearchPost   { id: string; username: string; content: string; likes: number; replies: number; createdAt: string }
 interface SearchHashtag { tag: string; count: number }
 
-function fmt(ts: string) {
+// ✅ دالة مساعدة لتنسيق الوقت مع الترجمة
+function formatTimeAgo(ts: string, t: (key: string) => string): string {
   const diff = Date.now() - new Date(ts).getTime();
-  if (diff < 60_000)     return "just now";
-  if (diff < 3_600_000)  return `${Math.floor(diff / 60_000)}m ago`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-  return `${Math.floor(diff / 86_400_000)}d ago`;
+  if (diff < 60_000)     return t('searchPage.time.justNow');
+  if (diff < 3_600_000)  return `${Math.floor(diff / 60_000)}m`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h`;
+  return `${Math.floor(diff / 86_400_000)}d`;
 }
 
+// ✅ مكون تمييز النص (يبقى كما هو)
 function HighlightText({ text, query }: { text: string; query: string }) {
   if (!query) return <>{text}</>;
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
@@ -35,6 +39,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 }
 
 export default function SearchPage() {
+  const { t } = useTranslation(); // ✅ استخدم الترجمة
   const [, navigate] = useLocation();
   const [query, setQuery]     = useState("");
   const [tab, setTab]         = useState<SearchTab>("all");
@@ -68,17 +73,19 @@ export default function SearchPage() {
     }, 350);
   }, [query, tab, sort]);
 
+  // ✅ تعريف التبويبات مع ترجمة التسميات
   const TABS: { id: SearchTab; label: string; icon: React.ReactNode }[] = [
-    { id: "all",      label: "All",       icon: <Search className="w-3 h-3" /> },
-    { id: "users",    label: "Users",     icon: <User className="w-3 h-3" /> },
-    { id: "posts",    label: "Posts",     icon: <FileText className="w-3 h-3" /> },
-    { id: "hashtags", label: "Hashtags",  icon: <Hash className="w-3 h-3" /> },
+    { id: "all",      label: t('searchPage.tabs.all'),       icon: <Search className="w-3 h-3" /> },
+    { id: "users",    label: t('searchPage.tabs.users'),     icon: <User className="w-3 h-3" /> },
+    { id: "posts",    label: t('searchPage.tabs.posts'),     icon: <FileText className="w-3 h-3" /> },
+    { id: "hashtags", label: t('searchPage.tabs.hashtags'),  icon: <Hash className="w-3 h-3" /> },
   ];
 
+  // ✅ تعريف خيارات الترتيب مع ترجمة التسميات
   const SORTS: { id: SortMode; label: string }[] = [
-    { id: "relevant",   label: "Relevant" },
-    { id: "recent",     label: "Recent" },
-    { id: "engagement", label: "Top" },
+    { id: "relevant",   label: t('searchPage.sort.relevant') },
+    { id: "recent",     label: t('searchPage.sort.recent') },
+    { id: "engagement", label: t('searchPage.sort.engagement') },
   ];
 
   const hasResults = results && (results.users.length + results.posts.length + results.hashtags.length) > 0;
@@ -98,7 +105,7 @@ export default function SearchPage() {
             ref={inputRef}
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search users, posts, hashtags…"
+            placeholder={t('searchPage.placeholder')}
             className="w-full pl-9 pr-9 py-2 rounded-full text-sm focus:outline-none"
             style={{ background: "#F0F2F5", border: "1px solid #E4E6EB", color: "#050505" }}
           />
@@ -113,14 +120,14 @@ export default function SearchPage() {
 
       {/* ── Tabs ── */}
       <div className="px-4 pt-3 flex gap-2 overflow-x-auto scrollbar-hide">
-        {TABS.map(t => (
-          <button key={t.id}
-            onClick={() => { playTap(); setTab(t.id); }}
+        {TABS.map(tabItem => (
+          <button key={tabItem.id}
+            onClick={() => { playTap(); setTab(tabItem.id); }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95"
-            style={tab === t.id
+            style={tab === tabItem.id
               ? { background: "#1877F2", color: "#fff" }
               : { background: "#fff", color: "#65676B", border: "1px solid #E4E6EB" }}>
-            {t.icon}{t.label}
+            {tabItem.icon}{tabItem.label}
           </button>
         ))}
         <div className="ml-auto flex-shrink-0 flex gap-1">
@@ -146,12 +153,12 @@ export default function SearchPage() {
           </div>
         )}
 
-        {/* empty state */}
+        {/* empty state (no query) */}
         {!loading && !query && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-4 py-16 text-gray-400">
             <Search className="w-12 h-12 opacity-30" />
-            <p className="text-sm">Search for users, posts, or hashtags</p>
+            <p className="text-sm">{t('searchPage.emptyState')}</p>
           </motion.div>
         )}
 
@@ -160,7 +167,9 @@ export default function SearchPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="flex flex-col items-center gap-3 py-16 text-gray-400">
             <div className="text-4xl">🔍</div>
-            <p className="text-sm">No results for "<strong className="text-gray-600">{query}</strong>"</p>
+            <p className="text-sm">
+              {t('searchPage.noResults')} "<strong className="text-gray-600">{query}</strong>"
+            </p>
           </motion.div>
         )}
 
@@ -173,7 +182,9 @@ export default function SearchPage() {
                 <section>
                   <div className="flex items-center gap-2 mb-2">
                     <User className="w-4 h-4 text-blue-500" />
-                    <span className="text-xs font-black uppercase tracking-wider text-gray-600">Users</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-600">
+                      {t('searchPage.sectionUsers')}
+                    </span>
                   </div>
                   <div className="space-y-2">
                     {results.users.map(u => (
@@ -188,7 +199,9 @@ export default function SearchPage() {
                             <HighlightText text={u.username} query={query} />
                             {u.verificationStatus === "verified" && <span className="ml-1 text-blue-500">✓</span>}
                           </div>
-                          <div className="text-xs text-gray-500">Lv.{u.level} · ELO {u.elo}</div>
+                          <div className="text-xs text-gray-500">
+                            {`Lvl ${u.level} · ${u.elo} ELO`}
+                          </div>
                         </div>
                         <ArrowLeft className="w-4 h-4 text-gray-400 rotate-180 flex-shrink-0" />
                       </motion.button>
@@ -202,7 +215,9 @@ export default function SearchPage() {
                 <section>
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="w-4 h-4 text-green-500" />
-                    <span className="text-xs font-black uppercase tracking-wider text-gray-600">Posts</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-600">
+                      {t('searchPage.sectionPosts')}
+                    </span>
                   </div>
                   <div className="space-y-2">
                     {results.posts.map(p => (
@@ -217,7 +232,9 @@ export default function SearchPage() {
                             onClick={() => navigate(`/user/${encodeURIComponent(p.username)}`)}>
                             {p.username}
                           </button>
-                          <span className="text-[10px] text-gray-400 ml-auto">{fmt(p.createdAt)}</span>
+                          <span className="text-[10px] text-gray-400 ml-auto">
+                            {formatTimeAgo(p.createdAt, t)}
+                          </span>
                         </div>
                         <p className="text-sm text-gray-800 leading-relaxed line-clamp-3">
                           <HighlightText text={p.content} query={query} />
@@ -237,7 +254,9 @@ export default function SearchPage() {
                 <section>
                   <div className="flex items-center gap-2 mb-2">
                     <Hash className="w-4 h-4 text-purple-500" />
-                    <span className="text-xs font-black uppercase tracking-wider text-gray-600">Hashtags</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-600">
+                      {t('searchPage.sectionHashtags')}
+                    </span>
                   </div>
                   <div className="space-y-2">
                     {results.hashtags.map((h: any) => (
@@ -254,7 +273,11 @@ export default function SearchPage() {
                           <div className="text-sm font-bold text-gray-900">
                             <HighlightText text={h.tag} query={query} />
                           </div>
-                          {h.count > 0 && <div className="text-xs text-gray-500">{h.count} posts</div>}
+                          {h.count > 0 && (
+                            <div className="text-xs text-gray-500">
+                              {`${h.count} posts`}
+                            </div>
+                          )}
                         </div>
                         <TrendingUp className="w-4 h-4 text-purple-400 flex-shrink-0" />
                       </motion.button>

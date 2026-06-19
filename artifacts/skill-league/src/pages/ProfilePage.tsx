@@ -1,3 +1,4 @@
+// src/pages/ProfilePage.tsx
 import React, {
   useState,
   useCallback,
@@ -9,21 +10,24 @@ import { useRoute } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
+// ===== Hooks =====
+import { useTranslation } from "@/hooks/useTranslation"; // ✅ إضافة الترجمة
+import { useProfileData } from "@/hooks/useProfileData";
+import { useFollowUser } from "@/hooks/useFollowUser";
+import { useGame } from "@/contexts/GameContext";
+
 // ===== Components =====
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import PostCard from "@/components/social/PostCard";
 import { PostModal } from "@/components/profile/PostModal";
 
-// ===== Hooks =====
-import { useProfileData } from "@/hooks/useProfileData";
-import { useFollowUser } from "@/hooks/useFollowUser";
-import { useGame } from "@/contexts/GameContext";
-
 // ===== Types =====
 import type { Post } from "@/types/profile";
 
 export default function ProfilePage() {
+  const { t } = useTranslation(); // ✅ استخدم الترجمة
+
   // ================= ROUTE =================
   const [, routeParams] = useRoute("/profile/:userId");
   const { authUser } = useGame();
@@ -65,10 +69,10 @@ export default function ProfilePage() {
   }, [profile, followMutation]);
 
   // ================= UI ACTIONS =================
-  const handleAvatarClick = () => toast("📷 تغيير الصورة الشخصية");
-  const handleCoverClick = () => toast("🖼️ تغيير صورة الغلاف");
-  const handleEditProfile = () => toast("✏️ تعديل الملف الشخصي");
-  const handleShare = () => toast("🔗 تم نسخ الرابط");
+  const handleAvatarClick = () => toast(t('profilePage.changeAvatar'));
+  const handleCoverClick = () => toast(t('profilePage.changeCover'));
+  const handleEditProfile = () => toast(t('profilePage.editProfile'));
+  const handleShare = () => toast(t('common.copied'));
 
   // ================= POST EVENTS =================
   const handleLikeChange = useCallback((postId: string) => {
@@ -152,12 +156,11 @@ export default function ProfilePage() {
               post={post as any}
               index={index}
               commentCount={(post as any).comments || 0}
-              currentUser={profile?.username || "مستخدم"}
+              currentUser={profile?.username || t('common.defaultUsername') || "مستخدم"}
               currentLevel={profile?.level ?? 1}
               currentPlayerId={safePlayerId}
               onLikeChange={handleLikeChange}
               onCommentCountChange={handleCommentCountChange}
-              onPostClick={handlePostClick}
             />
           </motion.div>
         </div>
@@ -170,6 +173,7 @@ export default function ProfilePage() {
     handleLikeChange,
     handleCommentCountChange,
     handlePostClick,
+    t,
   ]);
 
   // ================= LOADING =================
@@ -186,13 +190,13 @@ export default function ProfilePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-4xl mb-2">😕</p>
-        <h2 className="text-xl font-bold">فشل تحميل البروفايل</h2>
+        <h2 className="text-xl font-bold">{t('profilePage.loadError')}</h2>
 
         <button
           onClick={refetch}
           className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
         >
-          إعادة المحاولة
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -236,7 +240,7 @@ export default function ProfilePage() {
         {visiblePosts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-4xl mb-2">📝</p>
-            <p>لا توجد منشورات</p>
+            <p>{t('profilePage.noPosts')}</p>
           </div>
         ) : (
           <div className="space-y-4">
