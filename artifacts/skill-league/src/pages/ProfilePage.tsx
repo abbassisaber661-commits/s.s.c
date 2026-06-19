@@ -12,6 +12,7 @@ import { PostModal } from "@/components/profile/PostModal";
 // ===== Hooks =====
 import { useProfileData } from "@/hooks/useProfileData";
 import { useFollowUser } from "@/hooks/useFollowUser";
+import { useGame } from "@/contexts/GameContext";
 
 // ===== أنواع =====
 import type { Post } from "@/types/profile";
@@ -22,7 +23,8 @@ import type { Post } from "@/types/profile";
 export default function ProfilePage() {
   // ===== المتغيرات =====
   const [, routeParams] = useRoute("/profile/:userId");
-  const userId = routeParams?.userId;
+  const { authUser } = useGame();
+  const userId = routeParams?.userId ?? authUser?.uid ?? "";
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastPostRef = useRef<HTMLDivElement | null>(null);
 
