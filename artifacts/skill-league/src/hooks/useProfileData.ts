@@ -1,68 +1,203 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/lib/apiClient";
 import type { ProfileData, Post } from "@/types/profile";
 
-interface PostsPage { posts: Post[] }
+// ============================================================
+// Types
+// ============================================================
 interface PostsState {
-  pages: PostsPage[];
+  pages: Post[][];
+  hasNextPage: boolean;
   isFetchingNextPage: boolean;
-  hasNextPage: boolean;
-  fetchNextPage: () => void;
 }
 
-interface UseProfileDataResult {
-  profile: ProfileData | null;
-  posts: PostsState | null;
-  isLoading: boolean;
-  isError: boolean;
-  refetch: () => void;
-  fetchNextPage: () => void;
-  hasNextPage: boolean;
+// ============================================================
+// Cache مع صلاحية
+// ============================================================
+interface CacheEntry {
+  data: ProfileData;
+  timestamp: number;
 }
+const CACHE_TTL = 5 * 60 * 1000; // 5 دقائق
+const profileCache = new Map<string, CacheEntry>();
 
-export function useProfileData(userId: string): UseProfileDataResult {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+// ============================================================
+// Hook
+// ============================================================
+export function useProfileData(userId: string) {
+  // ---------- Profile ----------
+  const [profile, setProfile] = useState<ProfileData | null>(() => {
+    const entry = profileCache.get(userId);
+    if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
+      return entry.data;
+    }
+    return null;
+  });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // ---------- Posts ----------
+  const [postsState, setPostsState] = useState<PostsState>({
+    pages: [],
+    hasNextPage: false,
+    isFetchingNextPage: false,
+  });
+
+  const pageRef = useRef(1);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // ============================================================
+  // جلب البروفايل + الصفحة الأولى
+  // ============================================================
   const fetchProfile = useCallback(async () => {
-    if (!userId) { setIsLoading(false); return; }
+    if (!userId) {
+      setIsLoading(false);
+      setIsError(true);
+      setErrorMessage("معرف المستخدم غير موجود");
+      return;
+    }
+
     setIsLoading(true);
     setIsError(false);
+    setErrorMessage(null);
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+
     try {
-      const res = await api.social.profile(userId);
-      setProfile({
-        id:          res.playerId,
-        username:    res.username || "مستخدم",
-        level:       res.level ?? 1,
-        postsCount:  res.postsCount ?? 0,
-        followers:   res.followersCount ?? 0,
-        following:   res.followingCount ?? 0,
-        avatar:      undefined,
-        cover:       undefined,
-        bio:         undefined,
-        reelsCount:  0,
-        savedCount:  0,
-        isFollowing: false,
+      const profileRes = await api.social.profile(userId);
+
+      if (!profileRes) {
+        throw new Error("الملف الشخصي غير موجود");
+      }
+
+      let postsRes;
+      try {
+        postsRes = await api.social.postsByUser(userId, { page: 1, limit: 10 });
+      } catch {
+        postsRes = await api.social.search({
+          q: userId,
+          type: "posts",
+          sort: "latest",
+          page: 1,
+          limit: 10,
+        });
+      }
+
+      const mappedProfile: ProfileData = {
+        id: profileRes.playerId,
+        username: profileRes.username ?? "مستخدم",
+        level: profileRes.level ?? 1,
+        postsCount: profileRes.postsCount ?? 0,
+        followers: profileRes.followersCount ?? 0,
+        following: profileRes.followingCount ?? 0,
+        avatar: profileRes.avatar,
+        cover: profileRes.cover,
+        bio: profileRes.bio,
+        reelsCount: profileRes.reelsCount ?? 0,
+        savedCount: profileRes.savedCount ?? 0,
+        isFollowing: profileRes.isFollowing ?? false,
+      };
+
+      profileCache.set(userId, { data: mappedProfile, timestamp: Date.now() });
+      setProfile(mappedProfile);
+
+      const posts: Post[] = postsRes?.items ?? postsRes ?? [];
+
+      // ========== استبدال منطق hasNext ==========
+      const hasNext =
+        typeof postsRes?.hasNext === "boolean"
+          ? postsRes.hasNext
+          : Array.isArray(postsRes?.items)
+            ? postsRes.items.length === 10
+            : !!postsRes?.nextPageToken;
+
+      setPostsState({
+        pages: [posts],
+        hasNextPage: hasNext,
+        isFetchingNextPage: false,
       });
-    } catch {
+
+      pageRef.current = 1;
+    } catch (err) {
+      console.error("useProfileData fetch error:", err);
       setIsError(true);
+      setErrorMessage(err instanceof Error ? err.message : "حدث خطأ أثناء جلب البيانات");
     } finally {
       setIsLoading(false);
     }
   }, [userId]);
 
+  // ============================================================
+  // جلب الصفحة التالية
+  // ============================================================
+  const fetchNextPage = useCallback(async () => {
+    if (postsState.isFetchingNextPage || !postsState.hasNextPage) return;
+
+    setPostsState((prev) => ({ ...prev, isFetchingNextPage: true }));
+
+    try {
+      // ========== حساب nextPage من عدد الصفحات الحالية ==========
+      const nextPage = postsState.pages.length + 1;
+
+      let res;
+      try {
+        res = await api.social.postsByUser(userId, { page: nextPage, limit: 10 });
+      } catch {
+        res = await api.social.search({
+          q: userId,
+          type: "posts",
+          sort: "latest",
+          page: nextPage,
+          limit: 10,
+        });
+      }
+
+      const newPosts: Post[] = res?.items ?? res ?? [];
+
+      // ========== استبدال منطق hasNext ==========
+      const hasNext =
+        typeof res?.hasNext === "boolean"
+          ? res.hasNext
+          : Array.isArray(res?.items)
+            ? res.items.length === 10
+            : !!res?.nextPageToken;
+
+      setPostsState((prev) => ({
+        pages: [...prev.pages, newPosts],
+        hasNextPage: hasNext,
+        isFetchingNextPage: false,
+      }));
+
+      pageRef.current = nextPage;
+    } catch (err) {
+      console.error("useProfileData fetchNextPage error:", err);
+      setPostsState((prev) => ({ ...prev, isFetchingNextPage: false }));
+    }
+  }, [userId, postsState.isFetchingNextPage, postsState.hasNextPage, postsState.pages.length]);
+
+  // ============================================================
+  // التهيئة
+  // ============================================================
   useEffect(() => {
     fetchProfile();
+    return () => abortRef.current?.abort();
   }, [fetchProfile]);
 
+  // ============================================================
+  // القيمة المُرجَعة
+  // ============================================================
   return {
     profile,
-    posts: null,
+    posts: postsState.pages.flat(),
     isLoading,
     isError,
+    errorMessage,
     refetch: fetchProfile,
-    fetchNextPage: () => {},
-    hasNextPage: false,
+    fetchNextPage,
+    hasNextPage: postsState.hasNextPage,
+    isFetchingNextPage: postsState.isFetchingNextPage,
   };
 }
