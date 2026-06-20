@@ -29,7 +29,7 @@ export default function ProfilePage() {
   const { t } = useTranslation(); // ✅ استخدم الترجمة
 
   // ================= ROUTE =================
-  const [, routeParams] = useRoute("/profile/:userId");
+  const [, routeParams] = useRoute("/profile/:userId?");
   const { authUser } = useGame();
 
   const userId = routeParams?.userId ?? authUser?.uid ?? "";

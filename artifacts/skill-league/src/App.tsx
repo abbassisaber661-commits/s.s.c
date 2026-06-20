@@ -134,7 +134,7 @@ function AppShell() {
         <Route path="/results"             component={Results} />
 
         {/* ── User System ─────────────────────────── */}
-        <Route path="/profile"             component={Profile} />
+        <Route path="/profile/:userId?"      component={Profile} />
         <Route path="/leaderboard"         component={Leaderboard} />
         <Route path="/store"               component={Store} />
         <Route path="/wallet"              component={Wallet} />
