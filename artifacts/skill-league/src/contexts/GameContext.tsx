@@ -17,7 +17,7 @@ import {
 import { fameForPvpWin, fameForTournamentPlace, fameForLevelUp } from '../lib/fame';
 import { getCurrentSeason } from '../lib/seasons';
 import { recordSubmission, isScorePlausible, checkRateLimit } from '../lib/anti-cheat';
-import { api, setToken, setStoredPlayerId } from '../lib/apiClient';
+import { api, setToken, setStoredPlayerId, getStoredPlayerId } from '../lib/apiClient';
 import { startSession, endSession, trackPageView, trackFeatureUse } from '../lib/sessionTracker';
 import { STORE_ITEMS, type StoreItem } from '../lib/store';
 import type { PiLockTier } from '../lib/pi-lock';
@@ -134,6 +134,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Session recovery: if authUser exists in localStorage but no playerId was
+  // stored (server was offline at login time), re-register now.
+  useEffect(() => {
+    const storedAuth = loadAuthUser();
+    if (!storedAuth) return;
+    if (getStoredPlayerId()) return; // already registered
+    if (storedAuth.authMode === 'pi') return; // Pi handles its own flow
+    const displayName = data.username || storedAuth.username || 'User';
+    api.auth.guest(storedAuth.uid, displayName).then(res => {
+      setToken(res.token);
+      setStoredPlayerId(res.player.id);
+    }).catch(() => { /* still offline */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const season = getCurrentSeason();
     let updated = { ...data };
@@ -209,6 +224,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     saveAuthUser(au);
     setAuthUser(au);
     persist({ ...data, username: name.trim().slice(0, 20) || data.username });
+    try {
+      const res = await api.auth.guest(au.uid, name.trim().slice(0, 20) || 'User');
+      setToken(res.token);
+      setStoredPlayerId(res.player.id);
+    } catch { /* offline — retry on next mount */ }
   };
 
   const loginWithPiNetwork = async () => {
