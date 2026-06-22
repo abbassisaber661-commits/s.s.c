@@ -197,3 +197,52 @@ export function generateMatchQuestions(
 export function calcScore(correct: boolean) {
   return correct ? 3 : 0;
 }
+
+// ─────────────────────────────────────────────
+// 🔥 BOT SYSTEM
+// ─────────────────────────────────────────────
+
+export interface MatchBot {
+  id:    string;
+  name:  string;
+  avatar: string;
+  skill: number; // 0–1
+}
+
+const ALL_BOTS: MatchBot[] = [
+  { id: 'b01',  name: 'Nova',      avatar: '🤖', skill: 0.92 },
+  { id: 'b02',  name: 'Kai',       avatar: '🦅', skill: 0.85 },
+  { id: 'b03',  name: 'Zara',      avatar: '🌟', skill: 0.78 },
+  { id: 'b04',  name: 'Orion',     avatar: '🔭', skill: 0.70 },
+  { id: 'b05',  name: 'Echo',      avatar: '🎭', skill: 0.65 },
+  { id: 'b06',  name: 'Pixel',     avatar: '🎮', skill: 0.60 },
+  { id: 'b07',  name: 'Blaze',     avatar: '🔥', skill: 0.55 },
+  { id: 'b08',  name: 'Luna',      avatar: '🌙', skill: 0.50 },
+  { id: 'b09',  name: 'Rex',       avatar: '🦖', skill: 0.48 },
+  { id: 'b10',  name: 'Nyx',       avatar: '🌌', skill: 0.45 },
+  { id: 'b11',  name: 'Comet',     avatar: '☄️', skill: 0.42 },
+  { id: 'b12',  name: 'Dart',      avatar: '🎯', skill: 0.40 },
+  { id: 'b13',  name: 'Sage',      avatar: '🌿', skill: 0.38 },
+  { id: 'b14',  name: 'Storm',     avatar: '⚡', skill: 0.35 },
+  { id: 'b15',  name: 'Flux',      avatar: '🔄', skill: 0.32 },
+  { id: 'b16',  name: 'Chip',      avatar: '💡', skill: 0.30 },
+  { id: 'b17',  name: 'Vex',       avatar: '🎲', skill: 0.28 },
+  { id: 'b18',  name: 'Pax',       avatar: '🕊️', skill: 0.25 },
+  { id: 'b19',  name: 'Glitch',    avatar: '👾', skill: 0.22 },
+];
+
+export const MATCH_BOTS: MatchBot[] = ALL_BOTS.slice(0, 7);
+
+export function getMatchBots(divTier: 'div3' | 'div2' | 'pro' | 'champions'): MatchBot[] {
+  if (divTier === 'div3' || divTier === 'div2') return ALL_BOTS;
+  return ALL_BOTS.slice(0, 7);
+}
+
+export function simulateBotQuestion(
+  bot: MatchBot,
+  _timeLimitMs: number,
+  _streak: number,
+): { correct: boolean } {
+  const roll = Math.random();
+  return { correct: roll < bot.skill };
+}
