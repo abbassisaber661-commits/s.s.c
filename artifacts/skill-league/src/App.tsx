@@ -14,11 +14,12 @@ import LeagueDetailsPage from "@/pages/LeagueDetailsPage";
 import MatchArena    from "@/pages/MatchArena";
 import Results       from "@/pages/Results";
 import NotFound      from "@/pages/not-found";
-import AuthScreen       from "@/pages/AuthScreen";
+import AuthScreen    from "@/pages/AuthScreen";
 import LeagueDashboard  from "@/pages/LeagueDashboard";
 
 // User System
 import Profile       from "@/pages/ProfilePage";
+import GameProfile   from "@/pages/GameProfile"; // ✅ الجديد
 import Leaderboard   from "@/pages/Leaderboard";
 import Store         from "@/pages/Store";
 import Wallet        from "@/pages/Wallet";
@@ -84,6 +85,7 @@ import BottomNav         from "@/components/BottomNav";
 import LiveNotifToast    from "@/components/LiveNotifToast";
 import BetaBanner        from "@/components/BetaBanner";
 import BetaFeedbackWidget from "@/components/BetaFeedbackWidget";
+
 // Utils
 import { getNotifications, unreadCount } from "@/lib/messages";
 
@@ -117,83 +119,36 @@ function AppShell() {
     <>
       <LiveNotifToast />
 
-      <Switch>  {/* ── Core Flow ───────────────────────────── */}
-        <Route path="/"                    component={HomeScreen} />
-        <Route path="/league-select"       component={LeagueSelectPage} />
-        <Route path="/leagues"             >{() => <Redirect to="/league-select" />}</Route>
-        <Route path="/intro"               >{() => <Redirect to="/league-select" />}</Route>
-        <Route path="/hub"                 >{() => <Redirect to="/league-select" />}</Route>
-        <Route path="/league-hub"          >{() => <Redirect to="/league-select" />}</Route>
-        <Route path="/league/:leagueId"    component={LeagueDetailsPage} />
-        <Route path="/league-dashboard"    component={LeagueDashboard} />
+      <Switch>
+        {/* Core */}
+        <Route path="/" component={HomeScreen} />
+        <Route path="/league-select" component={LeagueSelectPage} />
 
-        {/* ── Match System (V2 — MatchArena only) ─── */}
-        <Route path="/match-arena"         component={MatchArena} />
-        <Route path="/match-entry/:league" >{() => <Redirect to="/league-select" />}</Route>
-        <Route path="/game/:league"        >{() => <Redirect to="/league-select" />}</Route>
-        <Route path="/results"             component={Results} />
+        {/* Profile system */}
+        <Route path="/profile/:userId?" component={Profile} />
+        <Route path="/game-profile/:userId?" component={GameProfile} /> {/* ✅ الجديد */}
 
-        {/* ── User System ─────────────────────────── */}
-        <Route path="/profile/:userId?"      component={Profile} />
-        <Route path="/leaderboard"         component={Leaderboard} />
-        <Route path="/store"               component={Store} />
-        <Route path="/wallet"              component={Wallet} />
-        <Route path="/settings"            component={Settings} />
+        {/* rest of routes */}
+        <Route path="/leaderboard" component={Leaderboard} />
+        <Route path="/store" component={Store} />
+        <Route path="/wallet" component={Wallet} />
+        <Route path="/settings" component={Settings} />
 
-        {/* ── Social Hub ──────────────────────────── */}
-        <Route path="/social"              component={SocialPage} />
-        <Route path="/friends"             component={FriendsPage} />
-        <Route path="/chat/:username"      component={ChatPage} />
-        <Route path="/community"           component={Community} />
-        <Route path="/user/:username"      component={UserProfile} />
-        <Route path="/messages"            component={Messages} />
-        <Route path="/notifications"       component={Notifications} />
-        {/* ── Social Engine (Phase 2-5) ───────── */}
-        <Route path="/search"              component={SearchPage} />
-        <Route path="/trending"            component={TrendingPage} />
-        <Route path="/hashtag/:tag"        component={HashtagFeedPage} />
+        <Route path="/social" component={SocialPage} />
+        <Route path="/friends" component={FriendsPage} />
+        <Route path="/chat/:username" component={ChatPage} />
 
-        {/* ── Competitive ─────────────────────────── */}
-        <Route path="/compete"             component={CompetePage} />
-        <Route path="/pvp"                 component={PvP} />
-        <Route path="/tournament"          component={Tournament} />
-        <Route path="/rooms"               component={Rooms} />
-        <Route path="/seasons"             component={Seasons} />
+        <Route path="/messages" component={Messages} />
+        <Route path="/notifications" component={Notifications} />
 
-        {/* ── Progression & Missions ──────────────── */}
-        <Route path="/journey"             component={Journey} />
-        <Route path="/career"              component={Career} />
-        <Route path="/daily-challenges"    component={DailyChallenges} />
-        <Route path="/daily-rewards"       component={DailyRewards} />
-        <Route path="/weekly-missions"     component={WeeklyMissions} />
-        <Route path="/achievements"        component={Achievements} />
+        <Route path="/seasons" component={Seasons} />
+        <Route path="/journey" component={Journey} />
 
-        {/* ── Social & Clans ──────────────────────── */}
-        <Route path="/clans"               component={Clans} />
-        <Route path="/events"              component={Events} />
+        <Route path="/match-arena" component={MatchArena} />
+        <Route path="/results" component={Results} />
 
-        {/* ── Arcade ──────────────────────────────── */}
-        <Route path="/arcade"              component={ArcadePage} />
-
-        {/* ── Economy & Shop ──────────────────────── */}
-        <Route path="/vip"                 component={VIP} />
-        <Route path="/marketplace"         component={Marketplace} />
-
-        {/* ── Info & Tools ────────────────────────── */}
-        <Route path="/news"                component={News} />
-        <Route path="/analytics"           component={Analytics} />
-        <Route path="/ai-coach"            component={AICoach} />
-        <Route path="/pi-lock"             component={PiLock} />
-
-        {/* ── Legal (public) ──────────────────────── */}
-        <Route path="/privacy"             component={PrivacyPolicy} />
-        <Route path="/terms"               component={TermsOfService} />
-
-        {/* ── Beta / System ───────────────────────── */}
-        <Route path="/beta-dashboard"      component={BetaDashboard} />
-        <Route path="/monitor"             component={MonitorDashboard} />
-        <Route path="/release"             component={ReleasePage} />
-        <Route path="/admin/economy-dashboard" component={EconomyDashboard} />
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfService} />
 
         <Route component={NotFound} />
       </Switch>
@@ -205,20 +160,13 @@ function AppShell() {
   );
 }
 
-function NotificationsPopup() {
-  return null;
-}
-
 function AppContent() {
   const { authUser } = useGame();
   const playerId = authUser?.uid ?? null;
 
   return (
     <RealtimeProvider playerId={playerId}>
-      <NotificationsPopup />
-      <WouterRouter
-        base={import.meta.env.BASE_URL.replace(/\/$/, "")}
-      >
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
         <AppShell />
       </WouterRouter>
     </RealtimeProvider>

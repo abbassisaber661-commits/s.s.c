@@ -1,121 +1,75 @@
-// src/components/profile/ProfileTabs.tsx
-import React, { useCallback } from "react";
+import React from "react";
 import { motion } from "framer-motion";
+import { Grid3X3, Clapperboard, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CONTENT_TABS, ContentTab } from "@/lib/profile-constants";
-import { useTranslation } from "@/hooks/useTranslation"; // ✅ إضافة الترجمة
+
+export type ContentTab = "posts" | "reels" | "saved";
 
 interface ProfileTabsProps {
-  /** التبويب النشط حالياً */
-  currentTab: ContentTab;
-  /** دالة لتغيير التبويب */
-  onTabChange: (tab: ContentTab) => void;
-  /** قائمة التبويبات المراد عرضها (اختياري، افتراضياً الكل) */
-  tabs?: ContentTab[];
-  /** كلاس إضافي للتخصيص */
-  className?: string;
-  /** عدادات اختيارية للأقسام (يُعرض كـ badge) */
-  postsCount?: number;
-  reelsCount?: number;
-  savedCount?: number;
+currentTab: ContentTab;
+onTabChange: (tab: ContentTab) => void;
+postsCount?: number;
+reelsCount?: number;
+savedCount?: number;
 }
 
-// ✅ خريطة لربط معرف التبويب بمفتاح الترجمة
-const tabTranslationKeys: Record<ContentTab, string> = {
-  posts: 'profilePage.tabs.posts',
-  reels: 'profilePage.tabs.reels',
-  saved: 'profilePage.tabs.saved',
-};
+const tabs = [
+{
+id: "posts" as const,
+icon: Grid3X3,
+label: "Posts",
+},
+{
+id: "reels" as const,
+icon: Clapperboard,
+label: "Reels",
+},
+{
+id: "saved" as const,
+icon: Bookmark,
+label: "Saved",
+},
+];
 
 export default function ProfileTabs({
-  currentTab,
-  onTabChange,
-  tabs,
-  className,
-  postsCount,
-  reelsCount,
-  savedCount,
+currentTab,
+onTabChange,
 }: ProfileTabsProps) {
-  const { t } = useTranslation(); // ✅ استخدم الترجمة
+return (
+<div className="sticky top-0 z-20 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800">
+<div className="grid grid-cols-3">
+{tabs.map((tab) => {
+const Icon = tab.icon;
+const active = currentTab === tab.id;
 
-  // تحديد التبويبات المعروضة (إذا لم تُمرر، نأخذ الكل)
-  const activeTabs = tabs ?? CONTENT_TABS.map((t) => t.id);
+      return (
+        <button
+          key={tab.id}
+          onClick={() => onTabChange(tab.id)}
+          className={cn(
+            "relative flex flex-col items-center justify-center py-3 transition-all",
+            active
+              ? "text-black dark:text-white"
+              : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          )}
+        >
+          <Icon size={20} />
 
-  // تثبيت دالة التغيير باستخدام useCallback لتجنب إعادة الإنشاء
-  const handleTabClick = useCallback(
-    (tabId: ContentTab) => {
-      onTabChange(tabId);
-    },
-    [onTabChange]
-  );
+          <span className="text-xs mt-1 font-medium">
+            {tab.label}
+          </span>
 
-  // دالة للحصول على العدد المناسب لكل تبويب
-  const getCount = (tabId: ContentTab): number | undefined => {
-    switch (tabId) {
-      case 'posts': return postsCount;
-      case 'reels': return reelsCount;
-      case 'saved': return savedCount;
-      default: return undefined;
-    }
-  };
+          {active && (
+            <motion.div
+              layoutId="profile-tab-indicator"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white"
+            />
+          )}
+        </button>
+      );
+    })}
+  </div>
+</div>
 
-  return (
-    <div
-      className={cn(
-        "flex gap-1 p-1 bg-white dark:bg-gray-900 rounded-2xl shadow-sm",
-        "border border-gray-100 dark:border-gray-800",
-        "overflow-x-auto scrollbar-hide",
-        className
-      )}
-      role="tablist"
-      aria-label={t('profilePage.tabs.ariaLabel') || "Profile tabs"}
-    >
-      {activeTabs.map((tabId) => {
-        const tabConfig = CONTENT_TABS.find((t) => t.id === tabId);
-        if (!tabConfig) return null;
-
-        const isActive = currentTab === tabId;
-        const labelKey = tabTranslationKeys[tabId];
-        const label = t(labelKey); // ✅ ترجمة التسمية
-        const count = getCount(tabId);
-
-        return (
-          <button
-            key={tabId}
-            role="tab"
-            aria-selected={isActive}
-            aria-controls={`panel-${tabId}`}
-            id={`tab-${tabId}`}
-            tabIndex={isActive ? 0 : -1}
-            onClick={() => handleTabClick(tabId)}
-            className={cn(
-              "relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
-              "whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1",
-              isActive
-                ? "text-white bg-gradient-to-r from-blue-500 to-purple-600 shadow-md"
-                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-            )}
-          >
-            {/* عرض الأيقونة إن وجدت */}
-            {tabConfig.icon && <span className="mr-1.5">{tabConfig.icon}</span>}
-            {label}
-            {count !== undefined && count > 0 && (
-              <span className="ml-1.5 text-xs bg-white/20 dark:bg-black/20 px-1.5 py-0.5 rounded-full">
-                {count}
-              </span>
-            )}
-
-            {/* المؤشر المتحرك للتبويب النشط */}
-            {isActive && (
-              <motion.span
-                layoutId="activeTabIndicator"
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-white rounded-full"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
+);
 }

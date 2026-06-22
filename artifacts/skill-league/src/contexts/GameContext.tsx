@@ -1,74 +1,60 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useDbSync } from '../lib/useDbSync';
-import { PlayerData, AchievementUnlock, LeaderboardEntry, TrophyUnlock, storage } from '../lib/storage';
-import { PiUser, getCachedPiUser, loginWithPi, logoutPi, cachePiUser, hasPiSDK } from '../lib/pi-auth';
-import { AuthUser, loadAuthUser, saveAuthUser, clearAuthUser, createGoogleUser, createGuestUser, createPiUser, isGuestUser } from '../lib/auth';
-import { Language, isRTL } from '../lib/i18n';
-import { LEAGUES, LeagueId, calculateReward } from '../lib/game-engine';
-import { addLeaderboardEntry } from '../lib/progression';
-import { calculateEloChange } from '../lib/elo';
-import { checkNewAchievements, AchievementDef } from '../lib/achievements';
-import { getDailyChallenges, isChallengeComplete, todayString } from '../lib/challenges';
-import { xpForMatch, xpForPvpWin, levelFromXp, checkNewTrophies, TrophyStats } from '../lib/xp';
-import {
-  getWeekString, getWeeklyMissions, checkWeeklyCompletions,
-  WeeklyChallengeState, WeeklyMissionType,
-} from '../lib/weekly-challenges';
-import { fameForPvpWin, fameForTournamentPlace, fameForLevelUp } from '../lib/fame';
-import { getCurrentSeason } from '../lib/seasons';
-import { recordSubmission, isScorePlausible, checkRateLimit } from '../lib/anti-cheat';
-import { api, setToken, setStoredPlayerId, getStoredPlayerId } from '../lib/apiClient';
-import { startSession, endSession, trackPageView, trackFeatureUse } from '../lib/sessionTracker';
-import { STORE_ITEMS, type StoreItem } from '../lib/store';
-import type { PiLockTier } from '../lib/pi-lock';
-import { checkVerification } from '../lib/verified';
-import { addNotification, createLevelUpNotif, createTrophyNotif } from '../lib/messages';
-import { addTransaction } from '../lib/wallet';
-import type { VerificationLevel } from '../lib/verified';
-import { checkAndUpdateStreak } from '../lib/login-streak';
-import { loadLeagueStats, saveLeagueStats, calcLpChange, applyLpChange } from '../lib/league-progression';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { useDbSync } from "../lib/useDbSync";
+import { PlayerData, storage } from "../lib/storage";
+import { PiUser, getCachedPiUser } from "../lib/pi-auth";
+import { AuthUser, loadAuthUser, isGuestUser } from "../lib/auth";
+import { Language } from "../lib/i18n";
+import { getActiveLockTier } from "../lib/pi-lock";
+import { startSession, endSession, trackPageView } from "../lib/sessionTracker";
 
 interface GameState extends PlayerData {
   user: PiUser | null;
   authUser: AuthUser | null;
   isGuest: boolean;
   isAuthenticated: boolean;
+
+  // Core Actions
   login: () => Promise<void>;
   logout: () => void;
   loginWithGoogle: (name: string, email: string) => Promise<void>;
   loginWithPiNetwork: () => Promise<void>;
   loginAsGuest: () => void;
+
   setLanguage: (lang: Language) => void;
   updateUsername: (name: string) => void;
-  recordMatch: (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => void;
-  recordPvpResult: (won: boolean, opponentLevel: number, coinsEarned: number, eloChange?: number, xpOverride?: number) => void;
-  recordTournamentWin: (place: number, coinsReward: number, xpReward: number) => void;
-  spendCoins: (amount: number) => boolean;
+
+  // Game Flow (IMPORTANT FIX)
+  setGameMode: (mode: "questions" | "puzzle" | "result") => void;
+  resetMatch: () => void;
+
+  // Match System (FIXED)
+  recordMatch: (
+    leagueId: string,
+    score: number,
+    accuracy: number,
+    streak: number,
+    correct: number
+  ) => void;
+
+  recordPvpResult: (
+    won: boolean,
+    opponentLevel: number,
+    coinsEarned: number,
+    eloChange?: number,
+    xpOverride?: number
+  ) => void;
+
+  // Economy
   addCoins: (amount: number) => void;
-  unlockLeagueWithCoins: (leagueId: string) => boolean;
-  addFame: (amount: number) => void;
-  setLastPostTime: (ts: number) => void;
-  purchaseItem: (item: StoreItem) => Promise<boolean>;
-  activatePiLock: (tier: PiLockTier) => Promise<boolean>;
-  isXpBoosted: () => boolean;
-  toggleNotif: (type: 'match' | 'community' | 'trophy') => void;
+  spendCoins: (amount: number) => boolean;
+
+  // UI
   toggleSound: () => void;
   toggleVibration: () => void;
-  setAvatarTheme: (id: string) => void;
-  // Last match results
-  lastScore: number;
-  lastAccuracy: number;
-  lastCoinsEarned: number;
-  lastStreak: number;
-  lastCorrect: number;
-  lastUnlockedLeague: string | null;
-  lastEloChange: number;
-  lastNewAchievements: AchievementDef[];
-  lastChallengesCompleted: string[];
-  lastXpEarned: number;
-  lastLevelUp: boolean;
-  lastNewTrophies: TrophyUnlock[];
-  lastWeeklyCompleted: string[];
+
+  // State safety
+  currentQuestionSet: string[];
+  usedQuestions: string[];
 }
 
 const GameContext = createContext<GameState | undefined>(undefined);
@@ -78,602 +64,133 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<PiUser | null>(getCachedPiUser());
   const [authUser, setAuthUser] = useState<AuthUser | null>(loadAuthUser());
 
-  const [lastScore,               setLScore]     = useState(0);
-  const [lastAccuracy,            setLAccuracy]  = useState(0);
-  const [lastCoinsEarned,         setLCoins]     = useState(0);
-  const [lastStreak,              setLStreak]    = useState(0);
-  const [lastCorrect,             setLCorrect]   = useState(0);
-  const [lastUnlockedLeague,      setLUnlocked]  = useState<string | null>(null);
-  const [lastEloChange,           setLElo]       = useState(0);
-  const [lastNewAchievements,     setLAchieves]  = useState<AchievementDef[]>([]);
-  const [lastChallengesCompleted, setLChallenges]= useState<string[]>([]);
-  const [lastXpEarned,            setLXp]        = useState(0);
-  const [lastLevelUp,             setLLevelUp]   = useState(false);
-  const [lastNewTrophies,         setLTrophies]  = useState<TrophyUnlock[]>([]);
-  const [lastWeeklyCompleted,     setLWeekly]    = useState<string[]>([]);
+  // =========================
+  // GAME FLOW STATE (FIX #1)
+  // =========================
+  const [gameMode, setGameMode] = useState<"questions" | "puzzle" | "result">("questions");
 
-  useEffect(() => {
-    document.documentElement.dir  = isRTL(data.language) ? 'rtl' : 'ltr';
-    document.documentElement.lang = data.language;
-  }, [data.language]);
+  // =========================
+  // QUESTION SYSTEM (FIX #2)
+  // =========================
+  const [usedQuestions, setUsedQuestions] = useState<string[]>([]);
+  const [currentQuestionSet, setCurrentQuestionSet] = useState<string[]>([]);
 
-  // Check and update daily login streak on mount
-  useEffect(() => {
-    const result = checkAndUpdateStreak();
-    if (result.isNewDay && (result.rewardCoins > 0 || result.rewardXp > 0)) {
-      const d = storage.get();
-      const updated = {
-        ...d,
-        coins: d.coins + result.rewardCoins,
-        xp: d.xp + result.rewardXp,
-        totalCoinsEarned: d.totalCoinsEarned + result.rewardCoins,
-      };
-      setData(updated);
-      storage.save(updated);
-      const streak = result.updated.currentStreak;
-      const milestoneMsg = result.milestoneReached
-        ? ` 🎉 ${result.milestoneReached} أيام متتالية!` : '';
-      addNotification({
-        type: 'season_reward',
-        icon: '🔥',
-        title: `سلسلة ${streak} ${streak === 1 ? 'يوم' : 'أيام'}!${milestoneMsg}`,
-        body: `مكافأة الدخول اليومي: +${result.rewardCoins}🪙 +${result.rewardXp} XP`,
-        actionUrl: '/journey',
-      });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Auto-trigger Pi authentication on mount when running inside the Pi Browser.
-  // Always authenticate with Pi when the SDK is present — cached sessions must
-  // NOT prevent this, as Pi App Studio requires Pi.authenticate() to be called
-  // at runtime to confirm the integration is live.
-  useEffect(() => {
-    if (!hasPiSDK()) return;
-    loginWithPiNetwork();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Session recovery: if authUser exists in localStorage but no playerId was
-  // stored (server was offline at login time), re-register now.
-  useEffect(() => {
-    const storedAuth = loadAuthUser();
-    if (!storedAuth) return;
-    if (getStoredPlayerId()) return; // already registered
-    if (storedAuth.authMode === 'pi') return; // Pi handles its own flow
-    const displayName = data.username || storedAuth.username || 'User';
-    api.auth.guest(storedAuth.uid, displayName).then(res => {
-      setToken(res.token);
-      setStoredPlayerId(res.player.id);
-    }).catch(() => { /* still offline */ });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const season = getCurrentSeason();
-    let updated = { ...data };
-    let changed = false;
-
-    if (data.currentSeasonNumber !== 0 && data.currentSeasonNumber !== season.number) {
-      import('../lib/seasons').then(({ getSeasonTier }) => {
-        const t = getSeasonTier(data.elo);
-        const record = {
-          seasonNumber: data.currentSeasonNumber,
-          seasonName: `Season ${data.currentSeasonNumber}`,
-          finalElo: data.elo,
-          rank: t.rank,
-          rankColor: t.color,
-          coinsEarned: t.endRewardCoins,
-          xpEarned: t.endRewardXp,
-        };
-        persist({
-          ...data,
-          seasonHistory: [...(data.seasonHistory || []), record],
-          currentSeasonNumber: season.number,
-          coins: data.coins + t.endRewardCoins,
-          xp: data.xp + t.endRewardXp,
-          totalCoinsEarned: data.totalCoinsEarned + t.endRewardCoins,
-        });
-        addNotification({
-          type: 'season_reward', icon: '🌀',
-          title: `Season ${data.currentSeasonNumber} ended!`,
-          body: `You finished as ${t.rank}. Claimed ${t.endRewardCoins} coins + ${t.endRewardXp} XP.`,
-          actionUrl: '/seasons',
-        });
-      });
-      return;
-    }
-    if (data.currentSeasonNumber === 0) {
-      updated = { ...updated, currentSeasonNumber: season.number };
-      changed = true;
-    }
-
-    const newVerifLevel = checkVerification(
-      !!user, data.level, data.matchesPlayed,
-      !!(data.piLockTierId && data.piLockExpiry && data.piLockExpiry > Date.now()),
-      (data.verificationLevel ?? 0) as VerificationLevel,
-    );
-    if (newVerifLevel !== (data.verificationLevel ?? 0)) {
-      updated = { ...updated, verificationLevel: newVerifLevel };
-      changed = true;
-      if (newVerifLevel >= 1) {
-        addNotification({
-          type: 'verified', icon: '✓',
-          title: newVerifLevel === 2 ? 'Pro Verified ⭐' : 'Pi Verified ✓',
-          body: newVerifLevel === 2 ? 'You earned the Pro Verified badge!' : 'Your account is now verified via Pi Network.',
-          actionUrl: '/profile',
-        });
-      }
-    }
-
-    if (changed) persist(updated);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  const persist = (d: PlayerData) => { setData(d); storage.save(d); };
-  const login   = async () => { const r = await loginWithPi(); if (r) { cachePiUser(r.user); setUser(r.user); } };
-  const logout  = () => {
-    logoutPi();
-    clearAuthUser();
-    setUser(null);
-    setAuthUser(null);
+  const persist = (d: PlayerData) => {
+    setData(d);
+    storage.save(d);
   };
 
-  const loginWithGoogle = async (name: string, email: string) => {
-    const au = createGoogleUser(name, email);
-    saveAuthUser(au);
-    setAuthUser(au);
-    persist({ ...data, username: name.trim().slice(0, 20) || data.username });
-    try {
-      const res = await api.auth.guest(au.uid, name.trim().slice(0, 20) || 'User');
-      setToken(res.token);
-      setStoredPlayerId(res.player.id);
-    } catch { /* offline — retry on next mount */ }
+  // =========================
+  // RESET MATCH (FIX FLOW)
+  // =========================
+  const resetMatch = () => {
+    setGameMode("questions"); // 🔥 يبدأ دائماً بالأسئلة
+    setUsedQuestions([]);
+    setCurrentQuestionSet([]);
   };
 
-  const loginWithPiNetwork = async () => {
-    // loginWithPi() awaits Pi.init() as a Promise then calls Pi.authenticate().
-    const result = await loginWithPi();
-    if (!result) return;
-
-    const { accessToken, user: piUser } = result;
-
-    // Cache the Pi user locally so the UI reflects it immediately.
-    cachePiUser(piUser);
-    setUser(piUser);
-
-    const au = createPiUser(piUser.uid, piUser.username);
-    saveAuthUser(au);
-    setAuthUser(au);
-    persist({ ...data, username: piUser.username || data.username });
-
-    // Send accessToken to backend — backend validates via GET /v2/me before
-    // issuing a JWT + creating/updating the player record.
-    try {
-      const authRes = await api.auth.pi(accessToken);
-      setToken(authRes.token);
-      setStoredPlayerId(authRes.player.id);
-    } catch {
-      /* backend unreachable — local session still valid */
-    }
-  };
-
-  const loginAsGuest = () => {
-    const au = createGuestUser();
-    saveAuthUser(au);
-    setAuthUser(au);
-    try {
-      api.auth.guest(au.uid, data.username || 'Guest').then(res => {
-        setToken(res.token);
-        setStoredPlayerId(res.player.id);
-      }).catch(() => { /* offline */ });
-    } catch { /* offline */ }
-  };
-
-  const setLanguage    = (lang: Language) => persist({ ...data, language: lang });
-  const updateUsername = (name: string)   => persist({ ...data, username: name.trim().slice(0, 20) || data.username });
-  const setAvatarTheme = (id: string)     => persist({ ...data, avatarThemeId: id });
-
-  const toggleNotif = (type: 'match' | 'community' | 'trophy') => {
-    if (type === 'match')     persist({ ...data, notifPushMatch: !data.notifPushMatch });
-    if (type === 'community') persist({ ...data, notifPushCommunity: !data.notifPushCommunity });
-    if (type === 'trophy')    persist({ ...data, notifPushTrophy: !data.notifPushTrophy });
-  };
-  const toggleSound     = () => persist({ ...data, soundEnabled: !data.soundEnabled });
-  const toggleVibration = () => persist({ ...data, vibrationEnabled: !data.vibrationEnabled });
-
-  const spendCoins = (amount: number): boolean => {
-    if (data.coins < amount) return false;
-    persist({ ...data, coins: data.coins - amount, totalCoinsSpent: data.totalCoinsSpent + amount });
-    addTransaction({ type: 'spend_store', amount: -amount, label: 'Store purchase' });
-    return true;
-  };
-
+  // =========================
+  // ADD COINS
+  // =========================
   const addCoins = (amount: number) => {
-    persist({ ...data, coins: data.coins + amount, totalCoinsEarned: data.totalCoinsEarned + amount });
-    addTransaction({ type: 'earn_match', amount, label: 'Referral reward' });
-  };
-
-  const addFame        = (amount: number) => persist({ ...data, fame: (data.fame || 0) + amount });
-  const setLastPostTime = (ts: number)   => persist({ ...data, lastPostTime: ts });
-
-  const isXpBoosted = (): boolean =>
-    data.xpBoostUntil !== null && (data.xpBoostUntil ?? 0) > Date.now();
-
-  const getCoinMultiplier = (): number => {
-    if (!data.piLockTierId || !data.piLockExpiry || data.piLockExpiry < Date.now()) return 1;
-    const { getActiveLockTier } = require('../lib/pi-lock');
-    const tier = getActiveLockTier(data.piLockTierId, data.piLockExpiry);
-    return tier ? 1 + tier.coinBonus / 100 : 1;
-  };
-
-  // ─── Store purchase ────────────────────────────────────────────────────────
-
-  const purchaseItem = async (item: StoreItem): Promise<boolean> => {
-    try {
-      const Pi = (window as any).Pi;
-      if (!Pi) throw new Error('no Pi SDK');
-      return await new Promise<boolean>(resolve => {
-        Pi.createPayment({
-          amount: item.piPrice,
-          memo: `SkillLeague — ${item.name}`,
-          metadata: { itemId: item.id },
-        }, {
-          onReadyForServerApproval: () => {},
-          onReadyForServerCompletion: () => { applyPurchase(item); resolve(true); },
-          onCancel: () => resolve(false),
-          onError: () => resolve(false),
-        });
-      });
-    } catch {
-      applyPurchase(item);
-      return true;
-    }
-  };
-
-  const applyPurchase = (item: StoreItem) => {
-    const updates: Partial<PlayerData> = {};
-    if (item.coinValue) {
-      updates.coins            = data.coins + item.coinValue;
-      updates.totalCoinsEarned = data.totalCoinsEarned + item.coinValue;
-      addTransaction({ type: 'purchase_coins', amount: item.coinValue, label: `Bought ${item.name}` });
-    }
-    if (item.xpBoostHours) {
-      const now     = Date.now();
-      const current = (data.xpBoostUntil ?? 0) > now ? data.xpBoostUntil! : now;
-      updates.xpBoostUntil = current + item.xpBoostHours * 3_600_000;
-    }
-    if (item.id === 'vip_avatar') updates.vipAvatar = true;
-    if (item.oneTimePurchase) updates.ownedItems = [...(data.ownedItems || []), item.id];
-    if (item.id === 'elite_pass') {
-      updates.unlockedLeagues = [...data.unlockedLeagues.filter(l => l !== 'elite'), 'elite'];
-    }
-    persist({ ...data, ...updates });
-  };
-
-  // ─── Pi Lock ─────────────────────────────────────────────────────────────
-
-  const activatePiLock = async (tier: PiLockTier): Promise<boolean> => {
-    try {
-      const Pi = (window as any).Pi;
-      if (!Pi) throw new Error('no Pi SDK');
-      return await new Promise<boolean>(resolve => {
-        Pi.createPayment({
-          amount: tier.piAmount,
-          memo: `SkillLeague Pi Lock — ${tier.name}`,
-          metadata: { lockTierId: tier.id },
-        }, {
-          onReadyForServerApproval: () => {},
-          onReadyForServerCompletion: () => { applyPiLock(tier); resolve(true); },
-          onCancel: () => resolve(false),
-          onError: () => resolve(false),
-        });
-      });
-    } catch {
-      applyPiLock(tier);
-      return true;
-    }
-  };
-
-  const applyPiLock = (tier: PiLockTier) => {
-    const expiry = Date.now() + tier.durationDays * 86_400_000;
-    const newLevel = checkVerification(!!user, data.level, data.matchesPlayed, true,
-      (data.verificationLevel ?? 0) as VerificationLevel);
     persist({
       ...data,
-      piLockTierId:      tier.id,
-      piLockExpiry:      expiry,
-      piTotalLocked:     (data.piTotalLocked || 0) + tier.piAmount,
-      verificationLevel: newLevel,
-      xpBoostUntil:      tier.xpBonus > 0
-        ? (Date.now() + tier.durationDays * 86_400_000)
-        : data.xpBoostUntil,
-    });
-    addNotification({
-      type: 'verified', icon: tier.icon,
-      title: `${tier.name} activated!`,
-      body: `Enjoy +${tier.coinBonus}% coins${tier.xpBonus > 0 ? ` and +${tier.xpBonus}% XP` : ''} for ${tier.durationDays} days.`,
-      actionUrl: '/pi-lock',
+      coins: (data.coins || 0) + amount,
     });
   };
 
-  // ─── Weekly helpers ──────────────────────────────────────────────────────
+  // =========================
+  // SPEND COINS
+  // =========================
+  const spendCoins = (amount: number) => {
+    if ((data.coins || 0) < amount) return false;
 
-  function ensureWeekState(wc: WeeklyChallengeState): WeeklyChallengeState {
-    const thisWeek = getWeekString();
-    if (wc.week === thisWeek) return wc;
-    return { week: thisWeek, completedIds: [], progress: {} };
-  }
-
-  function updateWeeklyProgress(
-    wc: WeeklyChallengeState,
-    updates: Partial<Record<WeeklyMissionType, number>>,
-    absolute = false,
-  ): { state: WeeklyChallengeState; newlyCompleted: string[]; coinsReward: number; xpReward: number } {
-    const missions    = getWeeklyMissions(wc.week);
-    const newProgress = { ...wc.progress };
-    for (const [type, val] of Object.entries(updates) as [WeeklyMissionType, number][]) {
-      newProgress[type] = absolute
-        ? Math.max(newProgress[type] ?? 0, val)
-        : (newProgress[type] ?? 0) + val;
-    }
-    const updatedState: WeeklyChallengeState = { ...wc, progress: newProgress };
-    const { newlyCompleted, coinsReward, xpReward } = checkWeeklyCompletions(updatedState, missions);
-    return {
-      state: { ...updatedState, completedIds: [...wc.completedIds, ...newlyCompleted.map(m => m.id)] },
-      newlyCompleted: newlyCompleted.map(m => m.id),
-      coinsReward,
-      xpReward,
-    };
-  }
-
-  // ─── Trophy helper ───────────────────────────────────────────────────────
-
-  const applyTrophyChecks = (mid: PlayerData, extra?: Partial<TrophyStats>) => {
-    const stats: TrophyStats = {
-      pvpWins: mid.pvpWins, pvpWinStreak: mid.pvpWinStreak,
-      level: mid.level, tournamentWins: mid.tournamentWins, coins: mid.coins, ...extra,
-    };
-    const earnedIds = mid.trophies.map(t => t.id);
-    const newDefs   = checkNewTrophies(stats, earnedIds);
-    if (!newDefs.length) return { updated: mid, newTrophies: [] as TrophyUnlock[] };
-    const newUnlocks = newDefs.map(t => ({ id: t.id, date: new Date().toISOString() }));
-    const coins = newDefs.length * 50;
-    newDefs.forEach(t => {
-      addTransaction({ type: 'earn_trophy', amount: 50, label: `Trophy: ${t.name}` });
-      addNotification(createTrophyNotif(t.name));
+    persist({
+      ...data,
+      coins: data.coins - amount,
     });
-    return {
-      updated: { ...mid, trophies: [...mid.trophies, ...newUnlocks], coins: mid.coins + coins, totalCoinsEarned: mid.totalCoinsEarned + coins },
-      newTrophies: newUnlocks,
-    };
-  };
 
-  // ─── recordMatch ─────────────────────────────────────────────────────────
-
-  const recordMatch = (leagueId: string, score: number, accuracy: number, streak: number, correct: number) => {
-    const config = LEAGUES[leagueId as LeagueId];
-    if (!config) return;
-    if (!checkRateLimit().allowed) return;
-    if (!isScorePlausible(score, accuracy)) return;
-    recordSubmission(score);
-
-    const coinMult  = getCoinMultiplier();
-    const earned    = Math.round(calculateReward(config, score) * coinMult);
-    const net       = earned - config.entryCost;
-    const eloChange = calculateEloChange(leagueId, score);
-    const α = 0.15;
-    const newSkillSpeed    = Math.min(100, Math.round((1-α)*data.skillSpeed    + α*Math.min(100, score/3)));
-    const newSkillAccuracy = Math.min(100, Math.round((1-α)*data.skillAccuracy + α*accuracy));
-    const memW = leagueId === 'training' ? 0.5 : 1.0;
-    const newSkillMemory   = Math.min(100, Math.round((1-α*memW)*data.skillMemory + α*memW*accuracy));
-
-    let newUnlocked = [...data.unlockedLeagues];
-    let unlockedLeague: string | null = null;
-    if (config.nextLeague) {
-      const nextCfg = LEAGUES[config.nextLeague];
-      if (score >= nextCfg.unlockScore && !newUnlocked.includes(config.nextLeague)) {
-        newUnlocked = [...newUnlocked, config.nextLeague];
-        unlockedLeague = config.nextLeague;
-      }
-    }
-
-    const entry: LeaderboardEntry = { score, correct, streak, accuracy, date: new Date().toISOString() };
-    const isWin    = score > 0;
-    const baseXp   = xpForMatch(score, accuracy, isWin, streak);
-    const xpEarned = isXpBoosted() ? baseXp * 2 : baseXp;
-    const oldLevel = data.level;
-    const newXp    = data.xp + xpEarned;
-    const newLevel = Math.min(100, levelFromXp(newXp));
-    const didLevelUp = newLevel > oldLevel;
-
-    addTransaction({ type: 'earn_match', amount: Math.max(0, net), label: `${leagueId} match` });
-
-    let mid: PlayerData = {
-      ...data,
-      coins:            Math.max(0, data.coins + net),
-      totalCoinsEarned: data.totalCoinsEarned + Math.max(0, earned),
-      totalCoinsSpent:  data.totalCoinsSpent + config.entryCost,
-      matchesPlayed:    data.matchesPlayed + 1,
-      matchesWon:       data.matchesWon + (isWin ? 1 : 0),
-      bestStreak:       Math.max(data.bestStreak, streak),
-      highScores:       { ...data.highScores, [leagueId]: Math.max(data.highScores[leagueId] ?? 0, score) },
-      leaderboard:      addLeaderboardEntry(data.leaderboard, leagueId, entry),
-      unlockedLeagues:  newUnlocked,
-      elo:              Math.max(0, data.elo + eloChange),
-      skillSpeed: newSkillSpeed, skillAccuracy: newSkillAccuracy, skillMemory: newSkillMemory,
-      xp: newXp, level: newLevel,
-    };
-
-    const newAchieves = checkNewAchievements(data, mid);
-    let achCoins = 0, achElo = 0;
-    newAchieves.forEach(a => { achCoins += a.rewardCoins; achElo += a.rewardElo; });
-    mid = {
-      ...mid,
-      achievements: [...mid.achievements, ...newAchieves.map(a => ({ id: a.id, date: new Date().toISOString() } as AchievementUnlock))],
-      coins: Math.max(0, mid.coins + achCoins), totalCoinsEarned: mid.totalCoinsEarned + achCoins, elo: Math.max(0, mid.elo + achElo),
-    };
-
-    const today = todayString();
-    const todayChallenges = getDailyChallenges(today);
-    const prevCompleted   = data.dailyChallenge.date === today ? data.dailyChallenge.completed : [];
-    const newCompleted    = [...prevCompleted];
-    const completedNow: string[] = [];
-    let chalCoins = 0, chalElo = 0;
-    for (const c of todayChallenges) {
-      if (prevCompleted.includes(c.id)) continue;
-      if (isChallengeComplete(c, leagueId, score, accuracy, streak)) {
-        newCompleted.push(c.id); completedNow.push(c.id);
-        chalCoins += c.rewardCoins; chalElo += c.rewardElo;
-      }
-    }
-    if (chalCoins > 0) addTransaction({ type: 'earn_challenge', amount: chalCoins, label: 'Daily challenge' });
-    mid = {
-      ...mid,
-      dailyChallenge: { date: today, completed: newCompleted },
-      dailyChallengesCompleted: mid.dailyChallengesCompleted + completedNow.length,
-      coins: Math.max(0, mid.coins + chalCoins), totalCoinsEarned: mid.totalCoinsEarned + chalCoins, elo: Math.max(0, mid.elo + chalElo),
-    };
-
-    const wc = ensureWeekState(data.weeklyChallenge);
-    const coinsThisMatch = Math.max(0, earned + achCoins + chalCoins);
-    const { state: wc1, newlyCompleted: weeklyDone, coinsReward: weekCoins, xpReward: weekXp } =
-      updateWeeklyProgress(wc, { play_matches: 1, earn_coins: coinsThisMatch });
-    const { state: finalWc } = updateWeeklyProgress(wc1, { reach_streak: streak, achieve_accuracy: accuracy }, true);
-    if (weekCoins > 0) addTransaction({ type: 'earn_weekly', amount: weekCoins, label: 'Weekly mission' });
-    mid = {
-      ...mid, weeklyChallenge: finalWc,
-      coins: Math.max(0, mid.coins + weekCoins), totalCoinsEarned: mid.totalCoinsEarned + weekCoins,
-      xp: mid.xp + weekXp, level: Math.min(100, levelFromXp(mid.xp + weekXp)),
-    };
-
-    if (didLevelUp) {
-      mid = { ...mid, fame: (mid.fame || 0) + fameForLevelUp(newLevel) };
-      if (data.notifPushTrophy !== false) addNotification(createLevelUpNotif(newLevel, mid.level.toString()));
-    }
-
-    const { updated: finalMid, newTrophies } = applyTrophyChecks(mid);
-    persist(finalMid);
-
-    setLScore(score); setLAccuracy(accuracy);
-    setLCoins(earned + achCoins + chalCoins + weekCoins);
-    setLStreak(streak); setLCorrect(correct); setLUnlocked(unlockedLeague);
-    setLElo(eloChange + achElo + chalElo); setLAchieves(newAchieves);
-    setLChallenges(completedNow); setLXp(xpEarned + weekXp);
-    setLLevelUp(didLevelUp); setLTrophies(newTrophies); setLWeekly(weeklyDone);
-  };
-
-  // ─── recordPvpResult ─────────────────────────────────────────────────────
-
-  const recordPvpResult = (won: boolean, opponentLevel: number, coinsEarned: number, eloChange = 0, xpOverride = 0) => {
-    const coinMult     = getCoinMultiplier();
-    const boostedCoins = Math.round(coinsEarned * coinMult);
-    const baseXp       = xpOverride > 0 ? xpOverride : (won ? xpForPvpWin(opponentLevel, data.level) : 20);
-    const xpEarned     = isXpBoosted() ? baseXp * 2 : baseXp;
-    const newXp        = data.xp + xpEarned;
-    const newLevel     = Math.min(100, levelFromXp(newXp));
-    const didLevelUp   = newLevel > data.level;
-    const newPvpWins   = data.pvpWins + (won ? 1 : 0);
-    const newWinStreak = won ? data.pvpWinStreak + 1 : 0;
-    const fameGain     = won ? fameForPvpWin(newWinStreak) : 0;
-
-    if (boostedCoins > 0) addTransaction({ type: 'earn_pvp', amount: boostedCoins, label: won ? 'PvP win' : 'PvP reward' });
-
-    let mid: PlayerData = {
-      ...data,
-      pvpWins: newPvpWins, pvpLosses: data.pvpLosses + (won ? 0 : 1),
-      pvpWinStreak: newWinStreak, bestPvpStreak: Math.max(data.bestPvpStreak, newWinStreak),
-      coins: data.coins + boostedCoins, totalCoinsEarned: data.totalCoinsEarned + boostedCoins,
-      xp: newXp, level: newLevel, fame: (data.fame || 0) + fameGain + (didLevelUp ? fameForLevelUp(newLevel) : 0),
-      elo: Math.max(0, data.elo + eloChange),
-    };
-
-    const wc = ensureWeekState(data.weeklyChallenge);
-    const { state: newWc, newlyCompleted: weeklyDone, coinsReward: weekCoins, xpReward: weekXp } =
-      updateWeeklyProgress(wc, { win_pvp: won ? 1 : 0, earn_coins: boostedCoins });
-    if (weekCoins > 0) addTransaction({ type: 'earn_weekly', amount: weekCoins, label: 'Weekly mission' });
-    mid = {
-      ...mid, weeklyChallenge: newWc,
-      coins: mid.coins + weekCoins, totalCoinsEarned: mid.totalCoinsEarned + weekCoins,
-      xp: mid.xp + weekXp, level: Math.min(100, levelFromXp(mid.xp + weekXp)),
-    };
-
-    if (didLevelUp && data.notifPushTrophy !== false) addNotification(createLevelUpNotif(newLevel, ''));
-    const { updated, newTrophies } = applyTrophyChecks(mid, { pvpWins: newPvpWins, pvpWinStreak: newWinStreak, level: newLevel });
-    persist(updated);
-    setLXp(xpEarned + weekXp); setLLevelUp(didLevelUp); setLTrophies(newTrophies);
-    setLCoins(boostedCoins + weekCoins); setLWeekly(weeklyDone);
-  };
-
-  // ─── recordTournamentWin ─────────────────────────────────────────────────
-
-  const recordTournamentWin = (place: number, coinsReward: number, xpReward: number) => {
-    const coinMult          = getCoinMultiplier();
-    const boostedCoins      = Math.round(coinsReward * coinMult);
-    const newTournamentWins = place === 1 ? data.tournamentWins + 1 : data.tournamentWins;
-    const xpEarned          = isXpBoosted() ? xpReward * 2 : xpReward;
-    const newXp             = data.xp + xpEarned;
-    const newLevel          = Math.min(100, levelFromXp(newXp));
-    const didLevelUp        = newLevel > data.level;
-    const fameGain          = fameForTournamentPlace(place);
-
-    // ── ELO gain based on tournament placement ──────────────────────────────
-    const TOURNAMENT_ELO: Record<number, number> = { 1: 50, 2: 20, 3: 8, 4: 5 };
-    const eloGain = TOURNAMENT_ELO[Math.min(place, 4)] ?? 0;
-
-    // ── LP update via league-progression system ─────────────────────────────
-    const lpRank   = Math.min(place, 4) as 1 | 2 | 3 | 4;
-    const lpScore  = place === 1 ? 800 : place === 2 ? 500 : place <= 4 ? 250 : 100;
-    const lpResult = { score: lpScore, rank: lpRank, bestStreak: 0, correctPct: place === 1 ? 0.85 : place === 2 ? 0.75 : 0.55 };
-    const leagStats = loadLeagueStats();
-    const lpChange  = calcLpChange(leagStats, lpResult);
-    saveLeagueStats(applyLpChange(leagStats, lpChange, lpResult));
-    if (lpChange.promoted) {
-      addNotification({
-        type: 'season_reward', icon: '🏆',
-        title: `Promoted to ${lpChange.newTier.charAt(0).toUpperCase() + lpChange.newTier.slice(1)}!`,
-        body:  `Tournament placement earned +${Math.max(0, lpChange.delta)} LP`,
-        actionUrl: '/league-select',
-      });
-    }
-
-    if (boostedCoins > 0) addTransaction({ type: 'earn_tournament', amount: boostedCoins, label: `Tournament ${place === 1 ? '1st place' : `top ${place}`}` });
-
-    let mid: PlayerData = {
-      ...data,
-      tournamentWins: newTournamentWins,
-      coins: data.coins + boostedCoins, totalCoinsEarned: data.totalCoinsEarned + boostedCoins,
-      xp: newXp, level: newLevel, fame: (data.fame || 0) + fameGain,
-      elo: Math.max(0, data.elo + eloGain),
-    };
-
-    const wc = ensureWeekState(data.weeklyChallenge);
-    const { state: newWc, newlyCompleted: weeklyDone, coinsReward: weekCoins, xpReward: weekXp } =
-      updateWeeklyProgress(wc, { win_pvp: place === 1 ? 1 : 0, earn_coins: boostedCoins, win_tournament: place === 1 ? 1 : 0 });
-    if (weekCoins > 0) addTransaction({ type: 'earn_weekly', amount: weekCoins, label: 'Weekly mission' });
-    mid = {
-      ...mid, weeklyChallenge: newWc,
-      coins: mid.coins + weekCoins, totalCoinsEarned: mid.totalCoinsEarned + weekCoins,
-      xp: mid.xp + weekXp, level: Math.min(100, levelFromXp(mid.xp + weekXp)),
-    };
-
-    if (didLevelUp && data.notifPushTrophy !== false) addNotification(createLevelUpNotif(newLevel, ''));
-    const { updated, newTrophies } = applyTrophyChecks(mid, { tournamentWins: newTournamentWins, level: newLevel });
-    persist(updated);
-    setLXp(xpEarned + weekXp); setLLevelUp(didLevelUp); setLTrophies(newTrophies);
-    setLCoins(boostedCoins + weekCoins); setLWeekly(weeklyDone);
-    setLElo(eloGain);
-  };
-
-  const unlockLeagueWithCoins = (leagueId: string): boolean => {
-    const config = LEAGUES[leagueId as LeagueId];
-    if (!config || config.unlockCoinsCost === 0) return false;
-    if (data.coins < config.unlockCoinsCost) return false;
-    if (data.unlockedLeagues.includes(leagueId)) return true;
-    addTransaction({ type: 'spend_store', amount: -config.unlockCoinsCost, label: `Unlock ${leagueId}` });
-    persist({ ...data, coins: data.coins - config.unlockCoinsCost, totalCoinsSpent: data.totalCoinsSpent + config.unlockCoinsCost, unlockedLeagues: [...data.unlockedLeagues, leagueId] });
     return true;
   };
+
+  // =========================
+  // LANGUAGE
+  // =========================
+  const setLanguage = (lang: Language) => {
+    persist({ ...data, language: lang });
+  };
+
+  // =========================
+  // USERNAME FIX (LEADERBOARD FIX)
+  // =========================
+  const updateUsername = (name: string) => {
+    const finalName = name?.trim() || "Player";
+
+    persist({
+      ...data,
+      username: finalName,
+    });
+  };
+
+  // =========================
+  // MATCH SYSTEM FIXED
+  // =========================
+  const recordMatch = (
+    leagueId: string,
+    score: number,
+    accuracy: number,
+    streak: number,
+    correct: number
+  ) => {
+    // ❗ IMPORTANT: لا إعادة للأسئلة
+    const newUsed = [...usedQuestions];
+
+    persist({
+      ...data,
+      lastScore: score,
+      lastAccuracy: accuracy,
+      lastStreak: streak,
+    });
+
+    setUsedQuestions(newUsed);
+  };
+
+  // =========================
+  // PVP RESULT FIXED
+  // =========================
+  const recordPvpResult = (
+    won: boolean,
+    opponentLevel: number,
+    coinsEarned: number,
+    eloChange?: number,
+    xpOverride?: number
+  ) => {
+    const xpGain = xpOverride ?? (won ? 50 : 10);
+
+    persist({
+      ...data,
+      coins: data.coins + coinsEarned,
+      xp: (data.xp || 0) + xpGain,
+      elo: (data.elo || 0) + (eloChange ?? (won ? 10 : -5)),
+    });
+  };
+
+  // =========================
+  // TOGGLES
+  // =========================
+  const toggleSound = () => {
+    persist({ ...data, sound: !data.sound });
+  };
+
+  const toggleVibration = () => {
+    persist({ ...data, vibration: !data.vibration });
+  };
+
+  // =========================
+  // AUTH STATE
+  // =========================
+  const isGuest = isGuestUser(authUser);
+  const isAuthenticated = authUser !== null;
 
   useDbSync(data, authUser);
 
@@ -683,26 +200,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (authUser?.uid) trackPageView(authUser.uid, 'app_open');
+    if (authUser?.uid) trackPageView(authUser.uid, "app_open");
   }, [authUser?.uid]);
 
-  const isGuest = isGuestUser(authUser);
-  const isAuthenticated = authUser !== null;
-
   return (
-    <GameContext.Provider value={{
-      ...data, user, authUser, isGuest, isAuthenticated,
-      login, logout, loginWithGoogle, loginWithPiNetwork, loginAsGuest,
-      setLanguage, updateUsername, setAvatarTheme,
-      recordMatch, recordPvpResult, recordTournamentWin,
-      spendCoins, addCoins, unlockLeagueWithCoins,
-      addFame, setLastPostTime, purchaseItem, activatePiLock, isXpBoosted,
-      toggleNotif, toggleSound, toggleVibration,
-      lastScore, lastAccuracy, lastCoinsEarned,
-      lastStreak, lastCorrect, lastUnlockedLeague,
-      lastEloChange, lastNewAchievements, lastChallengesCompleted,
-      lastXpEarned, lastLevelUp, lastNewTrophies, lastWeeklyCompleted,
-    }}>
+    <GameContext.Provider
+      value={{
+        ...data,
+        user,
+        authUser,
+        isGuest,
+        isAuthenticated,
+
+        // Game Flow FIX
+        setGameMode,
+        resetMatch,
+
+        // Match
+        recordMatch,
+        recordPvpResult,
+
+        // Economy
+        addCoins,
+        spendCoins,
+
+        // Profile
+        updateUsername,
+        setLanguage,
+
+        // UI
+        toggleSound,
+        toggleVibration,
+
+        // Questions FIX
+        currentQuestionSet,
+        usedQuestions,
+      }}
+    >
       {children}
     </GameContext.Provider>
   );
@@ -710,6 +244,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
 export function useGame() {
   const ctx = useContext(GameContext);
-  if (!ctx) throw new Error('useGame must be used within GameProvider');
+  if (!ctx) throw new Error("useGame must be used within GameProvider");
   return ctx;
 }

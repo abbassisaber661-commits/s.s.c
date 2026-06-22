@@ -2,34 +2,34 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/lib/apiClient";
 import type { ProfileData, Post } from "@/types/profile";
 
-// ============================================================
+// ============================
 // Types
-// ============================================================
+// ============================
 interface PostsState {
   pages: Post[][];
   hasNextPage: boolean;
   isFetchingNextPage: boolean;
 }
 
-// ============================================================
-// Cache مع صلاحية
-// ============================================================
 interface CacheEntry {
   data: ProfileData;
   timestamp: number;
 }
-const CACHE_TTL = 5 * 60 * 1000; // 5 دقائق
+
+const CACHE_TTL = 5 * 60 * 1000;
 const profileCache = new Map<string, CacheEntry>();
 
-// ============================================================
+// ============================
 // Hook
-// ============================================================
+// ============================
 export function useProfileData(userId: string) {
-  // ---------- Profile ----------
+  const safeUserId = userId || "1";
+
+  // ================= Profile =================
   const [profile, setProfile] = useState<ProfileData | null>(() => {
-    const entry = profileCache.get(userId);
-    if (entry && Date.now() - entry.timestamp < CACHE_TTL) {
-      return entry.data;
+    const cached = profileCache.get(safeUserId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.data;
     }
     return null;
   });
@@ -38,7 +38,7 @@ export function useProfileData(userId: string) {
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // ---------- Posts ----------
+  // ================= Posts =================
   const [postsState, setPostsState] = useState<PostsState>({
     pages: [],
     hasNextPage: false,
@@ -48,16 +48,9 @@ export function useProfileData(userId: string) {
   const pageRef = useRef(1);
   const abortRef = useRef<AbortController | null>(null);
 
-  // ============================================================
-  // جلب البروفايل + الصفحة الأولى
-  // ============================================================
+  // ================= Fetch Profile =================
   const fetchProfile = useCallback(async () => {
-    if (!userId) {
-      setIsLoading(false);
-      setIsError(true);
-      setErrorMessage("معرف المستخدم غير موجود");
-      return;
-    }
+    if (!safeUserId) return;
 
     setIsLoading(true);
     setIsError(false);
@@ -67,29 +60,34 @@ export function useProfileData(userId: string) {
     abortRef.current = new AbortController();
 
     try {
-      const profileRes = await api.social.profile(userId);
+      const res = await api.social.profile(safeUserId);
 
-      if (!profileRes) {
-        throw new Error("الملف الشخصي غير موجود");
-      }
+      if (!res) throw new Error("Profile not found");
 
-      const mappedProfile: ProfileData = {
-        id: profileRes.playerId,
-        username: profileRes.username ?? "مستخدم",
-        level: profileRes.level ?? 1,
-        postsCount: profileRes.postsCount ?? 0,
-        followers: profileRes.followersCount ?? 0,
-        following: profileRes.followingCount ?? 0,
-        avatar: undefined,
-        cover: undefined,
-        bio: undefined,
+      const mapped: ProfileData = {
+        id: res.playerId,
+        username: res.username || "User",
+        level: res.level ?? 1,
+        postsCount: res.postsCount ?? 0,
+        followers: res.followersCount ?? 0,
+        following: res.followingCount ?? 0,
+
+        // ✅ مهم جداً: fallback احترافي للصور
+        avatar: res.avatar || "/default-avatar.png",
+        cover: res.cover || "/default-cover.jpg",
+
+        bio: res.bio || "",
         reelsCount: 0,
         savedCount: 0,
         isFollowing: false,
       };
 
-      profileCache.set(userId, { data: mappedProfile, timestamp: Date.now() });
-      setProfile(mappedProfile);
+      profileCache.set(safeUserId, {
+        data: mapped,
+        timestamp: Date.now(),
+      });
+
+      setProfile(mapped);
 
       setPostsState({
         pages: [],
@@ -99,58 +97,59 @@ export function useProfileData(userId: string) {
 
       pageRef.current = 1;
     } catch (err) {
-      console.error("useProfileData fetch error:", err);
+      console.error("Profile fetch error:", err);
       setIsError(true);
-      setErrorMessage(err instanceof Error ? err.message : "حدث خطأ أثناء جلب البيانات");
+      setErrorMessage("Failed to load profile");
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [safeUserId]);
 
-  // ============================================================
-  // جلب الصفحة التالية
-  // ============================================================
+  // ================= Next Page =================
   const fetchNextPage = useCallback(async () => {
     if (postsState.isFetchingNextPage || !postsState.hasNextPage) return;
 
-    setPostsState((prev) => ({ ...prev, isFetchingNextPage: true }));
+    setPostsState((prev) => ({
+      ...prev,
+      isFetchingNextPage: true,
+    }));
 
     try {
-      // ========== حساب nextPage من عدد الصفحات الحالية ==========
-      const nextPage = postsState.pages.length + 1;
+      const next = postsState.pages.length + 1;
+      pageRef.current = next;
 
       setPostsState((prev) => ({
         ...prev,
+        isFetchingNextPage: false,
         hasNextPage: false,
+      }));
+    } catch (err) {
+      console.error(err);
+      setPostsState((prev) => ({
+        ...prev,
         isFetchingNextPage: false,
       }));
-
-      pageRef.current = nextPage;
-    } catch (err) {
-      console.error("useProfileData fetchNextPage error:", err);
-      setPostsState((prev) => ({ ...prev, isFetchingNextPage: false }));
     }
-  }, [userId, postsState.isFetchingNextPage, postsState.hasNextPage, postsState.pages.length]);
+  }, [postsState]);
 
-  // ============================================================
-  // التهيئة
-  // ============================================================
+  // ================= Init =================
   useEffect(() => {
     fetchProfile();
     return () => abortRef.current?.abort();
   }, [fetchProfile]);
 
-  // ============================================================
-  // القيمة المُرجَعة
-  // ============================================================
+  // ================= Return =================
   return {
     profile,
     posts: postsState.pages.flat(),
+
     isLoading,
     isError,
     errorMessage,
+
     refetch: fetchProfile,
     fetchNextPage,
+
     hasNextPage: postsState.hasNextPage,
     isFetchingNextPage: postsState.isFetchingNextPage,
   };
