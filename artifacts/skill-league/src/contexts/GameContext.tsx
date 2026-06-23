@@ -1,8 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useDbSync } from "../lib/useDbSync";
 import { PlayerData, storage } from "../lib/storage";
-import { PiUser, getCachedPiUser } from "../lib/pi-auth";
-import { AuthUser, loadAuthUser, isGuestUser } from "../lib/auth";
+import { PiUser, getCachedPiUser, loginWithPi, cachePiUser } from "../lib/pi-auth";
+import {
+  AuthUser, loadAuthUser, isGuestUser,
+  saveAuthUser, clearAuthUser,
+  createGoogleUser, createGuestUser, createPiUser,
+} from "../lib/auth";
 import { Language } from "../lib/i18n";
 import { getActiveLockTier } from "../lib/pi-lock";
 import { startSession, endSession, trackPageView } from "../lib/sessionTracker";
@@ -187,10 +191,46 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   // =========================
+  // AUTH FUNCTIONS
+  // =========================
+  const login = async () => {
+    // legacy stub — does nothing on its own
+  };
+
+  const loginWithGoogle = async (name: string, email: string) => {
+    const user = createGoogleUser(name, email);
+    saveAuthUser(user);
+    setAuthUser(user);
+  };
+
+  const loginWithPiNetwork = async () => {
+    const result = await loginWithPi();
+    if (result?.user) {
+      cachePiUser(result.user);
+      setUser(result.user);
+      const authU = createPiUser(result.user.uid, result.user.username);
+      saveAuthUser(authU);
+      setAuthUser(authU);
+    }
+  };
+
+  const loginAsGuest = () => {
+    const user = createGuestUser();
+    saveAuthUser(user);
+    setAuthUser(user);
+  };
+
+  const logout = () => {
+    clearAuthUser();
+    setAuthUser(null);
+    setUser(null);
+  };
+
+  // =========================
   // AUTH STATE
   // =========================
   const isGuest = isGuestUser(authUser);
-  const isAuthenticated = authUser !== null;
+  const isAuthenticated = !!authUser;
 
   useDbSync(data, authUser);
 
@@ -211,6 +251,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
         authUser,
         isGuest,
         isAuthenticated,
+
+        // Auth
+        login,
+        logout,
+        loginWithGoogle,
+        loginWithPiNetwork,
+        loginAsGuest,
 
         // Game Flow FIX
         setGameMode,
