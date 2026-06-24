@@ -34,16 +34,19 @@ export function getXPForNextLevel(level: number): number {
 }
 
 // ─────────────────────────────────────────────
-// 📈 XP SYSTEM
+// 📈 XP SYSTEM (FIXED)
 // ─────────────────────────────────────────────
 
 export function addXP(profile: PlayerProfile, gainedXP: number): PlayerProfile {
   let xp = profile.xp + gainedXP;
   let level = profile.level;
 
-  while (xp >= getXPForNextLevel(level)) {
-    xp -= getXPForNextLevel(level);
+  let required = getXPForNextLevel(level);
+
+  while (xp >= required) {
+    xp -= required;
     level += 1;
+    required = getXPForNextLevel(level);
   }
 
   return {
@@ -62,29 +65,6 @@ export function addPoints(profile: PlayerProfile, points: number): PlayerProfile
     ...profile,
     points: profile.points + points,
   };
-}
-
-// ─────────────────────────────────────────────
-// 🎮 MATCH RESULT UPDATE (AUTO SYNC TIER)
-// ─────────────────────────────────────────────
-
-export function updateMatchResult(
-  profile: PlayerProfile,
-  win: boolean,
-  pointsEarned: number,
-  xpEarned: number,
-): PlayerProfile {
-  const updated: PlayerProfile = {
-    ...profile,
-    gamesPlayed: profile.gamesPlayed + 1,
-    wins: profile.wins + (win ? 1 : 0),
-    losses: profile.losses + (win ? 0 : 1),
-  };
-
-  const withPoints = addPoints(updated, pointsEarned);
-  const withXP = addXP(withPoints, xpEarned);
-
-  return syncTier(withXP);
 }
 
 // ─────────────────────────────────────────────
@@ -108,4 +88,33 @@ export function syncTier(profile: PlayerProfile): PlayerProfile {
     ...profile,
     tier: calculateTier(profile.points),
   };
+}
+
+// ─────────────────────────────────────────────
+// 🎮 MATCH RESULT UPDATE (FIXED ORDER)
+// ─────────────────────────────────────────────
+
+export function updateMatchResult(
+  profile: PlayerProfile,
+  win: boolean,
+  pointsEarned: number,
+  xpEarned: number,
+): PlayerProfile {
+  let updated: PlayerProfile = {
+    ...profile,
+    gamesPlayed: profile.gamesPlayed + 1,
+    wins: profile.wins + (win ? 1 : 0),
+    losses: profile.losses + (win ? 0 : 1),
+  };
+
+  // 🟢 apply points first
+  updated = addPoints(updated, pointsEarned);
+
+  // 🟢 then XP
+  updated = addXP(updated, xpEarned);
+
+  // 🟢 then tier sync (IMPORTANT)
+  updated = syncTier(updated);
+
+  return updated;
 }

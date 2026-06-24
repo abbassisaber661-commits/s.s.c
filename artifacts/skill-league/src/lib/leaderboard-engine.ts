@@ -35,8 +35,13 @@ class LeaderboardEngine {
   // GET SORTED LEADERBOARD
   // =========================
   getLeaderboard(): LeaderboardEntry[] {
-    return this.players
-      .sort((a, b) => b.points - a.points)
+    return [...this.players]
+      .sort((a, b) => {
+        if (b.points === a.points) {
+          return b.xp - a.xp;
+        }
+        return b.points - a.points;
+      })
       .map((p, index) => ({
         id: p.id,
         username: p.username,

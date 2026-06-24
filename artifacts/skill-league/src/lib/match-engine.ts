@@ -8,6 +8,52 @@ import {
 } from './question-bank';
 
 // ─────────────────────────────────────────────
+// 🤖 MATCH BOTS (FIXED EXPORT)
+// ─────────────────────────────────────────────
+
+export const MATCH_BOTS = [
+  {
+    id: "bot_easy",
+    name: "Easy Bot",
+    level: 1,
+  },
+  {
+    id: "bot_medium",
+    name: "Medium Bot",
+    level: 2,
+  },
+  {
+    id: "bot_hard",
+    name: "Hard Bot",
+    level: 3,
+  },
+];
+
+// 🔥 FIX: bots getter
+export function getMatchBots() {
+  return MATCH_BOTS;
+}
+
+// 🔥 FIX: simulate bot answering question
+export function simulateBotQuestion(question: any, botLevel: number) {
+  const difficultyFactor = botLevel * 0.2;
+
+  const timeDelay = Math.max(
+    1000,
+    5000 - difficultyFactor * 1500
+  );
+
+  const isCorrect = Math.random() > (0.3 + difficultyFactor);
+
+  return {
+    question,
+    botLevel,
+    isCorrect,
+    timeDelay,
+  };
+}
+
+// ─────────────────────────────────────────────
 // 🔥 GLOBAL MATCH SEED
 // ─────────────────────────────────────────────
 
@@ -55,15 +101,13 @@ let _id = 0;
 const nextId = () => `q_${++_id}_${Date.now()}`;
 
 // ─────────────────────────────────────────────
-// 🔥 DIFFICULTY SYSTEM (UPDATED)
+// 🔥 DIFFICULTY SYSTEM
 // ─────────────────────────────────────────────
 
 type Difficulty = 'medium' | 'hard';
 
 const DIFF_MAP: Record<string, Difficulty> = {
   training: 'medium',
-
-  // 🔥 المطلوب منك: جعل الدوريات أصعب
   'division-iii': 'hard',
   'division-ii': 'hard',
   pro: 'hard',
@@ -75,19 +119,18 @@ function getDiff(tier: string): Difficulty {
 }
 
 // ─────────────────────────────────────────────
-// 🔥 QUESTION TRACKING (NO REPEAT)
+// 🔥 QUESTION TRACKING
 // ─────────────────────────────────────────────
 
 const usedQuestions = new Set<string>();
 
 function pickUnique(list: TriviaQ[], rng: () => number): TriviaQ {
   const available = list.filter(q => !usedQuestions.has(q.q));
-
   const pool = available.length ? available : list;
 
   const q = pool[Math.floor(rng() * pool.length)];
-
   usedQuestions.add(q.q);
+
   return q;
 }
 
@@ -146,7 +189,7 @@ export function generateMatchQuestions(
   const seed = createMatchSeed(tier, matchSeed);
   const rng = seededRng(seed);
 
-  usedQuestions.clear(); // 🔥 reset لكل مباراة
+  usedQuestions.clear();
 
   const sports  = shuffle([...SPORTS_BANK[diff]], rng);
   const culture = shuffle([...CULTURE_BANK[diff]], rng);
@@ -166,7 +209,6 @@ export function generateMatchQuestions(
   ];
 
   const pool = [...knowledge, ...visualQ];
-
   const final = shuffle(pool.slice(0, count), rng);
 
   return final.map(q => ({

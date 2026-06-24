@@ -1,73 +1,48 @@
-// ─────────────────────────────────────────────
-// 🏆 SkillLeague Leaderboard System
-// ─────────────────────────────────────────────
+import { useEffect, useState } from "react";
+import { leaderboard } from "@/lib/leaderboard";
 
-import type { PlayerProfile } from "@/lib/player-profile-system";
+export default function LeaderboardPage() {
+  const [data, setData] = useState(leaderboard.getTop(50));
 
-// ─────────────────────────────────────────────
-// 📊 ENTRY TYPE
-// ─────────────────────────────────────────────
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setData(leaderboard.getTop(50));
+    }, 1000);
 
-export interface LeaderboardEntry {
-  playerId: string;
-  username: string;
-  points: number;
-  xp: number;
-  tier: string;
-  wins: number;
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div style={{ padding: 20 }}>
+      <h1>🏆 Leaderboard</h1>
+
+      {data.length === 0 ? (
+        <p>No players yet — play a match first 🎮</p>
+      ) : (
+        <table style={{ width: "100%", marginTop: 20 }}>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Points</th>
+              <th>Wins</th>
+              <th>Tier</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {data.map((p, i) => (
+              <tr key={p.playerId}>
+                <td>#{i + 1}</td>
+                <td>{p.username}</td>
+                <td>{p.points}</td>
+                <td>{p.wins}</td>
+                <td>{p.tier}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 }
-
-// ─────────────────────────────────────────────
-// 🧠 LEADERBOARD ENGINE
-// ─────────────────────────────────────────────
-
-export class Leaderboard {
-  private board: LeaderboardEntry[] = [];
-
-  upsert(player: PlayerProfile) {
-    const index = this.board.findIndex(
-      (p) => p.playerId === player.id
-    );
-
-    const entry: LeaderboardEntry = {
-      playerId: player.id,
-      username: player.username,
-      points: player.points,
-      xp: player.xp,
-      tier: player.tier,
-      wins: player.wins,
-    };
-
-    if (index !== -1) {
-      this.board[index] = entry;
-    } else {
-      this.board.push(entry);
-    }
-
-    this.sort();
-  }
-
-  private sort() {
-    this.board.sort((a, b) => {
-      if (b.points === a.points) {
-        return b.xp - a.xp;
-      }
-      return b.points - a.points;
-    });
-  }
-
-  getTop(limit = 10) {
-    return this.board.slice(0, limit);
-  }
-
-  getPlayerRank(playerId: string) {
-    return this.board.findIndex((p) => p.playerId === playerId) + 1;
-  }
-
-  reset() {
-    this.board = [];
-  }
-}
-
-// singleton
-export const leaderboard = new Leaderboard();

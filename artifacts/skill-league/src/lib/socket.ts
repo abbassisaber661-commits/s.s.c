@@ -6,7 +6,7 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-export function getSocket() {
+export function connectSocket() {
   if (!socket) {
     socket = io("https://your-server-url.com", {
       transports: ["websocket"],
@@ -27,3 +27,6 @@ export const SocketEvents = {
   MATCH_UPDATE: "match_update",
   MATCH_END: "match_end",
 };
+
+// 🔁 للحفاظ على التوافق مع الكود القديم
+export const getSocket = connectSocket;

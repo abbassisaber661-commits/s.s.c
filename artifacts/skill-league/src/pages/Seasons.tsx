@@ -30,3 +30,6 @@ export function SeasonsPanel() {
     </div>
   );
 }
+
+// 🔥 FIX IMPORTANT
+export default SeasonsPanel;
