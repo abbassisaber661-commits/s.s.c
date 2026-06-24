@@ -6,11 +6,11 @@
 // 📦 CORE SYSTEM EXPORTS
 // ─────────────────────────────────────────────
 
-export { gameEngine } from '@/lib/esport-game-engine';
+export { gameEngine } from '@/lib/game-engine';
 
 export { matchSessionManager } from '@/lib/match-session-manager';
 
-export { gameOrchestrator } from '@/lib/game-orchestrator';
+export { gameOrchestrator, runGameFlow, resetGame } from '@/lib/game-orchestrator';
 
 export { leaderboardEngine } from '@/lib/leaderboard-engine';
 

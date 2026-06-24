@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────
 
 import type { PlayerProfile } from '@/lib/player-profile-system';
-import { gameEngine } from '@/lib/esport-game-engine';
+import { gameEngine } from '@/lib/game-engine';
 import { matchSessionManager } from '@/lib/match-session-manager';
 import { calculateRank } from '@/lib/rank-progression-engine';
 
@@ -57,3 +57,5 @@ export function runGameFlow(): GameResult | null {
 export function resetGame(): void {
   gameEngine.finish();
 }
+
+export const gameOrchestrator = { runGameFlow, resetGame };

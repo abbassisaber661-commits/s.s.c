@@ -13,6 +13,12 @@ export interface Question extends TriviaQ {
 }
 
 // ─────────────────────────────────────────────
+// 🔥 GENERATE MATCH QUESTIONS (re-export adapter)
+// ─────────────────────────────────────────────
+
+export { generateMatchQuestions } from '@/lib/match-engine';
+
+// ─────────────────────────────────────────────
 // 🔥 TIER DIFFICULTY SYSTEM
 // ─────────────────────────────────────────────
 

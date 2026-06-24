@@ -2,7 +2,7 @@
 // 🎮 SkillLeague Esport Match Service (CORE BRAIN)
 // ─────────────────────────────────────────────
 
-import { gameEngine } from "@/lib/esport-game-engine";
+import { gameEngine } from "@/lib/game-engine";
 import type { PlayerProfile } from "@/lib/player-profile-system";
 import type { MatchResult } from "@/lib/match-result-handler";
 

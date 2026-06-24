@@ -4,7 +4,7 @@
 
 import { useState, useCallback } from "react";
 
-import { gameEngine } from "@/lib/esport-game-engine";
+import { gameEngine } from "@/lib/game-engine";
 import {
   calculateXP,
   calculatePoints,

@@ -2,7 +2,7 @@
 // 🎮 SkillLeague Esport CORE INTEGRATION
 // ─────────────────────────────────────────────
 
-import { gameEngine } from "@/lib/esport-game-engine";
+import { gameEngine } from "@/lib/game-engine";
 import { matchSessionManager } from "@/lib/match-session-manager";
 import { updateRank } from "@/lib/rank-progression-engine";
 import type { PlayerProfile } from "@/lib/player-profile-system";

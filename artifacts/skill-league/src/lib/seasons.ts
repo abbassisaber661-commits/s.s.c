@@ -2,6 +2,15 @@
 // 🎮 SkillLeague Seasons Logic System (FIXED)
 // ─────────────────────────────────────────────
 
+export interface SeasonRecord {
+  seasonNumber: number;
+  rank: string;
+  points: number;
+  wins: number;
+  losses: number;
+  endedAt: string;
+}
+
 export interface Season {
   id: string;
   name: string;

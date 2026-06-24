@@ -13,6 +13,7 @@
 //   hard   → Professional + Champions (exact details + maximum deception)
 
 export interface TriviaQ {
+  id?:     string;    // optional stable identifier
   q:       string;    // full question text
   correct: string;    // exact correct answer
   opts:    string[];  // all 4 options INCLUDING the correct one

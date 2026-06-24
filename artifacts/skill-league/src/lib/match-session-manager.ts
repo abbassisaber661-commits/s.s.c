@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────
 
 import type { SoloMatchSession } from "@/lib/matchmaking-core";
-import { gameEngine } from "@/lib/esport-game-engine";
+import { gameEngine } from "@/lib/game-engine";
 import {
   calculatePoints,
   calculateXP,
