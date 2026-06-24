@@ -8,49 +8,81 @@ import {
 } from './question-bank';
 
 // ─────────────────────────────────────────────
-// 🤖 MATCH BOTS (FIXED EXPORT)
+// 🤖 MATCH BOT TYPE
 // ─────────────────────────────────────────────
 
-export const MATCH_BOTS = [
-  {
-    id: "bot_easy",
-    name: "Easy Bot",
-    level: 1,
-  },
-  {
-    id: "bot_medium",
-    name: "Medium Bot",
-    level: 2,
-  },
-  {
-    id: "bot_hard",
-    name: "Hard Bot",
-    level: 3,
-  },
+export interface MatchBot {
+  id:     string;
+  name:   string;
+  avatar: string;
+  skill:  number;
+  level:  number;
+}
+
+// ─────────────────────────────────────────────
+// 🤖 MATCH BOTS
+// ─────────────────────────────────────────────
+
+export const MATCH_BOTS: MatchBot[] = [
+  { id: 'bot_alpha',   name: 'Alpha',   avatar: '🤖', skill: 0.55, level: 2 },
+  { id: 'bot_nova',    name: 'Nova',    avatar: '🦾', skill: 0.45, level: 1 },
+  { id: 'bot_titan',   name: 'Titan',   avatar: '⚡', skill: 0.65, level: 3 },
+  { id: 'bot_cipher',  name: 'Cipher',  avatar: '🎯', skill: 0.50, level: 2 },
 ];
 
-// 🔥 FIX: bots getter
-export function getMatchBots() {
+const BOTS_BY_TIER: Record<string, MatchBot[]> = {
+  div3: [
+    { id: 'bot_rookie1',  name: 'Rookie',   avatar: '🌱', skill: 0.35, level: 1 },
+    { id: 'bot_rookie2',  name: 'Sprout',   avatar: '🐣', skill: 0.30, level: 1 },
+    { id: 'bot_rookie3',  name: 'Newbie',   avatar: '🎮', skill: 0.38, level: 1 },
+    { id: 'bot_rookie4',  name: 'Trainee',  avatar: '📚', skill: 0.32, level: 1 },
+  ],
+  div2: [
+    { id: 'bot_silver1',  name: 'Atlas',    avatar: '🪙', skill: 0.52, level: 2 },
+    { id: 'bot_silver2',  name: 'Echo',     avatar: '🔔', skill: 0.48, level: 2 },
+    { id: 'bot_silver3',  name: 'Orion',    avatar: '🌙', skill: 0.55, level: 2 },
+    { id: 'bot_silver4',  name: 'Vega',     avatar: '⭐', skill: 0.50, level: 2 },
+  ],
+  pro: [
+    { id: 'bot_pro1',     name: 'Apex',     avatar: '🏆', skill: 0.68, level: 3 },
+    { id: 'bot_pro2',     name: 'Blaze',    avatar: '🔥', skill: 0.72, level: 3 },
+    { id: 'bot_pro3',     name: 'Storm',    avatar: '⚡', skill: 0.65, level: 3 },
+    { id: 'bot_pro4',     name: 'Phantom',  avatar: '👻', skill: 0.70, level: 3 },
+  ],
+  champions: [
+    { id: 'bot_champ1',   name: 'Zeus',     avatar: '👑', skill: 0.85, level: 4 },
+    { id: 'bot_champ2',   name: 'Oracle',   avatar: '🔮', skill: 0.80, level: 4 },
+    { id: 'bot_champ3',   name: 'Nexus',    avatar: '💎', skill: 0.88, level: 4 },
+    { id: 'bot_champ4',   name: 'Infinity', avatar: '∞',  skill: 0.82, level: 4 },
+  ],
+};
+
+export function getMatchBots(divTier?: string): MatchBot[] {
+  if (divTier && BOTS_BY_TIER[divTier]) return BOTS_BY_TIER[divTier];
   return MATCH_BOTS;
 }
 
-// 🔥 FIX: simulate bot answering question
-export function simulateBotQuestion(question: any, botLevel: number) {
-  const difficultyFactor = botLevel * 0.2;
+// ─────────────────────────────────────────────
+// 🤖 BOT SIMULATION
+// ─────────────────────────────────────────────
 
-  const timeDelay = Math.max(
-    1000,
-    5000 - difficultyFactor * 1500
-  );
+export interface BotAnswer {
+  correct: boolean;
+  timeMs:  number;
+}
 
-  const isCorrect = Math.random() > (0.3 + difficultyFactor);
-
-  return {
-    question,
-    botLevel,
-    isCorrect,
-    timeDelay,
-  };
+export function simulateBotQuestion(
+  bot:            MatchBot,
+  timeLimitMs:    number,
+  currentStreak = 0,
+): BotAnswer {
+  const streakBonus = Math.min(0.1, currentStreak * 0.02);
+  const accuracy    = Math.min(0.95, bot.skill + streakBonus);
+  const correct     = Math.random() < accuracy;
+  const minMs       = timeLimitMs * 0.15;
+  const maxMs       = timeLimitMs * 0.90;
+  const timeMs      = minMs + Math.random() * (maxMs - minMs);
+  return { correct, timeMs };
 }
 
 // ─────────────────────────────────────────────

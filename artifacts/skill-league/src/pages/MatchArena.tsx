@@ -1,50 +1,40 @@
 import { useState, useEffect, useRef, useMemo, type CSSProperties } from 'react';
-import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'wouter';
 import { useGame } from '@/contexts/GameContext';
 import {
-  playCorrect, playWrong, playStreak, playStreak3, playStreak5, playPerfect,
-  playTap, playWin, playLose, playPromotion, playWhoosh, playPuzzleSnap, playPauseChime,
-} from '@/lib/sounds';
-import { MATCH_BOTS, getMatchBots, simulateBotQuestion, type MatchBot } from '@/lib/match-engine';
+  MATCH_BOTS, getMatchBots, simulateBotQuestion, type MatchBot,
+} from '@/lib/match-engine';
 import {
-  loadLeagueStats, calcLpChange, applyLpChange, saveLeagueStats,
-  getTier, type LpChange,
+  playTap, playCorrect, playWrong, playWin, playLose, playPerfect,
+  playStreak3, playStreak5, playStreak, playWhoosh, playPauseChime, playPuzzleSnap,
+} from '@/lib/sounds';
+import {
+  loadLeagueStats, saveLeagueStats, calcLpChange, applyLpChange, getTier,
+  type LpChange, type LeagueTier,
 } from '@/lib/league-progression';
 import {
   generateMatchSession, getPlayerSession, prepareSessionForDisplay,
   loadRecentQuestionIds, saveRecentQuestionIds,
-  CORRECT_POINTS, type DisplayQuestion,
+  CORRECT_POINTS,
+  type DisplayQuestion,
 } from '@/lib/question-session';
-import type { DivisionTier, PoolQuestion, PuzzleAssemblyQuestion } from '@/lib/question-pool';
-import { getLang } from '@/lib/question-pool';
-import type { Language } from '@/lib/i18n';
+import type { PoolQuestion, DivisionTier, PuzzleAssemblyQuestion } from '@/lib/question-pool';
 import {
-  calcMatchEconomy, leagueTierToEconomyTier,
+  leagueTierToEconomyTier, calcMatchEconomy,
   loadLocalGems, saveLocalGems, economyApi,
   type EconomyResult,
 } from '@/lib/economy';
-import { api, type DailyStatus } from '@/lib/apiClient';
+import { api } from '@/lib/apiClient';
+import type { Language } from '@/lib/i18n';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────
 
-const TOTAL_Q            = 10;
-const TICK_MS            = 50;
-const FB_MS              = 1100; // feedback shown briefly after timeout
-const QUESTION_DISPLAY_MS = 5000; // fixed 5 s visible per question
+type Phase =
+  | 'idle' | 'searching' | 'found' | 'countdown'
+  | 'question' | 'puzzle_intro' | 'feedback' | 'results';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Phase = 'idle' | 'searching' | 'found' | 'countdown' | 'puzzle_intro' | 'question' | 'feedback' | 'results';
-
-interface AnswerRecord {
-  correct:        boolean;
-  points:         number;
-  timeLeftMs:     number;
-  timeLimitMs:    number;
-  category:       string;
-  reactionTimeMs: number; // ms from question appear → player click
-}
+type StreakMilestone = '3' | '5' | 'perfect';
 
 interface PlayerRow {
   id:       string;
@@ -54,52 +44,72 @@ interface PlayerRow {
   isPlayer: boolean;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+interface AnswerRecord {
+  correct:        boolean;
+  points:         number;
+  timeLeftMs:     number;
+  timeLimitMs:    number;
+  category:       string;
+  reactionTimeMs: number;
+}
 
-function toDivisionTier(tier: string): DivisionTier {
-  const m: Record<string, DivisionTier> = {
+interface DailyStatus {
+  canPlay:            boolean;
+  nextMatchAt:        string | null;
+  matchesPlayedToday: number;
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+const TOTAL_Q             = 10;
+const TICK_MS             = 100;
+const QUESTION_DISPLAY_MS = 5_000;
+
+function toDivisionTier(tier: LeagueTier): DivisionTier {
+  const map: Record<LeagueTier, DivisionTier> = {
     training: 'div3',
     coin:     'div2',
     pro:      'pro',
     champion: 'champions',
   };
-  return m[tier] ?? 'div3';
+  return map[tier] ?? 'div3';
 }
 
-// ─── Category UI config ───────────────────────────────────────────────────────
+// ── Category configuration ─────────────────────────────────────────────────────
 
 const CAT_CFG: Record<string, { icon: string; color: string; label: string }> = {
-  sports:           { icon: '⚽', color: '#FF8C42', label: 'Sports'       },
-  culture:          { icon: '🎨', color: '#B44FFF', label: 'Culture'      },
-  geography:        { icon: '🌍', color: '#3AB4FF', label: 'Geography'    },
-  history:          { icon: '📜', color: '#FFD93D', label: 'History'      },
-  philosophy:       { icon: '🤔', color: '#7DFFB3', label: 'Philosophy'   },
-  religious:        { icon: '🕌', color: '#FF6EB4', label: 'Religious'    },
-  visual_attention: { icon: '👁️', color: '#00E5FF', label: 'Visual'       },
-  puzzle_assembly:  { icon: '🧩', color: '#FF3A5E', label: 'Puzzle'       },
-  famous_people:    { icon: '🌟', color: '#FFD700', label: 'Famous'       },
+  sports:            { icon: '⚽', color: '#3AB4FF', label: 'Sports'      },
+  culture:           { icon: '🎭', color: '#2EE87A', label: 'Culture'     },
+  philosophy:        { icon: '🧠', color: '#B44FFF', label: 'Philosophy'  },
+  religious:         { icon: '🕌', color: '#FFD93D', label: 'Religion'    },
+  geography:         { icon: '🌍', color: '#FF8C42', label: 'Geography'   },
+  history:           { icon: '📜', color: '#FF3A5E', label: 'History'     },
+  famous_people:     { icon: '⭐', color: '#00E5FF', label: 'Famous'      },
+  visual_attention:  { icon: '👁',  color: '#FF6B9D', label: 'Visual'     },
+  puzzle_assembly:   { icon: '🧩', color: '#FF3A5E', label: 'Puzzle'     },
+  sports_trivia:     { icon: '🏅', color: '#3AB4FF', label: 'Sports'     },
+  culture_trivia:    { icon: '🎭', color: '#2EE87A', label: 'Culture'    },
+  philosophy_trivia: { icon: '🧠', color: '#B44FFF', label: 'Philosophy' },
+  religion_trivia:   { icon: '🕌', color: '#FFD93D', label: 'Religion'   },
+  visual_deception:  { icon: '👁',  color: '#FF6B9D', label: 'Visual'    },
 };
 
-// ─── Esports VFX Components ───────────────────────────────────────────────────
+// ── Streak Banner ──────────────────────────────────────────────────────────────
 
-type StreakMilestone = '3' | '5' | 'perfect';
-
-function StreakMilestoneBanner({ milestone }: { milestone: StreakMilestone | null }) {
-  const cfg = milestone === '3'
-    ? { icon: '🔥', label: 'ON FIRE!',      color: '#FF8C42', glow: '#FF8C42' }
-    : milestone === '5'
-    ? { icon: '⚡', label: 'UNSTOPPABLE!',  color: '#3AB4FF', glow: '#3AB4FF' }
-    : milestone === 'perfect'
-    ? { icon: '🌟', label: 'PERFECT RUN!',  color: '#FFD93D', glow: '#FFD93D' }
-    : null;
-
+function StreakBanner({ milestone }: { milestone: StreakMilestone | null }) {
+  const cfgMap: Record<StreakMilestone, { icon: string; color: string; glow: string; label: string }> = {
+    '3':       { icon: '🔥', color: '#FF8C42', glow: '#FF8C42', label: '3× STREAK!'  },
+    '5':       { icon: '⚡', color: '#FFD93D', glow: '#FFD93D', label: '5× ON FIRE!' },
+    'perfect': { icon: '🌟', color: '#FFD93D', glow: '#FFD93D', label: 'PERFECT!'    },
+  };
+  const cfg = milestone ? cfgMap[milestone] : null;
   return (
     <AnimatePresence>
       {cfg && (
         <motion.div
-          key={milestone}
-          initial={{ opacity: 0, scale: 0.5, y: -30 }}
-          animate={{ opacity: 1, scale: 1,   y: 0 }}
+          key={milestone!}
+          initial={{ opacity: 0, scale: 0.6, y: 20 }}
+          animate={{ opacity: 1, scale: 1,   y: 0  }}
           exit={{   opacity: 0, scale: 1.2,  y: -20 }}
           transition={{ type: 'spring', stiffness: 420, damping: 26 }}
           className="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none flex flex-col items-center gap-1"

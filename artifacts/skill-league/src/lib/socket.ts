@@ -6,10 +6,11 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-export function connectSocket() {
+export function connectSocket(_playerId?: string | null): Socket {
   if (!socket) {
-    socket = io("https://your-server-url.com", {
-      transports: ["websocket"],
+    socket = io(window.location.origin, {
+      path: "/api/socket.io",
+      transports: ["websocket", "polling"],
     });
   }
 
