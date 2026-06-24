@@ -9,6 +9,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import type { EconomyTier } from './economy-engine.js';
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const DATA_FILE = process.env.LEAGUE_DATA_FILE ?? resolve('data/leagues.json');
@@ -48,7 +49,7 @@ export type MatchStatus  = 'upcoming' | 'available' | 'played' | 'missed';
 export type MatchResult  = 'win' | 'draw' | 'loss';
 
 /** Maps league IDs to economy-engine tier strings. */
-export const LEAGUE_TO_ECONOMY_TIER: Record<LeagueId, string> = {
+export const LEAGUE_TO_ECONOMY_TIER: Record<LeagueId, EconomyTier> = {
   coins:    'div3',
   pro:      'div2',
   elite:    'pro',
