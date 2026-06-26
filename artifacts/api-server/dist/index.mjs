@@ -92541,6 +92541,8 @@ async function broadcastLeaderboard(io2) {
       io2.emit("leaderboard:update", rows);
     }
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("relation") && msg.includes("does not exist")) return;
     logger.error({ err }, "leaderboard broadcast error");
   }
 }
@@ -92885,7 +92887,10 @@ function setupSocketIO(server2) {
   });
   setInterval(() => processQueue(io2), 1e3);
   if (!lbInterval) {
-    lbInterval = setInterval(() => broadcastLeaderboard(io2), 5e3);
+    setTimeout(() => {
+      broadcastLeaderboard(io2);
+      lbInterval = setInterval(() => broadcastLeaderboard(io2), 1e4);
+    }, 1e4);
   }
   io2.on("connection", (socket) => {
     logger.info({ socketId: socket.id }, "Socket connected");

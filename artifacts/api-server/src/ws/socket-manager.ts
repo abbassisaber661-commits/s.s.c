@@ -252,7 +252,10 @@ async function broadcastLeaderboard(io: IOServer) {
     if (rows.length > 0) {
       io.emit("leaderboard:update", rows);
     }
-  } catch (err) {
+  } catch (err: unknown) {
+    // Silently skip if tables are not yet created (cold start / schema not pushed yet)
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("relation") && msg.includes("does not exist")) return;
     logger.error({ err }, "leaderboard broadcast error");
   }
 }
@@ -673,7 +676,11 @@ export function setupSocketIO(server: HttpServer): IOServer {
   setInterval(() => processQueue(io), 1000);
 
   if (!lbInterval) {
-    lbInterval = setInterval(() => broadcastLeaderboard(io), 5000);
+    // Delay first broadcast by 10s to allow DB to be ready after cold start
+    setTimeout(() => {
+      broadcastLeaderboard(io);
+      lbInterval = setInterval(() => broadcastLeaderboard(io), 10000);
+    }, 10000);
   }
 
   io.on("connection", (socket: Socket) => {
