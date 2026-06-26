@@ -18,9 +18,12 @@ import AuthScreen    from "@/pages/AuthScreen";
 import LeagueDashboard  from "@/pages/LeagueDashboard";
 
 // User System
-import Profile       from "@/pages/ProfilePage";
-import GameProfile   from "@/pages/GameProfile"; // ✅ الجديد
-import Leaderboard   from "@/pages/Leaderboard";
+import Profile              from "@/pages/ProfilePage";
+import GameProfile          from "@/pages/GameProfile";
+import FollowersPage        from "@/pages/FollowersPage";
+import FollowingPage        from "@/pages/FollowingPage";
+import ProfileSettingsPage  from "@/pages/ProfileSettingsPage";
+import Leaderboard          from "@/pages/Leaderboard";
 import Store         from "@/pages/Store";
 import Wallet        from "@/pages/Wallet";
 import Settings      from "@/pages/Settings";
@@ -126,7 +129,10 @@ function AppShell() {
 
         {/* Profile system */}
         <Route path="/profile/:userId?" component={Profile} />
-        <Route path="/game-profile/:userId?" component={GameProfile} /> {/* ✅ الجديد */}
+        <Route path="/game-profile/:userId?" component={GameProfile} />
+        <Route path="/profile/:userId/followers" component={FollowersPage} />
+        <Route path="/profile/:userId/following" component={FollowingPage} />
+        <Route path="/profile-settings" component={ProfileSettingsPage} />
 
         {/* rest of routes */}
         <Route path="/leaderboard" component={Leaderboard} />

@@ -7,12 +7,38 @@ export interface Post {
   likes: number;
   comments: number;
   isSaved?: boolean;
+  isPinned?: boolean;
   timestamp: number;
   authorName: string;
   authorLevel: number;
 }
 
-export type VerificationTier = "none" | "verified" | "premium" | "partner" | "staff";
+export type VerificationTier =
+  | "none"
+  | "verified"
+  | "official"
+  | "premium"
+  | "partner"
+  | "creator"
+  | "developer"
+  | "moderator"
+  | "ambassador"
+  | "staff";
+
+export type BadgeRarity = "common" | "rare" | "epic" | "legendary";
+
+export type BadgeCategory = "role" | "social" | "achievement" | "event" | "special";
+
+export interface Badge {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  color?: string;
+  rarity?: BadgeRarity;
+  category?: BadgeCategory;
+  earnedAt?: number;
+}
 
 export interface Achievement {
   id: string;
@@ -21,7 +47,7 @@ export interface Achievement {
   icon: string;
   color: string;
   earnedAt?: number;
-  rarity?: "common" | "rare" | "epic" | "legendary";
+  rarity?: BadgeRarity;
 }
 
 export interface AvatarFrame {
@@ -45,6 +71,59 @@ export interface SocialLinks {
   twitch?: string;
   tiktok?: string;
   website?: string;
+}
+
+export type PrivacyVisibility = "everyone" | "friends" | "followers" | "nobody";
+
+export interface PrivacyConfig {
+  isPrivate: boolean;
+  whoCanFollow: PrivacyVisibility;
+  whoCanMessage: PrivacyVisibility;
+  whoCanSeeFriends: PrivacyVisibility;
+  whoCanSeeFollowers: PrivacyVisibility;
+  whoCanSeeFollowing: PrivacyVisibility;
+  whoCanViewPosts: PrivacyVisibility;
+}
+
+export interface FriendEntry {
+  id: string;
+  username: string;
+  displayName?: string;
+  avatar?: string;
+  isOnline?: boolean;
+  mutualCount?: number;
+  level?: number;
+}
+
+export interface FollowEntry {
+  id: string;
+  username: string;
+  displayName?: string;
+  avatar?: string;
+  bio?: string;
+  isFollowing?: boolean;
+  mutualCount?: number;
+  level?: number;
+  verification?: VerificationTier;
+}
+
+export type ActivityEventType =
+  | "joined"
+  | "post"
+  | "achievement"
+  | "badge"
+  | "friend"
+  | "league"
+  | "level"
+  | "media";
+
+export interface ActivityEvent {
+  id: string;
+  type: ActivityEventType;
+  title: string;
+  description?: string;
+  timestamp: number;
+  meta?: Record<string, unknown>;
 }
 
 export interface ProfileData {
@@ -73,6 +152,9 @@ export interface ProfileData {
   isOwner?: boolean;
   verification?: VerificationTier;
   achievements?: Achievement[];
+  badges?: Badge[];
+  activityEvents?: ActivityEvent[];
+  privacyConfig?: PrivacyConfig;
   avatarFrame?: AvatarFrame;
   profileTheme?: ProfileTheme;
   fullName?: string;
@@ -80,4 +162,4 @@ export interface ProfileData {
   socialLinks?: SocialLinks;
 }
 
-export type ContentTab = "posts" | "media" | "reels" | "saved";
+export type ContentTab = "posts" | "media" | "reels" | "saved" | "about" | "friends";
