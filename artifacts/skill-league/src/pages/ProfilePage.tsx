@@ -1,38 +1,60 @@
 import React, {
   useState,
   useCallback,
-  useRef,
-  useEffect,
   useMemo,
 } from "react";
 import { useRoute } from "wouter";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { AlertCircle, RefreshCcw } from "lucide-react";
 
-// ===== Hooks =====
+// ── Hooks ────────────────────────────────────────────────────────────────────
 import { useTranslation } from "@/hooks/useTranslation";
 import { useProfileData } from "@/hooks/useProfileData";
 import { useFollowUser } from "@/hooks/useFollowUser";
 import { useGame } from "@/contexts/GameContext";
 
-// ===== Components =====
+// ── Profile Components ────────────────────────────────────────────────────────
+import ProfileCoverHeader from "@/components/profile/ProfileCoverHeader";
+import ProfileSocialStats from "@/components/profile/ProfileSocialStats";
+import ProfileActionButtons from "@/components/profile/ProfileActionButtons";
+import ProfileLeagueCard from "@/components/profile/ProfileLeagueCard";
+import ProfileAchievements from "@/components/profile/ProfileAchievements";
+import ProfileCustomization from "@/components/profile/ProfileCustomization";
 import ProfileTabs from "@/components/profile/ProfileTabs";
-import PostCard from "@/components/social/PostCard";
+import ProfileMediaGrid from "@/components/profile/ProfileMediaGrid";
+import ProfileEmptyState from "@/components/profile/ProfileEmptyState";
+import ProfileSkeletonLoader from "@/components/profile/ProfileSkeletonLoader";
+import EditProfileModal from "@/components/profile/EditProfileModal";
 import { PostModal } from "@/components/profile/PostModal";
+import PostCard from "@/components/social/PostCard";
 
-// ===== Types =====
-import type { Post } from "@/types/profile";
+// ── Types ─────────────────────────────────────────────────────────────────────
+import type { ContentTab, Post } from "@/types/profile";
+
+// ── Demo achievements (replace with real API data) ────────────────────────────
+const DEMO_ACHIEVEMENTS = [
+  { id: "verified", title: "Verified", description: "Verified account", icon: "✅", color: "#3B82F6", rarity: "rare" as const },
+  { id: "early", title: "Early Member", description: "Joined in the first wave", icon: "🌟", color: "#8B5CF6", rarity: "epic" as const },
+  { id: "creator", title: "Creator", description: "Published 10+ posts", icon: "✍️", color: "#10B981", rarity: "common" as const },
+  { id: "100posts", title: "100 Posts", description: "Published 100 posts", icon: "📝", color: "#F59E0B", rarity: "rare" as const },
+  { id: "1k_followers", title: "1K Followers", description: "Reached 1,000 followers", icon: "👥", color: "#EF4444", rarity: "epic" as const },
+  { id: "top_community", title: "Top Member", description: "Recognized community leader", icon: "🏅", color: "#6366F1", rarity: "legendary" as const },
+  { id: "event", title: "Event Pro", description: "Participated in a platform event", icon: "🎉", color: "#EC4899", rarity: "common" as const },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
   const { t } = useTranslation();
 
-  // ================= ROUTE =================
+  // ── Route ─────────────────────────────────────────────────────────────────
   const [, routeParams] = useRoute("/profile/:userId?");
   const { authUser } = useGame();
 
   const userId = routeParams?.userId ?? authUser?.uid ?? "";
 
-  // ================= DATA =================
+  // ── Data ──────────────────────────────────────────────────────────────────
   const {
     profile,
     posts,
@@ -46,25 +68,54 @@ export default function ProfilePage() {
 
   const followMutation = useFollowUser(userId || "1");
 
-  // ================= STATE =================
-  const [currentTab, setCurrentTab] = useState<
-    "posts" | "reels" | "saved"
-  >("posts");
-
+  // ── State ─────────────────────────────────────────────────────────────────
+  const [currentTab, setCurrentTab] = useState<ContentTab>("posts");
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
-  // ================= FOLLOW =================
+  // Determine ownership — if no userId in route, viewing own profile
+  const isOwner = !routeParams?.userId || routeParams.userId === authUser?.uid;
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleFollowToggle = useCallback(() => {
     if (!profile) return;
-    const action = profile.isFollowing ? "unfollow" : "follow";
-    followMutation.mutate(action);
-  }, [profile]);
+    followMutation.mutate(profile.isFollowing ? "unfollow" : "follow");
+  }, [profile, followMutation]);
 
-  // ================= POSTS =================
+  const handleFriendToggle = useCallback(() => {
+    toast.info("Friend request feature coming soon");
+  }, []);
+
+  const handleMessage = useCallback(() => {
+    toast.info("Messaging feature coming soon");
+  }, []);
+
+  const handleShareProfile = useCallback(() => {
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => toast.success("Profile link copied!"))
+      .catch(() => toast.error("Could not copy link"));
+  }, []);
+
+  const handleSaveProfile = useCallback(
+    async (data: {
+      username: string;
+      bio: string;
+      avatar: string | File;
+      fullName?: string;
+      location?: string;
+      website?: string;
+    }) => {
+      toast.success("Profile updated!");
+      setIsEditOpen(false);
+    },
+    []
+  );
+
+  // ── Filtered posts by tab ─────────────────────────────────────────────────
   const visiblePosts = useMemo(() => {
     const allPosts = posts ?? [];
-
     switch (currentTab) {
       case "reels":
         return allPosts.filter((p) => p.type === "reel");
@@ -75,133 +126,245 @@ export default function ProfilePage() {
     }
   }, [posts, currentTab]);
 
-  // ================= LOADING =================
+  const mediaPosts = useMemo(
+    () => (posts ?? []).filter((p) => p.type === "image" || p.type === "reel"),
+    [posts]
+  );
+
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="max-w-2xl mx-auto min-h-screen bg-white dark:bg-gray-950">
+        <ProfileSkeletonLoader />
       </div>
     );
   }
 
-  // ================= ERROR =================
+  // ── Error ─────────────────────────────────────────────────────────────────
   if (isError || !profile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center">
-        <p className="text-5xl mb-2">😕</p>
-        <h2 className="text-xl font-bold">{t("profilePage.loadError")}</h2>
-
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6 gap-3">
+        <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+          <AlertCircle size={32} className="text-red-500" />
+        </div>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+          {t("profilePage.loadError")}
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+          We couldn't load this profile. Check your connection and try again.
+        </p>
         <button
           onClick={refetch}
-          className="mt-4 px-5 py-2 bg-blue-500 text-white rounded-xl font-medium"
+          className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold text-sm transition-colors"
         >
+          <RefreshCcw size={15} />
           {t("common.retry")}
         </button>
       </div>
     );
   }
 
-  // ================= UI =================
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-2xl mx-auto min-h-screen bg-white dark:bg-black pb-20">
+    <div className="max-w-2xl mx-auto min-h-screen bg-white dark:bg-gray-950 pb-24">
 
-      {/* ================= COVER ================= */}
-      <div className="relative">
-        <div className="h-48 md:h-64 bg-gray-300 dark:bg-gray-800 overflow-hidden">
-          {profile.cover ? (
-            <img
-              src={profile.cover}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-500">
-              {t("profilePage.noCover")}
-            </div>
-          )}
-        </div>
+      {/* ── Cover + Avatar + Identity ─────────────────────────────── */}
+      <ProfileCoverHeader
+        profile={profile}
+        isOwner={isOwner}
+        onAvatarClick={() => toast.info("Avatar upload coming soon")}
+        onCoverClick={() => toast.info("Cover upload coming soon")}
+      />
 
-        {/* ================= AVATAR CENTER ================= */}
-        <div className="absolute left-1/2 -bottom-12 -translate-x-1/2">
-          <img
-            src={profile.avatar || ""}
-            className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white dark:border-black object-cover shadow-xl"
+      {/* ── Social Stats ──────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="mt-5 px-4"
+      >
+        <ProfileSocialStats
+          postsCount={profile.postsCount}
+          followers={profile.followers}
+          following={profile.following}
+          friends={profile.friends ?? 0}
+          totalLikes={profile.totalLikes ?? 0}
+          onFollowersClick={() => toast.info("Followers list coming soon")}
+          onFollowingClick={() => toast.info("Following list coming soon")}
+          onFriendsClick={() => toast.info("Friends list coming soon")}
+        />
+      </motion.div>
+
+      {/* ── Action Buttons ────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mt-4 px-4"
+      >
+        <ProfileActionButtons
+          isOwner={isOwner}
+          isFollowing={profile.isFollowing ?? false}
+          isFriend={profile.isFriend ?? false}
+          isFollowLoading={followMutation.isPending}
+          onEditProfile={() => setIsEditOpen(true)}
+          onShareProfile={handleShareProfile}
+          onFollowToggle={handleFollowToggle}
+          onFriendToggle={handleFriendToggle}
+          onMessage={handleMessage}
+        />
+      </motion.div>
+
+      {/* ── League / Competitive (minimal) ────────────────────────── */}
+      {(profile.league || profile.level) && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="mt-4 px-4"
+        >
+          <ProfileLeagueCard
+            league={profile.league}
+            leagueIcon={profile.leagueIcon}
+            level={profile.level}
           />
-        </div>
-      </div>
+        </motion.div>
+      )}
 
-      {/* ================= USER INFO ================= */}
-      <div className="mt-16 text-center px-4">
-        <h2 className="text-2xl font-bold">{profile.username}</h2>
+      {/* ── Achievements ──────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mt-4 px-4"
+      >
+        <ProfileAchievements
+          achievements={profile.achievements ?? DEMO_ACHIEVEMENTS}
+        />
+      </motion.div>
 
-        <p className="text-sm text-gray-500 mt-1">
-          {t("profilePage.levelLabel")} {profile.level}
-        </p>
+      {/* ── Customization ─────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="mt-4 px-4"
+      >
+        <ProfileCustomization
+          avatarFrame={profile.avatarFrame}
+          profileTheme={profile.profileTheme}
+          isOwner={isOwner}
+          onOpenCosmetics={() => toast.info("Cosmetics shop coming soon")}
+        />
+      </motion.div>
 
-        {/* ================= STATS BIG STYLE ================= */}
-        <div className="flex justify-center gap-10 mt-6">
-          <div className="text-center">
-            <p className="text-2xl font-bold">{profile.postsCount}</p>
-            <p className="text-xs text-gray-500">Posts</p>
-          </div>
-
-          <div className="text-center">
-            <p className="text-2xl font-bold">{profile.followers}</p>
-            <p className="text-xs text-gray-500">Followers</p>
-          </div>
-
-          <div className="text-center">
-            <p className="text-2xl font-bold">{profile.following}</p>
-            <p className="text-xs text-gray-500">Following</p>
-          </div>
-        </div>
-
-        {/* ================= BUTTONS ================= */}
-        <div className="flex gap-2 mt-6 px-4">
-          <button
-            onClick={() => toast("Edit Profile")}
-            className="flex-1 py-2 bg-gray-200 dark:bg-gray-800 rounded-xl font-medium"
-          >
-            Edit Profile
-          </button>
-
-          <button
-            onClick={handleFollowToggle}
-            className="flex-1 py-2 bg-blue-500 text-white rounded-xl font-medium"
-          >
-            {profile.isFollowing ? "Unfollow" : "Follow"}
-          </button>
-        </div>
-      </div>
-
-      {/* ================= TABS ================= */}
+      {/* ── Tabs ──────────────────────────────────────────────────── */}
       <div className="mt-6">
         <ProfileTabs
           currentTab={currentTab}
-          onTabChange={(tab) => setCurrentTab(tab as any)}
+          onTabChange={setCurrentTab}
+          isOwner={isOwner}
           postsCount={profile.postsCount}
-          reelsCount={profile.reelsCount || 0}
-          savedCount={profile.savedCount || 0}
+          mediaCount={profile.mediaCount ?? mediaPosts.length}
+          reelsCount={profile.reelsCount ?? 0}
+          savedCount={profile.savedCount ?? 0}
         />
       </div>
 
-      {/* ================= POSTS ================= */}
-      <div className="mt-4 space-y-4 px-4">
-        {visiblePosts.length === 0 ? (
-          <p className="text-center text-gray-500 py-10">
-            {t("profilePage.noPosts")}
-          </p>
-        ) : (
-          visiblePosts.map((post) => (
-            <PostCard key={post.id} post={post as any} />
-          ))
-        )}
-      </div>
+      {/* ── Tab Content ───────────────────────────────────────────── */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentTab}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.18 }}
+        >
+          {/* POSTS tab */}
+          {currentTab === "posts" && (
+            <div className="mt-4 space-y-4 px-4">
+              {visiblePosts.length === 0 ? (
+                <ProfileEmptyState tab="posts" isOwner={isOwner} />
+              ) : (
+                <>
+                  {visiblePosts.map((post) => (
+                    <PostCard key={post.id} post={post as any} />
+                  ))}
+                  {hasNextPage && (
+                    <button
+                      onClick={fetchNextPage}
+                      disabled={isFetchingNextPage}
+                      className="w-full py-3 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+                    >
+                      {isFetchingNextPage ? "Loading…" : "Load more"}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
-      {/* ================= MODAL ================= */}
+          {/* MEDIA tab */}
+          {currentTab === "media" && (
+            <div className="mt-1">
+              {mediaPosts.length === 0 ? (
+                <ProfileEmptyState tab="media" isOwner={isOwner} />
+              ) : (
+                <ProfileMediaGrid posts={mediaPosts} filterType="all" />
+              )}
+            </div>
+          )}
+
+          {/* REELS tab */}
+          {currentTab === "reels" && (
+            <div className="mt-1">
+              {visiblePosts.length === 0 ? (
+                <ProfileEmptyState tab="reels" isOwner={isOwner} />
+              ) : (
+                <ProfileMediaGrid posts={visiblePosts} filterType="reel" />
+              )}
+            </div>
+          )}
+
+          {/* SAVED tab (owner only) */}
+          {currentTab === "saved" && isOwner && (
+            <div className="mt-4 space-y-4 px-4">
+              {visiblePosts.length === 0 ? (
+                <ProfileEmptyState tab="saved" isOwner={isOwner} />
+              ) : (
+                visiblePosts.map((post) => (
+                  <PostCard key={post.id} post={post as any} />
+                ))
+              )}
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* ── Modals ────────────────────────────────────────────────── */}
+      {isOwner && (
+        <EditProfileModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          initialData={{
+            username: profile.username,
+            bio: profile.bio ?? "",
+            avatar: profile.avatar ?? "",
+            fullName: profile.fullName ?? "",
+            location: profile.country ?? "",
+            website: profile.website ?? "",
+          }}
+          onSave={handleSaveProfile}
+        />
+      )}
+
       <PostModal
         post={selectedPost}
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedPost(null);
+        }}
       />
     </div>
   );
