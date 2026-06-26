@@ -101,7 +101,8 @@ router.post("/community/posts", async (req, res) => {
     const { authorId, username, level, content, imageUrl, type, meta } = req.body as Record<string, unknown>;
     const hasContent = typeof content === "string" && content.trim().length > 0;
     const hasImage   = typeof imageUrl === "string" && imageUrl.length > 0;
-    if (!authorId || (!hasContent && !hasImage)) { res.status(400).json({ error: "missing fields" }); return; }
+    // authorId is optional for guest posts — fall back to "guest"
+    if (!hasContent && !hasImage) { res.status(400).json({ error: "missing fields" }); return; }
     if (hasContent && String(content).length > 500) { res.status(400).json({ error: "too long" }); return; }
 
     const textContent = hasContent ? String(content).trim() : "";
@@ -110,7 +111,7 @@ router.post("/community/posts", async (req, res) => {
 
     const [post] = await db.insert(postsTable).values({
       id: nanoid(),
-      authorId: String(authorId),
+      authorId: authorId ? String(authorId) : "guest",
       username: String(username || "Player"),
       level: Number(level) || 1,
       content: textContent,
@@ -119,8 +120,8 @@ router.post("/community/posts", async (req, res) => {
       meta: { ...(meta as Record<string, unknown> || {}), hashtags, mentions },
     }).returning();
 
-    // Economy hook: daily post coin (fire-and-forget)
-    recordPost(String(authorId)).catch(() => {});
+    // Economy hook: daily post coin (fire-and-forget, skip for guest)
+    if (authorId) recordPost(String(authorId)).catch(() => {});
 
     // Mention notifications (fire-and-forget)
     if (mentions.length > 0) {

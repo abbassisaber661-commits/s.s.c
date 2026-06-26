@@ -39,8 +39,14 @@ export interface CommunityPost {
 }
 
 export interface CreatePostPayload {
+  /** Server-side player identity — required by backend */
+  authorId?: string;
+  username?: string;
+  level?: number;
+
   content: string;
-  imageUrls?: string[];
+  /** Single image URL — matches backend `imageUrl` column */
+  imageUrl?: string;
   type?: PostType;
 }
 

@@ -86643,7 +86643,7 @@ router6.post("/community/posts", async (req, res) => {
     const { authorId, username, level, content, imageUrl, type, meta } = req.body;
     const hasContent = typeof content === "string" && content.trim().length > 0;
     const hasImage = typeof imageUrl === "string" && imageUrl.length > 0;
-    if (!authorId || !hasContent && !hasImage) {
+    if (!hasContent && !hasImage) {
       res.status(400).json({ error: "missing fields" });
       return;
     }
@@ -86656,7 +86656,7 @@ router6.post("/community/posts", async (req, res) => {
     const mentions = hasContent ? extractMentions(textContent) : [];
     const [post] = await db.insert(postsTable).values({
       id: nanoid3(),
-      authorId: String(authorId),
+      authorId: authorId ? String(authorId) : "guest",
       username: String(username || "Player"),
       level: Number(level) || 1,
       content: textContent,
@@ -86664,7 +86664,7 @@ router6.post("/community/posts", async (req, res) => {
       type: String(type || "text"),
       meta: { ...meta || {}, hashtags, mentions }
     }).returning();
-    recordPost(String(authorId)).catch(() => {
+    if (authorId) recordPost(String(authorId)).catch(() => {
     });
     if (mentions.length > 0) {
       const { playersTable: playersTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));

@@ -6,25 +6,62 @@ import type { CommunityPost, CreatePostPayload, PaginatedResponse } from "@/shar
    Query Keys
 ───────────────────────────── */
 export const communityKeys = {
-  all: ["community"] as const,
-  posts: (type: string) => [...communityKeys.all, "posts", type] as const,
+  all:   ["community"] as const,
+  posts: (type: string) => ["community", "posts", type] as const,
 };
+
+/* ─────────────────────────────
+   Normalise API response
+   Guards against malformed payloads so the UI never crashes
+───────────────────────────── */
+function normalisePage(raw: unknown): PaginatedResponse<CommunityPost> {
+  if (raw && typeof raw === "object" && "data" in (raw as object)) {
+    const r = raw as { data: unknown; nextPage?: unknown; total?: unknown };
+    return {
+      data:     Array.isArray(r.data) ? (r.data as CommunityPost[]) : [],
+      nextPage: typeof r.nextPage === "number" ? r.nextPage : null,
+      total:    typeof r.total    === "number" ? r.total    : 0,
+    };
+  }
+  // Legacy flat array response — wrap it
+  if (Array.isArray(raw)) {
+    return { data: raw as CommunityPost[], nextPage: null, total: raw.length };
+  }
+  return { data: [], nextPage: null, total: 0 };
+}
 
 /* ─────────────────────────────
    Get Posts (Infinite Scroll)
 ───────────────────────────── */
 export function usePosts(type: string) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<PaginatedResponse<CommunityPost>, Error>({
     queryKey: communityKeys.posts(type),
-    queryFn: ({ pageParam = 1 }) =>
-      api.community.getPosts(type, pageParam as number, 10),
 
-    getNextPageParam: (lastPage: PaginatedResponse<CommunityPost>) =>
+    queryFn: async ({ pageParam = 1 }) => {
+      const raw = await api.community.getPosts(type, pageParam as number, 15);
+      return normalisePage(raw);
+    },
+
+    getNextPageParam: (lastPage) =>
       lastPage.nextPage ?? undefined,
+
     initialPageParam: 1,
 
-    staleTime: 60 * 1000,
+    // Data is considered fresh for 30 s — reduces unnecessary refetches
+    staleTime: 30 * 1000,
+
+    // Always refetch on mount so navigating back shows fresh posts
+    refetchOnMount: true,
+
+    // Refetch every 60 s while the tab is open
+    refetchInterval: 60 * 1000,
+
+    // Don't refetch on window focus to avoid jarring scroll jumps
     refetchOnWindowFocus: false,
+
+    // Retry up to 3 times with exponential back-off before showing error
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
   });
 }
 
@@ -38,12 +75,13 @@ export function useCreatePost() {
     mutationFn: (payload: CreatePostPayload) =>
       api.community.createPost(payload),
 
+    // Optimistic prepend: insert the new post at the top of cached pages
     onSuccess: (newPost) => {
-      ["fyp", "latest"].forEach((type) => {
-        queryClient.setQueryData(
-          communityKeys.posts(type),
-          (old: { pages: PaginatedResponse<CommunityPost>[] } | undefined) => {
-            if (!old) return old;
+      ["fyp", "latest"].forEach((feedType) => {
+        queryClient.setQueryData<{ pages: PaginatedResponse<CommunityPost>[] }>(
+          communityKeys.posts(feedType),
+          (old) => {
+            if (!old?.pages?.length) return old;
             const [firstPage, ...rest] = old.pages;
             return {
               ...old,
@@ -56,11 +94,16 @@ export function useCreatePost() {
         );
       });
     },
+
+    // Always invalidate after create so the server is the source of truth
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    },
   });
 }
 
 /* ─────────────────────────────
-   Like Post (Optimistic Update)
+   Like Post (Optimistic)
 ───────────────────────────── */
 export function useLikePost() {
   const queryClient = useQueryClient();
@@ -74,13 +117,13 @@ export function useLikePost() {
 
       const snapshots: Record<string, unknown> = {};
 
-      ["fyp", "following", "trending", "latest"].forEach((type) => {
-        const key = communityKeys.posts(type);
-        snapshots[type] = queryClient.getQueryData(key);
+      ["fyp", "following", "trending", "latest"].forEach((feedType) => {
+        const key = communityKeys.posts(feedType);
+        snapshots[feedType] = queryClient.getQueryData(key);
 
-        queryClient.setQueryData(
+        queryClient.setQueryData<{ pages: PaginatedResponse<CommunityPost>[] }>(
           key,
-          (old: { pages: PaginatedResponse<CommunityPost>[] } | undefined) => {
+          (old) => {
             if (!old) return old;
             return {
               ...old,
@@ -88,11 +131,7 @@ export function useLikePost() {
                 ...page,
                 data: page.data.map((p) =>
                   p.id === postId
-                    ? {
-                        ...p,
-                        likes: p.likes + (like ? 1 : -1),
-                        likedByMe: like,
-                      }
+                    ? { ...p, likes: p.likes + (like ? 1 : -1), likedByMe: like }
                     : p,
                 ),
               })),
@@ -106,10 +145,10 @@ export function useLikePost() {
 
     onError: (_err, _vars, context) => {
       if (!context?.snapshots) return;
-      ["fyp", "following", "trending", "latest"].forEach((type) => {
+      ["fyp", "following", "trending", "latest"].forEach((feedType) => {
         queryClient.setQueryData(
-          communityKeys.posts(type),
-          context.snapshots[type],
+          communityKeys.posts(feedType),
+          context.snapshots[feedType],
         );
       });
     },

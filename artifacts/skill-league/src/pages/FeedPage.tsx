@@ -32,6 +32,19 @@ const PostSkeleton = () => (
   </div>
 );
 
+const FeedErrorBanner = ({ onRetry }: { onRetry: () => void }) => (
+  <div className="p-6 text-center rounded-2xl bg-white dark:bg-gray-900 border border-red-100 dark:border-red-900/30">
+    <p className="text-red-500 font-semibold mb-1">Unable to load feed</p>
+    <p className="text-xs text-gray-400 mb-3">Check your connection and try again.</p>
+    <button
+      onClick={onRetry}
+      className="px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors"
+    >
+      Retry
+    </button>
+  </div>
+);
+
 const CreatePostTrigger = ({ username, onOpen }: { username: string; onOpen: () => void }) => (
   <div
     onClick={onOpen}
@@ -100,14 +113,17 @@ export default function FeedPage() {
 
   const handleCreate = useCallback(
     async (payload: CreatePostData): Promise<void> => {
+      const pid = getStoredPlayerId();
       createPost({
-        content: payload.content,
-        imageUrls: payload.imageUrls,
+        authorId: pid ?? undefined,
+        username:  username || undefined,
+        content:   payload.content,
+        imageUrl:  payload.imageUrls?.[0],
         type: (payload.format as import("@/shared/community").PostType) || "text",
       });
       setIsOpen(false);
     },
-    [createPost]
+    [createPost, username]
   );
 
   const handleLike = useCallback(
@@ -197,17 +213,10 @@ export default function FeedPage() {
         {/* Featured Players */}
         <FeaturedPlayers />
 
-        {/* Feed error */}
+        {/* Feed error — auto-retries are handled by React Query (retry:3);
+            this button is shown only after all retries exhausted */}
         {isError && (
-          <div className="p-6 text-center rounded-2xl bg-white dark:bg-gray-900 border border-red-100 dark:border-red-900/30">
-            <p className="text-red-500 font-semibold mb-3">Failed to load feed</p>
-            <button
-              onClick={() => refetch()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors"
-            >
-              Try again
-            </button>
-          </div>
+          <FeedErrorBanner onRetry={refetch} />
         )}
 
         {/* Loading skeletons */}

@@ -124,7 +124,7 @@ export const api = {
   /* ── Community ── */
   community: {
     /** Paginated feed — used by useCommunity / FeedPage / infinite scroll */
-    getPosts: (type: string, page = 1, limit = 10) =>
+    getPosts: (type: string, page = 1, limit = 15) =>
       apiFetch<PaginatedResponse<CommunityPost>>(
         `/community/posts?type=${type}&page=${page}&limit=${limit}`,
       ),
@@ -133,6 +133,7 @@ export const api = {
     posts: (limit = 30): Promise<ApiPost[]> =>
       get<ApiPost[]>(`/community/posts?limit=${limit}&format=flat`),
 
+    /** Creates a post — payload MUST include authorId for backend to accept */
     createPost: (payload: CreatePostPayload) =>
       post<CommunityPost>("/community/posts", payload),
 
