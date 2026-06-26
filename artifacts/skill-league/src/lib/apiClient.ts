@@ -223,15 +223,15 @@ export const api = {
   /* ── Followers ── */
   followers: {
     get: (targetId: string, viewerId?: string) =>
-      get<{ followers: number; following: number; isFollowing: boolean }>(
+      get<{ followers: number; following: number; isFollowing: boolean; followersCount: number; followingCount: number }>(
         `/followers/${targetId}${viewerId ? `?viewerId=${viewerId}` : ""}`,
       ),
 
     follow: (targetId: string, followerId: string) =>
-      post<{ ok: boolean }>(`/followers/${targetId}/follow`, { followerId }),
+      post<{ ok: boolean }>(`/followers/follow`, { followerId, followingId: targetId }),
 
     unfollow: (targetId: string, followerId: string) =>
-      post<{ ok: boolean }>(`/followers/${targetId}/unfollow`, { followerId }),
+      post<{ ok: boolean }>(`/followers/unfollow`, { followerId, followingId: targetId }),
   },
 
   /* ── Stories ── */
@@ -290,7 +290,7 @@ export const api = {
   /* ── Messages / DMs ── */
   messages: {
     thread: (userId1: string, userId2: string) =>
-      get<ApiMessage[]>(`/messages/thread?a=${userId1}&b=${userId2}`),
+      get<ApiMessage[]>(`/messages/thread/${userId1}/${userId2}`),
 
     send: (data: { fromId: string; toId: string; content: string }) =>
       post<ApiMessage>("/messages", data),
@@ -299,7 +299,7 @@ export const api = {
       patch<{ ok: boolean }>(`/messages/${messageId}/read`, {}),
 
     inbox: (playerId: string) =>
-      get<ApiMessage[]>(`/messages/inbox?playerId=${playerId}`),
+      get<ApiMessage[]>(`/messages/inbox/${playerId}`),
   },
 
   /* ── Analytics ── */
@@ -416,7 +416,7 @@ export const api = {
   /* ── Notifications ── */
   notifications: {
     list: (playerId: string, limit = 50) =>
-      get<ApiNotification[]>(`/notifications?playerId=${playerId}&limit=${limit}`),
+      get<ApiNotification[]>(`/notifications/${playerId}?limit=${limit}`),
 
     readAll: (playerId: string) =>
       post<{ ok: boolean }>("/notifications/read-all", { playerId }),

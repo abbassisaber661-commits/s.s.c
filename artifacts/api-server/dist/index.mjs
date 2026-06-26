@@ -86583,19 +86583,56 @@ function extractMentions(text2) {
   const matches = text2.match(/@[\w]+/g) ?? [];
   return [...new Set(matches.map((t) => t.slice(1).toLowerCase()))];
 }
+function mapPost(row) {
+  return {
+    id: row.id,
+    authorId: row.authorId,
+    authorName: row.username,
+    authorLevel: row.level ?? 1,
+    content: row.content ?? "",
+    imageUrl: row.imageUrl ?? void 0,
+    type: row.type ?? "text",
+    timestamp: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
+    likes: row.likes ?? 0,
+    likedByMe: false,
+    replyCount: row.replies ?? 0,
+    // also expose flat fields for legacy consumers
+    username: row.username,
+    level: row.level ?? 1,
+    createdAt: row.createdAt,
+    replies: row.replies ?? 0
+  };
+}
 router6.get("/community/posts", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 30, 100);
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const type = String(req.query.type ?? "fyp");
     const hashtag = req.query.hashtag ? String(req.query.hashtag) : null;
-    let query = db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit);
-    const rows = await query;
+    const flat = req.query.format === "flat";
+    const offset = (page - 1) * limit;
+    let query;
+    if (type === "trending") {
+      query = db.select().from(postsTable).orderBy(desc(postsTable.likes)).limit(limit + 1).offset(offset);
+    } else {
+      query = db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit + 1).offset(offset);
+    }
+    let rows = await query;
     if (hashtag) {
       const tag = hashtag.toLowerCase().replace(/^#?/, "#");
-      const filtered = rows.filter((p) => extractHashtags(p.content).includes(tag));
-      res.json(filtered);
+      rows = rows.filter((p) => extractHashtags(p.content).includes(tag));
+    }
+    const hasMore = rows.length > limit;
+    const pageRows = rows.slice(0, limit);
+    if (flat) {
+      res.json(pageRows);
       return;
     }
-    res.json(rows);
+    res.json({
+      data: pageRows.map(mapPost),
+      nextPage: hasMore ? page + 1 : null,
+      total: pageRows.length
+    });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -86648,7 +86685,7 @@ router6.post("/community/posts", async (req, res) => {
         }
       }
     }
-    res.status(201).json(post);
+    res.status(201).json(mapPost(post));
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -86665,12 +86702,14 @@ router6.post("/community/posts/:id/like", async (req, res) => {
     if (existing.length) {
       await db.delete(postLikesTable).where(eq(postLikesTable.id, existing[0].id));
       const [post] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
-      await db.update(postsTable).set({ likes: Math.max(0, (post?.likes ?? 1) - 1) }).where(eq(postsTable.id, req.params.id));
-      res.json({ liked: false });
+      const newLikes = Math.max(0, (post?.likes ?? 1) - 1);
+      await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
+      res.json({ liked: false, likes: newLikes, likedByMe: false, postId: req.params.id });
     } else {
       await db.insert(postLikesTable).values({ id: nanoid3(), postId: req.params.id, playerId: String(playerId) });
       const [post] = await db.select({ likes: postsTable.likes, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, req.params.id));
-      await db.update(postsTable).set({ likes: (post?.likes ?? 0) + 1 }).where(eq(postsTable.id, req.params.id));
+      const newLikes = (post?.likes ?? 0) + 1;
+      await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
       recordLikeGiven(String(playerId)).catch(() => {
       });
       if (post?.authorId && post.authorId !== String(playerId)) {
@@ -86683,8 +86722,33 @@ router6.post("/community/posts/:id/like", async (req, res) => {
           { postId: req.params.id, likerId: String(playerId), likerUsername: liker }
         );
       }
-      res.json({ liked: true });
+      res.json({ liked: true, likes: newLikes, likedByMe: true, postId: req.params.id });
     }
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router6.patch("/community/posts/:id/like", async (req, res) => {
+  const { playerId } = req.body;
+  const pid = playerId ? String(playerId) : null;
+  try {
+    if (pid) {
+      const existing = await db.select({ id: postLikesTable.id }).from(postLikesTable).where(and(eq(postLikesTable.postId, req.params.id), eq(postLikesTable.playerId, pid))).limit(1);
+      if (existing.length) {
+        await db.delete(postLikesTable).where(eq(postLikesTable.id, existing[0].id));
+        const [post2] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
+        const newLikes2 = Math.max(0, (post2?.likes ?? 1) - 1);
+        await db.update(postsTable).set({ likes: newLikes2 }).where(eq(postsTable.id, req.params.id));
+        res.json({ liked: false, likes: newLikes2, likedByMe: false, postId: req.params.id });
+        return;
+      }
+      await db.insert(postLikesTable).values({ id: nanoid3(), postId: req.params.id, playerId: pid });
+    }
+    const [post] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
+    const newLikes = (post?.likes ?? 0) + 1;
+    await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
+    res.json({ liked: true, likes: newLikes, likedByMe: true, postId: req.params.id });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -87089,6 +87153,21 @@ router8.get("/notifications/:playerId", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
+router8.get("/notifications", async (req, res) => {
+  const playerId = String(req.query.playerId ?? "");
+  if (!playerId) {
+    res.status(400).json({ error: "playerId required" });
+    return;
+  }
+  const limit = Math.min(Number(req.query.limit) || 30, 100);
+  try {
+    const rows = await db.select().from(notificationsTable).where(eq(notificationsTable.playerId, playerId)).orderBy(desc(notificationsTable.createdAt)).limit(limit);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
 router8.post("/notifications", async (req, res) => {
   try {
     const { playerId, type, title, body, data } = req.body;
@@ -87130,6 +87209,22 @@ router8.patch("/notifications/:playerId/read-all", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
+router8.post("/notifications/read-all", async (req, res) => {
+  const playerId = String(req.body.playerId ?? "");
+  if (!playerId) {
+    res.status(400).json({ error: "playerId required" });
+    return;
+  }
+  try {
+    await db.update(notificationsTable).set({ read: true }).where(
+      and(eq(notificationsTable.playerId, playerId), eq(notificationsTable.read, false))
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
 var notifications_default = router8;
 
 // src/routes/messages.ts
@@ -87139,7 +87234,33 @@ init_src();
 var router9 = (0, import_express9.Router)();
 router9.get("/messages/inbox/:playerId", async (req, res) => {
   try {
-    const rows = await db.select().from(messagesTable).where(and(eq(messagesTable.toId, req.params.playerId), eq(messagesTable.deleted, false))).orderBy(desc(messagesTable.createdAt)).limit(50);
+    const rows = await db.select().from(messagesTable).where(and(
+      eq(messagesTable.deleted, false),
+      or(
+        eq(messagesTable.toId, req.params.playerId),
+        eq(messagesTable.fromId, req.params.playerId)
+      )
+    )).orderBy(desc(messagesTable.createdAt)).limit(100);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router9.get("/messages/inbox", async (req, res) => {
+  const playerId = String(req.query.playerId ?? "");
+  if (!playerId) {
+    res.status(400).json({ error: "playerId required" });
+    return;
+  }
+  try {
+    const rows = await db.select().from(messagesTable).where(and(
+      eq(messagesTable.deleted, false),
+      or(
+        eq(messagesTable.toId, playerId),
+        eq(messagesTable.fromId, playerId)
+      )
+    )).orderBy(desc(messagesTable.createdAt)).limit(100);
     res.json(rows);
   } catch (err) {
     req.log.error({ err });
@@ -87149,6 +87270,27 @@ router9.get("/messages/inbox/:playerId", async (req, res) => {
 router9.get("/messages/thread/:playerA/:playerB", async (req, res) => {
   try {
     const { playerA, playerB } = req.params;
+    const rows = await db.select().from(messagesTable).where(and(
+      eq(messagesTable.deleted, false),
+      or(
+        and(eq(messagesTable.fromId, playerA), eq(messagesTable.toId, playerB)),
+        and(eq(messagesTable.fromId, playerB), eq(messagesTable.toId, playerA))
+      )
+    )).orderBy(messagesTable.createdAt).limit(100);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router9.get("/messages/thread", async (req, res) => {
+  const playerA = String(req.query.a ?? "");
+  const playerB = String(req.query.b ?? "");
+  if (!playerA || !playerB) {
+    res.status(400).json({ error: "a and b required" });
+    return;
+  }
+  try {
     const rows = await db.select().from(messagesTable).where(and(
       eq(messagesTable.deleted, false),
       or(
@@ -91728,36 +91870,75 @@ router25.get("/social/trending", async (req, res) => {
 router25.get("/social/profile/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const playerPosts = await db.select({
-      id: postsTable.id,
-      likes: postsTable.likes,
-      replies: postsTable.replies,
-      createdAt: postsTable.createdAt
-    }).from(postsTable).where(eq(postsTable.authorId, id)).orderBy(desc(postsTable.createdAt));
-    const postsCount = playerPosts.length;
-    const likesReceived = playerPosts.reduce((s, p) => s + p.likes, 0);
-    const commentsReceived = playerPosts.reduce((s, p) => s + p.replies, 0);
-    const lastPostAt = playerPosts[0]?.createdAt ?? null;
+    const playerPostRows = await db.select().from(postsTable).where(eq(postsTable.authorId, id)).orderBy(desc(postsTable.createdAt));
+    const postsCount = playerPostRows.length;
+    const likesReceived = playerPostRows.reduce((s, p) => s + (p.likes ?? 0), 0);
+    const commentsReceived = playerPostRows.reduce((s, p) => s + (p.replies ?? 0), 0);
+    const lastPostAt = playerPostRows[0]?.createdAt ?? null;
     const [followerRow] = await db.select({ cnt: count() }).from(followersTable).where(eq(followersTable.followingId, id));
     const [followingRow] = await db.select({ cnt: count() }).from(followersTable).where(eq(followersTable.followerId, id));
     const [player] = await db.select({
+      id: playersTable.id,
       username: playersTable.username,
       level: playersTable.level,
+      xp: playersTable.xp,
+      coins: playersTable.coins,
+      elo: playersTable.elo,
+      fame: playersTable.fame,
+      language: playersTable.language,
+      avatar: playersTable.avatar,
       createdAt: playersTable.createdAt,
       lastActiveAt: playersTable.lastActiveAt
     }).from(playersTable).where(eq(playersTable.id, id)).limit(1);
+    if (!player) {
+      res.status(404).json({ error: "Player not found" });
+      return;
+    }
+    const followersCount = followerRow?.cnt ?? 0;
+    const followingCount = followingRow?.cnt ?? 0;
+    const posts = playerPostRows.slice(0, 20).map((p) => ({
+      id: p.id,
+      authorId: p.authorId,
+      username: p.username,
+      level: p.level ?? 1,
+      content: p.content ?? "",
+      imageUrl: p.imageUrl,
+      type: p.type ?? "text",
+      createdAt: p.createdAt,
+      likes: p.likes ?? 0,
+      replies: p.replies ?? 0,
+      likedByMe: false
+    }));
     res.json({
+      // ── New shape (expected by useProfileData hook) ──
+      player: {
+        id: player.id,
+        username: player.username ?? "",
+        level: player.level ?? 1,
+        xp: player.xp ?? 0,
+        coins: player.coins ?? 0,
+        elo: player.elo ?? 0,
+        fame: player.fame ?? 0,
+        language: player.language ?? "en",
+        avatar: player.avatar ?? null,
+        bio: null,
+        cover: null
+      },
+      followers: followersCount,
+      following: followingCount,
+      posts,
+      // ── Flat stats (backward compatibility) ──
       playerId: id,
-      username: player?.username ?? "",
-      level: player?.level ?? 1,
+      username: player.username ?? "",
+      level: player.level ?? 1,
       postsCount,
       likesReceived,
       commentsReceived,
-      followersCount: followerRow?.cnt ?? 0,
-      followingCount: followingRow?.cnt ?? 0,
+      followersCount,
+      followingCount,
       lastPostAt,
-      lastActiveAt: player?.lastActiveAt ?? null,
-      joinedAt: player?.createdAt ?? null
+      lastActiveAt: player.lastActiveAt ?? null,
+      joinedAt: player.createdAt ?? null
     });
   } catch (err) {
     req.log.error({ err });

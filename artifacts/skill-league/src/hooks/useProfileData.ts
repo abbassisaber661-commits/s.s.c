@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/lib/apiClient";
 import type { ProfileData, Post } from "@/types/profile";
 
-// ============================
-// Types
-// ============================
 interface PostsState {
   pages: Post[][];
   hasNextPage: boolean;
@@ -19,13 +16,9 @@ interface CacheEntry {
 const CACHE_TTL = 5 * 60 * 1000;
 const profileCache = new Map<string, CacheEntry>();
 
-// ============================
-// Hook
-// ============================
 export function useProfileData(userId: string) {
   const safeUserId = userId || "1";
 
-  // ================= Profile =================
   const [profile, setProfile] = useState<ProfileData | null>(() => {
     const cached = profileCache.get(safeUserId);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -34,21 +27,18 @@ export function useProfileData(userId: string) {
     return null;
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!profileCache.has(safeUserId));
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // ================= Posts =================
   const [postsState, setPostsState] = useState<PostsState>({
     pages: [],
     hasNextPage: false,
     isFetchingNextPage: false,
   });
 
-  const pageRef = useRef(1);
   const abortRef = useRef<AbortController | null>(null);
 
-  // ================= Fetch Profile =================
   const fetchProfile = useCallback(async () => {
     if (!safeUserId) return;
 
@@ -60,42 +50,62 @@ export function useProfileData(userId: string) {
     abortRef.current = new AbortController();
 
     try {
-      const res = await api.social.profile(safeUserId);
+      // The backend returns both the new { player, followers, following, posts }
+      // shape AND flat stats for backward compatibility
+      const res = await api.social.profile(safeUserId) as any;
 
       if (!res) throw new Error("Profile not found");
 
-      const p = res.player;
+      // Handle new shape: { player: ApiPlayer, followers, following, posts }
+      const p = res.player ?? res;
+
       const mapped: ProfileData = {
-        id: p.id,
-        username: (p.username as string) || "User",
-        level: (p.level as number) ?? 1,
-        postsCount: res.posts?.length ?? 0,
-        followers: res.followers ?? 0,
-        following: res.following ?? 0,
+        id:          p.id ?? safeUserId,
+        username:    p.username ?? res.username ?? "User",
+        level:       p.level   ?? res.level    ?? 1,
+        postsCount:  res.postsCount ?? res.posts?.length ?? 0,
+        followers:   res.followers  ?? res.followersCount ?? 0,
+        following:   res.following  ?? res.followingCount ?? 0,
 
-        avatar: (p.avatar as string | undefined) || "/default-avatar.png",
-        cover: (p.cover as string | undefined) || "/default-cover.jpg",
+        avatar:  p.avatar  ?? res.avatar  ?? null,
+        cover:   p.cover   ?? res.cover   ?? null,
+        bio:     p.bio     ?? res.bio     ?? "",
 
-        bio: (p.bio as string | undefined) || "",
         reelsCount: 0,
         savedCount: 0,
         isFollowing: false,
+
+        // Optional enriched stats
+        totalLikes:       res.likesReceived    ?? 0,
+        joinedAt:         res.joinedAt         ?? undefined,
       };
 
-      profileCache.set(safeUserId, {
-        data: mapped,
-        timestamp: Date.now(),
-      });
-
+      profileCache.set(safeUserId, { data: mapped, timestamp: Date.now() });
       setProfile(mapped);
 
-      setPostsState({
-        pages: [],
-        hasNextPage: false,
-        isFetchingNextPage: false,
-      });
-
-      pageRef.current = 1;
+      // Load initial posts if returned
+      if (res.posts && Array.isArray(res.posts) && res.posts.length > 0) {
+        const mappedPosts: Post[] = res.posts.map((p: any) => ({
+          id:        p.id,
+          authorId:  p.authorId ?? safeUserId,
+          content:   p.content ?? "",
+          imageUrl:  p.imageUrl ?? null,
+          type:      p.type ?? "text",
+          timestamp: p.createdAt ? new Date(p.createdAt).getTime() : Date.now(),
+          likes:     p.likes ?? 0,
+          likedByMe: p.likedByMe ?? false,
+          replyCount: p.replies ?? 0,
+          isPinned:  false,
+          isSaved:   false,
+        }));
+        setPostsState({
+          pages: [mappedPosts],
+          hasNextPage: false,
+          isFetchingNextPage: false,
+        });
+      } else {
+        setPostsState({ pages: [], hasNextPage: false, isFetchingNextPage: false });
+      }
     } catch (err) {
       console.error("Profile fetch error:", err);
       setIsError(true);
@@ -105,40 +115,18 @@ export function useProfileData(userId: string) {
     }
   }, [safeUserId]);
 
-  // ================= Next Page =================
   const fetchNextPage = useCallback(async () => {
     if (postsState.isFetchingNextPage || !postsState.hasNextPage) return;
-
-    setPostsState((prev) => ({
-      ...prev,
-      isFetchingNextPage: true,
-    }));
-
-    try {
-      const next = postsState.pages.length + 1;
-      pageRef.current = next;
-
-      setPostsState((prev) => ({
-        ...prev,
-        isFetchingNextPage: false,
-        hasNextPage: false,
-      }));
-    } catch (err) {
-      console.error(err);
-      setPostsState((prev) => ({
-        ...prev,
-        isFetchingNextPage: false,
-      }));
-    }
+    setPostsState((prev) => ({ ...prev, isFetchingNextPage: true }));
+    // Pagination not yet implemented for profile posts beyond initial 20
+    setPostsState((prev) => ({ ...prev, isFetchingNextPage: false, hasNextPage: false }));
   }, [postsState]);
 
-  // ================= Init =================
   useEffect(() => {
     fetchProfile();
     return () => abortRef.current?.abort();
   }, [fetchProfile]);
 
-  // ================= Return =================
   return {
     profile,
     posts: postsState.pages.flat(),
@@ -147,10 +135,9 @@ export function useProfileData(userId: string) {
     isError,
     errorMessage,
 
-    refetch: fetchProfile,
+    refetch:           fetchProfile,
     fetchNextPage,
-
-    hasNextPage: postsState.hasNextPage,
+    hasNextPage:       postsState.hasNextPage,
     isFetchingNextPage: postsState.isFetchingNextPage,
   };
 }

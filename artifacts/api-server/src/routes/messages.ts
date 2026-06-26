@@ -1,24 +1,73 @@
 import { Router } from "express";
-import { eq, desc, and, or, ne } from "drizzle-orm";
+import { eq, desc, and, or } from "drizzle-orm";
 import { db, messagesTable, blocksTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 
 const router = Router();
 
+// GET /messages/inbox/:playerId  — path-param form (canonical)
 router.get("/messages/inbox/:playerId", async (req, res) => {
   try {
     const rows = await db.select().from(messagesTable)
-      .where(and(eq(messagesTable.toId, req.params.playerId), eq(messagesTable.deleted, false)))
-      .orderBy(desc(messagesTable.createdAt)).limit(50);
+      .where(and(
+        eq(messagesTable.deleted, false),
+        or(
+          eq(messagesTable.toId, req.params.playerId),
+          eq(messagesTable.fromId, req.params.playerId),
+        )
+      ))
+      .orderBy(desc(messagesTable.createdAt)).limit(100);
     res.json(rows);
   } catch (err) {
     req.log.error({ err }); res.status(500).json({ error: "internal" });
   }
 });
 
+// GET /messages/inbox  — query-param form (client compatibility)
+router.get("/messages/inbox", async (req, res) => {
+  const playerId = String(req.query.playerId ?? "");
+  if (!playerId) { res.status(400).json({ error: "playerId required" }); return; }
+  try {
+    const rows = await db.select().from(messagesTable)
+      .where(and(
+        eq(messagesTable.deleted, false),
+        or(
+          eq(messagesTable.toId, playerId),
+          eq(messagesTable.fromId, playerId),
+        )
+      ))
+      .orderBy(desc(messagesTable.createdAt)).limit(100);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// GET /messages/thread/:playerA/:playerB  — path-param form (canonical)
 router.get("/messages/thread/:playerA/:playerB", async (req, res) => {
   try {
     const { playerA, playerB } = req.params;
+    const rows = await db.select().from(messagesTable)
+      .where(and(
+        eq(messagesTable.deleted, false),
+        or(
+          and(eq(messagesTable.fromId, playerA), eq(messagesTable.toId, playerB)),
+          and(eq(messagesTable.fromId, playerB), eq(messagesTable.toId, playerA))
+        )
+      ))
+      .orderBy(messagesTable.createdAt).limit(100);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// GET /messages/thread  — query-param form (client compatibility)
+router.get("/messages/thread", async (req, res) => {
+  const playerA = String(req.query.a ?? "");
+  const playerB = String(req.query.b ?? "");
+  if (!playerA || !playerB) { res.status(400).json({ error: "a and b required" }); return; }
+  try {
     const rows = await db.select().from(messagesTable)
       .where(and(
         eq(messagesTable.deleted, false),

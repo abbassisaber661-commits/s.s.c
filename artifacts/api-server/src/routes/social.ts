@@ -325,21 +325,16 @@ router.get("/social/profile/:id", async (req, res) => {
     const { id } = req.params;
 
     // Posts by this player
-    const playerPosts = await db
-      .select({
-        id: postsTable.id,
-        likes: postsTable.likes,
-        replies: postsTable.replies,
-        createdAt: postsTable.createdAt,
-      })
+    const playerPostRows = await db
+      .select()
       .from(postsTable)
       .where(eq(postsTable.authorId, id))
       .orderBy(desc(postsTable.createdAt));
 
-    const postsCount      = playerPosts.length;
-    const likesReceived   = playerPosts.reduce((s, p) => s + p.likes, 0);
-    const commentsReceived = playerPosts.reduce((s, p) => s + p.replies, 0);
-    const lastPostAt      = playerPosts[0]?.createdAt ?? null;
+    const postsCount       = playerPostRows.length;
+    const likesReceived    = playerPostRows.reduce((s, p) => s + (p.likes ?? 0), 0);
+    const commentsReceived = playerPostRows.reduce((s, p) => s + (p.replies ?? 0), 0);
+    const lastPostAt       = playerPostRows[0]?.createdAt ?? null;
 
     // Followers / following
     const [followerRow] = await db
@@ -351,30 +346,80 @@ router.get("/social/profile/:id", async (req, res) => {
       .from(followersTable)
       .where(eq(followersTable.followerId, id));
 
-    // Player base info (joinDate, lastActiveAt)
+    // Player base info
     const [player] = await db
       .select({
-        username: playersTable.username,
-        level: playersTable.level,
-        createdAt: playersTable.createdAt,
+        id:           playersTable.id,
+        username:     playersTable.username,
+        level:        playersTable.level,
+        xp:           playersTable.xp,
+        coins:        playersTable.coins,
+        elo:          playersTable.elo,
+        fame:         playersTable.fame,
+        language:     playersTable.language,
+        avatar:       playersTable.avatar,
+        createdAt:    playersTable.createdAt,
         lastActiveAt: playersTable.lastActiveAt,
       })
       .from(playersTable)
       .where(eq(playersTable.id, id))
       .limit(1);
 
+    if (!player) {
+      res.status(404).json({ error: "Player not found" });
+      return;
+    }
+
+    const followersCount = followerRow?.cnt ?? 0;
+    const followingCount = followingRow?.cnt ?? 0;
+
+    // Map posts to ApiPost shape
+    const posts = playerPostRows.slice(0, 20).map(p => ({
+      id:        p.id,
+      authorId:  p.authorId,
+      username:  p.username,
+      level:     p.level ?? 1,
+      content:   p.content ?? "",
+      imageUrl:  p.imageUrl,
+      type:      p.type ?? "text",
+      createdAt: p.createdAt,
+      likes:     p.likes ?? 0,
+      replies:   p.replies ?? 0,
+      likedByMe: false,
+    }));
+
+    // Return in expected shape: { player, followers, following, posts }
+    // AND flat stats for backward compatibility
     res.json({
+      // ── New shape (expected by useProfileData hook) ──
+      player: {
+        id:           player.id,
+        username:     player.username ?? "",
+        level:        player.level ?? 1,
+        xp:           player.xp    ?? 0,
+        coins:        player.coins ?? 0,
+        elo:          player.elo   ?? 0,
+        fame:         player.fame  ?? 0,
+        language:     player.language ?? "en",
+        avatar:       player.avatar ?? null,
+        bio:          null,
+        cover:        null,
+      },
+      followers: followersCount,
+      following: followingCount,
+      posts,
+      // ── Flat stats (backward compatibility) ──
       playerId:          id,
-      username:          player?.username ?? "",
-      level:             player?.level ?? 1,
+      username:          player.username ?? "",
+      level:             player.level    ?? 1,
       postsCount,
       likesReceived,
       commentsReceived,
-      followersCount:    followerRow?.cnt ?? 0,
-      followingCount:    followingRow?.cnt ?? 0,
+      followersCount,
+      followingCount,
       lastPostAt,
-      lastActiveAt:      player?.lastActiveAt ?? null,
-      joinedAt:          player?.createdAt ?? null,
+      lastActiveAt:      player.lastActiveAt ?? null,
+      joinedAt:          player.createdAt    ?? null,
     });
   } catch (err) {
     req.log.error({ err }); res.status(500).json({ error: "internal" });

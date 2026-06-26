@@ -33,6 +33,7 @@ import ProfileSettingsPage from "@/pages/ProfileSettingsPage";
 // Social (UNIFIED)
 import FeedPage from "@/pages/FeedPage";
 import ReelsPage from "@/pages/ReelsPage";
+import SearchPage from "@/pages/SearchPage";
 
 // Legacy / Optional Social (can remove later if unused)
 import SocialPage from "@/pages/SocialPage";
@@ -128,6 +129,10 @@ function AppShell() {
         <Route path="/feed" component={FeedPage} />
         <Route path="/social" component={FeedPage} />
         <Route path="/reels" component={ReelsPage} />
+        <Route path="/search" component={SearchPage} />
+
+        {/* User profile by username (from search results) */}
+        <Route path="/user/:username" component={Profile} />
 
         {/* Legacy social (kept for compatibility) */}
         <Route path="/social-classic" component={SocialPage} />
