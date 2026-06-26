@@ -31,6 +31,8 @@ import Settings      from "@/pages/Settings";
 // Social Hub
 import Community     from "@/pages/Community";
 import SocialPage    from "@/pages/SocialPage";
+import FeedPage      from "@/pages/FeedPage";
+import ReelsPage     from "@/pages/ReelsPage";
 import FriendsPage   from "@/pages/FriendsPage";
 import ChatPage      from "@/pages/ChatPage";
 
@@ -140,7 +142,11 @@ function AppShell() {
         <Route path="/wallet" component={Wallet} />
         <Route path="/settings" component={Settings} />
 
-        <Route path="/social" component={SocialPage} />
+        <Route path="/social" component={FeedPage} />
+        <Route path="/feed" component={FeedPage} />
+        <Route path="/reels" component={ReelsPage} />
+        <Route path="/community" component={Community} />
+        <Route path="/social-classic" component={SocialPage} />
         <Route path="/friends" component={FriendsPage} />
         <Route path="/chat/:username" component={ChatPage} />
 
