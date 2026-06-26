@@ -64,19 +64,19 @@ export function useProfileData(userId: string) {
 
       if (!res) throw new Error("Profile not found");
 
+      const p = res.player;
       const mapped: ProfileData = {
-        id: res.playerId,
-        username: res.username || "User",
-        level: res.level ?? 1,
-        postsCount: res.postsCount ?? 0,
-        followers: res.followersCount ?? 0,
-        following: res.followingCount ?? 0,
+        id: p.id,
+        username: (p.username as string) || "User",
+        level: (p.level as number) ?? 1,
+        postsCount: res.posts?.length ?? 0,
+        followers: res.followers ?? 0,
+        following: res.following ?? 0,
 
-        // ✅ مهم جداً: fallback احترافي للصور
-        avatar: res.avatar || "/default-avatar.png",
-        cover: res.cover || "/default-cover.jpg",
+        avatar: (p.avatar as string | undefined) || "/default-avatar.png",
+        cover: (p.cover as string | undefined) || "/default-cover.jpg",
 
-        bio: res.bio || "",
+        bio: (p.bio as string | undefined) || "",
         reelsCount: 0,
         savedCount: 0,
         isFollowing: false,

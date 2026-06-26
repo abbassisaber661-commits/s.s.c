@@ -2,7 +2,7 @@ import React, { memo, useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Grid3X3, Image, Clapperboard } from "lucide-react";
 import { cn } from "@/lib/utils";
-import PostCard from "@/components/social/PostCard";
+import SocialPostCard from "@/components/social/SocialPostCard";
 import { ProfileMediaGrid } from "./ProfileMediaGrid";
 import type { Post, ContentTab } from "@/types/profile";
 
@@ -148,7 +148,7 @@ export const ProfileSearch = memo(({ posts, isOpen, onClose }: ProfileSearchProp
                   {results.length} result{results.length !== 1 ? "s" : ""}
                 </p>
                 {results.map((post) => (
-                  <PostCard key={post.id} post={post as any} />
+                  <SocialPostCard key={post.id} post={post as any} />
                 ))}
               </div>
             )}

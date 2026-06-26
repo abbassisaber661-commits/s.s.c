@@ -75,7 +75,7 @@ function getDiff(tier: string): Difficulty {
 // 🔥 TRIVIA GENERATOR (FIXED SYNC + NO REPEAT)
 // ─────────────────────────────────────────────
 
-function genTrivia(q: TriviaQ, type: any, label: string, color: string, diff: Difficulty, rng: () => number) {
+function genTrivia(q: TriviaQ, type: string, label: string, color: string, diff: Difficulty, rng: () => number) {
   const opts = shuffle([...q.opts], rng);
   const correct = opts.indexOf(q.correct);
 
@@ -86,10 +86,16 @@ function genTrivia(q: TriviaQ, type: any, label: string, color: string, diff: Di
     timeLimitMs: diff === 'easy' ? 14000 : diff === 'medium' ? 12000 : 10000,
     difficulty: diff,
     display: {
-      kind: 'trivia',
+      kind: 'trivia' as string,
       value: q.q,
       label,
       color,
+      extra: undefined as unknown,
+      gridEmojis: undefined as string[] | undefined,
+      gridCols: undefined as number | undefined,
+      gridSize: undefined as number | undefined,
+      logicLines: undefined as string[] | undefined,
+      wordTarget: undefined as string | undefined,
     },
     options: opts.map(o => ({
       id: o,
@@ -99,6 +105,107 @@ function genTrivia(q: TriviaQ, type: any, label: string, color: string, diff: Di
     })),
     correctIndex: correct,
   };
+}
+
+// ─────────────────────────────────────────────
+// 🔥 CLASSIC QUESTION GENERATORS
+// ─────────────────────────────────────────────
+
+type DisplayQuestion = ReturnType<typeof genTrivia>;
+export type { DisplayQuestion };
+
+/** Re-export so Game.tsx can import from this file */
+export type Question = DisplayQuestion;
+export interface Option {
+  id: string;
+  kind: string;
+  label: string;
+  value: string;
+}
+
+const COLORS = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange'];
+const SHAPES = ['Circle', 'Square', 'Triangle', 'Star', 'Diamond', 'Pentagon'];
+const CATEGORIES = [
+  { q: 'Which is a mammal?', opts: ['Shark', 'Eagle', 'Dolphin', 'Frog'], correct: 'Dolphin' },
+  { q: 'Which is a planet?', opts: ['Sun', 'Moon', 'Mars', 'Comet'], correct: 'Mars' },
+  { q: 'Which is a vegetable?', opts: ['Apple', 'Broccoli', 'Banana', 'Mango'], correct: 'Broccoli' },
+];
+
+function makeSimpleQ(type: string, prompt: string, opts: string[], correctIdx: number, timeLimitMs = 10000): DisplayQuestion {
+  return {
+    id: nextId(),
+    type,
+    prompt,
+    timeLimitMs,
+    difficulty: 'easy' as const,
+    display: {
+      kind: type,
+      value: prompt,
+      label: type,
+      color: '#4F8EFF',
+      extra: undefined,
+      gridEmojis: undefined,
+      gridCols: undefined,
+      gridSize: undefined,
+      logicLines: undefined,
+      wordTarget: undefined,
+    },
+    options: opts.map((o, i) => ({ id: String(i), kind: 'text', label: o, value: o })),
+    correctIndex: correctIdx,
+  };
+}
+
+function genColorPickName(): DisplayQuestion {
+  const idx = Math.floor(Math.random() * COLORS.length);
+  const color = COLORS[idx];
+  return makeSimpleQ('color_pick', `Which color is "${color}"?`, COLORS, idx, 9000);
+}
+function genShapeMatch(): DisplayQuestion {
+  const idx = Math.floor(Math.random() * SHAPES.length);
+  return makeSimpleQ('shape_match', `Select the shape: ${SHAPES[idx]}`, SHAPES, idx, 10000);
+}
+function genCategoryPick(): DisplayQuestion {
+  const cat = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+  const correctIdx = cat.opts.indexOf(cat.correct);
+  return makeSimpleQ('category_pick', cat.q, [...cat.opts], correctIdx, 12000);
+}
+function genPairMatch(): DisplayQuestion {
+  const pairs = [['Cat','Kitten'],['Dog','Puppy'],['Cow','Calf'],['Horse','Foal']];
+  const p = pairs[Math.floor(Math.random() * pairs.length)];
+  const opts = pairs.map(x => x[1]);
+  return makeSimpleQ('pair_match', `Baby of a ${p[0]}?`, opts, opts.indexOf(p[1]), 12000);
+}
+function genPatternNext(): DisplayQuestion {
+  const n = 2 + Math.floor(Math.random() * 4);
+  const seq = Array.from({ length: 4 }, (_, i) => String((i + 1) * n));
+  const next = String(5 * n);
+  const opts = [next, String(4 * n + 1), String(5 * n + 2), String(6 * n)];
+  return makeSimpleQ('pattern_next', `Next: ${seq.join(', ')}, ?`, opts, 0, 12000);
+}
+function genArithSeq(_diff: Difficulty): DisplayQuestion {
+  const a = 2 + Math.floor(Math.random() * 5);
+  const d = 2 + Math.floor(Math.random() * 4);
+  const seq = [a, a+d, a+2*d, a+3*d].map(String);
+  const correct = String(a + 4*d);
+  const opts = [correct, String(a+4*d+1), String(a+4*d-1), String(a+5*d)];
+  return makeSimpleQ('arith_seq', `Next: ${seq.join(', ')}, ?`, opts, 0, 11000);
+}
+function genGeoSeq(_diff: Difficulty): DisplayQuestion {
+  const a = 1 + Math.floor(Math.random() * 3);
+  const r = 2 + Math.floor(Math.random() * 2);
+  const seq = [a, a*r, a*r*r, a*r*r*r].map(String);
+  const correct = String(a * Math.pow(r, 4));
+  const opts = [correct, String(a*r*r*r*r+1), String(a*r*r*r*r-1), String(a*r*r*r*r+r)];
+  return makeSimpleQ('geo_seq', `Next: ${seq.join(', ')}, ?`, opts, 0, 13000);
+}
+function genQuadraticSeq(): DisplayQuestion {
+  const seq = [1, 4, 9, 16].map(String);
+  const opts = ['25', '20', '24', '30'];
+  return makeSimpleQ('quadratic_seq', `Next: ${seq.join(', ')}, ?`, opts, 0, 15000);
+}
+function genShapeEq(_diff: Difficulty): DisplayQuestion {
+  const opts = ['3', '4', '5', '6'];
+  return makeSimpleQ('shape_eq', 'Triangle sides + Square sides = ?', opts, 1, 14000);
 }
 
 // ─────────────────────────────────────────────
@@ -194,7 +301,7 @@ export function generateMatchQuestions(
 // 🔥 SCORE (CLEAN)
 // ─────────────────────────────────────────────
 
-export function calcScore(correct: boolean) {
+export function calcScore(correct: boolean, _timeLeftMs?: number, _timeLimitMs?: number, _streak?: number) {
   return correct ? 3 : 0;
 }
 
@@ -240,9 +347,13 @@ export function getMatchBots(divTier: 'div3' | 'div2' | 'pro' | 'champions'): Ma
 
 export function simulateBotQuestion(
   bot: MatchBot,
-  _timeLimitMs: number,
+  timeLimitMs: number,
   _streak: number,
-): { correct: boolean } {
+): { correct: boolean; timeMs: number } {
   const roll = Math.random();
-  return { correct: roll < bot.skill };
+  const correct = roll < bot.skill;
+  const timeMs = correct
+    ? Math.round(timeLimitMs * (0.3 + Math.random() * 0.5))
+    : timeLimitMs;
+  return { correct, timeMs };
 }

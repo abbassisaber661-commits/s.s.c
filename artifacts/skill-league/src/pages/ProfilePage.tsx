@@ -33,7 +33,7 @@ import ProfileVideos             from "@/components/profile/ProfileVideos";
 import ProfileActivityTimeline   from "@/components/profile/ProfileActivityTimeline";
 import EditProfileModal          from "@/components/profile/EditProfileModal";
 import { PostModal }             from "@/components/profile/PostModal";
-import PostCard                  from "@/components/social/PostCard";
+import SocialPostCard             from "@/components/social/SocialPostCard";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 import type { ContentTab, Post, FriendEntry, Badge } from "@/types/profile";
@@ -341,7 +341,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     {visiblePosts.map((post) => (
-                      <PostCard key={post.id} post={post as any} />
+                      <SocialPostCard key={post.id} post={post as any} />
                     ))}
                     {hasNextPage && (
                       <button
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                 <ProfileEmptyState tab="saved" isOwner={isOwner} />
               ) : (
                 visiblePosts.map((post) => (
-                  <PostCard key={post.id} post={post as any} />
+                  <SocialPostCard key={post.id} post={post as any} />
                 ))
               )}
             </div>

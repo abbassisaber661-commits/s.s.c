@@ -115,7 +115,7 @@ export async function addStoryAsync(
       authorLevel,
       emoji,
       content: content || (imageUrl ? "📸" : ""),
-      imageUrl: imageUrl ?? null,
+      imageUrl: imageUrl ?? undefined,
     });
     return await getStoriesAsync();
   } catch {

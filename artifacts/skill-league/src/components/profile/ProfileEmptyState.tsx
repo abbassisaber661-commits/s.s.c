@@ -42,6 +42,19 @@ const EMPTY_CONFIGS: Record<
     visitorDesc: "",
     actionLabel: "Browse Posts",
   },
+  about: {
+    icon: "📋",
+    title: "No Info Yet",
+    ownerDesc: "Add information about yourself so others can get to know you.",
+    visitorDesc: "This player hasn't added any info yet.",
+    actionLabel: "Edit Profile",
+  },
+  friends: {
+    icon: "👥",
+    title: "No Friends Yet",
+    ownerDesc: "Connect with other players to build your friends list.",
+    visitorDesc: "This player hasn't connected with anyone yet.",
+  },
 };
 
 export const ProfileEmptyState = memo(

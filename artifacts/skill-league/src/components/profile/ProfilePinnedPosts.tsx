@@ -2,7 +2,7 @@ import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import PostCard from "@/components/social/PostCard";
+import SocialPostCard from "@/components/social/SocialPostCard";
 import type { Post } from "@/types/profile";
 
 const MAX_PINS = 3;
@@ -54,7 +54,7 @@ export const ProfilePinnedPosts = memo(
               </div>
 
               <div className="rounded-2xl overflow-hidden ring-1 ring-blue-400/20">
-                <PostCard post={post as any} />
+                <SocialPostCard post={post as any} />
               </div>
 
               {isOwner && onUnpin && (

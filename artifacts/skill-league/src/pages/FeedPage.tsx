@@ -80,11 +80,11 @@ export default function FeedPage() {
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleCreate = useCallback(
-    (payload: CreatePostData) => {
+    async (payload: CreatePostData): Promise<void> => {
       createPost({
         content: payload.content,
         imageUrls: payload.imageUrls,
-        type: payload.type || "text",
+        type: (payload.format as import("@/shared/community").PostType) || "text",
       });
 
       setIsOpen(false);

@@ -55,7 +55,8 @@ export default function HashtagFeedPage() {
       api.social.postsByHashtag(tag),
       api.social.hashtagsTrending("7d"),
     ]).then(([postsData, trendData]) => {
-      setPosts((postsData as HPost[]) ?? []);
+      const rawPosts = (postsData as unknown as { posts?: HPost[] })?.posts ?? (postsData as unknown as HPost[]) ?? [];
+      setPosts(rawPosts as HPost[]);
       const trending = (trendData as any).trending ?? [];
       setRelatedTags(trending.filter((t: any) => t.tag !== displayTag.toLowerCase()).slice(0, 8));
     }).catch(() => {})

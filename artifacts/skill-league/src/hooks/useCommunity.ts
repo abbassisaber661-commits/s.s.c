@@ -17,12 +17,13 @@ export function usePosts(type: string) {
   return useInfiniteQuery({
     queryKey: communityKeys.posts(type),
     queryFn: ({ pageParam = 1 }) =>
-      api.community.getPosts(type, pageParam, 10),
+      api.community.getPosts(type, pageParam as number, 10),
 
-    getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
+    getNextPageParam: (lastPage: PaginatedResponse<CommunityPost>) =>
+      lastPage.nextPage ?? undefined,
     initialPageParam: 1,
 
-    staleTime: 60 * 1000, // 1 minute cache
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
 }
@@ -41,19 +42,17 @@ export function useCreatePost() {
       ["fyp", "latest"].forEach((type) => {
         queryClient.setQueryData(
           communityKeys.posts(type),
-          (old: any) => {
+          (old: { pages: PaginatedResponse<CommunityPost>[] } | undefined) => {
             if (!old) return old;
-
-            const [firstPage, ...rest] = old;
-
-            return [
-              {
-                ...firstPage,
-                data: [newPost, ...firstPage.data],
-              },
-              ...rest,
-            ];
-          }
+            const [firstPage, ...rest] = old.pages;
+            return {
+              ...old,
+              pages: [
+                { ...firstPage, data: [newPost, ...firstPage.data] },
+                ...rest,
+              ],
+            };
+          },
         );
       });
     },
@@ -73,40 +72,46 @@ export function useLikePost() {
     onMutate: async ({ postId, like }) => {
       await queryClient.cancelQueries({ queryKey: communityKeys.all });
 
-      const previousData = queryClient.getQueryData(communityKeys.all);
+      const snapshots: Record<string, unknown> = {};
 
       ["fyp", "following", "trending", "latest"].forEach((type) => {
-        queryClient.setQueryData(
-          communityKeys.posts(type),
-          (old: any) => {
-            if (!old) return old;
+        const key = communityKeys.posts(type);
+        snapshots[type] = queryClient.getQueryData(key);
 
-            return old.map((page: any) => ({
-              ...page,
-              data: page.data.map((post: CommunityPost) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      likes: post.likes + (like ? 1 : -1),
-                      likedByMe: like,
-                    }
-                  : post
-              ),
-            }));
-          }
+        queryClient.setQueryData(
+          key,
+          (old: { pages: PaginatedResponse<CommunityPost>[] } | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              pages: old.pages.map((page) => ({
+                ...page,
+                data: page.data.map((p) =>
+                  p.id === postId
+                    ? {
+                        ...p,
+                        likes: p.likes + (like ? 1 : -1),
+                        likedByMe: like,
+                      }
+                    : p,
+                ),
+              })),
+            };
+          },
         );
       });
 
-      return { previousData };
+      return { snapshots };
     },
 
     onError: (_err, _vars, context) => {
-      if (context?.previousData) {
+      if (!context?.snapshots) return;
+      ["fyp", "following", "trending", "latest"].forEach((type) => {
         queryClient.setQueryData(
-          communityKeys.all,
-          context.previousData
+          communityKeys.posts(type),
+          context.snapshots[type],
         );
-      }
+      });
     },
 
     onSettled: () => {

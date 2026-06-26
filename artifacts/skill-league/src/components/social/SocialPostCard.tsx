@@ -149,4 +149,5 @@ const SocialPostCard = memo(function SocialPostCard({
   );
 });
 
+export { SocialPostCard };
 export default SocialPostCard;

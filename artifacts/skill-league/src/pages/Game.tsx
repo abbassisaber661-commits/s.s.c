@@ -152,7 +152,7 @@ function QuestionDisplay({ q }: { q: Question }) {
 
       {d.kind === "sequence" && (
         <div className="flex items-center gap-3 flex-wrap justify-center">
-          {(d.extra ?? []).map((hex, i) => (
+          {((d.extra ?? []) as string[]).map((hex, i) => (
             <motion.div key={i} initial={{ scale: 0 }} animate={{ scale: 1 }}
               transition={{ delay: i * 0.07, type: "spring", stiffness: 400, damping: 22 }}>
               <div style={{ width: 48, height: 48, borderRadius: 24, background: hex,
@@ -287,7 +287,7 @@ function WordBuilder({
   const [shaking,   setShaking]   = useState(false);
   const [allCorrect, setAllCorrect] = useState(false);
 
-  const target = q.wordTarget ?? "";
+  const target = (q as { wordTarget?: string }).wordTarget ?? "";
   const slots  = target.length;
 
   useEffect(() => {

@@ -4,7 +4,8 @@ import { getStoredPlayerId } from "@/lib/apiClient";
 export async function fetchTrendingHashtags(): Promise<{ tag: string; postCount: number }[]> {
   try {
     const data = await api.social.hashtagsTrending();
-    return Array.isArray(data?.trending) ? data.trending : [];
+    const arr = Array.isArray(data) ? data : [];
+    return arr.map(d => ({ tag: d.tag, postCount: d.count }));
   } catch {
     return [];
   }

@@ -51,10 +51,24 @@ interface GameState extends PlayerData {
   // Economy
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
+  addFame: (amount: number) => void;
+  setLastPostTime: (t: number) => void;
+  unlockLeagueWithCoins: (leagueId: string) => boolean;
+
+  // Store
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  purchaseItem: (item: any) => Promise<boolean>;
+
+  // PiLock
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  activatePiLock: (tier: any) => Promise<boolean>;
 
   // UI
   toggleSound: () => void;
   toggleVibration: () => void;
+
+  // Tournament
+  recordTournamentWin: (place: number, coins: number, xp: number) => void;
 
   // State safety
   currentQuestionSet: string[];
@@ -103,6 +117,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const addFame = (amount: number) => {
+    persist({ ...data, fame: (data.fame || 0) + amount });
+  };
+
+  const setLastPostTime = (t: number) => {
+    persist({ ...data, lastPostTime: t });
+  };
+
   // =========================
   // SPEND COINS
   // =========================
@@ -114,6 +136,50 @@ export function GameProvider({ children }: { children: ReactNode }) {
       coins: data.coins - amount,
     });
 
+    return true;
+  };
+
+  const LEAGUE_UNLOCK_COSTS: Record<string, number> = {
+    coin: 50,
+    pro: 200,
+    champions: 500,
+  };
+
+  const purchaseItem = async (item: { id: string; name: string; price: number; [key: string]: unknown }): Promise<boolean> => {
+    if ((data.coins || 0) < item.price) return false;
+    const already = data.ownedItems || [];
+    if (already.includes(item.id)) return true;
+    persist({
+      ...data,
+      coins: data.coins - item.price,
+      ownedItems: [...already, item.id],
+    });
+    return true;
+  };
+
+  const activatePiLock = async (_tier: unknown): Promise<boolean> => {
+    return false;
+  };
+
+  const recordTournamentWin = (place: number, coins: number, xp: number) => {
+    persist({
+      ...data,
+      coins: (data.coins || 0) + coins,
+      xp: (data.xp || 0) + xp,
+      fame: (data.fame || 0) + Math.max(0, 3 - place),
+    });
+  };
+
+  const unlockLeagueWithCoins = (leagueId: string): boolean => {
+    const cost = LEAGUE_UNLOCK_COSTS[leagueId] ?? 100;
+    if ((data.coins || 0) < cost) return false;
+    const already = data.unlockedLeagues || ['training'];
+    if (already.includes(leagueId)) return true;
+    persist({
+      ...data,
+      coins: data.coins - cost,
+      unlockedLeagues: [...already, leagueId],
+    });
     return true;
   };
 
@@ -151,9 +217,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     persist({
       ...data,
-      lastScore: score,
-      lastAccuracy: accuracy,
-      lastStreak: streak,
+      bestStreak: Math.max(data.bestStreak || 0, streak),
     });
 
     setUsedQuestions(newUsed);
@@ -183,11 +247,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // TOGGLES
   // =========================
   const toggleSound = () => {
-    persist({ ...data, sound: !data.sound });
+    persist({ ...data, soundEnabled: !data.soundEnabled });
   };
 
   const toggleVibration = () => {
-    persist({ ...data, vibration: !data.vibration });
+    persist({ ...data, vibrationEnabled: !data.vibrationEnabled });
   };
 
   // =========================
@@ -270,6 +334,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         // Economy
         addCoins,
         spendCoins,
+        addFame,
+        setLastPostTime,
+        unlockLeagueWithCoins,
+        purchaseItem,
+        activatePiLock,
+        recordTournamentWin,
 
         // Profile
         updateUsername,

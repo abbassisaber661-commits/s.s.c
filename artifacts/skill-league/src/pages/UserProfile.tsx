@@ -117,8 +117,9 @@ export default function UserProfile() {
     if (!targetUsername || isOwnProfile) return;
     setStatsLoading(true);
     api.players.leaderboard(100)
-      .then(players => {
-        const p = players.find(pl => pl.username === targetUsername);
+      .then(res => {
+        const players = Array.isArray(res) ? res : ((res as unknown as { players: unknown[] }).players ?? []);
+        const p = (players as { username: string; id: string }[]).find(pl => pl.username === targetUsername);
         if (!p) { setStatsLoading(false); return; }
         setTargetPlayerId(p.id);
         return api.social.profile(p.id);

@@ -61,7 +61,7 @@ export default function SearchPage() {
       try {
         const r = await api.social.search(query.trim(), tab === "all" ? "all" : tab, sort);
         setResults({
-          users:    (r.users    as SearchUser[])    ?? [],
+          users:    (r.users    as unknown as SearchUser[])    ?? [],
           posts:    (r.posts    as SearchPost[])    ?? [],
           hashtags: (r.hashtags as SearchHashtag[]) ?? [],
         });
