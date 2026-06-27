@@ -41,6 +41,10 @@ import SocialPage from "@/pages/SocialPage";
 import Community from "@/pages/Community";
 import FriendsPage from "@/pages/FriendsPage";
 
+// Marketplace & Jobs
+import Marketplace from "@/pages/Marketplace";
+import JobsPage from "@/pages/JobsPage";
+
 // Communication
 import Messages from "@/pages/Messages";
 import Notifications from "@/pages/Notifications";
@@ -139,6 +143,8 @@ function AppShell() {
         <Route path="/social-classic" component={SocialPage} />
         <Route path="/community" component={Community} />
         <Route path="/friends" component={FriendsPage} />
+        <Route path="/marketplace" component={Marketplace} />
+        <Route path="/jobs" component={JobsPage} />
 
         {/* ================= COMMUNICATION ================= */}
         <Route path="/messages" component={Messages} />
