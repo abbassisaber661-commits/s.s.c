@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Crown, Trophy, Medal } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { api } from "@/lib/apiClient";
 import Avatar from "@/components/Avatar";
 
@@ -26,6 +27,7 @@ const RANK_STYLE = [
 ];
 
 export default function FeaturedPlayers() {
+  const [, navigate] = useLocation();
   const [players, setPlayers] = useState<FeaturedPlayer[]>(MOCK_PLAYERS);
 
   useEffect(() => {
@@ -63,7 +65,8 @@ export default function FeaturedPlayers() {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.07 }}
-              className="flex items-center gap-3 px-4 py-3"
+              onClick={() => navigate(`/profile/${player.id}`)}
+              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
             >
               {/* Rank badge */}
               <div

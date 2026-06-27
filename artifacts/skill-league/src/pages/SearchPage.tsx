@@ -12,7 +12,7 @@ type SearchTab = "all" | "users" | "posts" | "hashtags";
 type SortMode  = "relevant" | "recent" | "engagement";
 
 interface SearchUser   { id: string; username: string; level: number; elo: number; verificationStatus: string }
-interface SearchPost   { id: string; username: string; content: string; likes: number; replies: number; createdAt: string }
+interface SearchPost   { id: string; authorId: string; username: string; content: string; likes: number; replies: number; createdAt: string }
 interface SearchHashtag { tag: string; count: number }
 
 // ✅ دالة مساعدة لتنسيق الوقت مع الترجمة
@@ -95,7 +95,7 @@ export default function SearchPage() {
       {/* ── Header ── */}
       <div className="sticky top-0 z-20 bg-white border-b px-3 py-2 flex items-center gap-2"
         style={{ borderColor: "#E4E6EB", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-        <button onClick={() => { playTap(); navigate("/social"); }}
+        <button onClick={() => { playTap(); navigate(-1 as any); }}
           className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all flex-shrink-0">
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
@@ -190,7 +190,7 @@ export default function SearchPage() {
                     {results.users.map(u => (
                       <motion.button key={u.id}
                         initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                        onClick={() => navigate(`/user/${encodeURIComponent(u.username)}`)}
+                        onClick={() => navigate(`/profile/${u.id}`)}
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border hover:border-blue-300 active:scale-98 transition-all text-left"
                         style={{ borderColor: "#E4E6EB" }}>
                         <Avatar username={u.username} size="sm" shape="rounded-xl" />
@@ -229,7 +229,7 @@ export default function SearchPage() {
                           <Avatar username={p.username} size="xs" shape="rounded-lg" />
                           <button
                             className="text-xs font-bold text-blue-600 hover:underline"
-                            onClick={() => navigate(`/user/${encodeURIComponent(p.username)}`)}>
+                            onClick={() => navigate(`/profile/${p.authorId}`)}>
                             {p.username}
                           </button>
                           <span className="text-[10px] text-gray-400 ml-auto">

@@ -240,7 +240,7 @@ router.post("/players", async (req, res) => {
 
 router.patch("/players/:id", async (req, res) => {
   try {
-    const allowed = ["username","avatar","language","coins","xp","level","elo","lp","fame",
+    const allowed = ["username","avatar","bio","cover","language","coins","xp","level","elo","lp","fame",
       "leagueDivision","unlockedLeagues","ownedItems","xpBoostUntil","highScores",
       "achievements","trophies","dailyChallenges","matchesPlayed","matchesWon",
       "pvpWins","pvpLosses","pvpWinStreak","bestPvpStreak","tournamentWins","bestStreak",

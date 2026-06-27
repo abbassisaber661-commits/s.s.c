@@ -32,6 +32,8 @@ export const playersTable = pgTable('players', {
   achievements:      jsonb('achievements').$type<{ id: string; date: string }[]>().notNull().default([]),
   highScores:        jsonb('high_scores').$type<Record<string, number>>().notNull().default({}),
   dailyChallenges:   jsonb('daily_challenges').$type<Record<string, boolean>>().notNull().default({}),
+  bio:               text('bio'),
+  cover:             text('cover'),
   verificationStatus:text('verification_status').notNull().default('unverified'),
   piUid:             text('pi_uid'),
   language:          text('language').notNull().default('en'),
