@@ -13,11 +13,10 @@ import FeaturedPlayers from "@/components/social/FeaturedPlayers";
 import PostCard from "@/components/social/PostCard";
 
 import {
-  getCommunityPosts, addPost, createPost, getLikedPostIds,
+  addPost, createPost, getLikedPostIds,
   type CommunityPost, type PostType,
 } from "@/lib/community";
 import { checkPostSpam } from "@/lib/anti-cheat";
-import { getCommentCounts } from "@/lib/comments";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 
 type FeedTab = "new" | "hot" | "trending";
@@ -73,8 +72,8 @@ export default function Community() {
         setCommentCounts(counts);
       })
       .catch(() => {
-        setPosts(getCommunityPosts());
-        setCommentCounts(getCommentCounts());
+        setPosts([]);
+        setCommentCounts({});
       })
       .finally(() => setLoading(false));
   }, []);

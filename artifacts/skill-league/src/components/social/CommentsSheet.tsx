@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Reply, Loader2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CommentItem, type CommentData } from "./CommentItem";
-import { getComments } from "@/lib/comments";
 import { useGame } from "@/contexts/GameContext";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 import { getSocket } from "@/lib/socket";
@@ -70,8 +69,7 @@ export const CommentsSheet = memo(({
       setComments(res.map(mapToCommentData));
       setHasMore(res.length >= PAGE_SIZE);
     }).catch(() => {
-      const local = getComments(postId);
-      setComments(local.map(mapToCommentData));
+      setComments([]);
       setHasMore(false);
     }).finally(() => setLoading(false));
   }, [isOpen, postId]);

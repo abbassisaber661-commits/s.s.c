@@ -8,11 +8,6 @@ import { getSocialLeague } from "@/lib/socialLeague";
 import { api, getStoredPlayerId, type ApiMessage } from "@/lib/apiClient";
 import Avatar from "@/components/Avatar";
 
-function isOnline(username: string): boolean {
-  const hash = username.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  return (hash + new Date().getHours()) % 3 !== 0;
-}
-
 function getMsgAge(ts: number): string {
   const diff  = Date.now() - ts;
   const mins  = Math.floor(diff / 60_000);
@@ -52,7 +47,6 @@ export default function ChatPage() {
   const endRef   = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const online = isOnline(them);
   const league = getSocialLeague(myLevel);
   void league;
 
@@ -148,7 +142,7 @@ export default function ChatPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <Avatar username={them} size="sm" shape="rounded-xl" online={online} />
+        <Avatar username={them} size="sm" shape="rounded-xl" />
 
         <div className="flex-1 min-w-0">
           <button
@@ -157,8 +151,8 @@ export default function ChatPage() {
           >
             {them}
           </button>
-          <span className={`text-[11px] font-medium ${online ? 'text-green-400' : 'text-muted-foreground'}`}>
-            {online ? '🟢 Online' : '⚫ Offline'}
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {theirId ? 'Connected' : 'Looking up…'}
           </span>
         </div>
       </div>

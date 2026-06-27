@@ -7,12 +7,6 @@ import { getFriendsList, unfriend, type FriendEntry } from "@/lib/friends";
 import { getSocialLeague } from "@/lib/socialLeague";
 import Avatar from "@/components/Avatar";
 
-function isOnline(username: string): boolean {
-  const hash = username.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const hour = new Date().getHours();
-  return (hash + hour) % 3 !== 0;
-}
-
 export default function FriendsPage() {
   const [, navigate] = useLocation();
   const { username }  = useGame();
@@ -26,9 +20,6 @@ export default function FriendsPage() {
     unfriend(username, them);
     setFriends(getFriendsList(username));
   }
-
-  const online  = friends.filter(f => isOnline(f.username));
-  const offline = friends.filter(f => !isOnline(f.username));
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-28">
@@ -62,41 +53,16 @@ export default function FriendsPage() {
             </button>
           </motion.div>
         ) : (
-          <>
-            {online.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 px-1">
-                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
-                  <span className="text-xs font-bold text-green-400">Online — {online.length}</span>
-                </div>
-                {online.map((f, i) => (
-                  <FriendCard
-                    key={f.username} entry={f} index={i} online
-                    onMessage={() => navigate(`/chat/${encodeURIComponent(f.username)}`)}
-                    onUnfriend={() => handleUnfriend(f.username)}
-                    onProfile={() => navigate(`/user/${encodeURIComponent(f.username)}`)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {offline.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 px-1">
-                  <span className="w-2 h-2 rounded-full bg-muted-foreground flex-shrink-0" />
-                  <span className="text-xs font-bold text-muted-foreground">Offline — {offline.length}</span>
-                </div>
-                {offline.map((f, i) => (
-                  <FriendCard
-                    key={f.username} entry={f} index={i} online={false}
-                    onMessage={() => navigate(`/chat/${encodeURIComponent(f.username)}`)}
-                    onUnfriend={() => handleUnfriend(f.username)}
-                    onProfile={() => navigate(`/user/${encodeURIComponent(f.username)}`)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+          <div className="space-y-2">
+            {friends.map((f, i) => (
+              <FriendCard
+                key={f.username} entry={f} index={i}
+                onMessage={() => navigate(`/chat/${encodeURIComponent(f.username)}`)}
+                onUnfriend={() => handleUnfriend(f.username)}
+                onProfile={() => navigate(`/user/${encodeURIComponent(f.username)}`)}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
@@ -104,9 +70,9 @@ export default function FriendsPage() {
 }
 
 function FriendCard({
-  entry, index, online, onMessage, onUnfriend, onProfile,
+  entry, index, onMessage, onUnfriend, onProfile,
 }: {
-  entry: FriendEntry; index: number; online: boolean;
+  entry: FriendEntry; index: number;
   onMessage: () => void; onUnfriend: () => void; onProfile: () => void;
 }) {
   const { username } = entry;
@@ -122,7 +88,7 @@ function FriendCard({
     >
       {/* Avatar */}
       <button onClick={onProfile} className="active:scale-90 transition-transform">
-        <Avatar username={username} size="lg" shape="rounded-xl" online={online} />
+        <Avatar username={username} size="lg" shape="rounded-xl" />
       </button>
 
       {/* Info */}
@@ -130,9 +96,6 @@ function FriendCard({
         <button onClick={onProfile} className="text-sm font-bold truncate hover:text-primary transition-colors block text-left">
           {username}
         </button>
-        <div className={`text-[11px] font-bold ${online ? 'text-green-400' : 'text-muted-foreground'}`}>
-          {online ? '🟢 Online now' : '⚫ Offline'}
-        </div>
       </div>
 
       {/* Actions */}

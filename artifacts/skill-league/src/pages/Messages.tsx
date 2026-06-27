@@ -10,11 +10,6 @@ import { getFriendsList } from "@/lib/friends";
 import { getMsgAge } from "@/lib/chat";
 import Avatar from "@/components/Avatar";
 
-function isOnline(username: string): boolean {
-  const hash = username.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  return (hash + new Date().getHours()) % 3 !== 0;
-}
-
 const NOTIF_ICON: Record<string, string> = {
   like: '❤️', comment: '💬', follow: '👤', mention: '📢',
   system: '🎮', pvp_result: '⚔️', tournament: '🏆', trophy: '🏅',
@@ -195,21 +190,18 @@ export default function Messages() {
                 <div className="mb-3">
                   <p className="text-[11px] text-muted-foreground font-bold mb-2">START A CONVERSATION</p>
                   <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                    {friends.map(f => {
-                      const online = isOnline(f.username);
-                      return (
-                        <button
-                          key={f.username}
-                          onClick={() => navigate(`/chat/${encodeURIComponent(f.username)}`)}
-                          className="flex flex-col items-center gap-1 flex-shrink-0 active:scale-90 transition-transform"
-                        >
-                          <Avatar username={f.username} size="lg" shape="rounded-xl" online={online} />
-                          <span className="text-[10px] font-bold text-muted-foreground w-12 text-center truncate">
-                            {f.username.replace(/\d+$/, '')}
-                          </span>
-                        </button>
-                      );
-                    })}
+                    {friends.map(f => (
+                      <button
+                        key={f.username}
+                        onClick={() => navigate(`/chat/${encodeURIComponent(f.username)}`)}
+                        className="flex flex-col items-center gap-1 flex-shrink-0 active:scale-90 transition-transform"
+                      >
+                        <Avatar username={f.username} size="lg" shape="rounded-xl" />
+                        <span className="text-[10px] font-bold text-muted-foreground w-12 text-center truncate">
+                          {f.username.replace(/\d+$/, '')}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -227,9 +219,7 @@ export default function Messages() {
                   </button>
                 </div>
               ) : (
-                convos.map((conv, i) => {
-                  const online = isOnline(conv.partnerUsername);
-                  return (
+                convos.map((conv, i) => (
                     <motion.button
                       key={conv.partnerId}
                       initial={{ opacity: 0, x: -8 }}
@@ -238,7 +228,7 @@ export default function Messages() {
                       onClick={() => navigate(`/chat/${encodeURIComponent(conv.partnerUsername)}`)}
                       className={`w-full flex items-center gap-3 p-3 rounded-2xl border bg-card text-left transition-all active:scale-[0.98] hover:bg-card/80 ${conv.unread > 0 ? 'border-primary/40' : 'border-border'}`}
                     >
-                      <Avatar username={conv.partnerUsername} size="lg" shape="rounded-xl" online={online} />
+                      <Avatar username={conv.partnerUsername} size="lg" shape="rounded-xl" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className={`text-sm font-bold truncate ${conv.unread > 0 ? 'text-foreground' : 'text-foreground/80'}`}>
@@ -262,8 +252,7 @@ export default function Messages() {
                         </div>
                       </div>
                     </motion.button>
-                  );
-                })
+                  ))
               )}
             </motion.div>
           )}

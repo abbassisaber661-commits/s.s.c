@@ -7,14 +7,13 @@ import {
   Repeat2, ChevronRight,
 } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
-import { getCommunityPosts, getLikedPostIds, type CommunityPost, getPostAge } from "@/lib/community";
+import { type CommunityPost, type PostType, getPostAge } from "@/lib/community";
 import { getSocialLeague } from "@/lib/socialLeague";
 import {
   getFriendStatus, sendFriendRequest, unfriend,
   getFriendsCount, getFriendsList, type FriendStatus, type FriendEntry,
 } from "@/lib/friends";
 import { getAllPostMeta } from "@/lib/postMeta";
-import { getCommentCounts } from "@/lib/comments";
 import { getStories } from "@/lib/stories";
 import Avatar from "@/components/Avatar";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
@@ -24,10 +23,6 @@ const XP_PER_LEVEL = 500;
 type ProfileTab = "posts" | "media" | "activity";
 type ListType   = "followers" | "following" | "friends";
 
-function isOnline(username: string): boolean {
-  const hash = username.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return (hash + new Date().getHours()) % 3 !== 0;
-}
 function fmtDate(ts: string | null): string {
   if (!ts) return "—";
   return new Date(ts).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -98,6 +93,7 @@ export default function UserProfile() {
   } | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [targetPlayerId, setTargetPlayerId] = useState<string | null>(null);
+  const [apiPosts, setApiPosts] = useState<CommunityPost[]>([]);
 
   const [isFollowing, setIsFollowing]       = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -109,7 +105,6 @@ export default function UserProfile() {
   const [listLoading, setListLoading]     = useState(false);
 
   useEffect(() => {
-    setCommentCounts(getCommentCounts());
     setPostMeta(getAllPostMeta());
   }, []);
 
@@ -124,7 +119,28 @@ export default function UserProfile() {
         setTargetPlayerId(p.id);
         return api.social.profile(p.id);
       })
-      .then(stats => { if (stats) setBackendStats(stats as any); })
+      .then(stats => {
+        if (stats) {
+          setBackendStats(stats as any);
+          const rawPosts: any[] = (stats as any).posts ?? [];
+          const mapped: CommunityPost[] = rawPosts.map((p: any) => ({
+            id: p.id,
+            authorId: p.authorId,
+            authorName: p.username ?? p.authorName ?? targetUsername,
+            authorLevel: p.level ?? 1,
+            authorFame: 0,
+            content: p.content ?? "",
+            imageUrl: p.imageUrl ?? undefined,
+            type: (p.type as PostType) ?? "text",
+            timestamp: new Date(p.createdAt ?? Date.now()).getTime(),
+            likes: p.likes ?? 0,
+            likedByMe: false,
+            boosted: false,
+            boostExpiry: null,
+          }));
+          setApiPosts(mapped);
+        }
+      })
       .catch(() => {})
       .finally(() => setStatsLoading(false));
   }, [targetUsername, isOwnProfile]);
@@ -161,10 +177,9 @@ export default function UserProfile() {
     }
   }, [activeList, targetPlayerId]);
 
-  const allPosts  = useMemo(() => getCommunityPosts(), []);
-  const userPosts = useMemo(
-    () => allPosts.filter(p => p.authorName === targetUsername).sort((a, b) => b.timestamp - a.timestamp),
-    [allPosts, targetUsername]
+  const userPosts  = useMemo(
+    () => [...apiPosts].sort((a, b) => b.timestamp - a.timestamp),
+    [apiPosts]
   );
   const mediaPosts = useMemo(() => userPosts.filter(p => !!p.imageUrl), [userPosts]);
   const friendsList  = useMemo(() => getFriendsList(targetUsername), [targetUsername]);
@@ -176,7 +191,7 @@ export default function UserProfile() {
 
   const inferredLevel = userPosts[0]?.authorLevel ?? 1;
   const inferredXp    = inferredLevel * XP_PER_LEVEL - Math.floor(XP_PER_LEVEL * 0.4);
-  const totalLikes    = backendStats?.likesReceived ?? userPosts.reduce((s, p) => s + p.likes, 0);
+  const totalLikes    = backendStats?.likesReceived ?? userPosts.reduce((s: number, p: CommunityPost) => s + p.likes, 0);
   const league        = getSocialLeague(inferredLevel);
   const xpBase        = (inferredLevel - 1) * XP_PER_LEVEL;
   const xpInLevel     = Math.max(0, inferredXp - xpBase);
@@ -243,12 +258,6 @@ export default function UserProfile() {
         <span className="font-black text-base flex-1 truncate" style={{ color: "#050505" }}>
           {targetUsername}
         </span>
-        {isOnline(targetUsername) && (
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: "#2D8A3E" }}>
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            Online
-          </div>
-        )}
       </div>
 
       {/* ── Profile Hero ── */}
@@ -642,13 +651,9 @@ function ListSheet({
                 style={{ background: "transparent" }}
                 onMouseEnter={e => (e.currentTarget.style.background = "#F0F2F5")}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
-                <Avatar username={u.username} size="md" shape="rounded-full"
-                  online={isOnline(u.username)} />
+                <Avatar username={u.username} size="md" shape="rounded-full" />
                 <div className="flex-1 text-left min-w-0">
                   <div className="text-sm font-bold truncate" style={{ color: "#050505" }}>{u.username}</div>
-                  <div className="text-[11px] font-semibold" style={{ color: isOnline(u.username) ? "#2D8A3E" : "#65676B" }}>
-                    {isOnline(u.username) ? "🟢 Online" : "⚫ Offline"}
-                  </div>
                 </div>
                 <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "#65676B" }} />
               </button>
