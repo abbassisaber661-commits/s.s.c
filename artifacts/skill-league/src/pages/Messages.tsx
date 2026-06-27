@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { ArrowLeft, Bell, CheckCheck, MessageSquare, Wifi, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -136,11 +136,12 @@ export default function Messages() {
 
       {/* ── Header ───────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <Link href="/">
-          <button className="p-2 rounded-xl hover:bg-muted transition-colors active:scale-90">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </Link>
+        <button
+          onClick={() => window.history.length > 1 ? navigate(-1 as any) : navigate("/feed")}
+          className="p-2 rounded-xl hover:bg-muted transition-colors active:scale-90"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <MessageSquare className="w-5 h-5 text-primary" />
         <h1 className="text-lg font-black flex-1">Messages</h1>
 
@@ -317,9 +318,7 @@ export default function Messages() {
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-muted-foreground/60">{getAge(n.createdAt)}</span>
                           {!!n.data?.postId && (
-                            <Link href="/social">
-                              <Button size="sm" variant="outline" className="text-xs h-6 px-2">View →</Button>
-                            </Link>
+                            <Button size="sm" variant="outline" className="text-xs h-6 px-2" onClick={() => navigate("/feed")}>View →</Button>
                           )}
                         </div>
                       </div>

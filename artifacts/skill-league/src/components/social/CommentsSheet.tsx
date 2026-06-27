@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Reply, Loader2, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CommentItem, type CommentData } from "./CommentItem";
-import { addComment, getComments } from "@/lib/comments";
+import { getComments } from "@/lib/comments";
 import { useGame } from "@/contexts/GameContext";
-import { api } from "@/lib/apiClient";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
 import { getSocket } from "@/lib/socket";
 import { toast } from "sonner";
 
@@ -131,8 +131,9 @@ export const CommentsSheet = memo(({
     onCountChange?.(1);
 
     try {
+      const playerId = getStoredPlayerId();
       await api.community.comment(postId, {
-        authorId: username,
+        authorId: playerId ?? username,
         username,
         content: optimistic.content,
       });
@@ -140,8 +141,6 @@ export const CommentsSheet = memo(({
         postId,
         comment: { username, level, content: optimistic.content },
       });
-      // Persist locally too
-      addComment(postId, username, level, optimistic.content);
     } catch {
       toast.error("Failed to send comment");
     } finally {

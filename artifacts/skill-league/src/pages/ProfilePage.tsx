@@ -3,6 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCcw, Settings } from "lucide-react";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
 
 import { useTranslation } from "@/hooks/useTranslation";
 import { useProfileData } from "@/hooks/useProfileData";
@@ -68,10 +69,42 @@ export default function ProfilePage() {
     followMutation.mutate(profile.isFollowing ? "unfollow" : "follow");
   }, [profile, followMutation]);
 
-  const handleSaveProfile = useCallback(async () => {
-    toast.success("Profile updated!");
-    setIsEditOpen(false);
-  }, []);
+  const handleSaveProfile = useCallback(async (data: {
+    username: string;
+    bio: string;
+    avatar: string | File;
+    fullName?: string;
+    location?: string;
+    website?: string;
+  }) => {
+    const pid = getStoredPlayerId() ?? userId;
+    if (!pid) { toast.error("Not logged in"); return; }
+    try {
+      let avatarStr: string | undefined;
+      if (data.avatar instanceof File) {
+        avatarStr = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(data.avatar as File);
+        });
+      } else {
+        avatarStr = data.avatar || undefined;
+      }
+      await api.players.sync(pid, {
+        username: data.username,
+        bio:      data.bio || undefined,
+        avatar:   avatarStr,
+        fullName: data.fullName || undefined,
+        location: data.location || undefined,
+        website:  data.website  || undefined,
+      } as any);
+      toast.success("Profile updated!");
+      setIsEditOpen(false);
+      refetch();
+    } catch {
+      toast.error("Failed to save profile");
+    }
+  }, [userId, refetch]);
 
   const allPosts    = posts ?? [];
   const pinnedPosts = allPosts.filter((p) => p.isPinned);
@@ -134,8 +167,8 @@ export default function ProfilePage() {
       <ProfileCoverHeader
         profile={profile}
         isOwner={isOwner}
-        onAvatarClick={() => isOwner && navigate("/profile-settings")}
-        onCoverClick={() => isOwner && navigate("/profile-settings")}
+        onAvatarClick={() => isOwner && setIsEditOpen(true)}
+        onCoverClick={() => isOwner && setIsEditOpen(true)}
       />
 
       {/* ── Stats: Posts / Followers / Following ─────────── */}

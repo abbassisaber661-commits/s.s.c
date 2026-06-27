@@ -4,8 +4,9 @@ import type {
   PaginatedResponse,
   ApiPost,
 } from "@/shared/community";
+import type { FollowEntry } from "@/types/profile";
 
-export type { ApiPost };
+export type { ApiPost, FollowEntry };
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
 const API_BASE = BASE + "/api";
@@ -224,8 +225,20 @@ export const api = {
   /* ── Followers ── */
   followers: {
     get: (targetId: string, viewerId?: string) =>
-      get<{ followers: number; following: number; isFollowing: boolean; followersCount: number; followingCount: number }>(
+      get<{ followersCount: number; followingCount: number; isFollowing: boolean }>(
         `/followers/${targetId}${viewerId ? `?viewerId=${viewerId}` : ""}`,
+      ),
+
+    /** List of users who follow targetId (with profile data) */
+    list: (targetId: string, viewerId?: string) =>
+      get<FollowEntry[]>(
+        `/followers/${targetId}/list${viewerId ? `?viewerId=${viewerId}` : ""}`,
+      ),
+
+    /** List of users that targetId follows (with profile data) */
+    listFollowing: (targetId: string, viewerId?: string) =>
+      get<FollowEntry[]>(
+        `/followers/${targetId}/following${viewerId ? `?viewerId=${viewerId}` : ""}`,
       ),
 
     follow: (targetId: string, followerId: string) =>

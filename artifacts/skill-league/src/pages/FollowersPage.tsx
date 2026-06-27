@@ -1,23 +1,11 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, memo } from "react";
 import { useRoute, useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowLeft, Search, X, UserCheck, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { VerificationBadge } from "@/components/profile/VerificationBadge";
-import type { FollowEntry, VerificationTier } from "@/types/profile";
-
-const DEMO_FOLLOWERS: FollowEntry[] = Array.from({ length: 24 }, (_, i) => ({
-  id: String(i + 1),
-  username: `player_${i + 1}`,
-  displayName: `Player ${i + 1}`,
-  avatar: undefined,
-  bio: i % 3 === 0 ? "Competitive gamer and community builder." : undefined,
-  isFollowing: i % 3 === 0,
-  mutualCount: Math.floor(Math.random() * 8),
-  level: Math.floor(Math.random() * 50) + 1,
-  verification: i === 0 ? "verified" : i === 2 ? "creator" : "none" as VerificationTier,
-}));
+import { api, getStoredPlayerId } from "@/lib/apiClient";
+import type { FollowEntry } from "@/types/profile";
 
 const Shimmer = ({ className }: { className?: string }) => (
   <div className={cn("animate-pulse bg-gray-200 dark:bg-gray-700 rounded", className)} />
@@ -37,20 +25,32 @@ const SkeletonItem = () => (
 interface FollowerItemProps {
   user: FollowEntry;
   index: number;
-  onFollowToggle: (id: string, following: boolean) => void;
+  viewerId: string;
 }
 
-const FollowerItem = memo(({ user, index, onFollowToggle }: FollowerItemProps) => {
+const FollowerItem = memo(({ user, index, viewerId }: FollowerItemProps) => {
   const [, navigate] = useLocation();
   const [following, setFollowing] = useState(user.isFollowing ?? false);
   const [loading, setLoading] = useState(false);
 
   const handleFollow = async () => {
+    if (!viewerId) { toast.error("Sign in to follow"); return; }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setFollowing((v) => !v);
-    setLoading(false);
-    onFollowToggle(user.id, !following);
+    try {
+      if (following) {
+        await api.followers.unfollow(user.id, viewerId);
+        setFollowing(false);
+        toast.success("Unfollowed");
+      } else {
+        await api.followers.follow(user.id, viewerId);
+        setFollowing(true);
+        toast.success("Followed");
+      }
+    } catch {
+      toast.error("Action failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,90 +60,91 @@ const FollowerItem = memo(({ user, index, onFollowToggle }: FollowerItemProps) =
       transition={{ delay: Math.min(index * 0.03, 0.4) }}
       className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
     >
-      {/* Avatar */}
       <div
         className="relative flex-shrink-0 cursor-pointer"
         onClick={() => navigate(`/profile/${user.id}`)}
       >
         <div className="w-11 h-11 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-          {user.avatar ? (
+          {user.avatar && !user.avatar.match(/^\p{Emoji}/u) ? (
             <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
           ) : (
             <span className="text-white font-bold text-base">
-              {user.username[0]?.toUpperCase()}
+              {user.avatar?.match(/^\p{Emoji}/u) ? user.avatar : user.username[0]?.toUpperCase()}
             </span>
           )}
         </div>
       </div>
 
-      {/* Info */}
       <div
         className="flex-1 min-w-0 cursor-pointer"
         onClick={() => navigate(`/profile/${user.id}`)}
       >
-        <div className="flex items-center gap-1">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-            {user.displayName ?? user.username}
-          </p>
-          {user.verification && user.verification !== "none" && (
-            <VerificationBadge tier={user.verification} size="sm" showTooltip={false} />
-          )}
-        </div>
+        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+          {user.displayName ?? user.username}
+        </p>
         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-          @{user.username}
-          {user.mutualCount ? ` · ${user.mutualCount} mutual` : ""}
+          @{user.username} · Lv {user.level}
         </p>
       </div>
 
-      {/* Follow button */}
-      <button
-        onClick={handleFollow}
-        disabled={loading}
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold",
-          "transition-all duration-200 flex-shrink-0",
-          following
-            ? "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-            : "bg-blue-500 hover:bg-blue-600 text-white",
-          "disabled:opacity-60"
-        )}
-      >
-        {loading ? (
-          <Loader2 size={12} className="animate-spin" />
-        ) : following ? (
-          <UserCheck size={12} />
-        ) : (
-          <UserPlus size={12} />
-        )}
-        {following ? "Following" : "Follow"}
-      </button>
+      {viewerId && viewerId !== user.id && (
+        <button
+          onClick={handleFollow}
+          disabled={loading}
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold",
+            "transition-all duration-200 flex-shrink-0",
+            following
+              ? "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+              : "bg-blue-500 hover:bg-blue-600 text-white",
+            "disabled:opacity-60"
+          )}
+        >
+          {loading ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : following ? (
+            <UserCheck size={12} />
+          ) : (
+            <UserPlus size={12} />
+          )}
+          {following ? "Following" : "Follow"}
+        </button>
+      )}
     </motion.div>
   );
 });
 
 FollowerItem.displayName = "FollowerItem";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 20;
 
 export default function FollowersPage() {
   const [, navigate] = useLocation();
   const [, params] = useRoute("/profile/:userId/followers");
   const userId = params?.userId ?? "";
+  const viewerId = getStoredPlayerId() ?? "";
 
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [followers, setFollowers] = useState<FollowEntry[]>([]);
   const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!userId) return;
     setIsLoading(true);
-    const t = setTimeout(() => {
-      setFollowers(DEMO_FOLLOWERS);
-      setIsLoading(false);
-    }, 600);
-    return () => clearTimeout(t);
-  }, [userId]);
+    setError(false);
+    api.followers.list(userId, viewerId || undefined)
+      .then(data => {
+        setFollowers(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setIsLoading(false);
+      });
+  }, [userId, viewerId]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return followers;
@@ -165,10 +166,6 @@ export default function FollowersPage() {
     obs.observe(loaderRef.current);
     return () => obs.disconnect();
   }, [hasMore]);
-
-  const handleFollowToggle = useCallback((id: string, following: boolean) => {
-    toast.success(following ? "Followed" : "Unfollowed");
-  }, []);
 
   return (
     <div className="max-w-2xl mx-auto min-h-screen bg-white dark:bg-gray-950">
@@ -211,6 +208,23 @@ export default function FollowersPage() {
       {/* List */}
       {isLoading ? (
         <div>{Array.from({ length: 8 }).map((_, i) => <SkeletonItem key={i} />)}</div>
+      ) : error ? (
+        <div className="flex flex-col items-center py-20 text-center px-6">
+          <span className="text-5xl mb-3">⚠️</span>
+          <p className="text-base font-semibold text-gray-700 dark:text-gray-300">Failed to load</p>
+          <button
+            onClick={() => {
+              setError(false);
+              setIsLoading(true);
+              api.followers.list(userId, viewerId || undefined)
+                .then(data => { setFollowers(data); setIsLoading(false); })
+                .catch(() => { setError(true); setIsLoading(false); });
+            }}
+            className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-semibold"
+          >
+            Retry
+          </button>
+        </div>
       ) : visible.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-center px-6">
           <span className="text-5xl mb-3">👥</span>
@@ -224,9 +238,8 @@ export default function FollowersPage() {
       ) : (
         <>
           {visible.map((user, i) => (
-            <FollowerItem key={user.id} user={user} index={i} onFollowToggle={handleFollowToggle} />
+            <FollowerItem key={user.id} user={user} index={i} viewerId={viewerId} />
           ))}
-
           {hasMore && (
             <div ref={loaderRef} className="flex justify-center py-6">
               <Loader2 size={20} className="animate-spin text-gray-400" />

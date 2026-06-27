@@ -27,7 +27,7 @@ export function getNotifications(): Notification[] {
     const raw = localStorage.getItem(NOTIFS_KEY);
     if (raw) return JSON.parse(raw) as Notification[];
   } catch { /* ignore */ }
-  return getSeedNotifications();
+  return [];
 }
 
 export function saveNotifications(notifs: Notification[]) {
@@ -72,34 +72,6 @@ export function getAge(ts: number): string {
   if (m < 60)  return `${m}m ago`;
   if (h < 24)  return `${h}h ago`;
   return `${d}d ago`;
-}
-
-function getSeedNotifications(): Notification[] {
-  const now = Date.now();
-  const list: Notification[] = [
-    {
-      id: 'seed_1', type: 'system', title: 'Welcome to SkillLeague!',
-      body: 'Complete your first match to earn coins and XP.',
-      icon: '🎮', timestamp: now - 5 * 60_000, read: false, actionUrl: '/leagues',
-    },
-    {
-      id: 'seed_2', type: 'system', title: 'Season 29: Ember is live',
-      body: 'Reach Gold rank (1150+ ELO) before the season ends for 300 coins + 500 XP.',
-      icon: '🌀', timestamp: now - 30 * 60_000, read: false, actionUrl: '/seasons',
-    },
-    {
-      id: 'seed_3', type: 'system', title: 'New Weekly Missions available',
-      body: '5 missions reset this week — up to 605 coins + 900 XP.',
-      icon: '📋', timestamp: now - 2 * 3_600_000, read: false, actionUrl: '/daily-challenges',
-    },
-    {
-      id: 'seed_4', type: 'system', title: 'Pi Store is now open!',
-      body: 'Buy coin bundles, XP boosts, and cosmetic items using Pi.',
-      icon: '🛒', timestamp: now - 6 * 3_600_000, read: true, actionUrl: '/store',
-    },
-  ];
-  saveNotifications(list);
-  return list;
 }
 
 export function createLevelUpNotif(level: number, title: string): Omit<Notification, 'id' | 'timestamp' | 'read'> {
