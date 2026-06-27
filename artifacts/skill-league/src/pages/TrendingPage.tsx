@@ -9,7 +9,7 @@ import { playTap } from "@/lib/sounds";
 type Window = "24h" | "7d" | "30d";
 type TrendTab = "posts" | "users" | "hashtags";
 
-interface TPost { id: string; username: string; content: string; likes: number; replies: number; createdAt: string }
+interface TPost { id: string; authorId: string; username: string; content: string; likes: number; replies: number; createdAt: string }
 interface TUser  { authorId: string; username: string; postCount: number; totalLikes: number; level?: number }
 interface THashtag { tag: string; postCount: number; totalLikes: number }
 
@@ -172,7 +172,7 @@ export default function TrendingPage() {
                         <motion.button key={u.authorId}
                           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: i * 0.04 }}
-                          onClick={() => navigate(`/user/${encodeURIComponent(u.username)}`)}
+                          onClick={() => navigate(`/profile/${u.authorId}`)}
                           className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border hover:border-blue-300 active:scale-98 transition-all text-left"
                           style={{ borderColor: "#E4E6EB" }}>
                           <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-sm text-white flex-shrink-0"
@@ -246,7 +246,7 @@ function TrendPostCard({ post, rank, navigate }: { post: TPost; rank: number; na
           {rank}
         </div>
         <button className="text-xs font-bold text-blue-600 hover:underline"
-          onClick={() => navigate(`/user/${encodeURIComponent(post.username)}`)}>
+          onClick={() => navigate(`/profile/${post.authorId}`)}>
           {post.username}
         </button>
         <span className="text-[10px] text-gray-400 ml-auto">{fmt(post.createdAt)}</span>

@@ -6,7 +6,7 @@ import { api } from "@/lib/apiClient";
 import Avatar from "@/components/Avatar";
 import { playTap } from "@/lib/sounds";
 
-interface HPost { id: string; username: string; level: number; content: string; likes: number; replies: number; createdAt: string }
+interface HPost { id: string; authorId: string; username: string; level: number; content: string; likes: number; replies: number; createdAt: string }
 
 function fmt(ts: string) {
   const diff = Date.now() - new Date(ts).getTime();
@@ -135,12 +135,12 @@ export default function HashtagFeedPage() {
                 <div className="p-4 space-y-2.5">
                   {/* Author row */}
                   <div className="flex items-center gap-2">
-                    <button onClick={() => navigate(`/user/${encodeURIComponent(post.username)}`)}>
+                    <button onClick={() => navigate(`/profile/${post.authorId}`)}>
                       <Avatar username={post.username} size="sm" shape="rounded-xl" />
                     </button>
                     <div className="flex-1 min-w-0">
                       <button
-                        onClick={() => navigate(`/user/${encodeURIComponent(post.username)}`)}
+                        onClick={() => navigate(`/profile/${post.authorId}`)}
                         className="text-sm font-bold hover:text-blue-600 transition-colors">
                         {post.username}
                       </button>
