@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRealtime } from "@/contexts/RealtimeContext";
 import { useGame } from "@/contexts/GameContext";
 import { api, getStoredPlayerId, type ApiNotification, type ApiMessage } from "@/lib/apiClient";
-import { getFriendsList } from "@/lib/friends";
 import { getMsgAge } from "@/lib/chat";
 import Avatar from "@/components/Avatar";
 
@@ -124,8 +123,6 @@ export default function Messages() {
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   }
 
-  const friends = getFriendsList(username);
-
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: "#F0F2F5" }}>
 
@@ -224,38 +221,6 @@ export default function Messages() {
           {/* ── DMs TAB ── */}
           {tab === 'dms' && (
             <motion.div key="dms" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
-
-              {/* Friends quick-start bar */}
-              {friends.length > 0 && (
-                <div
-                  className="rounded-2xl p-3"
-                  style={{ background: "#FFFFFF", border: "1px solid #E4E6EB" }}
-                >
-                  <p className="text-[11px] font-black mb-2.5 uppercase tracking-wider" style={{ color: "#65676B" }}>
-                    Start a conversation
-                  </p>
-                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-                    {friends.map(f => (
-                      <button
-                        key={f.username}
-                        onClick={() => navigate(`/chat/${encodeURIComponent(f.username)}`)}
-                        className="flex flex-col items-center gap-1.5 flex-shrink-0 active:scale-90 transition-transform"
-                      >
-                        <div className="relative">
-                          <Avatar username={f.username} size="lg" shape="rounded-xl" />
-                          <span
-                            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
-                            style={{ background: "#22C55E" }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-bold w-12 text-center truncate" style={{ color: "#65676B" }}>
-                          {f.username.replace(/\d+$/, '')}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Conversation list */}
               {convos.length === 0 ? (

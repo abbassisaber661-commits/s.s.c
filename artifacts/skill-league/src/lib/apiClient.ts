@@ -428,6 +428,31 @@ export const api = {
       post<{ id: string; [key: string]: unknown }>("/marketplace/items", data),
   },
 
+  /* ── Jobs ── */
+  jobs: {
+    list: (params?: { type?: string; category?: string; country?: string; q?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.type)     qs.set("type",     params.type);
+      if (params?.category) qs.set("category", params.category);
+      if (params?.country)  qs.set("country",  params.country);
+      if (params?.q)        qs.set("q",        params.q);
+      return get<{ id: string; authorId: string; authorName: string; title: string; description: string; jobType: string; country: string; category: string; createdAt: string }[]>(
+        `/jobs${qs.toString() ? `?${qs}` : ""}`,
+      );
+    },
+
+    create: (data: { authorId: string; authorName: string; title: string; description: string; jobType?: string; country?: string; category?: string }) =>
+      post<{ id: string; authorId: string; authorName: string; title: string; description: string; jobType: string; country: string; category: string; createdAt: string }>(
+        "/jobs", data,
+      ),
+
+    delete: (jobId: string, authorId: string) =>
+      apiFetch<{ ok: boolean }>(`/jobs/${jobId}`, {
+        method: "DELETE",
+        body: JSON.stringify({ authorId }),
+      }),
+  },
+
   /* ── Beta Feedback ── */
   betaFeedback: {
     submit: (data: { [key: string]: unknown }) =>

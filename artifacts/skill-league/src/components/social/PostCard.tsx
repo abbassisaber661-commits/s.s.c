@@ -9,11 +9,10 @@ import { type CommunityPost, getPostAge } from "@/lib/community";
 import { type Comment, getCommentAge } from "@/lib/comments";
 import { toggleSave, isSaved } from "@/lib/savedPosts";
 import { getSocialLeague } from "@/lib/socialLeague";
-import { getFriendStatus, sendFriendRequest, unfriend, type FriendStatus } from "@/lib/friends";
+import { api } from "@/lib/apiClient";
 import { getPostMeta, incrementView, incrementShare } from "@/lib/postMeta";
 
 import Avatar from "@/components/Avatar";
-import { api } from "@/lib/apiClient";
 import { getSocket } from "@/lib/socket";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -70,40 +69,48 @@ const RichContent = memo(({ content, onHashtag }: any) => {
 });
 
 // ==================================================
-// Friend Button (memo)
+// Friend / Follow Button (API-based, memo)
 // ==================================================
-const FriendButton = memo(({ me, them }: any) => {
+const FriendButton = memo(({ meId, themId, me, them }: { meId?: string; themId?: string; me?: string; them?: string }) => {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<FriendStatus>(() => getFriendStatus(me, them));
+  const [following, setFollowing] = useState<boolean | null>(null);
 
-  if (!me || me === them) return null;
+  useEffect(() => {
+    if (!meId || !themId || meId === themId) return;
+    api.followers.get(themId, meId)
+      .then(d => setFollowing(d.isFollowing))
+      .catch(() => setFollowing(false));
+  }, [meId, themId]);
+
+  if (!meId || !themId || meId === themId) return null;
+  if (me && them && me === them) return null;
 
   const handle = async () => {
     try {
-      if (status === "none") {
-        await sendFriendRequest(me, them);
-        setStatus("pending_sent");
-        toast.success(t('postCard.friendRequestSent'));
-      } else if (status === "friends") {
-        await unfriend(me, them);
-        setStatus("none");
+      if (following) {
+        await api.followers.unfollow(themId, meId);
+        setFollowing(false);
         toast.success(t('postCard.friendRemoved'));
+      } else {
+        await api.followers.follow(themId, meId);
+        setFollowing(true);
+        toast.success(t('postCard.friendRequestSent'));
       }
     } catch {
       toast.error(t('postCard.friendError'));
     }
   };
 
-  const label =
-    status === "none"
-      ? t('postCard.friendAdd')
-      : status === "pending_sent"
-      ? t('postCard.friendPending')
-      : t('postCard.friendAdded');
+  if (following === null) return null;
 
   return (
-    <button onClick={handle} className="text-xs px-2 py-1 rounded bg-blue-600 text-white">
-      {label}
+    <button onClick={handle}
+      className="text-xs px-2 py-1 rounded font-bold transition-colors"
+      style={following
+        ? { background: "#E7F3E8", color: "#2D8A3E" }
+        : { background: "#1877F2", color: "#fff" }
+      }>
+      {following ? t('postCard.friendAdded') : t('postCard.friendAdd')}
     </button>
   );
 });
@@ -274,7 +281,7 @@ export default function PostCard({
           </div>
         </div>
 
-        <FriendButton me={currentUser} them={post.authorName} />
+        <FriendButton me={currentUser} them={post.authorName} meId={currentPlayerId} themId={(post as any).authorId} />
       </div>
 
       {/* CONTENT */}

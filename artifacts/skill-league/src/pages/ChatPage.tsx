@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, Send, Lock, Phone, Video, MoreVertical } from "lucide-react";
+import { ArrowLeft, Send, Phone, Video, MoreVertical } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
-import { getFriendStatus } from "@/lib/friends";
 import { getSocialLeague } from "@/lib/socialLeague";
 import { api, getStoredPlayerId, type ApiMessage } from "@/lib/apiClient";
 import Avatar from "@/components/Avatar";
@@ -34,9 +33,7 @@ export default function ChatPage() {
   const [, navigate] = useLocation();
   const { username: me, level: myLevel } = useGame();
 
-  const them    = decodeURIComponent(params?.username ?? "");
-  const status  = getFriendStatus(me, them);
-  const canChat = status === 'friends' || status === 'pending_sent';
+  const them = decodeURIComponent(params?.username ?? "");
 
   const myId  = getStoredPlayerId();
   const [theirId, setTheirId] = useState<string | null>(null);
@@ -85,7 +82,7 @@ export default function ChatPage() {
   }, [messages.length]);
 
   async function handleSend() {
-    if (!draft.trim() || !canChat || !myId || !theirId || sending) return;
+    if (!draft.trim() || !myId || !theirId || sending) return;
     const text = draft.trim();
     setSending(true);
 
@@ -174,34 +171,8 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* ── Not friends wall ── */}
-      {!canChat && (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center space-y-4 max-w-xs"
-          >
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "#F0F2F5" }}>
-              <Lock className="w-8 h-8" style={{ color: "#65676B" }} />
-            </div>
-            <h3 className="font-black text-lg" style={{ color: "#050505" }}>Add Friend First</h3>
-            <p className="text-sm leading-relaxed" style={{ color: "#65676B" }}>
-              You can only message players you're friends with. Find <strong style={{ color: "#050505" }}>{them}</strong> on the Social feed and send a friend request.
-            </p>
-            <button
-              onClick={() => navigate('/social')}
-              className="w-full py-2.5 rounded-xl font-bold text-sm active:scale-95 transition-transform"
-              style={{ background: "#FFD60A", color: "#000000" }}
-            >
-              Go to Social Feed
-            </button>
-          </motion.div>
-        </div>
-      )}
-
       {/* ── Message list ── */}
-      {canChat && (
+      {(
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
           {loading && (
             <div className="flex justify-center py-8">
@@ -301,7 +272,7 @@ export default function ChatPage() {
       )}
 
       {/* ── Input bar ── */}
-      {canChat && (
+      {(
         <div
           className="flex-shrink-0 px-4 py-3"
           style={{

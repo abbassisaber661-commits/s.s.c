@@ -1,62 +1,101 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Briefcase, Plus, Search, MapPin, Clock, Tag, X } from "lucide-react";
+import { ArrowLeft, Briefcase, Plus, Search, MapPin, Clock, Tag, X, Loader2 } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { toast } from "sonner";
 
-interface Job {
+interface ApiJob {
   id: string;
+  authorId: string;
+  authorName: string;
   title: string;
-  type: "offer" | "request";
-  poster: string;
+  description: string;
+  jobType: string;
   country: string;
   category: string;
-  description: string;
-  postedAt: string;
+  createdAt: string;
 }
 
-const DEMO_JOBS: Job[] = [
-  { id: "1", title: "مطلوب مدرب كرة قدم", type: "request", poster: "Ahmed_KSA", country: "السعودية", category: "تدريب", description: "نبحث عن مدرب محترف لفريق شبابي 3 مرات أسبوعياً.", postedAt: "منذ ساعتين" },
-  { id: "2", title: "مصمم جرافيك للألعاب", type: "offer", poster: "DesignPro", country: "مصر", category: "تصميم", description: "عرض عمل: تصميم شعارات وواجهات للألعاب الإلكترونية.", postedAt: "منذ 5 ساعات" },
-  { id: "3", title: "مطلوب مبرمج Unity", type: "request", poster: "GameStudio_EG", country: "الإمارات", category: "برمجة", description: "نحتاج مبرمج Unity لمشروع لعبة جوال. دوام جزئي.", postedAt: "منذ يوم" },
-  { id: "4", title: "معلق رياضي للبث المباشر", type: "offer", poster: "StreamKing", country: "الكويت", category: "إعلام", description: "نبحث عن معلق للبث المباشر لمباريات الإسبورت.", postedAt: "منذ يومين" },
-  { id: "5", title: "مدير وسائل تواصل اجتماعي", type: "request", poster: "ESports_Club", country: "قطر", category: "تسويق", description: "مطلوب مدير سوشيال ميديا لنادي رياضي إلكتروني.", postedAt: "منذ 3 أيام" },
-];
+const CATEGORIES = ["الكل", "تدريب", "تصميم", "برمجة", "إعلام", "تسويق", "عام"];
 
-const CATEGORIES = ["الكل", "تدريب", "تصميم", "برمجة", "إعلام", "تسويق"];
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60_000);
+  const h = Math.floor(diff / 3_600_000);
+  const d = Math.floor(diff / 86_400_000);
+  if (m < 1)   return "الآن";
+  if (m < 60)  return `منذ ${m} دقيقة`;
+  if (h < 24)  return `منذ ${h} ساعة`;
+  return `منذ ${d} يوم`;
+}
 
 export default function JobsPage() {
   const [, navigate] = useLocation();
-  const { username } = useGame();
+  const { username, authUser } = useGame();
+  const myId = authUser?.uid ?? getStoredPlayerId();
+
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "offer" | "request">("all");
   const [category, setCategory] = useState("الكل");
   const [showPost, setShowPost] = useState(false);
   const [newJob, setNewJob] = useState({ title: "", type: "offer" as "offer" | "request", country: "", category: "تدريب", description: "" });
-  const [jobs, setJobs] = useState<Job[]>(DEMO_JOBS);
+  const [jobs, setJobs] = useState<ApiJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    api.jobs.list()
+      .then(setJobs)
+      .catch(() => toast.error("فشل تحميل الوظائف"))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = jobs.filter(j => {
-    const matchSearch = j.title.toLowerCase().includes(search.toLowerCase()) || j.country.includes(search) || j.poster.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === "all" || j.type === filter;
-    const matchCat = category === "الكل" || j.category === category;
+    const matchSearch = search === "" ||
+      j.title.toLowerCase().includes(search.toLowerCase()) ||
+      j.country.includes(search) ||
+      j.authorName.toLowerCase().includes(search.toLowerCase());
+    const matchFilter = filter === "all" || j.jobType === filter;
+    const matchCat    = category === "الكل" || j.category === category;
     return matchSearch && matchFilter && matchCat;
   });
 
-  function handlePost() {
-    if (!newJob.title.trim() || !newJob.description.trim()) return;
-    const job: Job = {
-      id: Date.now().toString(),
-      title: newJob.title,
-      type: newJob.type,
-      poster: username || "You",
-      country: newJob.country || "غير محدد",
-      category: newJob.category,
-      description: newJob.description,
-      postedAt: "الآن",
-    };
-    setJobs(prev => [job, ...prev]);
-    setNewJob({ title: "", type: "offer", country: "", category: "تدريب", description: "" });
-    setShowPost(false);
+  async function handlePost() {
+    if (!myId || !username || !newJob.title.trim() || !newJob.description.trim()) return;
+    setPosting(true);
+    try {
+      const created = await api.jobs.create({
+        authorId:    myId,
+        authorName:  username,
+        title:       newJob.title,
+        description: newJob.description,
+        jobType:     newJob.type,
+        country:     newJob.country || "غير محدد",
+        category:    newJob.category,
+      });
+      setJobs(prev => [created, ...prev]);
+      setNewJob({ title: "", type: "offer", country: "", category: "تدريب", description: "" });
+      setShowPost(false);
+      toast.success("تم نشر الإعلان بنجاح ✅");
+    } catch {
+      toast.error("فشل نشر الإعلان، يرجى المحاولة مجدداً");
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function handleDelete(jobId: string) {
+    if (!myId) return;
+    try {
+      await api.jobs.delete(jobId, myId);
+      setJobs(prev => prev.filter(j => j.id !== jobId));
+      toast.success("تم حذف الإعلان");
+    } catch {
+      toast.error("فشل الحذف");
+    }
   }
 
   return (
@@ -68,13 +107,15 @@ export default function JobsPage() {
         </button>
         <Briefcase className="w-5 h-5 text-yellow-400" />
         <h1 className="text-lg font-black flex-1">الوظائف 💼</h1>
-        <button
-          onClick={() => setShowPost(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-black"
-          style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}
-        >
-          <Plus className="w-3.5 h-3.5" /> نشر إعلان
-        </button>
+        {myId && (
+          <button
+            onClick={() => setShowPost(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-black"
+            style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}
+          >
+            <Plus className="w-3.5 h-3.5" /> نشر إعلان
+          </button>
+        )}
       </div>
 
       <div className="max-w-md mx-auto px-4 pt-4 space-y-4">
@@ -96,7 +137,9 @@ export default function JobsPage() {
               key={f.val}
               onClick={() => setFilter(f.val as any)}
               className="flex-1 py-1.5 rounded-xl text-xs font-bold transition-all"
-              style={filter === f.val ? { background: "#fbbf24", color: "#000" } : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
+              style={filter === f.val
+                ? { background: "#fbbf24", color: "#000" }
+                : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.1)" }}
             >
               {f.label}
             </button>
@@ -110,48 +153,74 @@ export default function JobsPage() {
               key={cat}
               onClick={() => setCategory(cat)}
               className="shrink-0 px-3 py-1 rounded-full text-[11px] font-bold transition-all"
-              style={category === cat ? { background: "#7c3aed", color: "#fff" } : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.1)" }}
+              style={category === cat
+                ? { background: "#7c3aed", color: "#fff" }
+                : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.1)" }}
             >
               {cat}
             </button>
           ))}
         </div>
 
+        {/* Loading */}
+        {loading && (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-yellow-400" />
+          </div>
+        )}
+
         {/* Jobs list */}
-        <div className="space-y-3">
-          {filtered.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground text-sm">لا توجد نتائج</div>
-          )}
-          {filtered.map((job, i) => (
-            <motion.div
-              key={job.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06 }}
-              className="rounded-2xl p-4 space-y-2"
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-black text-sm leading-snug flex-1">{job.title}</h3>
-                <span
-                  className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold"
-                  style={job.type === "offer" ? { background: "rgba(16,185,129,0.15)", color: "#10b981" } : { background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}
-                >
-                  {job.type === "offer" ? "عرض" : "طلب"}
-                </span>
+        {!loading && (
+          <div className="space-y-3">
+            {filtered.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground text-sm">
+                {jobs.length === 0 ? "لا توجد إعلانات بعد — كن أول من ينشر!" : "لا توجد نتائج"}
               </div>
+            )}
+            {filtered.map((job, i) => (
+              <motion.div
+                key={job.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
+                className="rounded-2xl p-4 space-y-2"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-black text-sm leading-snug flex-1">{job.title}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold"
+                      style={job.jobType === "offer"
+                        ? { background: "rgba(16,185,129,0.15)", color: "#10b981" }
+                        : { background: "rgba(124,58,237,0.15)", color: "#a78bfa" }}
+                    >
+                      {job.jobType === "offer" ? "عرض" : "طلب"}
+                    </span>
+                    {myId && job.authorId === myId && (
+                      <button
+                        onClick={() => handleDelete(job.id)}
+                        className="p-1 rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
+                        title="حذف"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-              <p className="text-xs text-muted-foreground leading-relaxed">{job.description}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{job.description}</p>
 
-              <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.country}</span>
-                <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{job.category}</span>
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{job.postedAt}</span>
-                <span className="mr-auto font-bold" style={{ color: "#fbbf24" }}>@{job.poster}</span>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
+                  {job.country && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{job.country}</span>}
+                  <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{job.category}</span>
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{timeAgo(job.createdAt)}</span>
+                  <span className="mr-auto font-bold" style={{ color: "#fbbf24" }}>@{job.authorName}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Post Job Modal */}
@@ -190,7 +259,9 @@ export default function JobsPage() {
                     key={t}
                     onClick={() => setNewJob(p => ({ ...p, type: t as any }))}
                     className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
-                    style={newJob.type === t ? { background: "#fbbf24", color: "#000" } : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}
+                    style={newJob.type === t
+                      ? { background: "#fbbf24", color: "#000" }
+                      : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}
                   >
                     {t === "offer" ? "عرض عمل" : "طلب موظف"}
                   </button>
@@ -223,11 +294,11 @@ export default function JobsPage() {
 
               <button
                 onClick={handlePost}
-                disabled={!newJob.title.trim() || !newJob.description.trim()}
-                className="w-full py-3 rounded-xl font-black text-black disabled:opacity-40 transition-all"
+                disabled={posting || !newJob.title.trim() || !newJob.description.trim()}
+                className="w-full py-3 rounded-xl font-black text-black disabled:opacity-40 transition-all flex items-center justify-center gap-2"
                 style={{ background: "linear-gradient(135deg,#fbbf24,#f59e0b)" }}
               >
-                نشر الإعلان
+                {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : "نشر الإعلان"}
               </button>
             </motion.div>
           </motion.div>

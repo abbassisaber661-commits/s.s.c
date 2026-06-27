@@ -9,10 +9,6 @@ import {
 import { useGame } from "@/contexts/GameContext";
 import { type CommunityPost, type PostType, getPostAge } from "@/lib/community";
 import { getSocialLeague } from "@/lib/socialLeague";
-import {
-  getFriendStatus, sendFriendRequest, unfriend,
-  getFriendsCount, getFriendsList, type FriendStatus, type FriendEntry,
-} from "@/lib/friends";
 import { getAllPostMeta } from "@/lib/postMeta";
 import { getStories } from "@/lib/stories";
 import Avatar from "@/components/Avatar";
@@ -36,37 +32,6 @@ function fmtRelative(ts: string | null): string {
   return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
-function FriendBtn({ me, them, onToggle }: { me: string; them: string; onToggle: () => void }) {
-  const [status, setStatus] = useState<FriendStatus>(() => getFriendStatus(me, them));
-
-  function handle() {
-    if (status === "none")    { sendFriendRequest(me, them); setStatus("friends"); }
-    else if (status === "friends") { unfriend(me, them);    setStatus("none"); }
-    onToggle();
-  }
-
-  if (status === "pending_sent") return (
-    <button disabled
-      className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-      style={{ background: "#E4E6EB", color: "#65676B" }}>
-      ⏳ Pending
-    </button>
-  );
-  if (status === "friends") return (
-    <button onClick={handle}
-      className="flex-1 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-all"
-      style={{ background: "#E7F3E8", color: "#2D8A3E" }}>
-      ✔ Friends
-    </button>
-  );
-  return (
-    <button onClick={handle}
-      className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white active:scale-95 transition-all"
-      style={{ background: "#1877F2" }}>
-      + Add Friend
-    </button>
-  );
-}
 
 export default function UserProfile() {
   const [, params]   = useRoute("/user/:username");
@@ -188,8 +153,8 @@ export default function UserProfile() {
     [apiPosts]
   );
   const mediaPosts = useMemo(() => userPosts.filter(p => !!p.imageUrl), [userPosts]);
-  const friendsList  = useMemo(() => getFriendsList(targetUsername), [targetUsername]);
-  const friendsCount = getFriendsCount(targetUsername);
+  const friendsList  = followingList;
+  const friendsCount = followingList.length;
   const storiesCount = useMemo(() => {
     try { return getStories().filter(s => (s as any).authorName === targetUsername).length; }
     catch { return 0; }
@@ -341,16 +306,13 @@ export default function UserProfile() {
                   }}>
                   {isFollowing ? "✔ Following" : "Follow"}
                 </button>
-                <FriendBtn me={myUsername} them={targetUsername} onToggle={() => forceUpdate(n => n + 1)} />
-                {getFriendStatus(myUsername, targetUsername) === "friends" && (
-                  <button
-                    onClick={() => navigate(`/chat/${encodeURIComponent(targetUsername)}`)}
-                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-all"
-                    style={{ background: "#E4E6EB", color: "#050505" }}>
-                    <MessageCircle className="w-4 h-4" />
-                    Message
-                  </button>
-                )}
+                <button
+                  onClick={() => navigate(`/chat/${encodeURIComponent(targetUsername)}`)}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-all"
+                  style={{ background: "#E4E6EB", color: "#050505" }}>
+                  <MessageCircle className="w-4 h-4" />
+                  Message
+                </button>
               </div>
             )}
           </div>

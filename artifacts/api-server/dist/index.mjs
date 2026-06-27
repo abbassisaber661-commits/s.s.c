@@ -20501,27 +20501,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router29;
+    module.exports = Router30;
     module.exports.Route = Route;
-    function Router29(options) {
-      if (!(this instanceof Router29)) {
-        return new Router29(options);
+    function Router30(options) {
+      if (!(this instanceof Router30)) {
+        return new Router30(options);
       }
       const opts = options || {};
-      function router29(req, res, next) {
-        router29.handle(req, res, next);
+      function router30(req, res, next) {
+        router30.handle(req, res, next);
       }
-      Object.setPrototypeOf(router29, this);
-      router29.caseSensitive = opts.caseSensitive;
-      router29.mergeParams = opts.mergeParams;
-      router29.params = {};
-      router29.strict = opts.strict;
-      router29.stack = [];
-      return router29;
+      Object.setPrototypeOf(router30, this);
+      router30.caseSensitive = opts.caseSensitive;
+      router30.mergeParams = opts.mergeParams;
+      router30.params = {};
+      router30.strict = opts.strict;
+      router30.stack = [];
+      return router30;
     }
-    Router29.prototype = function() {
+    Router30.prototype = function() {
     };
-    Router29.prototype.param = function param2(name2, fn) {
+    Router30.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20541,7 +20541,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router29.prototype.handle = function handle(req, res, callback) {
+    Router30.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20668,7 +20668,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router29.prototype.use = function use(handler) {
+    Router30.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -20701,7 +20701,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router29.prototype.route = function route(path) {
+    Router30.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -20716,7 +20716,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router29.prototype[method] = function(path) {
+      Router30.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20899,13 +20899,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve6 = __require("node:path").resolve;
     var once = require_once();
-    var Router29 = require_router();
+    var Router30 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router29 = null;
+      var router30 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20914,13 +20914,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router29 === null) {
-            router29 = new Router29({
+          if (router30 === null) {
+            router30 = new Router30({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router29;
+          return router30;
         }
       });
     };
@@ -20991,15 +20991,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router29 = this.router;
+      var router30 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router29.use(path, fn2);
+          return router30.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router29.use(path, function mounted_app(req, res, next) {
+        router30.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23572,7 +23572,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router29 = require_router();
+    var Router30 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23594,8 +23594,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router29.Route;
-    exports.Router = Router29;
+    exports.Route = Router30.Route;
+    exports.Router = Router30;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -54214,7 +54214,7 @@ var init_matches = __esm({
 });
 
 // ../../lib/db/src/schema/community.ts
-var postsTable, postLikesTable, postCommentsTable, insertPostSchema, insertCommentSchema;
+var postsTable, postLikesTable, postCommentsTable, jobsTable, insertPostSchema, insertCommentSchema, insertJobSchema;
 var init_community = __esm({
   "../../lib/db/src/schema/community.ts"() {
     "use strict";
@@ -54247,8 +54247,21 @@ var init_community = __esm({
       content: text("content").notNull(),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
+    jobsTable = pgTable("jobs", {
+      id: text("id").primaryKey(),
+      authorId: text("author_id").notNull(),
+      authorName: text("author_name").notNull(),
+      title: text("title").notNull(),
+      description: text("description").notNull(),
+      jobType: text("job_type").notNull().default("offer"),
+      // 'offer' | 'request'
+      country: text("country").notNull().default(""),
+      category: text("category").notNull().default("general"),
+      createdAt: timestamp("created_at").notNull().defaultNow()
+    });
     insertPostSchema = createInsertSchema(postsTable).omit({ createdAt: true });
     insertCommentSchema = createInsertSchema(postCommentsTable).omit({ createdAt: true });
+    insertJobSchema = createInsertSchema(jobsTable).omit({ createdAt: true });
   }
 });
 
@@ -54549,6 +54562,7 @@ __export(schema_exports, {
   insertBotSchema: () => insertBotSchema,
   insertCoinTxSchema: () => insertCoinTxSchema,
   insertCommentSchema: () => insertCommentSchema,
+  insertJobSchema: () => insertJobSchema,
   insertMessageSchema: () => insertMessageSchema,
   insertNotifSchema: () => insertNotifSchema,
   insertPlayerSchema: () => insertPlayerSchema,
@@ -54557,6 +54571,7 @@ __export(schema_exports, {
   insertStorePurchSchema: () => insertStorePurchSchema,
   insertTournamentSchema: () => insertTournamentSchema,
   ipFingerprintsTable: () => ipFingerprintsTable,
+  jobsTable: () => jobsTable,
   marketplaceListingsTable: () => marketplaceListingsTable,
   messagesTable: () => messagesTable,
   notificationsTable: () => notificationsTable,
@@ -54609,6 +54624,7 @@ __export(src_exports, {
   insertBotSchema: () => insertBotSchema,
   insertCoinTxSchema: () => insertCoinTxSchema,
   insertCommentSchema: () => insertCommentSchema,
+  insertJobSchema: () => insertJobSchema,
   insertMessageSchema: () => insertMessageSchema,
   insertNotifSchema: () => insertNotifSchema,
   insertPlayerSchema: () => insertPlayerSchema,
@@ -54617,6 +54633,7 @@ __export(src_exports, {
   insertStorePurchSchema: () => insertStorePurchSchema,
   insertTournamentSchema: () => insertTournamentSchema,
   ipFingerprintsTable: () => ipFingerprintsTable,
+  jobsTable: () => jobsTable,
   marketplaceListingsTable: () => marketplaceListingsTable,
   messagesTable: () => messagesTable,
   notificationsTable: () => notificationsTable,
@@ -79774,12 +79791,12 @@ var require_dist4 = __commonJS({
 import { createServer } from "http";
 
 // src/app.ts
-var import_express28 = __toESM(require_express2(), 1);
+var import_express29 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express27 = __toESM(require_express2(), 1);
+var import_express28 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -86672,10 +86689,10 @@ router6.post("/community/posts", async (req, res) => {
     });
     if (mentions.length > 0) {
       const { playersTable: playersTable2 } = await Promise.resolve().then(() => (init_src(), src_exports));
-      const { ilike: ilike2 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
+      const { ilike: ilike3 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
       for (const mention of mentions) {
         try {
-          const [mentionedPlayer] = await db.select({ id: playersTable2.id, username: playersTable2.username }).from(playersTable2).where(ilike2(playersTable2.username, mention)).limit(1);
+          const [mentionedPlayer] = await db.select({ id: playersTable2.id, username: playersTable2.username }).from(playersTable2).where(ilike3(playersTable2.username, mention)).limit(1);
           if (mentionedPlayer && mentionedPlayer.id !== String(authorId)) {
             notify(
               mentionedPlayer.id,
@@ -92362,38 +92379,119 @@ router26.get("/stories/:id/viewers", async (req, res) => {
 });
 var stories_default = router26;
 
-// src/routes/index.ts
+// src/routes/jobs.ts
+var import_express27 = __toESM(require_express2(), 1);
+init_drizzle_orm();
+init_src();
 var router27 = (0, import_express27.Router)();
-router27.use(health_default);
-router27.use(auth_default);
-router27.use(pi_auth_default);
-router27.use(arenas_default);
-router27.use(players_default);
-router27.use(matches_default);
-router27.use(community_default);
-router27.use(economy_default);
-router27.use(notifications_default);
-router27.use(messages_default);
-router27.use(analytics_default);
-router27.use(followers_default);
-router27.use(marketplace_default);
-router27.use(security_default);
-router27.use(pi_payments_default);
-router27.use(beta_default);
-router27.use(monitor_default);
-router27.use(release_default);
-router27.use(league_system_default);
-router27.use(game_layer_default);
-router27.use(daily_economy_default);
-router27.use(audit_default);
-router27.use(economy_balance_default);
-router27.use(economy_stabilizer_default);
-router27.use(social_default);
-router27.use(stories_default);
-var routes_default = router27;
+router27.get("/jobs", async (req, res) => {
+  try {
+    const { type, category, country, q } = req.query;
+    let rows = await db.select().from(jobsTable).orderBy(desc(jobsTable.createdAt)).limit(100);
+    if (type && (type === "offer" || type === "request")) {
+      rows = rows.filter((r) => r.jobType === type);
+    }
+    if (category && category !== "all") {
+      rows = rows.filter((r) => r.category === category);
+    }
+    if (country) {
+      rows = rows.filter((r) => r.country.toLowerCase().includes(country.toLowerCase()));
+    }
+    if (q) {
+      const lq = q.toLowerCase();
+      rows = rows.filter(
+        (r) => r.title.toLowerCase().includes(lq) || r.description.toLowerCase().includes(lq) || r.authorName.toLowerCase().includes(lq) || r.country.toLowerCase().includes(lq)
+      );
+    }
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "jobs list error");
+    res.status(500).json({ error: "server_error" });
+  }
+});
+router27.post("/jobs", async (req, res) => {
+  try {
+    const { authorId, authorName, title, description, jobType, country, category } = req.body;
+    if (!authorId || !authorName || !title?.trim() || !description?.trim()) {
+      res.status(400).json({ error: "authorId, authorName, title, description required" });
+      return;
+    }
+    const type = jobType === "request" ? "request" : "offer";
+    const [job] = await db.insert(jobsTable).values({
+      id: nanoid3(),
+      authorId: String(authorId),
+      authorName: String(authorName),
+      title: String(title).slice(0, 120),
+      description: String(description).slice(0, 1e3),
+      jobType: type,
+      country: String(country || "").slice(0, 60),
+      category: String(category || "general").slice(0, 40)
+    }).returning();
+    res.status(201).json(job);
+  } catch (err) {
+    req.log.error({ err }, "jobs create error");
+    res.status(500).json({ error: "server_error" });
+  }
+});
+router27.delete("/jobs/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { authorId } = req.body;
+    if (!authorId) {
+      res.status(400).json({ error: "authorId required" });
+      return;
+    }
+    const [job] = await db.select().from(jobsTable).where(eq(jobsTable.id, id)).limit(1);
+    if (!job) {
+      res.status(404).json({ error: "not_found" });
+      return;
+    }
+    if (job.authorId !== authorId) {
+      res.status(403).json({ error: "forbidden" });
+      return;
+    }
+    await db.delete(jobsTable).where(eq(jobsTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "jobs delete error");
+    res.status(500).json({ error: "server_error" });
+  }
+});
+var jobs_default = router27;
+
+// src/routes/index.ts
+var router28 = (0, import_express28.Router)();
+router28.use(health_default);
+router28.use(auth_default);
+router28.use(pi_auth_default);
+router28.use(arenas_default);
+router28.use(players_default);
+router28.use(matches_default);
+router28.use(community_default);
+router28.use(economy_default);
+router28.use(notifications_default);
+router28.use(messages_default);
+router28.use(analytics_default);
+router28.use(followers_default);
+router28.use(marketplace_default);
+router28.use(security_default);
+router28.use(pi_payments_default);
+router28.use(beta_default);
+router28.use(monitor_default);
+router28.use(release_default);
+router28.use(league_system_default);
+router28.use(game_layer_default);
+router28.use(daily_economy_default);
+router28.use(audit_default);
+router28.use(economy_balance_default);
+router28.use(economy_stabilizer_default);
+router28.use(social_default);
+router28.use(stories_default);
+router28.use(jobs_default);
+var routes_default = router28;
 
 // src/app.ts
-var app = (0, import_express28.default)();
+var app = (0, import_express29.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -92414,8 +92512,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express28.default.json({ limit: "1mb" }));
-app.use(import_express28.default.urlencoded({ extended: true }));
+app.use(import_express29.default.json({ limit: "1mb" }));
+app.use(import_express29.default.urlencoded({ extended: true }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();
@@ -92438,8 +92536,8 @@ app.use("/api", routes_default);
 var app_default = app;
 
 // src/routes/profile.ts
-var import_express29 = __toESM(require_express2(), 1);
-var router28 = (0, import_express29.Router)();
+var import_express30 = __toESM(require_express2(), 1);
+var router29 = (0, import_express30.Router)();
 var profile = {
   id: "1",
   username: "user123",
@@ -92449,7 +92547,7 @@ var profile = {
   location: "Tunisia",
   website: "https://example.com"
 };
-router28.get("/", (req, res) => {
+router29.get("/", (req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -92463,7 +92561,7 @@ router28.get("/", (req, res) => {
     });
   }
 });
-router28.put("/", (req, res) => {
+router29.put("/", (req, res) => {
   try {
     const { username, bio, avatar, fullName, location, website } = req.body;
     profile = {
@@ -92488,7 +92586,7 @@ router28.put("/", (req, res) => {
     });
   }
 });
-var profile_default = router28;
+var profile_default = router29;
 
 // ../../node_modules/.pnpm/socket.io@4.8.3/node_modules/socket.io/wrapper.mjs
 var import_dist = __toESM(require_dist4(), 1);

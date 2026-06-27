@@ -1,60 +1,114 @@
-const STORE_KEY = 'sl_friends_v2';
+/**
+ * friends.ts — API-based follow/friend system.
+ * Backed by /followers API endpoints. No localStorage.
+ */
+import { api, getStoredPlayerId } from "@/lib/apiClient";
 
-export type FriendStatus = 'none' | 'pending_sent' | 'friends';
+export type FriendStatus = "none" | "pending_sent" | "friends";
 
 export interface FriendEntry {
+  id: string;
   username: string;
+  level?: number;
+  avatar?: string;
   status: FriendStatus;
-  at: number;
 }
 
-type FriendsStore = Record<string, FriendEntry[]>;
-
-function load(): FriendsStore {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); }
-  catch { return {}; }
+/**
+ * Synchronous stub — returns 'none'.
+ * Use checkFollowStatus() for the real async check.
+ */
+export function getFriendStatus(_me: string, _them: string): FriendStatus {
+  return "none";
 }
 
-function save(s: FriendsStore) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(s));
+/**
+ * Async: check if myId follows theirId via API.
+ */
+export async function checkFollowStatus(
+  myId: string,
+  theirId: string,
+): Promise<FriendStatus> {
+  if (!myId || !theirId || myId === theirId) return "none";
+  try {
+    const data = await api.followers.get(theirId, myId);
+    return data.isFollowing ? "friends" : "none";
+  } catch {
+    return "none";
+  }
 }
 
-export function getFriendStatus(me: string, them: string): FriendStatus {
-  if (!me || !them || me === them) return 'none';
-  const store = load();
-  const entry = (store[me] ?? []).find(e => e.username === them);
-  return entry?.status ?? 'none';
+/**
+ * Follow a player (replaces sendFriendRequest).
+ */
+export async function sendFriendRequest(
+  _me: string,
+  _them: string,
+  myId?: string,
+  theirId?: string,
+): Promise<void> {
+  const from = myId ?? getStoredPlayerId();
+  if (!from || !theirId) return;
+  await api.followers.follow(theirId, from);
 }
 
-export function sendFriendRequest(me: string, them: string): void {
-  acceptFriendRequest(me, them);
+/**
+ * Follow by IDs directly.
+ */
+export async function followPlayer(myId: string, theirId: string): Promise<void> {
+  if (!myId || !theirId || myId === theirId) return;
+  await api.followers.follow(theirId, myId);
 }
 
-export function acceptFriendRequest(me: string, them: string): void {
-  const store = load();
-  store[me] = store[me] ?? [];
-  store[them] = store[them] ?? [];
-  const myEntry = store[me].find(e => e.username === them);
-  if (myEntry) myEntry.status = 'friends';
-  else store[me].push({ username: them, status: 'friends', at: Date.now() });
-  const theirEntry = store[them].find(e => e.username === me);
-  if (theirEntry) theirEntry.status = 'friends';
-  else store[them].push({ username: me, status: 'friends', at: Date.now() });
-  save(store);
+/**
+ * Unfollow a player (replaces unfriend).
+ */
+export async function unfriend(
+  _me: string,
+  _them: string,
+  myId?: string,
+  theirId?: string,
+): Promise<void> {
+  const from = myId ?? getStoredPlayerId();
+  if (!from || !theirId) return;
+  await api.followers.unfollow(theirId, from);
 }
 
-export function unfriend(me: string, them: string): void {
-  const store = load();
-  if (store[me])   store[me]   = store[me].filter(e => e.username !== them);
-  if (store[them]) store[them] = store[them].filter(e => e.username !== me);
-  save(store);
+/**
+ * Unfollow by IDs directly.
+ */
+export async function unfollowPlayer(myId: string, theirId: string): Promise<void> {
+  if (!myId || !theirId) return;
+  await api.followers.unfollow(theirId, myId);
 }
 
-export function getFriendsList(me: string): FriendEntry[] {
-  const store = load();
-  return (store[me] ?? []).filter(e => e.status === 'friends');
+/**
+ * Get list of players the current user follows (their "friends").
+ */
+export async function getFriendsListAsync(myId: string): Promise<FriendEntry[]> {
+  if (!myId) return [];
+  try {
+    const entries = await api.followers.listFollowing(myId, myId);
+    return entries.map(e => ({
+      id:       e.id,
+      username: e.username,
+      level:    e.level,
+      avatar:   e.avatar,
+      status:   "friends" as FriendStatus,
+    }));
+  } catch {
+    return [];
+  }
 }
 
-export function getFriendsCount(me: string): number {
-  return getFriendsList(me).length;
+/**
+ * Synchronous stub for backwards-compat (returns empty).
+ * Use getFriendsListAsync() for real data.
+ */
+export function getFriendsList(_me: string): FriendEntry[] {
+  return [];
+}
+
+export function getFriendsCount(_me: string): number {
+  return 0;
 }
