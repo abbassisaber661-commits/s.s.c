@@ -10,46 +10,34 @@ interface ProfileLeagueCardProps {
   className?: string;
 }
 
-const LEAGUE_COLORS: Record<string, string> = {
-  bronze: "from-amber-700/20 to-amber-600/10 border-amber-700/30",
-  silver: "from-gray-400/20 to-gray-300/10 border-gray-400/30",
-  gold: "from-yellow-500/20 to-yellow-400/10 border-yellow-500/30",
-  platinum: "from-cyan-400/20 to-cyan-300/10 border-cyan-400/30",
-  diamond: "from-blue-400/20 to-blue-300/10 border-blue-400/30",
-  master: "from-purple-500/20 to-purple-400/10 border-purple-500/30",
-  grandmaster: "from-red-500/20 to-red-400/10 border-red-500/30",
-  challenger: "from-yellow-300/20 to-yellow-200/10 border-yellow-300/30",
+// Per-league accent colors — kept subtle on the white/light-gray palette
+const LEAGUE_ACCENT: Record<string, { border: string; text: string; bg: string }> = {
+  bronze:      { border: "#D97706", text: "#92400E", bg: "#FEF3C7" },
+  silver:      { border: "#9CA3AF", text: "#374151", bg: "#F3F4F6" },
+  gold:        { border: "#FFD60A", text: "#78350F", bg: "#FFFBEB" },
+  platinum:    { border: "#22D3EE", text: "#164E63", bg: "#ECFEFF" },
+  diamond:     { border: "#60A5FA", text: "#1E3A5F", bg: "#EFF6FF" },
+  master:      { border: "#A855F7", text: "#581C87", bg: "#FAF5FF" },
+  grandmaster: { border: "#EF4444", text: "#7F1D1D", bg: "#FEF2F2" },
+  challenger:  { border: "#FFD60A", text: "#111111", bg: "#FFFBEB" },
 };
 
-const LEAGUE_TEXT_COLORS: Record<string, string> = {
-  bronze: "text-amber-600 dark:text-amber-400",
-  silver: "text-gray-500 dark:text-gray-300",
-  gold: "text-yellow-600 dark:text-yellow-400",
-  platinum: "text-cyan-600 dark:text-cyan-300",
-  diamond: "text-blue-500 dark:text-blue-300",
-  master: "text-purple-600 dark:text-purple-400",
-  grandmaster: "text-red-500 dark:text-red-400",
-  challenger: "text-yellow-500 dark:text-yellow-300",
-};
+const DEFAULT_ACCENT = { border: "#E5E5E5", text: "#666666", bg: "#F5F5F7" };
 
 export const ProfileLeagueCard = memo(
   ({ league, leagueIcon, level, className }: ProfileLeagueCardProps) => {
-    const leagueKey = (league ?? "").toLowerCase();
-    const gradientClass =
-      LEAGUE_COLORS[leagueKey] ?? "from-gray-200/20 to-gray-100/10 border-gray-300/30";
-    const textClass =
-      LEAGUE_TEXT_COLORS[leagueKey] ?? "text-gray-600 dark:text-gray-400";
+    const key    = (league ?? "").toLowerCase();
+    const accent = LEAGUE_ACCENT[key] ?? DEFAULT_ACCENT;
 
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         className={cn(
-          "flex items-center gap-3 px-4 py-3",
-          "rounded-2xl border bg-gradient-to-r",
-          gradientClass,
+          "flex items-center gap-3 px-4 py-3 rounded-2xl border bg-white shadow-sm",
           className
         )}
+        style={{ borderColor: accent.border + "60" }}
       >
         {/* League Icon */}
         <div className="flex-shrink-0">
@@ -61,23 +49,20 @@ export const ProfileLeagueCard = memo(
             />
           ) : (
             <div
-              className={cn(
-                "w-9 h-9 rounded-full flex items-center justify-center",
-                "bg-white/10 backdrop-blur-sm",
-                textClass
-              )}
+              className="w-9 h-9 rounded-full flex items-center justify-center"
+              style={{ background: accent.bg }}
             >
-              <Trophy size={20} />
+              <Trophy size={20} style={{ color: accent.border }} />
             </div>
           )}
         </div>
 
         {/* Info */}
         <div className="flex flex-col min-w-0">
-          <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-500 font-semibold">
+          <span className="text-[10px] uppercase tracking-widest text-[#666666] font-semibold">
             Current League
           </span>
-          <span className={cn("text-sm font-bold capitalize", textClass)}>
+          <span className="text-sm font-bold capitalize" style={{ color: accent.text }}>
             {league ?? "Unranked"}
           </span>
         </div>
@@ -86,11 +71,8 @@ export const ProfileLeagueCard = memo(
         {level !== undefined && (
           <div className="ml-auto flex-shrink-0">
             <div
-              className={cn(
-                "px-3 py-1 rounded-full text-xs font-bold",
-                "bg-white/10 backdrop-blur-sm",
-                textClass
-              )}
+              className="px-3 py-1 rounded-full text-xs font-bold border"
+              style={{ background: accent.bg, color: accent.text, borderColor: accent.border + "60" }}
             >
               Lv. {level}
             </div>

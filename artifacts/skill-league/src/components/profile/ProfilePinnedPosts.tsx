@@ -28,11 +28,11 @@ export const ProfilePinnedPosts = memo(
       >
         {/* Header */}
         <div className="flex items-center gap-2 px-4 pt-2">
-          <Pin size={14} className="text-blue-500 rotate-45" />
-          <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <Pin size={14} className="text-[#FFD60A] rotate-45" />
+          <span className="text-xs font-bold text-[#666666] uppercase tracking-wider">
             Pinned Posts
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-600 ml-auto">
+          <span className="text-xs text-[#666666] ml-auto">
             {pinned.length}/{MAX_PINS}
           </span>
         </div>
@@ -48,19 +48,19 @@ export const ProfilePinnedPosts = memo(
               className="relative"
             >
               {/* Pin badge */}
-              <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-blue-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-[#FFD60A] text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
                 <Pin size={9} className="rotate-45" />
                 Pinned
               </div>
 
-              <div className="rounded-2xl overflow-hidden ring-1 ring-blue-400/20">
+              <div className="rounded-2xl overflow-hidden ring-1 ring-[#FFD60A]/30">
                 <SocialPostCard post={post as any} />
               </div>
 
               {isOwner && onUnpin && (
                 <button
                   onClick={() => onUnpin(post.id)}
-                  className="mt-1.5 ml-1 text-[11px] text-gray-400 hover:text-red-400 transition-colors font-medium"
+                  className="mt-1.5 ml-1 text-[11px] text-[#666666] hover:text-red-500 transition-colors font-medium"
                 >
                   Unpin
                 </button>
@@ -70,7 +70,7 @@ export const ProfilePinnedPosts = memo(
         </div>
 
         {/* Divider */}
-        <div className="mx-4 border-b border-gray-100 dark:border-gray-800 pt-2" />
+        <div className="mx-4 border-b border-[#E5E5E5] pt-2" />
       </motion.div>
     );
   }

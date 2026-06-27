@@ -24,14 +24,14 @@ const StatItem = memo(({ label, value, index, onClick }: StatItemProps) => (
     className={cn(
       "flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors",
       onClick
-        ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95"
+        ? "cursor-pointer hover:bg-[#F5F5F7] active:scale-95"
         : "cursor-default"
     )}
   >
-    <span className="text-lg font-bold text-gray-900 dark:text-white leading-none">
+    <span className="text-lg font-bold text-[#111111] leading-none">
       {formatNumber(value)}
     </span>
-    <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+    <span className="text-[11px] text-[#666666] font-medium whitespace-nowrap">
       {label}
     </span>
   </motion.button>
@@ -74,7 +74,7 @@ export const ProfileSocialStats = memo(
               onClick={stat.onClick}
             />
             {i < stats.length - 1 && (
-              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+              <div className="w-px h-6 bg-[#E5E5E5] mx-1" />
             )}
           </React.Fragment>
         ))}

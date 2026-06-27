@@ -30,13 +30,7 @@ export default memo(function ProfileTabs({
   };
 
   return (
-    <div
-      className={cn(
-        "sticky top-0 z-20",
-        "bg-white/90 dark:bg-gray-950/90 backdrop-blur-md",
-        "border-b border-gray-200 dark:border-gray-800"
-      )}
-    >
+    <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm">
       <div className="flex">
         {TABS.map((tab) => {
           const Icon = tab.icon;
@@ -51,21 +45,21 @@ export default memo(function ProfileTabs({
                 "relative flex flex-col items-center justify-center flex-1",
                 "px-4 py-3 gap-0.5 transition-all duration-200",
                 active
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                  ? "text-[#111111]"
+                  : "text-[#666666] hover:text-[#111111]"
               )}
             >
               <Icon size={18} strokeWidth={active ? 2.5 : 2} />
               <span className="text-[11px] font-semibold leading-none">{tab.label}</span>
               {count !== undefined && count > 0 && (
-                <span className="text-[9px] text-gray-400 dark:text-gray-500">
+                <span className="text-[9px] text-[#666666]">
                   {count >= 1000 ? (count / 1000).toFixed(1) + "K" : count}
                 </span>
               )}
               {active && (
                 <motion.div
                   layoutId="profile-tab-indicator"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FFD60A]"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}

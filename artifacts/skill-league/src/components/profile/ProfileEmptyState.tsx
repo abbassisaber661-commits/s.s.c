@@ -83,11 +83,11 @@ export const ProfileEmptyState = memo(
           {config.icon}
         </motion.div>
 
-        <h3 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-2">
+        <h3 className="text-base font-bold text-[#111111] mb-2">
           {config.title}
         </h3>
 
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
+        <p className="text-sm text-[#666666] max-w-xs leading-relaxed">
           {description}
         </p>
 
@@ -95,11 +95,7 @@ export const ProfileEmptyState = memo(
           <motion.button
             whileTap={{ scale: 0.96 }}
             onClick={onAction}
-            className={cn(
-              "mt-6 px-5 py-2.5 rounded-xl text-sm font-semibold",
-              "bg-blue-500 hover:bg-blue-600 text-white",
-              "transition-colors duration-200"
-            )}
+            className="mt-6 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#FFD60A] hover:bg-[#F5C800] text-black transition-colors duration-200"
           >
             {config.actionLabel}
           </motion.button>

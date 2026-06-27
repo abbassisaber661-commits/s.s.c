@@ -164,7 +164,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto min-h-screen bg-white dark:bg-gray-950">
+      <div className="max-w-2xl mx-auto min-h-screen bg-[#F5F5F7]">
         <ProfileSkeletonLoader />
       </div>
     );
@@ -172,19 +172,19 @@ export default function ProfilePage() {
 
   if (isError || !profile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center px-6 gap-3">
-        <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F5F5F7] text-center px-6 gap-3">
+        <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
           <AlertCircle size={32} className="text-red-500" />
         </div>
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-bold text-[#111111]">
           {t("profilePage.loadError")}
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+        <p className="text-sm text-[#666666] max-w-xs">
           We couldn't load this profile. Check your connection and try again.
         </p>
         <button
           onClick={refetch}
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold text-sm transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#FFD60A] hover:bg-[#F5C800] text-black rounded-xl font-semibold text-sm transition-colors"
         >
           <RefreshCcw size={15} />
           {t("common.retry")}
@@ -196,9 +196,9 @@ export default function ProfilePage() {
   const profileUrl = `${window.location.origin}/profile/${profile.id}`;
 
   return (
-    <div className="max-w-2xl mx-auto min-h-screen bg-white dark:bg-gray-950 pb-24">
+    <div className="max-w-2xl mx-auto min-h-screen bg-[#F5F5F7] pb-24">
 
-      {/* ── Settings button (owner only) ──────────────────── */}
+      {/* ── Settings button (owner only) ── */}
       {isOwner && (
         <div className="absolute top-3 right-3 z-30">
           <button
@@ -210,52 +210,44 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Hidden file inputs for direct avatar/cover upload */}
-      <input
-        ref={avatarInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleAvatarUpload}
-      />
-      <input
-        ref={coverInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleCoverUpload}
-      />
+      {/* Hidden file inputs */}
+      <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+      <input ref={coverInputRef}  type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
 
-      {/* ── Cover + Avatar + Identity ─────────────────────── */}
-      <ProfileCoverHeader
-        profile={profile}
-        isOwner={isOwner}
-        onAvatarClick={() => isOwner && avatarInputRef.current?.click()}
-        onCoverClick={() => isOwner && coverInputRef.current?.click()}
-      />
+      {/* ── Cover + Avatar + Identity ── */}
+      <div className="bg-white">
+        <ProfileCoverHeader
+          profile={profile}
+          isOwner={isOwner}
+          onAvatarClick={() => isOwner && avatarInputRef.current?.click()}
+          onCoverClick={() => isOwner && coverInputRef.current?.click()}
+        />
+      </div>
 
-      {/* ── Stats: Posts / Followers / Following ─────────── */}
+      {/* ── Stats row ── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mt-5 px-4"
+        className="mt-4 px-4"
       >
-        <ProfileSocialStats
-          postsCount={profile.postsCount}
-          followers={profile.followers}
-          following={profile.following}
-          onFollowersClick={() => navigate(`/profile/${profile.id}/followers`)}
-          onFollowingClick={() => navigate(`/profile/${profile.id}/following`)}
-        />
+        <div className="bg-white rounded-2xl border border-[#E5E5E5] shadow-sm py-3">
+          <ProfileSocialStats
+            postsCount={profile.postsCount}
+            followers={profile.followers}
+            following={profile.following}
+            onFollowersClick={() => navigate(`/profile/${profile.id}/followers`)}
+            onFollowingClick={() => navigate(`/profile/${profile.id}/following`)}
+          />
+        </div>
       </motion.div>
 
-      {/* ── Action Buttons ────────────────────────────────── */}
+      {/* ── Action Buttons ── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="mt-4 px-4"
+        className="mt-3 px-4"
       >
         <ProfileActionButtons
           isOwner={isOwner}
@@ -268,13 +260,13 @@ export default function ProfilePage() {
         />
       </motion.div>
 
-      {/* ── League / Level card ───────────────────────────── */}
+      {/* ── League / Level card ── */}
       {(profile.league || profile.level) && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mt-4 px-4"
+          className="mt-3 px-4"
         >
           <ProfileLeagueCard
             league={profile.league}
@@ -284,8 +276,8 @@ export default function ProfilePage() {
         </motion.div>
       )}
 
-      {/* ── Navigation Tabs: Posts / Media / About ────────── */}
-      <div className="mt-6">
+      {/* ── Navigation Tabs ── */}
+      <div className="mt-4">
         <ProfileTabs
           currentTab={currentTab}
           onTabChange={setCurrentTab}
@@ -295,7 +287,7 @@ export default function ProfilePage() {
         />
       </div>
 
-      {/* ── Tab Content ──────────────────────────────────── */}
+      {/* ── Tab Content ── */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentTab}
@@ -313,12 +305,8 @@ export default function ProfilePage() {
                   <ProfileSortFilter sort={sort} onChange={setSort} />
                 </div>
               )}
-              <ProfilePinnedPosts
-                posts={pinnedPosts}
-                isOwner={isOwner}
-                onUnpin={() => {}}
-              />
-              <div className="space-y-4 px-4 mt-2">
+              <ProfilePinnedPosts posts={pinnedPosts} isOwner={isOwner} onUnpin={() => {}} />
+              <div className="space-y-3 px-4 mt-2">
                 {visiblePosts.length === 0 ? (
                   <ProfileEmptyState tab="posts" isOwner={isOwner} />
                 ) : (
@@ -335,7 +323,7 @@ export default function ProfilePage() {
                       <button
                         onClick={fetchNextPage}
                         disabled={isFetchingNextPage}
-                        className="w-full py-3 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+                        className="w-full py-3 text-sm font-semibold text-[#666666] hover:text-[#111111] transition-colors"
                       >
                         {isFetchingNextPage ? "Loading…" : "Load more"}
                       </button>
@@ -354,7 +342,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <ProfileGallery posts={mediaPosts} />
-                  <div className="mt-2 border-t border-gray-100 dark:border-gray-800 pt-2">
+                  <div className="mt-2 border-t border-[#E5E5E5] pt-2">
                     <ProfileVideos posts={mediaPosts} />
                   </div>
                 </>
@@ -376,7 +364,7 @@ export default function ProfilePage() {
         </motion.div>
       </AnimatePresence>
 
-      {/* ── Modals ────────────────────────────────────────── */}
+      {/* ── Modals ── */}
       {isOwner && (
         <EditProfileModal
           isOpen={isEditOpen}
@@ -406,7 +394,6 @@ export default function ProfilePage() {
         onClose={() => setIsShareOpen(false)}
       />
 
-      {/* Comments Sheet for profile posts */}
       {openCommentPostId && (
         <CommentsSheet
           postId={openCommentPostId}
