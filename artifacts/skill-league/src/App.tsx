@@ -64,6 +64,7 @@ import Settings from "@/pages/Settings";
 
 // UI
 import BottomNav from "@/components/BottomNav";
+import SocialBottomNav from "@/components/SocialBottomNav";
 import LiveNotifToast from "@/components/LiveNotifToast";
 import BetaBanner from "@/components/BetaBanner";
 import BetaFeedbackWidget from "@/components/BetaFeedbackWidget";
@@ -80,6 +81,17 @@ const NO_NAV_PATHS = [
   "/results",
   "/match-arena",
   "/chat/",
+];
+
+/**
+ * 🌐 Social section routes — show SocialBottomNav here
+ */
+const SOCIAL_PATHS = [
+  "/feed",
+  "/social",
+  "/friends",
+  "/jobs",
+  "/marketplace",
 ];
 
 /**
@@ -101,6 +113,7 @@ function AppShell() {
   }, [location]);
 
   const hideNav = NO_NAV_PATHS.some((p) => location.startsWith(p));
+  const showSocialNav = !hideNav && SOCIAL_PATHS.some((p) => location.startsWith(p));
 
   // 🔐 Auth Guard
   if (
@@ -168,6 +181,7 @@ function AppShell() {
       </Switch>
 
       {!hideNav && <BottomNav unreadMessages={unread} />}
+      {showSocialNav && <SocialBottomNav />}
 
       <BetaBanner />
       <BetaFeedbackWidget />

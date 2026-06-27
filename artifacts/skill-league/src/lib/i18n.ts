@@ -34,6 +34,7 @@ const T = {
     // ── Navigation ────────────────────────────────────────
     nav_home:'Home', nav_compete:'Compete', nav_feed:'Feed',
     nav_store:'Store', nav_profile:'Profile',
+    nav_friends:'Friends', nav_jobs:'Jobs', nav_market:'Market', nav_post:'Post',
     // ── Leagues ───────────────────────────────────────────
     league_training:'Training', league_bronze:'Bronze',
     league_silver:'Silver', league_elite:'Elite',
@@ -479,6 +480,7 @@ const T = {
     back_to_leagues:'الدوريات', insufficient_funds:'رصيد غير كافٍ',
     nav_home:'الرئيسية', nav_compete:'منافسة', nav_feed:'فيد',
     nav_store:'المتجر', nav_profile:'ملفي',
+    nav_friends:'أصدقاء', nav_jobs:'وظائف', nav_market:'السوق', nav_post:'نشر',
     league_training:'تدريب', league_bronze:'برونز', league_silver:'فضة', league_elite:'نخبة',
     select_league:'اختر الدوري',
     league_training_desc:'ابدأ رحلتك — مجاني وبلا شروط',
