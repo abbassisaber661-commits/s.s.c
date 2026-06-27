@@ -8,6 +8,7 @@ import { useGame } from "@/contexts/GameContext";
 import { useRealtime } from "@/contexts/RealtimeContext";
 import { usePosts, useCreatePost, useLikePost } from "@/hooks/useCommunity";
 import { SocialPostCard } from "@/components/social/SocialPostCard";
+import { CommentsSheet } from "@/components/social/CommentsSheet";
 import { CreatePostModal, type CreatePostData } from "@/components/social/CreatePostModal";
 import StoryBar from "@/components/social/StoryBar";
 import FeaturedPlayers from "@/components/social/FeaturedPlayers";
@@ -65,6 +66,8 @@ export default function FeedPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
   const [dmCount, setDmCount] = useState(0);
+  const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   const { ref, inView } = useInView();
 
@@ -247,8 +250,9 @@ export default function FeedPage() {
               >
                 <SocialPostCard
                   post={post}
-                  commentCount={post.replyCount || 0}
+                  commentCount={commentCounts[post.id] ?? post.replyCount ?? 0}
                   onLikeChange={handleLike}
+                  onCommentClick={(postId) => setOpenCommentPostId(postId)}
                 />
               </motion.div>
             ))}
@@ -276,6 +280,25 @@ export default function FeedPage() {
         onClose={() => setIsOpen(false)}
         onSubmit={handleCreate}
       />
+
+      {/* Comments Sheet */}
+      {openCommentPostId && (
+        <CommentsSheet
+          postId={openCommentPostId}
+          isOpen={!!openCommentPostId}
+          onClose={() => setOpenCommentPostId(null)}
+          initialCount={
+            commentCounts[openCommentPostId] ??
+            (posts.find((p) => p.id === openCommentPostId)?.replyCount ?? 0)
+          }
+          onCountChange={(delta) => {
+            setCommentCounts((prev) => ({
+              ...prev,
+              [openCommentPostId]: (prev[openCommentPostId] ?? posts.find((p) => p.id === openCommentPostId)?.replyCount ?? 0) + delta,
+            }));
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +27,7 @@ import ProfileVideos         from "@/components/profile/ProfileVideos";
 import EditProfileModal      from "@/components/profile/EditProfileModal";
 import { PostModal }         from "@/components/profile/PostModal";
 import SocialPostCard        from "@/components/social/SocialPostCard";
+import { CommentsSheet }     from "@/components/social/CommentsSheet";
 
 import type { ContentTab, Post } from "@/types/profile";
 import type { SortOption } from "@/components/profile/ProfileSortFilter";
@@ -61,6 +62,11 @@ export default function ProfilePage() {
   const [isEditOpen, setIsEditOpen]   = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [sort, setSort]               = useState<SortOption>("latest");
+  const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
+  const [commentCounts, setCommentCounts]         = useState<Record<string, number>>({});
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef  = useRef<HTMLInputElement>(null);
 
   const isOwner = !routeParams?.userId || routeParams.userId === authUser?.uid;
 
@@ -104,6 +110,50 @@ export default function ProfilePage() {
     } catch {
       toast.error("Failed to save profile");
     }
+  }, [userId, refetch]);
+
+  const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const pid = getStoredPlayerId() ?? userId;
+    if (!pid) { toast.error("Not logged in"); return; }
+    try {
+      const avatarStr = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+      await api.players.sync(pid, { avatar: avatarStr } as any);
+      toast.success("Avatar updated!");
+      refetch();
+    } catch {
+      toast.error("Failed to update avatar");
+    }
+    e.target.value = "";
+  }, [userId, refetch]);
+
+  const handleCoverUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const pid = getStoredPlayerId() ?? userId;
+    if (!pid) { toast.error("Not logged in"); return; }
+    try {
+      const coverStr = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+      await fetch(`/api/players/${pid}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cover: coverStr }),
+      });
+      toast.success("Cover updated!");
+      refetch();
+    } catch {
+      toast.error("Failed to update cover");
+    }
+    e.target.value = "";
   }, [userId, refetch]);
 
   const allPosts    = posts ?? [];
@@ -163,12 +213,28 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Hidden file inputs for direct avatar/cover upload */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleAvatarUpload}
+      />
+      <input
+        ref={coverInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleCoverUpload}
+      />
+
       {/* ── Cover + Avatar + Identity ─────────────────────── */}
       <ProfileCoverHeader
         profile={profile}
         isOwner={isOwner}
-        onAvatarClick={() => isOwner && setIsEditOpen(true)}
-        onCoverClick={() => isOwner && setIsEditOpen(true)}
+        onAvatarClick={() => isOwner && avatarInputRef.current?.click()}
+        onCoverClick={() => isOwner && coverInputRef.current?.click()}
       />
 
       {/* ── Stats: Posts / Followers / Following ─────────── */}
@@ -261,7 +327,12 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     {visiblePosts.map((post) => (
-                      <SocialPostCard key={post.id} post={post as any} />
+                      <SocialPostCard
+                        key={post.id}
+                        post={post as any}
+                        commentCount={commentCounts[post.id] ?? (post as any).replyCount ?? 0}
+                        onCommentClick={(postId) => setOpenCommentPostId(postId)}
+                      />
                     ))}
                     {hasNextPage && (
                       <button
@@ -337,6 +408,25 @@ export default function ProfilePage() {
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
       />
+
+      {/* Comments Sheet for profile posts */}
+      {openCommentPostId && (
+        <CommentsSheet
+          postId={openCommentPostId}
+          isOpen={!!openCommentPostId}
+          onClose={() => setOpenCommentPostId(null)}
+          initialCount={
+            commentCounts[openCommentPostId] ??
+            ((allPosts.find((p) => p.id === openCommentPostId) as any)?.replyCount ?? 0)
+          }
+          onCountChange={(delta) => {
+            setCommentCounts((prev) => ({
+              ...prev,
+              [openCommentPostId]: (prev[openCommentPostId] ?? (allPosts.find((p) => p.id === openCommentPostId) as any)?.replyCount ?? 0) + delta,
+            }));
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -54118,6 +54118,8 @@ var init_players = __esm({
       achievements: jsonb("achievements").$type().notNull().default([]),
       highScores: jsonb("high_scores").$type().notNull().default({}),
       dailyChallenges: jsonb("daily_challenges").$type().notNull().default({}),
+      bio: text("bio"),
+      cover: text("cover"),
       verificationStatus: text("verification_status").notNull().default("unverified"),
       piUid: text("pi_uid"),
       language: text("language").notNull().default("en"),
@@ -86158,6 +86160,8 @@ router4.patch("/players/:id", async (req, res) => {
     const allowed = [
       "username",
       "avatar",
+      "bio",
+      "cover",
       "language",
       "coins",
       "xp",
@@ -87474,9 +87478,8 @@ router11.get("/followers/:playerId", async (req, res) => {
     const [followerRow] = await db.select({ cnt: count() }).from(followersTable).where(eq(followersTable.followingId, playerId));
     const [followingRow] = await db.select({ cnt: count() }).from(followersTable).where(eq(followersTable.followerId, playerId));
     let isFollowing = false;
-    let followers = [];
     if (viewerId) {
-      const [row] = await db.select().from(followersTable).where(and(
+      const [row] = await db.select({ id: followersTable.id }).from(followersTable).where(and(
         eq(followersTable.followerId, viewerId),
         eq(followersTable.followingId, playerId)
       ));
@@ -87485,9 +87488,90 @@ router11.get("/followers/:playerId", async (req, res) => {
     res.json({
       followersCount: followerRow?.cnt ?? 0,
       followingCount: followingRow?.cnt ?? 0,
-      isFollowing,
-      followers
+      isFollowing
     });
+  } catch (err) {
+    res.status(500).json({ error: "internal" });
+  }
+});
+router11.get("/followers/:playerId/list", async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const viewerId = req.query["viewerId"];
+    const rows = await db.select({ followerId: followersTable.followerId }).from(followersTable).where(eq(followersTable.followingId, playerId));
+    if (rows.length === 0) {
+      res.json([]);
+      return;
+    }
+    const followerIds = rows.map((r) => r.followerId);
+    const players = await Promise.all(
+      followerIds.map(
+        (fid) => db.select({
+          id: playersTable.id,
+          username: playersTable.username,
+          avatar: playersTable.avatar,
+          level: playersTable.level
+        }).from(playersTable).where(eq(playersTable.id, fid)).limit(1).then((rs) => rs[0] ?? null)
+      )
+    );
+    let viewerFollowingSet = /* @__PURE__ */ new Set();
+    if (viewerId) {
+      const vRows = await db.select({ followingId: followersTable.followingId }).from(followersTable).where(eq(followersTable.followerId, viewerId));
+      viewerFollowingSet = new Set(vRows.map((r) => r.followingId));
+    }
+    const result = players.filter(Boolean).map((p) => ({
+      id: p.id,
+      username: p.username,
+      displayName: p.username,
+      avatar: p.avatar,
+      level: p.level,
+      isFollowing: viewerFollowingSet.has(p.id),
+      mutualCount: 0,
+      verification: "none"
+    }));
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: "internal" });
+  }
+});
+router11.get("/followers/:playerId/following", async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const viewerId = req.query["viewerId"];
+    const rows = await db.select({ followingId: followersTable.followingId }).from(followersTable).where(eq(followersTable.followerId, playerId));
+    if (rows.length === 0) {
+      res.json([]);
+      return;
+    }
+    const followingIds = rows.map((r) => r.followingId);
+    const players = await Promise.all(
+      followingIds.map(
+        (fid) => db.select({
+          id: playersTable.id,
+          username: playersTable.username,
+          avatar: playersTable.avatar,
+          level: playersTable.level
+        }).from(playersTable).where(eq(playersTable.id, fid)).limit(1).then((rs) => rs[0] ?? null)
+      )
+    );
+    let viewerFollowingSet = /* @__PURE__ */ new Set();
+    if (viewerId && viewerId !== playerId) {
+      const vRows = await db.select({ followingId: followersTable.followingId }).from(followersTable).where(eq(followersTable.followerId, viewerId));
+      viewerFollowingSet = new Set(vRows.map((r) => r.followingId));
+    } else {
+      viewerFollowingSet = new Set(followingIds);
+    }
+    const result = players.filter(Boolean).map((p) => ({
+      id: p.id,
+      username: p.username,
+      displayName: p.username,
+      avatar: p.avatar,
+      level: p.level,
+      isFollowing: viewerFollowingSet.has(p.id),
+      mutualCount: 0,
+      verification: "none"
+    }));
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: "internal" });
   }
@@ -87499,7 +87583,11 @@ router11.post("/followers/follow", async (req, res) => {
       res.status(400).json({ error: "followerId and followingId required" });
       return;
     }
-    const existing = await db.select().from(followersTable).where(and(
+    if (followerId === followingId) {
+      res.status(400).json({ error: "cannot follow yourself" });
+      return;
+    }
+    const existing = await db.select({ id: followersTable.id }).from(followersTable).where(and(
       eq(followersTable.followerId, followerId),
       eq(followersTable.followingId, followingId)
     ));
@@ -87523,15 +87611,6 @@ router11.post("/followers/unfollow", async (req, res) => {
       eq(followersTable.followingId, followingId)
     ));
     res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ error: "internal" });
-  }
-});
-router11.get("/followers/:playerId/following", async (req, res) => {
-  try {
-    const { playerId } = req.params;
-    const rows = await db.select().from(followersTable).where(eq(followersTable.followerId, playerId));
-    res.json(rows.map((r) => ({ id: r.followingId, username: r.followingId })));
   } catch (err) {
     res.status(500).json({ error: "internal" });
   }
@@ -91887,6 +91966,8 @@ router25.get("/social/profile/:id", async (req, res) => {
       fame: playersTable.fame,
       language: playersTable.language,
       avatar: playersTable.avatar,
+      bio: playersTable.bio,
+      cover: playersTable.cover,
       createdAt: playersTable.createdAt,
       lastActiveAt: playersTable.lastActiveAt
     }).from(playersTable).where(eq(playersTable.id, id)).limit(1);
@@ -91921,8 +92002,8 @@ router25.get("/social/profile/:id", async (req, res) => {
         fame: player.fame ?? 0,
         language: player.language ?? "en",
         avatar: player.avatar ?? null,
-        bio: null,
-        cover: null
+        bio: player.bio ?? null,
+        cover: player.cover ?? null
       },
       followers: followersCount,
       following: followingCount,
