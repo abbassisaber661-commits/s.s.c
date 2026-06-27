@@ -356,14 +356,19 @@ export function generateMatchSession(
 
 // ─── Player-specific ordering ─────────────────────────────────────────────────
 //
-// PUZZLE GUARANTEE: PZ questions always appear FIRST in the ordered sequence.
-// Specifically:
-//   • Position 0 is ALWAYS a puzzle_assembly question (if any exist in the set)
-//   • Remaining puzzles (if PUZZLE_TARGET > 1) are spread within the first half
-//   • Other questions (VA + MCQ) fill positions after the initial puzzle
+// TWO-PHASE ordering:
+//   Phase 1 — ALL text-based knowledge questions (MCQ)
+//   Phase 2 — ALL visual challenges (visual_attention + puzzle_assembly)
 //
-// This prevents puzzles from being hidden at the end of a match where players
-// might not reach them if they quit or the timer runs out.
+// Within each phase questions are seeded-shuffled so each player gets a unique
+// order while the underlying question set stays identical for all players in
+// the same match.
+//
+// This ensures the visual/puzzle section never appears until every knowledge
+// question has been answered.
+
+/** Categories that belong to Phase 2 (visual challenges) */
+const VISUAL_CATEGORIES = new Set(['visual_attention', 'puzzle_assembly']);
 
 export function getPlayerSession(
   session:  MatchSession,
@@ -372,57 +377,18 @@ export function getPlayerSession(
   const seed = hashStr(`${session.matchId}::${playerId}::order`);
   const rng  = lcg(seed);
 
-  // Separate puzzle questions from everything else
-  const puzzleQs = session.questions.filter(q => q.category === 'puzzle_assembly');
-  const otherQs  = session.questions.filter(q => q.category !== 'puzzle_assembly');
+  // ── Phase 1: text-based knowledge questions ──────────────────────────────
+  const knowledgeQs = session.questions.filter(q => !VISUAL_CATEGORIES.has(q.category));
 
-  if (puzzleQs.length === 0) {
-    // No puzzles in session (should never happen with guarantee, but safe fallback)
-    return {
-      matchId:          session.matchId,
-      division:         session.division,
-      totalQuestions:   session.totalQuestions,
-      orderedQuestions: seededShuffle([...otherQs], rng),
-    };
-  }
+  // ── Phase 2: visual / puzzle questions ───────────────────────────────────
+  const visualQs    = session.questions.filter(q =>  VISUAL_CATEGORIES.has(q.category));
 
-  // Shuffle puzzles and others independently
-  const shuffledPuzzles = seededShuffle([...puzzleQs], rng);
-  const shuffledOthers  = seededShuffle([...otherQs],  rng);
+  // Shuffle each phase independently (seeded for per-player variety)
+  const shuffledKnowledge = seededShuffle([...knowledgeQs], rng);
+  const shuffledVisual    = seededShuffle([...visualQs],    rng);
 
-  // Build ordered list:
-  //  • First puzzle is ALWAYS at index 0 (guaranteed visible)
-  //  • If there are multiple puzzles, interleave them within first 60% of match
-  //    so player encounters all puzzles early, not bunched at the end
-  const ordered: PoolQuestion[] = [];
-
-  if (shuffledPuzzles.length === 1) {
-    // Single puzzle → position 0 (first question)
-    ordered.push(shuffledPuzzles[0]);
-    ordered.push(...shuffledOthers);
-  } else {
-    // Multiple puzzles (div2/pro/champions) → distribute evenly in first half
-    // e.g. 2 puzzles + 8 others: P _ _ _ P _ _ _ _ _
-    const totalSlots = session.totalQuestions;
-    const step       = Math.max(2, Math.floor(totalSlots / (shuffledPuzzles.length + 1)));
-    let   pzIdx      = 0;
-    let   otherIdx   = 0;
-    for (let slot = 0; slot < totalSlots; slot++) {
-      const nextPzSlot = pzIdx < shuffledPuzzles.length
-        ? pzIdx * step   // ideal slot for this puzzle
-        : Infinity;
-      if (slot === nextPzSlot || (pzIdx < shuffledPuzzles.length && slot === 0)) {
-        ordered.push(shuffledPuzzles[pzIdx++]);
-      } else if (otherIdx < shuffledOthers.length) {
-        ordered.push(shuffledOthers[otherIdx++]);
-      } else if (pzIdx < shuffledPuzzles.length) {
-        ordered.push(shuffledPuzzles[pzIdx++]);
-      }
-    }
-    // Safety: append any remaining items not yet added
-    while (pzIdx    < shuffledPuzzles.length) ordered.push(shuffledPuzzles[pzIdx++]);
-    while (otherIdx < shuffledOthers.length)  ordered.push(shuffledOthers[otherIdx++]);
-  }
+  // Final order: all Phase 1 first, then all Phase 2
+  const ordered: PoolQuestion[] = [...shuffledKnowledge, ...shuffledVisual];
 
   return {
     matchId:          session.matchId,
