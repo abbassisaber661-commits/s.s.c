@@ -180,6 +180,13 @@ export const api = {
       get<{ id: string; authorName: string; content: string; createdAt: string }[]>(
         `/community/posts/${postId}/comments`,
       ),
+
+    /** Delete a comment (owner only) */
+    deleteComment: (postId: string, commentId: string, authorId: string) =>
+      apiFetch<{ ok: boolean }>(`/community/posts/${postId}/comments/${commentId}`, {
+        method: "DELETE",
+        body: JSON.stringify({ authorId }),
+      }),
   },
 
   /* ── Auth ── */

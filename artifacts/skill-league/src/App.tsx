@@ -25,6 +25,7 @@ import Results from "@/pages/Results";
 
 // Profile System
 import Profile from "@/pages/ProfilePage";
+import UserProfile from "@/pages/UserProfile";
 import GameProfile from "@/pages/GameProfile";
 import FollowersPage from "@/pages/FollowersPage";
 import FollowingPage from "@/pages/FollowingPage";
@@ -131,8 +132,8 @@ function AppShell() {
         <Route path="/reels" component={ReelsPage} />
         <Route path="/search" component={SearchPage} />
 
-        {/* User profile by username (from search results) */}
-        <Route path="/user/:username" component={Profile} />
+        {/* User profile by username (from search results / legacy links) */}
+        <Route path="/user/:username" component={UserProfile} />
 
         {/* Legacy social (kept for compatibility) */}
         <Route path="/social-classic" component={SocialPage} />

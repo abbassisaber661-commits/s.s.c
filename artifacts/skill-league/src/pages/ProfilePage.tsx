@@ -143,11 +143,7 @@ export default function ProfilePage() {
         reader.onload = (ev) => resolve(ev.target?.result as string);
         reader.readAsDataURL(file);
       });
-      await fetch(`/api/players/${pid}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cover: coverStr }),
-      });
+      await api.players.sync(pid, { cover: coverStr } as any);
       toast.success("Cover updated!");
       refetch();
     } catch {
@@ -267,7 +263,7 @@ export default function ProfilePage() {
           onEditProfile={() => setIsEditOpen(true)}
           onShareProfile={() => setIsShareOpen(true)}
           onFollowToggle={handleFollowToggle}
-          onMessage={() => navigate(`/messages?with=${profile.id}`)}
+          onMessage={() => navigate(`/chat/${encodeURIComponent(profile.username)}`)}
         />
       </motion.div>
 

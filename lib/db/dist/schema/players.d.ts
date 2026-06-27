@@ -514,6 +514,40 @@ export declare const playersTable: import("drizzle-orm/pg-core").PgTableWithColu
         }, {}, {
             $type: Record<string, boolean>;
         }>;
+        bio: import("drizzle-orm/pg-core").PgColumn<{
+            name: "bio";
+            tableName: "players";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        cover: import("drizzle-orm/pg-core").PgColumn<{
+            name: "cover";
+            tableName: "players";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         verificationStatus: import("drizzle-orm/pg-core").PgColumn<{
             name: "verification_status";
             tableName: "players";
@@ -678,6 +712,8 @@ export declare const insertPlayerSchema: z.ZodObject<{
     }[]>>>;
     highScores: z.ZodOptional<z.ZodType<Record<string, number>, Record<string, number>, z.core.$ZodTypeInternals<Record<string, number>, Record<string, number>>>>;
     dailyChallenges: z.ZodOptional<z.ZodType<Record<string, boolean>, Record<string, boolean>, z.core.$ZodTypeInternals<Record<string, boolean>, Record<string, boolean>>>>;
+    bio: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    cover: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     verificationStatus: z.ZodOptional<z.ZodString>;
     piUid: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     language: z.ZodOptional<z.ZodString>;

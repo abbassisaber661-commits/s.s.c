@@ -86823,6 +86823,20 @@ router6.delete("/community/posts/:id", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
+router6.delete("/community/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const { authorId } = req.body;
+    const { postId, commentId } = req.params;
+    await db.delete(postCommentsTable).where(
+      and(eq(postCommentsTable.id, commentId), eq(postCommentsTable.postId, postId), eq(postCommentsTable.authorId, String(authorId)))
+    );
+    await db.update(postsTable).set({ replies: sql`GREATEST(${postsTable.replies} - 1, 0)` }).where(eq(postsTable.id, postId));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
 var community_default = router6;
 
 // src/routes/economy.ts

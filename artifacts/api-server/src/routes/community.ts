@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc, and, asc } from "drizzle-orm";
+import { eq, desc, and, asc, sql } from "drizzle-orm";
 import { db, postsTable, postLikesTable, postCommentsTable, notificationsTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { recordPost, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
@@ -277,6 +277,20 @@ router.delete("/community/posts/:id", async (req, res) => {
   try {
     const { authorId } = req.body as Record<string, unknown>;
     await db.delete(postsTable).where(and(eq(postsTable.id, req.params.id), eq(postsTable.authorId, String(authorId))));
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+router.delete("/community/posts/:postId/comments/:commentId", async (req, res) => {
+  try {
+    const { authorId } = req.body as Record<string, unknown>;
+    const { postId, commentId } = req.params;
+    await db.delete(postCommentsTable).where(
+      and(eq(postCommentsTable.id, commentId), eq(postCommentsTable.postId, postId), eq(postCommentsTable.authorId, String(authorId)))
+    );
+    await db.update(postsTable).set({ replies: sql`GREATEST(${postsTable.replies} - 1, 0)` }).where(eq(postsTable.id, postId));
     res.json({ ok: true });
   } catch (err) {
     req.log.error({ err }); res.status(500).json({ error: "internal" });

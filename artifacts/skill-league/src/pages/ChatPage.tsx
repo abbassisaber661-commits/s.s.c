@@ -152,7 +152,7 @@ export default function ChatPage() {
 
         <div className="flex-1 min-w-0">
           <button
-            onClick={() => navigate(`/user/${encodeURIComponent(them)}`)}
+            onClick={() => theirId ? navigate(`/profile/${theirId}`) : navigate(`/search?q=${encodeURIComponent(them)}`)}
             className="font-bold text-sm hover:text-primary transition-colors block truncate text-left"
           >
             {them}

@@ -164,11 +164,15 @@ export const CommentsSheet = memo(({
     inputRef.current?.focus();
   }, []);
 
-  const handleDelete = useCallback((commentId: string) => {
+  const handleDelete = useCallback(async (commentId: string) => {
+    const authorId = getStoredPlayerId();
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     onCountChange?.(-1);
+    if (authorId) {
+      api.community.deleteComment(postId, commentId, authorId).catch(() => {});
+    }
     toast.success("Comment deleted");
-  }, [onCountChange]);
+  }, [onCountChange, postId]);
 
   const handleReport = useCallback((commentId: string) => {
     toast.success("Comment reported");
