@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { bustProfileCache } from "@/hooks/useProfileData";
 
 export function useFollowUser(userId: string) {
   const [isPending, setIsPending] = useState(false);
@@ -24,6 +25,9 @@ export function useFollowUser(userId: string) {
           await api.followers.unfollow(userId, followerId);
           toast.success("Unfollowed successfully");
         }
+
+        // Bust the in-memory profile cache so refetch() gets fresh isFollowing + counts
+        bustProfileCache(userId);
       } catch (error) {
         console.error(error);
         toast.error("Operation failed");

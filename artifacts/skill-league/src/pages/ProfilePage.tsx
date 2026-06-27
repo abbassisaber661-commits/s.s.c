@@ -70,10 +70,11 @@ export default function ProfilePage() {
 
   const isOwner = !routeParams?.userId || routeParams.userId === authUser?.uid;
 
-  const handleFollowToggle = useCallback(() => {
+  const handleFollowToggle = useCallback(async () => {
     if (!profile) return;
-    followMutation.mutate(profile.isFollowing ? "unfollow" : "follow");
-  }, [profile, followMutation]);
+    await followMutation.mutate(profile.isFollowing ? "unfollow" : "follow");
+    refetch();
+  }, [profile, followMutation, refetch]);
 
   const handleSaveProfile = useCallback(async (data: {
     username: string;

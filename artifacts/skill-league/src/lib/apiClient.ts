@@ -146,10 +146,10 @@ export const api = {
       type?: string;
     }) => post<ApiPost>("/community/posts", payload),
 
-    likePost: (postId: string, like: boolean) =>
+    likePost: (postId: string, like: boolean, playerId?: string | null, playerUsername?: string | null) =>
       patch<{ postId: string; likes: number; likedByMe: boolean }>(
         `/community/posts/${postId}/like`,
-        { like },
+        { like, playerId: playerId ?? undefined, playerUsername: playerUsername ?? undefined },
       ),
 
     /** Legacy toggle like — PostCard / Home / likes.service */

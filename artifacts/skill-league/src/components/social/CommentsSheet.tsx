@@ -64,7 +64,6 @@ export const CommentsSheet = memo(({
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
-    // Try API first, fallback to localStorage
     api.community.comments(postId).then((res: any[]) => {
       setComments(res.map(mapToCommentData));
       setHasMore(res.length >= PAGE_SIZE);
@@ -74,12 +73,14 @@ export const CommentsSheet = memo(({
     }).finally(() => setLoading(false));
   }, [isOpen, postId]);
 
-  // Real-time comment subscription
+  // Real-time comment subscription — skip own events (already added optimistically)
   useEffect(() => {
     if (!isOpen) return;
     const socket = getSocket();
     const handler = (data: any) => {
       if (data.postId !== postId) return;
+      // Skip if this event originated from the current user (already added optimistically)
+      if (data.comment?.username === username) return;
       const newComment: CommentData = {
         id:          `rt_${Date.now()}`,
         postId,
@@ -94,7 +95,7 @@ export const CommentsSheet = memo(({
     };
     socket.on("community:comment", handler);
     return () => { socket.off("community:comment", handler); };
-  }, [isOpen, postId]);
+  }, [isOpen, postId, username]);
 
   const handleSend = useCallback(async () => {
     const text = replyTo ? draft.trim() : draft.trim();

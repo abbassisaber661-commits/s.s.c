@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { api } from "@/lib/apiClient";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
 import type { ProfileData, Post } from "@/types/profile";
 
 interface PostsState {
@@ -15,6 +15,11 @@ interface CacheEntry {
 
 const CACHE_TTL = 5 * 60 * 1000;
 const profileCache = new Map<string, CacheEntry>();
+
+/** Evict a specific userId from the in-memory profile cache */
+export function bustProfileCache(userId: string) {
+  profileCache.delete(userId);
+}
 
 export function useProfileData(userId: string) {
   const safeUserId = userId || "1";
@@ -59,6 +64,16 @@ export function useProfileData(userId: string) {
       // Handle new shape: { player: ApiPlayer, followers, following, posts }
       const p = res.player ?? res;
 
+      // Fetch real isFollowing from the followers API
+      const viewerId = getStoredPlayerId();
+      let isFollowing = false;
+      if (viewerId && viewerId !== (p.id ?? safeUserId)) {
+        try {
+          const followData = await api.followers.get(p.id ?? safeUserId, viewerId);
+          isFollowing = followData.isFollowing;
+        } catch {}
+      }
+
       const mapped: ProfileData = {
         id:          p.id ?? safeUserId,
         username:    p.username ?? res.username ?? "User",
@@ -73,7 +88,7 @@ export function useProfileData(userId: string) {
 
         reelsCount: 0,
         savedCount: 0,
-        isFollowing: false,
+        isFollowing,
 
         // Optional enriched stats
         totalLikes:       res.likesReceived    ?? 0,

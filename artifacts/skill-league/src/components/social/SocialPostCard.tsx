@@ -1,5 +1,5 @@
 // src/components/social/SocialPostCard.tsx
-import React, { memo, useState, useCallback } from "react";
+import React, { memo, useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Share2, Heart } from "lucide-react";
 import { useLocation } from "wouter";
@@ -43,6 +43,12 @@ const SocialPostCard = memo(function SocialPostCard({
 
   const [liked, setLiked] = useState(post.likedByMe);
   const [likes, setLikes] = useState(post.likes);
+
+  // Sync with server-authoritative data after refetch
+  useEffect(() => {
+    setLiked(post.likedByMe);
+    setLikes(post.likes);
+  }, [post.likedByMe, post.likes]);
 
   const handleLike = useCallback(() => {
     const next = !liked;

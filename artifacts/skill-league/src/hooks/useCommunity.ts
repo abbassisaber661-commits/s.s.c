@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/apiClient";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
 import type { CommunityPost, CreatePostPayload, PaginatedResponse } from "@/shared/community";
 
 /* ─────────────────────────────
@@ -109,8 +109,10 @@ export function useLikePost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ postId, like }: { postId: string; like: boolean }) =>
-      api.community.likePost(postId, like),
+    mutationFn: ({ postId, like }: { postId: string; like: boolean }) => {
+      const playerId = getStoredPlayerId();
+      return api.community.likePost(postId, like, playerId);
+    },
 
     onMutate: async ({ postId, like }) => {
       await queryClient.cancelQueries({ queryKey: communityKeys.all });
