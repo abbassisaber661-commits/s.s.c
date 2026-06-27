@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Bell, CheckCheck, MessageSquare, Wifi, Plus } from "lucide-react";
+import { ArrowLeft, Bell, CheckCheck, MessageSquare, Wifi, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRealtime } from "@/contexts/RealtimeContext";
@@ -127,77 +127,128 @@ export default function Messages() {
   const friends = getFriendsList(username);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col pb-24">
+    <div className="min-h-screen flex flex-col pb-24" style={{ background: "#F0F2F5" }}>
 
-      {/* ── Header ───────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
+      {/* ── Header ── */}
+      <div
+        className="sticky top-0 z-20 px-4 py-3 flex items-center gap-3"
+        style={{
+          background: "#FFFFFF",
+          borderBottom: "1px solid #E4E6EB",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        }}
+      >
         <button
           onClick={() => window.history.length > 1 ? navigate(-1 as any) : navigate("/feed")}
-          className="p-2 rounded-xl hover:bg-muted transition-colors active:scale-90"
+          className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
-        <MessageSquare className="w-5 h-5 text-primary" />
-        <h1 className="text-lg font-black flex-1">Messages</h1>
 
-        <div className={`flex items-center gap-1 text-[11px] px-2 py-1 rounded-full ${connected ? 'bg-green-500/10 text-green-400' : 'bg-muted text-muted-foreground'}`}>
+        <MessageSquare className="w-5 h-5" style={{ color: "#FFD60A" }} />
+        <h1 className="text-lg font-black flex-1" style={{ color: "#050505" }}>Messages</h1>
+
+        <div
+          className="flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full font-bold"
+          style={connected
+            ? { background: "#DCFCE7", color: "#16A34A" }
+            : { background: "#F3F4F6", color: "#9CA3AF" }}
+        >
           <Wifi className="w-3 h-3" />
           {connected ? 'Live' : 'Offline'}
         </div>
 
         {tab === 'notifications' && notifUnread > 0 && (
-          <button onClick={handleMarkAll} className="flex items-center gap-1 text-xs text-primary font-bold hover:opacity-80">
-            <CheckCheck className="w-4 h-4" />
+          <button
+            onClick={handleMarkAll}
+            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg active:scale-95 transition-transform"
+            style={{ background: "#FFF8DC", color: "#92400E" }}
+          >
+            <CheckCheck className="w-3.5 h-3.5" />
             All read
           </button>
         )}
       </div>
 
-      {/* ── Tabs ─────────────────────────────────────────── */}
-      <div className="flex bg-card border-b border-border px-4 py-2 gap-2 sticky top-[57px] z-10">
+      {/* ── Tabs ── */}
+      <div
+        className="flex px-4 py-2 gap-2 sticky z-10"
+        style={{
+          top: "57px",
+          background: "#FFFFFF",
+          borderBottom: "1px solid #E4E6EB",
+        }}
+      >
         <button
           onClick={() => setTab('dms')}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all ${tab === 'dms' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          className="flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95"
+          style={tab === 'dms'
+            ? { background: "#FFD60A", color: "#000000" }
+            : { background: "#F0F2F5", color: "#65676B" }}
         >
           <MessageSquare className="w-3.5 h-3.5" />
           DMs
           {dmUnread > 0 && (
-            <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{dmUnread}</span>
+            <span
+              className="w-4 h-4 rounded-full text-white text-[10px] flex items-center justify-center font-black"
+              style={{ background: "#EF4444" }}
+            >
+              {dmUnread}
+            </span>
           )}
         </button>
         <button
           onClick={() => setTab('notifications')}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all ${tab === 'notifications' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          className="flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95"
+          style={tab === 'notifications'
+            ? { background: "#FFD60A", color: "#000000" }
+            : { background: "#F0F2F5", color: "#65676B" }}
         >
           <Bell className="w-3.5 h-3.5" />
           Notifications
           {notifUnread > 0 && (
-            <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{notifUnread}</span>
+            <span
+              className="w-4 h-4 rounded-full text-white text-[10px] flex items-center justify-center font-black"
+              style={{ background: "#EF4444" }}
+            >
+              {notifUnread}
+            </span>
           )}
         </button>
       </div>
 
-      {/* ── Content ──────────────────────────────────────── */}
+      {/* ── Content ── */}
       <div className="flex-1 max-w-md mx-auto w-full px-4 pt-4">
         <AnimatePresence mode="wait">
 
-          {/* DMs TAB */}
+          {/* ── DMs TAB ── */}
           {tab === 'dms' && (
-            <motion.div key="dms" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-2">
+            <motion.div key="dms" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-3">
 
-              {/* Start a conversation from friends list */}
+              {/* Friends quick-start bar */}
               {friends.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-[11px] text-muted-foreground font-bold mb-2">START A CONVERSATION</p>
-                  <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                <div
+                  className="rounded-2xl p-3"
+                  style={{ background: "#FFFFFF", border: "1px solid #E4E6EB" }}
+                >
+                  <p className="text-[11px] font-black mb-2.5 uppercase tracking-wider" style={{ color: "#65676B" }}>
+                    Start a conversation
+                  </p>
+                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
                     {friends.map(f => (
                       <button
                         key={f.username}
                         onClick={() => navigate(`/chat/${encodeURIComponent(f.username)}`)}
-                        className="flex flex-col items-center gap-1 flex-shrink-0 active:scale-90 transition-transform"
+                        className="flex flex-col items-center gap-1.5 flex-shrink-0 active:scale-90 transition-transform"
                       >
-                        <Avatar username={f.username} size="lg" shape="rounded-xl" />
-                        <span className="text-[10px] font-bold text-muted-foreground w-12 text-center truncate">
+                        <div className="relative">
+                          <Avatar username={f.username} size="lg" shape="rounded-xl" />
+                          <span
+                            className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                            style={{ background: "#22C55E" }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold w-12 text-center truncate" style={{ color: "#65676B" }}>
                           {f.username.replace(/\d+$/, '')}
                         </span>
                       </button>
@@ -206,79 +257,120 @@ export default function Messages() {
                 </div>
               )}
 
-              {/* API-backed conversation list */}
+              {/* Conversation list */}
               {convos.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground space-y-3">
-                  <MessageSquare className="w-12 h-12 mx-auto opacity-30" />
-                  <p className="font-bold text-foreground">No conversations yet</p>
-                  <p className="text-sm">Add friends from the Social feed, then message them here.</p>
-                  <button onClick={() => navigate('/social')}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold mt-1 active:scale-95 transition-transform">
+                <div className="flex flex-col items-center py-16 gap-4">
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: "#FFF8DC" }}>
+                    <MessageSquare className="w-9 h-9" style={{ color: "#D97706" }} />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-black text-base" style={{ color: "#050505" }}>No conversations yet</p>
+                    <p className="text-sm mt-1" style={{ color: "#65676B" }}>Add friends from the Social feed,<br/>then message them here.</p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/social')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold active:scale-95 transition-transform"
+                    style={{ background: "#FFD60A", color: "#000000" }}
+                  >
                     <Plus className="w-4 h-4" />
                     Find people
                   </button>
                 </div>
               ) : (
-                convos.map((conv, i) => (
+                <div className="space-y-1.5">
+                  {convos.map((conv, i) => (
                     <motion.button
                       key={conv.partnerId}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.04 }}
                       onClick={() => navigate(`/chat/${encodeURIComponent(conv.partnerUsername)}`)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-2xl border bg-card text-left transition-all active:scale-[0.98] hover:bg-card/80 ${conv.unread > 0 ? 'border-primary/40' : 'border-border'}`}
+                      className="w-full flex items-center gap-3 p-3.5 rounded-2xl text-left transition-all active:scale-[0.98]"
+                      style={{
+                        background: "#FFFFFF",
+                        border: conv.unread > 0 ? "1px solid #FFD60A" : "1px solid #E4E6EB",
+                        boxShadow: conv.unread > 0 ? "0 0 0 1px #FFD60A20" : "none",
+                      }}
                     >
-                      <Avatar username={conv.partnerUsername} size="lg" shape="rounded-xl" />
+                      {/* Avatar with online indicator */}
+                      <div className="relative flex-shrink-0">
+                        <Avatar username={conv.partnerUsername} size="lg" shape="rounded-xl" />
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+                          style={{ background: "#22C55E" }}
+                        />
+                      </div>
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className={`text-sm font-bold truncate ${conv.unread > 0 ? 'text-foreground' : 'text-foreground/80'}`}>
+                          <span
+                            className="text-sm font-bold truncate"
+                            style={{ color: "#050505" }}
+                          >
                             {conv.partnerUsername}
                           </span>
                           {conv.lastTimestamp && (
-                            <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-2">
+                            <span className="text-[10px] flex-shrink-0 ml-2" style={{ color: "#65676B" }}>
                               {getMsgAge(new Date(conv.lastTimestamp).getTime())}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center justify-between mt-0.5">
-                          <p className={`text-xs truncate ${conv.unread > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                          <p
+                            className="text-xs truncate"
+                            style={{
+                              color: conv.unread > 0 ? "#050505" : "#65676B",
+                              fontWeight: conv.unread > 0 ? 600 : 400,
+                            }}
+                          >
                             {conv.lastMessage || 'No messages yet'}
                           </p>
                           {conv.unread > 0 && (
-                            <span className="flex-shrink-0 ml-2 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+                            <span
+                              className="flex-shrink-0 ml-2 w-5 h-5 rounded-full text-black text-[10px] font-black flex items-center justify-center"
+                              style={{ background: "#FFD60A" }}
+                            >
                               {conv.unread}
                             </span>
                           )}
                         </div>
                       </div>
                     </motion.button>
-                  ))
+                  ))}
+                </div>
               )}
             </motion.div>
           )}
 
-          {/* NOTIFICATIONS TAB */}
+          {/* ── NOTIFICATIONS TAB ── */}
           {tab === 'notifications' && (
             <motion.div key="notifs" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-2">
               {notifsLoading && (
                 <div className="flex justify-center py-8">
                   <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
-                    className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent" />
+                    className="w-6 h-6 rounded-full border-2 border-t-transparent"
+                    style={{ borderColor: "#FFD60A", borderTopColor: "transparent" }}
+                  />
                 </div>
               )}
 
               {!notifsLoading && notifUnread > 0 && (
-                <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary">
-                  {notifUnread} unread notification{notifUnread !== 1 ? 's' : ''}
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl px-4 py-3 text-sm font-semibold"
+                  style={{ background: "#FFF8DC", border: "1px solid #FCD34D", color: "#92400E" }}
+                >
+                  🔔 {notifUnread} unread notification{notifUnread !== 1 ? 's' : ''}
                 </motion.div>
               )}
 
               {!notifsLoading && notifs.length === 0 && (
-                <div className="text-center py-16 text-muted-foreground">
-                  <Bell className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm font-bold">No notifications yet</p>
-                  <p className="text-xs mt-1 opacity-70">Likes, comments, follows and mentions appear here.</p>
+                <div className="flex flex-col items-center py-16 gap-3">
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#F3F4F6" }}>
+                    <Bell className="w-7 h-7" style={{ color: "#9CA3AF" }} />
+                  </div>
+                  <p className="text-sm font-bold" style={{ color: "#050505" }}>No notifications yet</p>
+                  <p className="text-xs" style={{ color: "#65676B" }}>Likes, comments, follows and mentions appear here.</p>
                 </div>
               )}
 
@@ -289,25 +381,47 @@ export default function Messages() {
                     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.04 }}
                     onClick={() => handleRead(n.id)}
-                    className={`rounded-2xl border bg-card p-4 cursor-pointer transition-all hover:bg-card/80 active:scale-[0.99] ${!n.read ? 'border-primary/30 bg-primary/5' : 'border-border'}`}
+                    className="rounded-2xl p-4 cursor-pointer transition-all active:scale-[0.99]"
+                    style={{
+                      background: !n.read ? "#FFFBEB" : "#FFFFFF",
+                      border: !n.read ? "1px solid #FCD34D" : "1px solid #E4E6EB",
+                    }}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                        style={{ backgroundColor: `${TYPE_COLOR[n.type] ?? '#3AB4FF'}20` }}>
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                        style={{ backgroundColor: `${TYPE_COLOR[n.type] ?? '#3AB4FF'}20` }}
+                      >
                         {NOTIF_ICON[n.type] ?? '🎮'}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className={`text-sm font-bold ${!n.read ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          <span
+                            className="text-sm font-bold"
+                            style={{ color: "#050505" }}
+                          >
                             {n.title}
                           </span>
-                          {!n.read && <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
+                          {!n.read && (
+                            <span
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ background: "#FFD60A" }}
+                            />
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{n.body}</p>
+                        <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#65676B" }}>{n.body}</p>
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs text-muted-foreground/60">{getAge(n.createdAt)}</span>
+                          <span className="text-xs" style={{ color: "#9CA3AF" }}>{getAge(n.createdAt)}</span>
                           {!!n.data?.postId && (
-                            <Button size="sm" variant="outline" className="text-xs h-6 px-2" onClick={() => navigate("/feed")}>View →</Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-6 px-2 active:scale-95"
+                              style={{ borderColor: "#FFD60A", color: "#000", fontWeight: 700 }}
+                              onClick={() => navigate("/feed")}
+                            >
+                              View →
+                            </Button>
                           )}
                         </div>
                       </div>

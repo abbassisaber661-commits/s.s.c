@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Send, Lock } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, Send, Lock, Phone, Video, MoreVertical } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 import { getFriendStatus } from "@/lib/friends";
 import { getSocialLeague } from "@/lib/socialLeague";
@@ -131,33 +131,50 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground">
+    <div className="flex flex-col h-screen" style={{ background: "#F0F2F5" }}>
 
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 bg-background/95 backdrop-blur border-b border-border z-20">
+      {/* ── Header ── */}
+      <div
+        className="flex-shrink-0 flex items-center gap-3 px-4 py-3 z-20"
+        style={{
+          background: "#FFFFFF",
+          borderBottom: "1px solid #E4E6EB",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        }}
+      >
         <button
           onClick={() => navigate('/messages')}
-          className="p-2 rounded-xl hover:bg-muted transition-colors active:scale-90"
+          className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all flex-shrink-0"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
 
-        <Avatar username={them} size="sm" shape="rounded-xl" />
+        {/* Avatar with online dot */}
+        <div className="relative flex-shrink-0">
+          <Avatar username={them} size="sm" shape="rounded-xl" />
+          {theirId && (
+            <span
+              className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white"
+              style={{ background: "#22C55E" }}
+            />
+          )}
+        </div>
 
         <div className="flex-1 min-w-0">
           <button
             onClick={() => theirId ? navigate(`/profile/${theirId}`) : navigate(`/search?q=${encodeURIComponent(them)}`)}
-            className="font-bold text-sm hover:text-primary transition-colors block truncate text-left"
+            className="font-black text-sm hover:text-blue-600 transition-colors block truncate text-left"
+            style={{ color: "#050505" }}
           >
             {them}
           </button>
-          <span className="text-[11px] font-medium text-muted-foreground">
-            {theirId ? 'Connected' : 'Looking up…'}
+          <span className="text-[11px] font-medium" style={{ color: theirId ? "#22C55E" : "#65676B" }}>
+            {theirId ? '🟢 Active now' : 'Looking up…'}
           </span>
         </div>
       </div>
 
-      {/* ── Not friends wall ──────────────────────────────── */}
+      {/* ── Not friends wall ── */}
       {!canChat && (
         <div className="flex-1 flex items-center justify-center p-8">
           <motion.div
@@ -165,16 +182,17 @@ export default function ChatPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center space-y-4 max-w-xs"
           >
-            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto">
-              <Lock className="w-8 h-8 text-muted-foreground" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "#F0F2F5" }}>
+              <Lock className="w-8 h-8" style={{ color: "#65676B" }} />
             </div>
-            <h3 className="font-black text-lg">Add Friend First</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              You can only message players you're friends with. Find <strong>{them}</strong> on the Social feed and send a friend request.
+            <h3 className="font-black text-lg" style={{ color: "#050505" }}>Add Friend First</h3>
+            <p className="text-sm leading-relaxed" style={{ color: "#65676B" }}>
+              You can only message players you're friends with. Find <strong style={{ color: "#050505" }}>{them}</strong> on the Social feed and send a friend request.
             </p>
             <button
               onClick={() => navigate('/social')}
-              className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm active:scale-95 transition-transform"
+              className="w-full py-2.5 rounded-xl font-bold text-sm active:scale-95 transition-transform"
+              style={{ background: "#FFD60A", color: "#000000" }}
             >
               Go to Social Feed
             </button>
@@ -182,64 +200,96 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* ── Message list ──────────────────────────────────── */}
+      {/* ── Message list ── */}
       {canChat && (
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
           {loading && (
             <div className="flex justify-center py-8">
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
-                className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent" />
+                className="w-6 h-6 rounded-full border-2 border-t-transparent"
+                style={{ borderColor: "#FFD60A", borderTopColor: "transparent" }}
+              />
             </div>
           )}
 
           {!loading && messages.length === 0 && (
-            <div className="text-center py-16 text-muted-foreground space-y-2">
-              <div className="text-4xl">👋</div>
-              <p className="font-bold text-foreground">Start the conversation</p>
-              <p className="text-sm">Say hello to {them}!</p>
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "#FFF8DC" }}>
+                <span className="text-3xl">👋</span>
+              </div>
+              <p className="font-black text-base" style={{ color: "#050505" }}>Say hello!</p>
+              <p className="text-sm text-center" style={{ color: "#65676B" }}>Start your conversation with <strong>{them}</strong></p>
             </div>
           )}
 
           {!loading && groupMessages(messages).map(group => (
-            <div key={group.date} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-px bg-border/50" />
-                <span className="text-[10px] text-muted-foreground font-medium px-2">{group.date}</span>
-                <div className="flex-1 h-px bg-border/50" />
+            <div key={group.date} className="space-y-1">
+              {/* Date divider */}
+              <div className="flex items-center gap-2 my-3">
+                <div className="flex-1 h-px" style={{ background: "#E4E6EB" }} />
+                <span
+                  className="text-[11px] font-semibold px-3 py-1 rounded-full"
+                  style={{ background: "#E4E6EB", color: "#65676B" }}
+                >
+                  {group.date}
+                </span>
+                <div className="flex-1 h-px" style={{ background: "#E4E6EB" }} />
               </div>
 
               {group.items.map((msg, i) => {
                 const isMe       = msg.fromId === myId;
                 const showAvatar = !isMe && (i === 0 || group.items[i - 1]?.fromId !== msg.fromId);
+                const isLast     = i === group.items.length - 1 || group.items[i + 1]?.fromId !== msg.fromId;
 
                 return (
                   <motion.div
                     key={msg.id}
                     initial={{ opacity: 0, y: 6, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.18 }}
-                    className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
+                    transition={{ duration: 0.15 }}
+                    className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'} ${i > 0 && group.items[i - 1]?.fromId === msg.fromId ? 'mt-0.5' : 'mt-2'}`}
                   >
+                    {/* Incoming avatar */}
                     {!isMe && (
-                      <div className={showAvatar ? 'opacity-100' : 'opacity-0 pointer-events-none'}>
-                        <Avatar username={them} size="xs" shape="rounded-lg" />
+                      <div className="w-7 flex-shrink-0 mb-1">
+                        {showAvatar ? (
+                          <Avatar username={them} size="xs" shape="rounded-lg" />
+                        ) : null}
                       </div>
                     )}
 
-                    <div className={`max-w-[72%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-0.5`}>
+                    <div className={`flex flex-col gap-0.5 max-w-[72%] ${isMe ? 'items-end' : 'items-start'}`}>
                       <div
-                        className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
-                          isMe
-                            ? `bg-primary text-primary-foreground rounded-br-sm${msg.pending ? ' opacity-60' : ''}`
-                            : 'bg-card border border-border rounded-bl-sm'
-                        }`}
+                        className="px-4 py-2.5 text-sm leading-relaxed break-words"
+                        style={{
+                          background: isMe ? "#FFD60A" : "#FFFFFF",
+                          color: "#000000",
+                          border: isMe ? "none" : "1px solid #E4E6EB",
+                          borderRadius: isMe
+                            ? isLast ? "20px 20px 4px 20px" : "20px 20px 20px 20px"
+                            : isLast ? "20px 20px 20px 4px" : "20px 20px 20px 20px",
+                          opacity: msg.pending ? 0.65 : 1,
+                          boxShadow: isMe ? "0 1px 2px rgba(0,0,0,0.1)" : "0 1px 2px rgba(0,0,0,0.06)",
+                          fontWeight: 400,
+                        }}
                       >
                         {msg.text}
                       </div>
-                      <span className={`text-[10px] px-1 ${isMe ? 'text-right text-muted-foreground' : 'text-muted-foreground'}`}>
-                        {msg.pending ? 'Sending…' : getMsgAge(msg.timestamp)}
-                        {isMe && !msg.pending && <span className="ml-1">{msg.read ? ' ✓✓' : ' ✓'}</span>}
-                      </span>
+
+                      {/* Timestamp + read receipt — only show on last in sequence */}
+                      {isLast && (
+                        <span
+                          className="text-[10px] px-1"
+                          style={{ color: "#65676B" }}
+                        >
+                          {msg.pending ? 'Sending…' : getMsgAge(msg.timestamp)}
+                          {isMe && !msg.pending && (
+                            <span className="ml-1" style={{ color: msg.read ? "#1877F2" : "#65676B" }}>
+                              {msg.read ? '✓✓' : '✓'}
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </div>
                   </motion.div>
                 );
@@ -250,28 +300,38 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* ── Input bar ─────────────────────────────────────── */}
+      {/* ── Input bar ── */}
       {canChat && (
-        <div className="flex-shrink-0 border-t border-border bg-background/95 backdrop-blur px-4 py-3">
+        <div
+          className="flex-shrink-0 px-4 py-3"
+          style={{
+            background: "#FFFFFF",
+            borderTop: "1px solid #E4E6EB",
+          }}
+        >
           <div className="flex items-center gap-2 max-w-md mx-auto">
-            <Avatar username={me} size="xs" shape="rounded-lg" />
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder={theirId ? `Message ${them}…` : `Looking up ${them}…`}
-              maxLength={500}
-              disabled={!theirId || sending}
-              className="flex-1 bg-card border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
-            />
+            <div className="flex-1 flex items-center gap-2 px-4 py-2.5 rounded-full"
+              style={{ background: "#F0F2F5", border: "1px solid #E4E6EB" }}>
+              <input
+                ref={inputRef}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder={theirId ? `Message ${them}…` : `Looking up ${them}…`}
+                maxLength={500}
+                disabled={!theirId || sending}
+                className="flex-1 bg-transparent text-sm focus:outline-none disabled:opacity-50"
+                style={{ color: "#050505" }}
+              />
+            </div>
+
             <button
               onClick={handleSend}
               disabled={!draft.trim() || !theirId || sending}
-              className="w-10 h-10 flex items-center justify-center rounded-xl disabled:opacity-40 active:scale-90 transition-all"
-              style={{ background: 'hsl(var(--primary))' }}
+              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 active:scale-90 transition-all disabled:opacity-40"
+              style={{ background: "#FFD60A" }}
             >
-              <Send className="w-4 h-4 text-primary-foreground" />
+              <Send className="w-4 h-4" style={{ color: "#000000" }} />
             </button>
           </div>
         </div>
