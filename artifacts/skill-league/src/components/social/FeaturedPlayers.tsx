@@ -32,7 +32,10 @@ export default function FeaturedPlayers() {
 
   useEffect(() => {
     api.players.leaderboard(3)
-      .then(data => { if (Array.isArray(data) && data.length >= 3) setPlayers(data as any); })
+      .then(data => {
+        const list = Array.isArray(data) ? data : ((data as any).players ?? []);
+        if (list.length > 0) setPlayers(list as any);
+      })
       .catch(() => {});
   }, []);
 

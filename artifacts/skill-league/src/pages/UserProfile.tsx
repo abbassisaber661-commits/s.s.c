@@ -165,13 +165,19 @@ export default function UserProfile() {
     setListLoading(true);
     const myId = authUser?.uid ?? getStoredPlayerId() ?? "";
     if (activeList === "followers") {
-      api.followers.get(targetPlayerId, myId)
-        .then((data: any) => setFollowersList(data?.followers ?? []))
+      api.followers.list(targetPlayerId, myId || undefined)
+        .then((data: any) => {
+          const arr = Array.isArray(data) ? data : (data?.followers ?? []);
+          setFollowersList(arr.map((e: any) => ({ id: e.id ?? e.followerId, username: e.username ?? e.followerUsername ?? "" })));
+        })
         .catch(() => setFollowersList([]))
         .finally(() => setListLoading(false));
     } else {
-      (api.followers as any).following(targetPlayerId)
-        .then((data: any) => setFollowingList(Array.isArray(data) ? data : []))
+      api.followers.listFollowing(targetPlayerId, myId || undefined)
+        .then((data: any) => {
+          const arr = Array.isArray(data) ? data : (data?.following ?? []);
+          setFollowingList(arr.map((e: any) => ({ id: e.id ?? e.followingId, username: e.username ?? e.followingUsername ?? "" })));
+        })
         .catch(() => setFollowingList([]))
         .finally(() => setListLoading(false));
     }
@@ -251,7 +257,7 @@ export default function UserProfile() {
         className="sticky top-0 z-20 border-b px-4 py-3 flex items-center gap-3"
         style={{ background: "#FFFFFF", borderColor: "#E4E6EB", boxShadow: "0 2px 4px rgba(0,0,0,0.08)" }}
       >
-        <button onClick={() => navigate("~/")}
+        <button onClick={() => window.history.back()}
           className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-transform">
           <ArrowLeft className="w-5 h-5" style={{ color: "#050505" }} />
         </button>
