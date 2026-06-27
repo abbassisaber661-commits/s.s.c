@@ -8,8 +8,6 @@ import { ChevronLeft, Bell, BellOff, CheckCheck } from "lucide-react";
 import { playTap } from "@/lib/sounds";
 import { useRealtime } from "@/contexts/RealtimeContext";
 
-/* ───────────── ICONS ───────────── */
-
 const TYPE_ICON: Record<string, string> = {
   match:         "⚔️",
   level_up:      "⬆️",
@@ -30,8 +28,6 @@ const TYPE_ICON: Record<string, string> = {
   mention:       "📢",
 };
 
-/* ───────────── TIME FORMAT ───────────── */
-
 function fmt(ts: number | string) {
   const t = typeof ts === "string" ? new Date(ts).getTime() : ts;
   const diff = Date.now() - t;
@@ -40,8 +36,6 @@ function fmt(ts: number | string) {
   if (diff < 86_400_000)  return `${Math.floor(diff / 3_600_000)}h ago`;
   return `${Math.floor(diff / 86_400_000)}d ago`;
 }
-
-/* ───────────── NAVIGATION HELPER ───────────── */
 
 function resolveActionUrl(n: ApiNotification): string | null {
   const d = n.data as Record<string, unknown> | undefined;
@@ -52,8 +46,6 @@ function resolveActionUrl(n: ApiNotification): string | null {
   if (n.type === "comment" && d?.postId)   return `/feed`;
   return null;
 }
-
-/* ───────────── COMPONENT ───────────── */
 
 export default function Notifications() {
   const { language, authUser } = useGame();
@@ -67,7 +59,6 @@ export default function Notifications() {
   const [loading, setLoading] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
-  /* ─── Load DB notifications ─── */
   useEffect(() => {
     if (!authUser?.uid) return;
     setLoading(true);
@@ -78,7 +69,6 @@ export default function Notifications() {
       .finally(() => setLoading(false));
   }, [authUser?.uid]);
 
-  /* ─── Merge push notifications in real-time ─── */
   const allNotifs = useMemo(() => {
     const pushMapped: ApiNotification[] = pushNotifs.map((p: any) => ({
       id:        p.id ?? `push_${Date.now()}`,
@@ -100,7 +90,6 @@ export default function Notifications() {
     [allNotifs, readIds]
   );
 
-  /* ─── Mark all read ─── */
   const handleMarkAllRead = () => {
     playTap();
     if (authUser?.uid) {
@@ -109,7 +98,6 @@ export default function Notifications() {
     setReadIds(new Set(allNotifs.map(n => n.id)));
   };
 
-  /* ─── Mark single read + navigate ─── */
   const handleClick = (n: ApiNotification) => {
     if (!readIds.has(n.id) && !n.read) {
       api.notifications.markRead(n.id).catch(() => {});
@@ -119,24 +107,23 @@ export default function Notifications() {
     if (url) navigate(url);
   };
 
-  /* ─── Render ─── */
   return (
-    <div dir={rtl ? "rtl" : "ltr"} className="min-h-screen bg-background pb-24">
+    <div dir={rtl ? "rtl" : "ltr"} className="min-h-screen bg-[#F5F5F7] pb-24">
 
       {/* HEADER */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => window.history.length > 1 ? navigate(-1 as any) : navigate("/feed")}
-          className="p-2 rounded-xl hover:bg-card"
+          className="p-2 rounded-xl hover:bg-[#F5F5F7] transition-colors"
         >
-          <ChevronLeft className={`w-5 h-5 ${rtl ? "rotate-180" : ""}`} onClick={playTap} />
+          <ChevronLeft className={`w-5 h-5 text-[#111111] ${rtl ? "rotate-180" : ""}`} onClick={playTap} />
         </button>
 
         <div className="flex-1 flex items-center gap-2">
-          <Bell className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-black">{t("notifications_title")}</h1>
+          <Bell className="w-5 h-5 text-[#FFD60A]" />
+          <h1 className="text-lg font-black text-[#111111]">{t("notifications_title")}</h1>
           {unread > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-xs bg-red-500 text-white">
+            <span className="px-2 py-0.5 rounded-full text-xs bg-red-500 text-white font-bold">
               {unread}
             </span>
           )}
@@ -145,7 +132,7 @@ export default function Notifications() {
         {unread > 0 && (
           <button
             onClick={handleMarkAllRead}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg hover:bg-card"
+            className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-xl hover:bg-[#F5F5F7] transition-colors text-[#666666] font-semibold border border-[#E5E5E5]"
           >
             <CheckCheck className="w-4 h-4" />
             Mark all
@@ -158,14 +145,17 @@ export default function Notifications() {
 
         {loading && (
           <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[#FFD60A] border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
         {!loading && allNotifs.length === 0 && (
-          <div className="flex flex-col items-center py-16 opacity-60">
-            <BellOff className="w-12 h-12 mb-2" />
-            <p className="text-sm">{t("no_notifications")}</p>
+          <div className="flex flex-col items-center py-16 gap-3">
+            <div className="w-16 h-16 rounded-full bg-[#F5F5F7] flex items-center justify-center">
+              <BellOff className="w-8 h-8 text-[#666666]" />
+            </div>
+            <p className="text-sm font-bold text-[#111111]">{t("no_notifications")}</p>
+            <p className="text-xs text-[#666666]">Activity from your network appears here.</p>
           </div>
         )}
 
@@ -181,25 +171,32 @@ export default function Notifications() {
                 key={n.id}
                 initial={{ opacity: 0, x: rtl ? 20 : -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className={`p-4 rounded-2xl border flex gap-3 relative transition-opacity ${
-                  isRead ? "opacity-70" : "border-primary/20"
-                } ${actionUrl ? "cursor-pointer hover:bg-card/50" : ""}`}
+                className={`p-4 rounded-2xl border flex gap-3 relative transition-all cursor-pointer ${
+                  isRead
+                    ? "bg-white border-[#E5E5E5] opacity-80"
+                    : "bg-[#FFFBEB] border-[#FFD60A]/40"
+                } ${actionUrl ? "hover:shadow-sm" : ""}`}
                 onClick={() => handleClick(n)}
               >
                 {!isRead && (
-                  <div className="absolute top-3 right-3 w-2 h-2 bg-primary rounded-full" />
+                  <div className="absolute top-3 right-3 w-2 h-2 bg-[#FFD60A] rounded-full" />
                 )}
 
-                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary/10 flex-shrink-0">
+                <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F5F5F7] flex-shrink-0 text-lg">
                   {icon}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start gap-2">
-                    <p className="font-bold text-sm leading-snug">{n.title}</p>
-                    <span className="text-[10px] opacity-60 flex-shrink-0">{fmt(ts)}</span>
+                    <p className="font-bold text-sm leading-snug text-[#111111]">{n.title}</p>
+                    <span className="text-[10px] text-[#666666] flex-shrink-0">{fmt(ts)}</span>
                   </div>
-                  <p className="text-xs opacity-70 mt-1 line-clamp-2">{n.body}</p>
+                  <p className="text-xs text-[#666666] mt-1 line-clamp-2">{n.body}</p>
+                  {actionUrl && (
+                    <span className="inline-block mt-2 text-xs font-bold text-[#111111] border border-[#FFD60A] rounded-lg px-2 py-0.5">
+                      View →
+                    </span>
+                  )}
                 </div>
               </motion.div>
             );

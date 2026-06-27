@@ -44,7 +44,6 @@ const SocialPostCard = memo(function SocialPostCard({
   const [liked, setLiked] = useState(post.likedByMe);
   const [likes, setLikes] = useState(post.likes);
 
-  // Sync with server-authoritative data after refetch
   useEffect(() => {
     setLiked(post.likedByMe);
     setLikes(post.likes);
@@ -52,23 +51,16 @@ const SocialPostCard = memo(function SocialPostCard({
 
   const handleLike = useCallback(() => {
     const next = !liked;
-
     setLiked(next);
     setLikes((l) => l + (next ? 1 : -1));
-
     onLikeChange?.(post.id, next);
   }, [liked, post.id, onLikeChange]);
 
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/post/${post.id}`;
-
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: post.authorName,
-          text: post.content,
-          url,
-        });
+        await navigator.share({ title: post.authorName, text: post.content, url });
       } else {
         await navigator.clipboard.writeText(url);
         toast.success("Link copied");
@@ -81,7 +73,7 @@ const SocialPostCard = memo(function SocialPostCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800",
+        "bg-white rounded-2xl border border-[#E5E5E5] shadow-sm",
         className
       )}
     >
@@ -92,15 +84,15 @@ const SocialPostCard = memo(function SocialPostCard({
       >
         <Avatar username={post.authorName} />
         <div>
-          <div className="font-semibold text-sm">{post.authorName}</div>
-          <div className="text-xs text-gray-400">
+          <div className="font-semibold text-sm text-[#111111]">{post.authorName}</div>
+          <div className="text-xs text-[#666666]">
             Lv.{post.authorLevel} · {formatAge(post.timestamp)}
           </div>
         </div>
       </div>
 
       {/* CONTENT */}
-      <div className="px-4 pb-3 text-sm whitespace-pre-wrap">
+      <div className="px-4 pb-3 text-sm whitespace-pre-wrap text-[#111111] leading-relaxed">
         {post.content}
       </div>
 
@@ -109,11 +101,12 @@ const SocialPostCard = memo(function SocialPostCard({
         <img
           src={post.imageUrl}
           className="w-full max-h-96 object-cover"
+          alt=""
         />
       )}
 
       {/* STATS */}
-      <div className="px-4 py-2 text-xs text-gray-400 flex gap-3">
+      <div className="px-4 py-2 text-xs text-[#666666] flex gap-3">
         {likes > 0 && <span>{formatNumber(likes)} likes</span>}
         {commentCount > 0 && (
           <span>{formatNumber(commentCount)} comments</span>
@@ -121,32 +114,36 @@ const SocialPostCard = memo(function SocialPostCard({
       </div>
 
       {/* ACTIONS */}
-      <div className="flex items-center border-t border-gray-100 dark:border-gray-800">
+      <div className="flex items-center border-t border-[#E5E5E5]">
         {/* LIKE */}
         <button
           onClick={handleLike}
           className={cn(
-            "flex-1 py-2 text-sm flex items-center justify-center gap-1",
-            liked ? "text-red-500" : "text-gray-500"
+            "flex-1 py-2.5 text-sm flex items-center justify-center gap-1.5 font-medium transition-colors",
+            liked ? "text-red-500" : "text-[#666666] hover:text-[#111111]"
           )}
         >
-          <Heart size={16} />
-          {likes}
+          <Heart size={16} className={liked ? "fill-red-500" : ""} />
+          {likes > 0 && formatNumber(likes)}
         </button>
+
+        <div className="w-px h-6 bg-[#E5E5E5]" />
 
         {/* COMMENT */}
         <button
           onClick={() => onCommentClick?.(post.id)}
-          className="flex-1 py-2 text-sm text-gray-500 flex items-center justify-center gap-1"
+          className="flex-1 py-2.5 text-sm text-[#666666] hover:text-[#111111] flex items-center justify-center gap-1.5 font-medium transition-colors"
         >
           <MessageCircle size={16} />
-          {commentCount}
+          {commentCount > 0 && formatNumber(commentCount)}
         </button>
+
+        <div className="w-px h-6 bg-[#E5E5E5]" />
 
         {/* SHARE */}
         <button
           onClick={handleShare}
-          className="flex-1 py-2 text-sm text-gray-500 flex items-center justify-center gap-1"
+          className="flex-1 py-2.5 text-sm text-[#666666] hover:text-[#111111] flex items-center justify-center gap-1.5 font-medium transition-colors"
         >
           <Share2 size={16} />
         </button>

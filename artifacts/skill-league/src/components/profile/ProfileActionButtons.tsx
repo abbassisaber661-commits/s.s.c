@@ -36,9 +36,9 @@ const ActionButton = memo(
     className?: string;
   }) => {
     const variantClasses = {
-      primary:   "bg-blue-500 hover:bg-blue-600 text-white",
-      secondary: "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200",
-      success:   "bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400",
+      primary:   "bg-[#FFD60A] hover:bg-[#F5C800] text-black border border-[#FFD60A]",
+      secondary: "bg-white hover:bg-[#F5F5F7] text-[#111111] border border-[#E5E5E5]",
+      success:   "bg-green-50 hover:bg-green-100 text-green-700 border border-green-200",
     };
 
     return (

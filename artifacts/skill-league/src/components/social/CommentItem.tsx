@@ -66,8 +66,7 @@ export const CommentItem = memo(function CommentItem({
       <div className="flex-shrink-0">
         <div
           className={cn(
-            "rounded-full flex items-center justify-center font-bold text-white",
-            "bg-gradient-to-br from-blue-400 to-purple-500",
+            "rounded-full flex items-center justify-center font-bold text-black bg-[#FFD60A]",
             depth === 0 ? "w-8 h-8 text-xs" : "w-6 h-6 text-[10px]"
           )}
         >
@@ -77,27 +76,27 @@ export const CommentItem = memo(function CommentItem({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="bg-gray-50 dark:bg-gray-800/60 rounded-2xl px-3 py-2">
+        <div className="bg-[#F5F5F7] rounded-2xl px-3 py-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-xs font-bold text-gray-900 dark:text-white">
+            <span className="text-xs font-bold text-[#111111]">
               {comment.authorName}
             </span>
-            <span className="text-[10px] text-gray-400">Lv.{comment.authorLevel}</span>
+            <span className="text-[10px] text-[#666666]">Lv.{comment.authorLevel}</span>
           </div>
-          <p className="text-sm text-gray-700 dark:text-gray-200 mt-0.5 leading-relaxed break-words">
+          <p className="text-sm text-[#111111] mt-0.5 leading-relaxed break-words">
             {comment.content}
           </p>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-3 mt-1.5 ml-1">
-          <span className="text-[10px] text-gray-400">{formatAge(comment.timestamp)}</span>
+          <span className="text-[10px] text-[#666666]">{formatAge(comment.timestamp)}</span>
 
           <button
             onClick={handleLike}
             className={cn(
               "flex items-center gap-1 text-[11px] font-semibold transition-colors",
-              liked ? "text-red-500" : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              liked ? "text-red-500" : "text-[#666666] hover:text-[#111111]"
             )}
           >
             <Heart size={12} className={liked ? "fill-red-500" : ""} />
@@ -107,7 +106,7 @@ export const CommentItem = memo(function CommentItem({
           {onReply && depth === 0 && (
             <button
               onClick={() => onReply(comment)}
-              className="flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-blue-500 transition-colors"
+              className="flex items-center gap-1 text-[11px] font-semibold text-[#666666] hover:text-[#111111] transition-colors"
             >
               <Reply size={12} />
               Reply
@@ -117,7 +116,7 @@ export const CommentItem = memo(function CommentItem({
           {replyCount > 0 && depth === 0 && (
             <button
               onClick={() => setShowReplies((v) => !v)}
-              className="text-[11px] font-semibold text-blue-500 hover:text-blue-600"
+              className="text-[11px] font-semibold text-[#111111] hover:text-[#666666] transition-colors"
             >
               {showReplies ? "Hide" : `${replyCount} repl${replyCount === 1 ? "y" : "ies"}`}
             </button>
@@ -127,7 +126,7 @@ export const CommentItem = memo(function CommentItem({
           <div className="relative ml-auto">
             <button
               onClick={() => setShowMenu((v) => !v)}
-              className="text-gray-300 hover:text-gray-500 dark:hover:text-gray-400 transition-colors"
+              className="text-[#E5E5E5] hover:text-[#666666] transition-colors"
             >
               <MoreHorizontal size={14} />
             </button>
@@ -142,14 +141,14 @@ export const CommentItem = memo(function CommentItem({
                     exit={{ opacity: 0, scale: 0.9 }}
                     className={cn(
                       "absolute right-0 bottom-full mb-1 z-50 w-36",
-                      "bg-white dark:bg-gray-900 rounded-xl shadow-xl",
-                      "border border-gray-100 dark:border-gray-800 overflow-hidden"
+                      "bg-white rounded-xl shadow-lg",
+                      "border border-[#E5E5E5] overflow-hidden"
                     )}
                   >
                     {isOwner && onDelete && (
                       <button
                         onClick={() => { onDelete(comment.id); setShowMenu(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
                       >
                         <Trash2 size={12} /> Delete
                       </button>
@@ -157,7 +156,7 @@ export const CommentItem = memo(function CommentItem({
                     {!isOwner && onReport && (
                       <button
                         onClick={() => { onReport(comment.id); setShowMenu(false); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
                       >
                         <Flag size={12} /> Report
                       </button>

@@ -69,8 +69,8 @@ const Toolbar = memo(({
         className={cn(
           "flex items-center justify-center w-8 h-8 rounded-lg transition-all",
           active
-            ? "text-blue-500 bg-blue-50 dark:bg-blue-900/20"
-            : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+            ? "text-[#111111] bg-[#FFD60A]/20"
+            : "text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F7]",
           "disabled:opacity-40 disabled:cursor-not-allowed"
         )}
       >
@@ -84,7 +84,7 @@ const Toolbar = memo(({
       {btn(ImageIcon, onImage, hasImage, hasVideo || hasPoll, "Add image")}
       {btn(Video,     onVideo, hasVideo, hasImage || hasPoll, "Add video")}
       {btn(BarChart3, onPoll,  hasPoll,  hasImage || hasVideo, "Create poll")}
-      <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
+      <div className="w-px h-5 bg-[#E5E5E5] mx-1" />
       {btn(Hash,      onHashtag, false, false, "Add hashtag")}
       {btn(AtSign,    () => {}, false, false, "Mention user")}
       {btn(MapPin,    onLocation, false, false, "Add location")}
@@ -104,25 +104,25 @@ const PollBuilder = memo(({
   onRemoveOption(id: string): void;
 }) => (
   <div className="space-y-2 px-4 pb-2">
-    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Poll</p>
+    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider">Poll</p>
     <input
       value={question}
       onChange={(e) => onQuestionChange(e.target.value)}
       placeholder="Ask a question…"
-      className="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-xl border border-transparent focus:border-blue-400 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+      className="w-full px-3 py-2 text-sm bg-[#F5F5F7] rounded-xl border border-[#E5E5E5] focus:border-[#FFD60A] focus:outline-none text-[#111111] placeholder-[#666666]"
     />
     <div className="space-y-1.5">
       {options.map((opt, i) => (
         <div key={opt.id} className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 w-5 text-right font-medium">{i + 1}.</span>
+          <span className="text-xs text-[#666666] w-5 text-right font-medium">{i + 1}.</span>
           <input
             value={opt.text}
             onChange={(e) => onOptionChange(opt.id, e.target.value)}
             placeholder={`Option ${i + 1}`}
-            className="flex-1 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg border border-transparent focus:border-blue-400 focus:outline-none text-gray-900 dark:text-white placeholder-gray-400"
+            className="flex-1 px-3 py-1.5 text-sm bg-[#F5F5F7] rounded-lg border border-[#E5E5E5] focus:border-[#FFD60A] focus:outline-none text-[#111111] placeholder-[#666666]"
           />
           {options.length > 2 && (
-            <button onClick={() => onRemoveOption(opt.id)} className="text-gray-400 hover:text-red-400 transition-colors">
+            <button onClick={() => onRemoveOption(opt.id)} className="text-[#666666] hover:text-red-500 transition-colors">
               <X size={14} />
             </button>
           )}
@@ -132,7 +132,7 @@ const PollBuilder = memo(({
     {options.length < MAX_POLL_OPTIONS && (
       <button
         onClick={onAddOption}
-        className="flex items-center gap-1.5 text-xs text-blue-500 font-semibold hover:text-blue-600 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-[#111111] font-semibold hover:text-[#666666] transition-colors"
       >
         <Plus size={13} /> Add option
       </button>
@@ -164,7 +164,6 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
   const videoInputRef = useRef<HTMLInputElement>(null);
   const textareaRef   = useRef<HTMLTextAreaElement>(null);
 
-  // Restore draft on open
   useEffect(() => {
     if (!isOpen) return;
     const draft = getDraft();
@@ -174,7 +173,6 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
     textareaRef.current?.focus();
   }, [isOpen]);
 
-  // Auto-save draft every 3 seconds
   useEffect(() => {
     if (!isOpen) return;
     const t = setInterval(() => {
@@ -297,7 +295,7 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/50"
             onClick={handleClose}
           />
 
@@ -309,23 +307,23 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
             className={cn(
               "fixed bottom-0 left-0 right-0 z-[60] max-w-2xl mx-auto",
-              "bg-white dark:bg-gray-950 rounded-t-3xl shadow-2xl",
+              "bg-white rounded-t-3xl shadow-2xl",
               "flex flex-col max-h-[92vh]"
             )}
           >
             {/* Handle */}
-            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-3 flex-shrink-0" />
+            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mt-3 flex-shrink-0" />
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-[#E5E5E5]">
               <button
                 onClick={handleClose}
-                className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium"
+                className="text-sm text-[#666666] hover:text-[#111111] font-medium transition-colors"
               >
                 Cancel
               </button>
 
-              <h3 className="text-sm font-bold text-gray-900 dark:text-white">New Post</h3>
+              <h3 className="text-sm font-bold text-[#111111]">New Post</h3>
 
               {/* Audience selector */}
               <div className="relative">
@@ -333,8 +331,8 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                   onClick={() => setShowAudience((v) => !v)}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold",
-                    "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300",
-                    "hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    "bg-[#F5F5F7] border border-[#E5E5E5] text-[#666666]",
+                    "hover:bg-[#E5E5E5] transition-colors"
                   )}
                 >
                   <currentAudience.icon size={12} />
@@ -347,7 +345,7 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                       initial={{ opacity: 0, scale: 0.9, y: -4 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9, y: -4 }}
-                      className="absolute right-0 top-full mt-1 z-50 w-40 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden"
+                      className="absolute right-0 top-full mt-1 z-50 w-40 bg-white rounded-2xl shadow-lg border border-[#E5E5E5] overflow-hidden"
                     >
                       {AUDIENCE_OPTIONS.map((opt) => {
                         const Icon = opt.icon;
@@ -358,8 +356,8 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                             className={cn(
                               "w-full flex items-center gap-2 px-4 py-2.5 text-sm transition-colors",
                               audience === opt.value
-                                ? "text-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                ? "text-[#111111] bg-[#FFD60A]/20 font-bold"
+                                : "text-[#666666] hover:bg-[#F5F5F7]"
                             )}
                           >
                             <Icon size={14} />
@@ -380,11 +378,11 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-100 dark:border-amber-800 flex-shrink-0"
+                  className="flex items-center gap-2 px-4 py-2 bg-[#FFFBEB] border-b border-[#FFD60A]/30 flex-shrink-0"
                 >
-                  <span className="text-xs text-amber-700 dark:text-amber-400 flex-1">You have a saved draft</span>
-                  <button onClick={restoreDraft} className="text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline">Restore</button>
-                  <button onClick={() => { clearDraft(); setHasDraft(false); }} className="text-xs text-amber-500 hover:text-amber-700">
+                  <span className="text-xs text-[#666666] flex-1">You have a saved draft</span>
+                  <button onClick={restoreDraft} className="text-xs font-semibold text-[#111111] hover:underline">Restore</button>
+                  <button onClick={() => { clearDraft(); setHasDraft(false); }} className="text-xs text-[#666666] hover:text-[#111111]">
                     <X size={12} />
                   </button>
                 </motion.div>
@@ -395,12 +393,12 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
             <div className="flex-1 overflow-y-auto min-h-0">
               {/* Author row */}
               <div className="flex items-center gap-3 px-4 pt-4 pb-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[#FFD60A] flex items-center justify-center text-black font-bold flex-shrink-0">
                   {username[0]?.toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{username}</p>
-                  <p className="text-xs text-gray-400">Level {level}</p>
+                  <p className="text-sm font-bold text-[#111111]">{username}</p>
+                  <p className="text-xs text-[#666666]">Level {level}</p>
                 </div>
               </div>
 
@@ -412,8 +410,8 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                   onChange={(e) => setContent(e.target.value.slice(0, MAX_CHARS))}
                   placeholder="What's on your mind? Use # for hashtags, @ for mentions…"
                   className={cn(
-                    "w-full resize-none bg-transparent text-sm text-gray-900 dark:text-white",
-                    "placeholder-gray-400 focus:outline-none leading-relaxed",
+                    "w-full resize-none bg-transparent text-sm text-[#111111]",
+                    "placeholder-[#666666] focus:outline-none leading-relaxed",
                     "min-h-[80px]"
                   )}
                   rows={4}
@@ -421,7 +419,7 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                 <div className="flex justify-end">
                   <span className={cn(
                     "text-[10px] font-medium",
-                    charLeft < 20 ? "text-red-500" : charLeft < 60 ? "text-amber-500" : "text-gray-400"
+                    charLeft < 20 ? "text-red-500" : charLeft < 60 ? "text-amber-500" : "text-[#666666]"
                   )}>
                     {charLeft}
                   </span>
@@ -442,7 +440,7 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                     )}
                   >
                     {images.map((url, i) => (
-                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-[#F5F5F7]">
                         <img src={url} alt="" className="w-full h-full object-cover" />
                         <button
                           onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
@@ -455,7 +453,7 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                     {images.length < MAX_IMAGES && (
                       <button
                         onClick={() => imageInputRef.current?.click()}
-                        className="aspect-square rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-400 transition-colors"
+                        className="aspect-square rounded-xl border-2 border-dashed border-[#E5E5E5] flex items-center justify-center text-[#666666] hover:border-[#FFD60A] hover:text-[#111111] transition-colors"
                       >
                         <Plus size={20} />
                       </button>
@@ -493,7 +491,7 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="border-t border-gray-100 dark:border-gray-800 pt-3"
+                    className="border-t border-[#E5E5E5] pt-3"
                   >
                     <PollBuilder
                       question={pollQuestion}
@@ -518,17 +516,17 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                     exit={{ opacity: 0, height: 0 }}
                     className="px-4 pb-3"
                   >
-                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
-                      <MapPin size={14} className="text-blue-500 flex-shrink-0" />
+                    <div className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F7] rounded-xl border border-[#E5E5E5]">
+                      <MapPin size={14} className="text-[#FFD60A] flex-shrink-0" />
                       <input
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                         placeholder="Add location…"
                         autoFocus
-                        className="flex-1 bg-transparent text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                        className="flex-1 bg-transparent text-sm text-[#111111] placeholder-[#666666] focus:outline-none"
                       />
                       {location && (
-                        <button onClick={() => setLocation("")} className="text-gray-400">
+                        <button onClick={() => setLocation("")} className="text-[#666666] hover:text-[#111111]">
                           <X size={13} />
                         </button>
                       )}
@@ -539,7 +537,7 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 px-4 py-3 pb-safe">
+            <div className="flex-shrink-0 border-t border-[#E5E5E5] px-4 py-3 pb-safe bg-white">
               <div className="flex items-center gap-1">
                 {/* Toolbar */}
                 <Toolbar
@@ -563,8 +561,8 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
                   className={cn(
                     "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all",
                     canPost
-                      ? "bg-blue-500 hover:bg-blue-600 text-white"
-                      : "bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
+                      ? "bg-[#FFD60A] hover:bg-[#F5C800] text-black"
+                      : "bg-[#F5F5F7] text-[#666666] cursor-not-allowed border border-[#E5E5E5]"
                   )}
                 >
                   {submitting

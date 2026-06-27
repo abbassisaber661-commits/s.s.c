@@ -20,10 +20,10 @@ const SKELETON = () => (
   <div className="space-y-4 px-4 pt-2">
     {[1, 2, 3].map((i) => (
       <div key={i} className="flex gap-2.5">
-        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse flex-shrink-0" />
+        <div className="w-8 h-8 rounded-full bg-[#F5F5F7] animate-pulse flex-shrink-0" />
         <div className="flex-1 space-y-1.5">
-          <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
-          <div className="h-3 w-24 bg-gray-100 dark:bg-gray-700 rounded animate-pulse ml-1" />
+          <div className="h-16 bg-[#F5F5F7] rounded-2xl animate-pulse" />
+          <div className="h-3 w-24 bg-[#E5E5E5] rounded animate-pulse ml-1" />
         </div>
       </div>
     ))}
@@ -73,13 +73,11 @@ export const CommentsSheet = memo(({
     }).finally(() => setLoading(false));
   }, [isOpen, postId]);
 
-  // Real-time comment subscription — skip own events (already added optimistically)
   useEffect(() => {
     if (!isOpen) return;
     const socket = getSocket();
     const handler = (data: any) => {
       if (data.postId !== postId) return;
-      // Skip if this event originated from the current user (already added optimistically)
       if (data.comment?.username === username) return;
       const newComment: CommentData = {
         id:          `rt_${Date.now()}`,
@@ -98,7 +96,7 @@ export const CommentsSheet = memo(({
   }, [isOpen, postId, username]);
 
   const handleSend = useCallback(async () => {
-    const text = replyTo ? draft.trim() : draft.trim();
+    const text = draft.trim();
     if (!text) return;
 
     setSending(true);
@@ -190,7 +188,7 @@ export const CommentsSheet = memo(({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/40"
             onClick={onClose}
           />
 
@@ -202,28 +200,28 @@ export const CommentsSheet = memo(({
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
             className={cn(
               "fixed bottom-0 left-0 right-0 z-50 max-w-2xl mx-auto",
-              "bg-white dark:bg-gray-950 rounded-t-3xl",
+              "bg-white rounded-t-3xl",
               "flex flex-col shadow-2xl",
               "max-h-[85vh]"
             )}
           >
             {/* Handle */}
-            <div className="w-10 h-1 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto mt-3 mb-2 flex-shrink-0" />
+            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mt-3 mb-2 flex-shrink-0" />
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0 border-b border-[#E5E5E5]">
               <div className="flex items-center gap-2">
-                <MessageCircle size={16} className="text-blue-500" />
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">
+                <MessageCircle size={16} className="text-[#FFD60A]" />
+                <h3 className="text-sm font-bold text-[#111111]">
                   Comments
                 </h3>
-                <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                <span className="text-xs text-[#666666] bg-[#F5F5F7] px-2 py-0.5 rounded-full">
                   {comments.length}
                 </span>
               </div>
               <button
                 onClick={onClose}
-                className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="w-7 h-7 rounded-full bg-[#F5F5F7] flex items-center justify-center text-[#666666] hover:bg-[#E5E5E5] transition-colors"
               >
                 <X size={14} />
               </button>
@@ -236,13 +234,16 @@ export const CommentsSheet = memo(({
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 flex-shrink-0 border-b border-blue-100 dark:border-blue-800"
+                  className="flex items-center gap-2 px-4 py-2 bg-[#FFFBEB] flex-shrink-0 border-b border-[#FFD60A]/30"
                 >
-                  <Reply size={13} className="text-blue-500 flex-shrink-0" />
-                  <span className="text-xs text-blue-600 dark:text-blue-400 font-medium flex-1 truncate">
+                  <Reply size={13} className="text-[#111111] flex-shrink-0" />
+                  <span className="text-xs text-[#666666] font-medium flex-1 truncate">
                     Replying to @{replyTo.authorName}
                   </span>
-                  <button onClick={() => { setReplyTo(null); setDraft(""); }} className="text-blue-400 hover:text-blue-600">
+                  <button
+                    onClick={() => { setReplyTo(null); setDraft(""); }}
+                    className="text-[#666666] hover:text-[#111111]"
+                  >
                     <X size={13} />
                   </button>
                 </motion.div>
@@ -256,8 +257,8 @@ export const CommentsSheet = memo(({
               ) : comments.length === 0 ? (
                 <div className="flex flex-col items-center py-12 text-center">
                   <span className="text-4xl mb-2">💬</span>
-                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">No comments yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Be the first to comment!</p>
+                  <p className="text-sm font-semibold text-[#111111]">No comments yet</p>
+                  <p className="text-xs text-[#666666] mt-1">Be the first to comment!</p>
                 </div>
               ) : (
                 <div className="px-4 space-y-3">
@@ -274,7 +275,7 @@ export const CommentsSheet = memo(({
                   {hasMore && (
                     <button
                       onClick={handleLoadMore}
-                      className="w-full text-xs text-blue-500 font-semibold py-2"
+                      className="w-full text-xs text-[#666666] font-semibold py-2 hover:text-[#111111] transition-colors"
                     >
                       Load more comments
                     </button>
@@ -284,9 +285,9 @@ export const CommentsSheet = memo(({
             </div>
 
             {/* Input */}
-            <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 px-4 py-3 pb-safe">
+            <div className="flex-shrink-0 border-t border-[#E5E5E5] px-4 py-3 pb-safe bg-white">
               <div className="flex items-end gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#FFD60A] flex items-center justify-center text-black text-xs font-bold flex-shrink-0">
                   {username[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 relative">
@@ -299,9 +300,9 @@ export const CommentsSheet = memo(({
                     rows={1}
                     className={cn(
                       "w-full resize-none px-3 py-2.5 text-sm rounded-2xl",
-                      "bg-gray-100 dark:bg-gray-800",
-                      "text-gray-900 dark:text-white placeholder-gray-400",
-                      "border border-transparent focus:border-blue-400 focus:outline-none",
+                      "bg-[#F5F5F7] border border-[#E5E5E5]",
+                      "text-[#111111] placeholder-[#666666]",
+                      "focus:border-[#FFD60A] focus:outline-none",
                       "transition-colors max-h-28 overflow-y-auto"
                     )}
                     style={{ fieldSizing: "content" } as React.CSSProperties}
@@ -314,8 +315,8 @@ export const CommentsSheet = memo(({
                   className={cn(
                     "w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0",
                     draft.trim() && !sending
-                      ? "bg-blue-500 hover:bg-blue-600 text-white"
-                      : "bg-gray-200 dark:bg-gray-700 text-gray-400"
+                      ? "bg-[#FFD60A] hover:bg-[#F5C800] text-black"
+                      : "bg-[#F5F5F7] text-[#666666]"
                   )}
                 >
                   {sending

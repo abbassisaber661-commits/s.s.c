@@ -32,7 +32,7 @@ export const ProfileCoverHeader = memo(
     return (
       <div className="w-full">
         {/* ── Cover Photo ─────────────────────────────────────────── */}
-        <div className="relative h-48 md:h-64 bg-gradient-to-br from-blue-900 via-gray-800 to-gray-900 overflow-hidden">
+        <div className="relative h-48 md:h-64 bg-gradient-to-br from-[#111111] via-[#222222] to-[#333333] overflow-hidden">
           {profile.profileTheme?.gradient && (
             <div
               className="absolute inset-0"
@@ -48,12 +48,12 @@ export const ProfileCoverHeader = memo(
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-full h-full bg-gradient-to-br from-blue-800/40 via-purple-800/20 to-gray-900/60" />
+              <div className="w-full h-full bg-gradient-to-br from-[#FFD60A]/20 via-[#111111]/40 to-[#111111]/80" />
             </div>
           )}
 
           {/* Gradient overlay bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/40 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/30 to-transparent" />
 
           {/* Edit cover button (owner only) */}
           {isOwner && (
@@ -61,7 +61,7 @@ export const ProfileCoverHeader = memo(
               onClick={onCoverClick}
               className={cn(
                 "absolute bottom-3 right-3 flex items-center gap-1.5",
-                "bg-black/50 hover:bg-black/70 backdrop-blur-sm",
+                "bg-black/50 hover:bg-black/70",
                 "text-white text-xs font-medium px-3 py-1.5 rounded-full",
                 "transition-all duration-200"
               )}
@@ -93,8 +93,8 @@ export const ProfileCoverHeader = memo(
               <div
                 className={cn(
                   "w-28 h-28 rounded-full overflow-hidden",
-                  "border-4 border-white dark:border-gray-950",
-                  "shadow-xl bg-gray-200 dark:bg-gray-800"
+                  "border-4 border-white",
+                  "shadow-xl bg-[#F5F5F7]"
                 )}
               >
                 {profile.avatar ? (
@@ -104,7 +104,7 @@ export const ProfileCoverHeader = memo(
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-[#666666]">
                     {(profile.displayName ?? profile.username)?.[0]?.toUpperCase() ?? "?"}
                   </div>
                 )}
@@ -117,7 +117,7 @@ export const ProfileCoverHeader = memo(
                   className={cn(
                     "absolute bottom-0 right-0 z-20",
                     "w-8 h-8 rounded-full flex items-center justify-center",
-                    "bg-blue-500 hover:bg-blue-600 text-white shadow-lg",
+                    "bg-[#FFD60A] hover:bg-[#F5C800] text-black shadow-lg",
                     "transition-colors duration-200"
                   )}
                 >
@@ -137,7 +137,7 @@ export const ProfileCoverHeader = memo(
         >
           {/* Display name + badge */}
           <div className="flex items-center justify-center gap-1.5 flex-wrap">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+            <h1 className="text-xl font-bold text-[#111111] leading-tight">
               {profile.displayName ?? profile.username}
             </h1>
             {profile.verification && profile.verification !== "none" && (
@@ -146,13 +146,13 @@ export const ProfileCoverHeader = memo(
           </div>
 
           {/* @username */}
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-sm text-[#666666] mt-0.5">
             @{profile.username}
           </p>
 
           {/* Bio */}
           {profile.bio && (
-            <p className="text-sm text-gray-700 dark:text-gray-300 mt-3 max-w-sm mx-auto leading-relaxed">
+            <p className="text-sm text-[#111111] mt-3 max-w-sm mx-auto leading-relaxed">
               {profile.bio}
             </p>
           )}
@@ -160,13 +160,13 @@ export const ProfileCoverHeader = memo(
           {/* Meta info */}
           <div className="flex items-center justify-center gap-4 flex-wrap mt-3">
             {profile.country && (
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-[#666666]">
                 <MapPin size={12} />
                 <span>{profile.country}</span>
               </div>
             )}
             {joinDate && (
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-[#666666]">
                 <Calendar size={12} />
                 <span>Joined {joinDate}</span>
               </div>
