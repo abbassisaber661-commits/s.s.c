@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { useT, isRTL } from "@/lib/i18n";
 import { useCreatePost } from "@/hooks/useCommunity";
+import { getStoredPlayerId } from "@/lib/apiClient";
 import CreatePost from "@/components/social/CreatePost";
 
 export default function SocialBottomNav() {
@@ -26,8 +27,9 @@ export default function SocialBottomNav() {
 
   async function handlePost(content: string, imageUrl?: string) {
     return new Promise<void>((resolve, reject) => {
+      const authorId = getStoredPlayerId() ?? undefined;
       createPost(
-        { content, imageUrl, username },
+        { content, imageUrl, username, authorId },
         {
           onSuccess: () => { setPostOpen(false); resolve(); },
           onError: (err) => reject(err),
@@ -239,6 +241,7 @@ export default function SocialBottomNav() {
                 <CreatePost
                   onPost={handlePost}
                   username={username}
+                  defaultOpen={true}
                 />
               </div>
             </motion.div>

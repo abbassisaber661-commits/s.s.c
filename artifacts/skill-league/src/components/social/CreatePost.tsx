@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, ImageIcon, Camera, X, AlertCircle, Loader2, CheckCircle } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import { useTranslation } from "@/hooks/useTranslation";
-import { compressImage } from "@/lib/imageUtils";
+import { compressImageToBase64 } from "@/lib/imageUtils";
 
 interface CreatePostProps {
   onPost: (content: string, imageUrl?: string) => Promise<void> | void;
   username?: string;
   onAvatarClick?: () => void;
   maxLength?: number;
+  defaultOpen?: boolean;
 }
 
 export default function CreatePost({
@@ -17,10 +18,11 @@ export default function CreatePost({
   username,
   onAvatarClick,
   maxLength = 280,
+  defaultOpen = false,
 }: CreatePostProps) {
   const { t } = useTranslation();
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState("");
   const [imageUrl, setImageUrl] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +55,8 @@ export default function CreatePost({
     setLoadingImage(true);
     setError(null);
     try {
-      const compressed = await compressImage(file);
-      setImageUrl(URL.createObjectURL(compressed));
+      const base64 = await compressImageToBase64(file);
+      setImageUrl(base64);
       if (!open) setOpen(true);
     } catch {
       setError(t('createPost.imageLoadError') || "Could not load image. Please try another file.");
