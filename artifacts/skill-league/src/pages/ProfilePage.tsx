@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, RefreshCcw, Settings } from "lucide-react";
+import { AlertCircle, RefreshCcw, Menu } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 
 import { useTranslation } from "@/hooks/useTranslation";
@@ -205,7 +205,7 @@ export default function ProfilePage() {
             onClick={() => navigate("/profile-settings")}
             className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/50 transition-colors"
           >
-            <Settings size={16} />
+            <Menu size={16} />
           </button>
         </div>
       )}

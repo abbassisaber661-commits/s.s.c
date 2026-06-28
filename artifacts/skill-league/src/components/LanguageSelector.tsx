@@ -5,9 +5,10 @@ import { Globe } from 'lucide-react';
 interface Props {
   current: Language;
   onChange: (lang: Language) => void;
+  upward?: boolean;
 }
 
-export default function LanguageSelector({ current, onChange }: Props) {
+export default function LanguageSelector({ current, onChange, upward = false }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,7 +34,8 @@ export default function LanguageSelector({ current, onChange }: Props) {
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 z-50 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+        <div
+          className={`absolute z-50 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden ${upward ? 'bottom-full mb-2' : 'top-full mt-2'}`}
           style={{ minWidth: '200px', right: 0 }}
         >
           <div className="p-2 grid grid-cols-1 gap-0.5 max-h-72 overflow-y-auto">

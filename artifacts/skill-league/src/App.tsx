@@ -66,8 +66,8 @@ import Settings from "@/pages/Settings";
 import BottomNav from "@/components/BottomNav";
 import SocialBottomNav from "@/components/SocialBottomNav";
 import LiveNotifToast from "@/components/LiveNotifToast";
-import BetaBanner from "@/components/BetaBanner";
-import BetaFeedbackWidget from "@/components/BetaFeedbackWidget";
+import LanguageSelector from "@/components/LanguageSelector";
+import type { Language } from "@/lib/i18n";
 
 // Utils
 import { getNotifications, unreadCount } from "@/lib/messages";
@@ -122,6 +122,8 @@ function AppShell() {
   ) {
     return <AuthScreen />;
   }
+
+  const { language, setLanguage } = useGame();
 
   return (
     <>
@@ -183,8 +185,15 @@ function AppShell() {
       {!hideNav && <BottomNav unreadMessages={unread} />}
       {showSocialNav && <SocialBottomNav />}
 
-      <BetaBanner />
-      <BetaFeedbackWidget />
+      {!hideNav && (
+        <div className="fixed right-3 z-40" style={{ bottom: "76px" }}>
+          <LanguageSelector
+            current={(language as Language) ?? "en"}
+            onChange={(lang: Language) => setLanguage(lang)}
+            upward
+          />
+        </div>
+      )}
     </>
   );
 }

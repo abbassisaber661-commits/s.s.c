@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Wifi, Search, MessageSquare, Bell, Globe } from "lucide-react";
+import { Loader2, Search, MessageSquare, Bell } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useLocation } from "wouter";
 
@@ -14,9 +14,7 @@ import StoryBar from "@/components/social/StoryBar";
 import FeaturedPlayers from "@/components/social/FeaturedPlayers";
 import GuestBanner from "@/components/GuestBanner";
 import Avatar from "@/components/Avatar";
-import LanguageSelector from "@/components/LanguageSelector";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
-import type { Language } from "@/lib/i18n";
 
 const PostSkeleton = () => (
   <div className="bg-white rounded-2xl p-4 animate-pulse border border-[#E5E5E5] shadow-sm">
@@ -60,7 +58,7 @@ const CreatePostTrigger = ({ username, onOpen }: { username: string; onOpen: () 
 );
 
 export default function FeedPage() {
-  const { username, isGuest, language, setLanguage, authUser } = useGame() as any;
+  const { username, isGuest, authUser } = useGame() as any;
   const { connected, pushNotifs } = useRealtime();
   const [, navigate] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -190,13 +188,6 @@ export default function FeedPage() {
               )}
             </button>
 
-            {/* Language — kept exactly as-is */}
-            <div className="ml-1">
-              <LanguageSelector
-                current={(language as Language) ?? "en"}
-                onChange={(lang: Language) => setLanguage(lang)}
-              />
-            </div>
           </div>
         </div>
       </div>

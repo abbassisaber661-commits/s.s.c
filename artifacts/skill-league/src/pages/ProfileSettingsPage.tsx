@@ -3,19 +3,12 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  User,
   Shield,
-  Bell,
-  Palette,
-  Lock,
-  UserX,
   ChevronRight,
-  Settings,
   LogOut,
-  Trash2,
 } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useGame } from "@/contexts/GameContext";
 import { PrivacySettings } from "@/components/profile/PrivacySettings";
 import type { PrivacyConfig } from "@/types/profile";
 
@@ -117,13 +110,18 @@ export default function ProfileSettingsPage() {
   const [, navigate] = useLocation();
   const [view, setView] = useState<SettingsView>("main");
   const [privacy, setPrivacy] = useState<PrivacyConfig>(DEFAULT_PRIVACY);
+  const { logout } = useGame();
 
   const handlePrivacyChange = (
     key: keyof PrivacyConfig,
     value: PrivacyConfig[keyof PrivacyConfig]
   ) => {
     setPrivacy((prev) => ({ ...prev, [key]: value }));
-    toast.success("Privacy setting updated");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
@@ -157,23 +155,6 @@ export default function ProfileSettingsPage() {
       ) : (
         /* ── Main settings view ── */
         <div className="pb-20">
-          <SectionHeader title="Account" />
-          <div className="bg-white dark:bg-gray-900/60 rounded-2xl mx-4 border border-gray-100 dark:border-gray-800 overflow-hidden">
-            <SettingsRow
-              icon={User}
-              label="Edit Profile"
-              description="Update your name, bio, and avatar"
-              onClick={() => toast.info("Open Edit Profile modal")}
-            />
-            <Divider />
-            <SettingsRow
-              icon={Settings}
-              label="Account Preferences"
-              description="Language, timezone, and display options"
-              onClick={() => toast.info("Coming soon")}
-            />
-          </div>
-
           <SectionHeader title="Privacy & Security" />
           <div className="bg-white dark:bg-gray-900/60 rounded-2xl mx-4 border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SettingsRow
@@ -182,54 +163,14 @@ export default function ProfileSettingsPage() {
               description="Control who can see your profile and content"
               onClick={() => setView("privacy")}
             />
-            <Divider />
-            <SettingsRow
-              icon={Lock}
-              label="Security"
-              description="Password, two-factor authentication"
-              onClick={() => toast.info("Coming soon")}
-            />
-            <Divider />
-            <SettingsRow
-              icon={UserX}
-              label="Blocked Users"
-              description="Manage accounts you have blocked"
-              onClick={() => toast.info("Coming soon")}
-            />
           </div>
 
-          <SectionHeader title="Personalization" />
-          <div className="bg-white dark:bg-gray-900/60 rounded-2xl mx-4 border border-gray-100 dark:border-gray-800 overflow-hidden">
-            <SettingsRow
-              icon={Palette}
-              label="Appearance"
-              description="Theme, dark mode, and visual preferences"
-              onClick={() => toast.info("Coming soon")}
-            />
-            <Divider />
-            <SettingsRow
-              icon={Bell}
-              label="Notifications"
-              description="Push, email, and in-app alerts"
-              onClick={() => toast.info("Coming soon")}
-              badge="3"
-            />
-          </div>
-
-          <SectionHeader title="Danger Zone" />
+          <SectionHeader title="Account" />
           <div className="bg-white dark:bg-gray-900/60 rounded-2xl mx-4 border border-gray-100 dark:border-gray-800 overflow-hidden">
             <SettingsRow
               icon={LogOut}
               label="Log Out"
-              onClick={() => toast.info("Log out flow here")}
-              variant="danger"
-            />
-            <Divider />
-            <SettingsRow
-              icon={Trash2}
-              label="Delete Account"
-              description="Permanently remove your account and data"
-              onClick={() => toast.error("This action is irreversible")}
+              onClick={handleLogout}
               variant="danger"
             />
           </div>

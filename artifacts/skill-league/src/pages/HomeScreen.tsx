@@ -16,8 +16,6 @@ import { loadStreakData } from "@/lib/login-streak";
 import { getJourneyTier } from "@/lib/journey";
 import { loadLocalGems } from "@/lib/economy";
 import { Bell } from "lucide-react";
-import { CreatePostModal, type CreatePostData } from "@/components/social/CreatePostModal";
-import { useCreatePost } from "@/hooks/useCommunity";
 
 // ── Particles (seeded, stable across renders) ─────────────────────────────────
 const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
@@ -99,8 +97,6 @@ export default function HomeScreen() {
   const [newsUnread,      setNewsUnread]      = useState(0);
   const [gems,            setGems]            = useState(0);
   const [top5,            setTop5]            = useState<any[]>([]);
-  const [showCreatePost,  setShowCreatePost]  = useState(false);
-  const createPostMutation = useCreatePost();
 
   useEffect(() => {
     setUnread(unreadCount(getNotifications()));
@@ -495,39 +491,10 @@ export default function HomeScreen() {
           </div>
         </motion.div>
 
-        {/* Community section — Friends / Jobs / Market / Post */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
-          <SectionLabel label="Community" />
-          <div className="grid grid-cols-4 gap-2">
-            <NavBtn href="/friends"    icon="🤝" label="Friends"  color="#34d399" />
-            <NavBtn href="/jobs"       icon="💼" label="Jobs"     color="#fbbf24" />
-            <NavBtn href="/marketplace" icon="🛒" label="Market"  color="#f472b6" />
-            {/* Create Post — not a link, opens modal */}
-            <button
-              onClick={() => setShowCreatePost(true)}
-              className="relative w-full h-16 rounded-2xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all"
-              style={{ borderColor: "#a78bfa40", backgroundColor: "#a78bfa12", border: "1px solid #a78bfa40" }}
-            >
-              <span className="text-xl leading-none">✍️</span>
-              <span className="text-[10px] font-bold leading-none" style={{ color: "#a78bfa" }}>Post</span>
-            </button>
-          </div>
-        </motion.div>
-
         {/* ── Top 5 Players Per League ─────────────────── */}
         <LeagueTop5Section top5={top5} />
 
       </div>
-
-      {/* Create Post Modal */}
-      <CreatePostModal
-        isOpen={showCreatePost}
-        onClose={() => setShowCreatePost(false)}
-        onSubmit={async (data: CreatePostData) => {
-          await createPostMutation.mutateAsync(data);
-          setShowCreatePost(false);
-        }}
-      />
     </div>
   );
 }
