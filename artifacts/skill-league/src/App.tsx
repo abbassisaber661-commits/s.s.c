@@ -185,12 +185,12 @@ function AppShell() {
       {!hideNav && <BottomNav unreadMessages={unread} />}
       {showSocialNav && <SocialBottomNav />}
 
+      {/* 🌐 Global language button — top-right, always visible */}
       {!hideNav && (
-        <div className="fixed right-3 z-40" style={{ bottom: "76px" }}>
+        <div className="fixed top-3 right-3 z-50">
           <LanguageSelector
             current={(language as Language) ?? "en"}
             onChange={(lang: Language) => setLanguage(lang)}
-            upward
           />
         </div>
       )}
