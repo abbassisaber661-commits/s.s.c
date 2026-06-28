@@ -57,7 +57,7 @@ export default function ProfilePage() {
   const followMutation = useFollowUser(userId || "1");
 
   const [currentTab, setCurrentTab]   = useState<ContentTab>("posts");
-  const [selectedPost]                = useState<Post | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditOpen, setIsEditOpen]   = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
