@@ -1,61 +1,45 @@
 import React, { memo } from "react";
 import { motion } from "framer-motion";
-import { Grid3X3, Image, Info } from "lucide-react";
+import { Clapperboard, Image, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ContentTab } from "@/types/profile";
+
+export type ActiveTab = "all" | "video" | "image" | "saved";
 
 interface ProfileTabsProps {
-  currentTab: ContentTab;
-  onTabChange: (tab: ContentTab) => void;
-  isOwner?: boolean;
-  postsCount?: number;
-  mediaCount?: number;
+  activeTab: ActiveTab;
+  onTabChange: (tab: ActiveTab) => void;
 }
 
-const TABS: { id: ContentTab; icon: React.ElementType; label: string }[] = [
-  { id: "posts", icon: Grid3X3, label: "Posts" },
-  { id: "media", icon: Image,   label: "Media" },
-  { id: "about", icon: Info,    label: "About" },
+const TABS: { id: ActiveTab; icon?: React.ElementType; label?: string }[] = [
+  { id: "all",   label: "Tout" },
+  { id: "video", icon: Clapperboard },
+  { id: "image", icon: Image },
+  { id: "saved", icon: Bookmark },
 ];
 
-export default memo(function ProfileTabs({
-  currentTab,
-  onTabChange,
-  postsCount,
-  mediaCount,
-}: ProfileTabsProps) {
-  const countMap: Partial<Record<ContentTab, number | undefined>> = {
-    posts: postsCount,
-    media: mediaCount,
-  };
-
+export default memo(function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
   return (
     <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm">
       <div className="flex">
         {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const active = currentTab === tab.id;
-          const count = countMap[tab.id];
+          const Icon  = tab.icon;
+          const active = activeTab === tab.id;
 
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "relative flex flex-col items-center justify-center flex-1",
-                "px-4 py-3 gap-0.5 transition-all duration-200",
-                active
-                  ? "text-[#111111]"
-                  : "text-[#666666] hover:text-[#111111]"
+                "relative flex items-center justify-center flex-1",
+                "py-3 transition-all duration-200",
+                active ? "text-[#111111]" : "text-[#888888] hover:text-[#444444]"
               )}
             >
-              <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-              <span className="text-[11px] font-semibold leading-none">{tab.label}</span>
-              {count !== undefined && count > 0 && (
-                <span className="text-[9px] text-[#666666]">
-                  {count >= 1000 ? (count / 1000).toFixed(1) + "K" : count}
-                </span>
-              )}
+              {Icon
+                ? <Icon size={19} strokeWidth={active ? 2.5 : 2} />
+                : <span className="text-xs font-bold">{tab.label}</span>
+              }
+
               {active && (
                 <motion.div
                   layoutId="profile-tab-indicator"

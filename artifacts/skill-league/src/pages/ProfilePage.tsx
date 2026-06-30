@@ -15,26 +15,20 @@ import ProfileCoverHeader    from "@/components/profile/ProfileCoverHeader";
 import ProfileSocialStats    from "@/components/profile/ProfileSocialStats";
 import ProfileActionButtons  from "@/components/profile/ProfileActionButtons";
 import ProfileLeagueCard     from "@/components/profile/ProfileLeagueCard";
-import ProfileTabs           from "@/components/profile/ProfileTabs";
-import ProfileMediaGrid      from "@/components/profile/ProfileMediaGrid";
+import ProfileTabs, { type ActiveTab } from "@/components/profile/ProfileTabs";
 import ProfileEmptyState     from "@/components/profile/ProfileEmptyState";
 import ProfileSkeletonLoader from "@/components/profile/ProfileSkeletonLoader";
 import ProfilePinnedPosts    from "@/components/profile/ProfilePinnedPosts";
-import ProfileAboutTab       from "@/components/profile/ProfileAboutTab";
 import ProfileShareSheet     from "@/components/profile/ProfileShareSheet";
 import ProfileSortFilter     from "@/components/profile/ProfileSortFilter";
-import ProfileGallery        from "@/components/profile/ProfileGallery";
-import ProfileVideos         from "@/components/profile/ProfileVideos";
 import EditProfileModal      from "@/components/profile/EditProfileModal";
 import { PostModal }         from "@/components/profile/PostModal";
 import SocialPostCard        from "@/components/social/SocialPostCard";
 import { CommentsSheet }     from "@/components/social/CommentsSheet";
 
 import { getSavedPostIds } from "@/lib/savedPosts";
-import type { ContentTab, Post } from "@/types/profile";
+import type { Post } from "@/types/profile";
 import type { SortOption } from "@/components/profile/ProfileSortFilter";
-
-type PostsSubTab = "all" | "reels" | "photos" | "saved";
 
 const sortPosts = (posts: Post[], sort: SortOption): Post[] => {
   const copy = [...posts];
@@ -60,9 +54,8 @@ export default function ProfilePage() {
 
   const followMutation = useFollowUser(userId || "1");
 
-  const [currentTab, setCurrentTab]   = useState<ContentTab>("posts");
-  const [postsSubTab, setPostsSubTab] = useState<PostsSubTab>("all");
-  const [savedIds, setSavedIds]       = useState<string[]>([]);
+  const [activeTab, setActiveTab]   = useState<ActiveTab>("all");
+  const [savedIds, setSavedIds]     = useState<string[]>([]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditOpen, setIsEditOpen]   = useState(false);
@@ -157,22 +150,20 @@ export default function ProfilePage() {
 
   const allPosts    = posts ?? [];
   const pinnedPosts = allPosts.filter((p) => p.isPinned);
-  const mediaPosts  = allPosts.filter((p) => p.type === "image" || p.type === "reel");
+  const nonPinned   = useMemo(() => allPosts.filter((p) => !p.isPinned), [allPosts]);
 
-  const nonPinned = useMemo(() => allPosts.filter((p) => !p.isPinned), [allPosts]);
-
-  const subTabPosts = useMemo(() => {
-    switch (postsSubTab) {
-      case "reels":  return nonPinned.filter((p) => p.type === "reel");
-      case "photos": return nonPinned.filter((p) => p.type === "image");
-      case "saved":  return nonPinned.filter((p) => savedIds.includes(p.id) || p.isSaved);
-      default:       return nonPinned;
+  const filteredPosts = useMemo(() => {
+    switch (activeTab) {
+      case "video": return nonPinned.filter((p) => p.type === "reel" || (p as any).type === "video");
+      case "image": return nonPinned.filter((p) => p.type === "image");
+      case "saved": return nonPinned.filter((p) => savedIds.includes(p.id) || p.isSaved);
+      default:      return nonPinned;
     }
-  }, [postsSubTab, nonPinned, savedIds]);
+  }, [activeTab, nonPinned, savedIds]);
 
   const visiblePosts = useMemo(
-    () => sortPosts(subTabPosts, sort),
-    [subTabPosts, sort],
+    () => sortPosts(filteredPosts, sort),
+    [filteredPosts, sort],
   );
 
   if (isLoading) {
@@ -289,120 +280,57 @@ export default function ProfilePage() {
         </motion.div>
       )}
 
-      {/* ── Navigation Tabs ── */}
+      {/* ── Unified Tab Bar ── */}
       <div className="mt-4">
-        <ProfileTabs
-          currentTab={currentTab}
-          onTabChange={setCurrentTab}
-          isOwner={isOwner}
-          postsCount={profile.postsCount}
-          mediaCount={profile.mediaCount ?? mediaPosts.length}
-        />
+        <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
       {/* ── Tab Content ── */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={currentTab}
+          key={activeTab}
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -5 }}
           transition={{ duration: 0.16 }}
         >
-
-          {/* POSTS */}
-          {currentTab === "posts" && (
-            <div className="mt-2">
-
-              {/* ── Posts sub-tabs: All / Reels / Photos / Saved ── */}
-              <div className="flex border-b border-[#E5E5E5] bg-white">
-                {(["all", "reels", "photos", "saved"] as PostsSubTab[]).map((tab) => {
-                  const labels: Record<PostsSubTab, string> = {
-                    all: "الكل", reels: "ريلز", photos: "صور", saved: "محفوظ",
-                  };
-                  const active = postsSubTab === tab;
-                  return (
-                    <button
-                      key={tab}
-                      onClick={() => setPostsSubTab(tab)}
-                      className={`relative flex-1 py-2.5 text-xs font-semibold transition-colors ${
-                        active ? "text-[#111111]" : "text-[#888888] hover:text-[#444444]"
-                      }`}
-                    >
-                      {labels[tab]}
-                      {active && (
-                        <motion.div
-                          layoutId="posts-subtab-indicator"
-                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FFD60A]"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
+          <div className="mt-2">
+            {allPosts.length > 1 && (
+              <div className="flex justify-end px-4 py-2">
+                <ProfileSortFilter sort={sort} onChange={setSort} />
               </div>
-
-              {allPosts.length > 1 && (
-                <div className="flex justify-end px-4 py-2">
-                  <ProfileSortFilter sort={sort} onChange={setSort} />
-                </div>
-              )}
-              <ProfilePinnedPosts posts={postsSubTab === "all" ? pinnedPosts : []} isOwner={isOwner} onUnpin={() => {}} />
-              <div className="space-y-3 px-4 mt-2">
-                {visiblePosts.length === 0 ? (
-                  <ProfileEmptyState tab="posts" isOwner={isOwner} />
-                ) : (
-                  <>
-                    {visiblePosts.map((post) => (
-                      <SocialPostCard
-                        key={post.id}
-                        post={post as any}
-                        commentCount={commentCounts[post.id] ?? (post as any).replyCount ?? 0}
-                        onCommentClick={(postId) => setOpenCommentPostId(postId)}
-                      />
-                    ))}
-                    {hasNextPage && postsSubTab === "all" && (
-                      <button
-                        onClick={fetchNextPage}
-                        disabled={isFetchingNextPage}
-                        className="w-full py-3 text-sm font-semibold text-[#666666] hover:text-[#111111] transition-colors"
-                      >
-                        {isFetchingNextPage ? "Loading…" : "Load more"}
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* MEDIA */}
-          {currentTab === "media" && (
-            <div className="mt-2">
-              {mediaPosts.length === 0 ? (
-                <ProfileEmptyState tab="media" isOwner={isOwner} />
+            )}
+            <ProfilePinnedPosts
+              posts={activeTab === "all" ? pinnedPosts : []}
+              isOwner={isOwner}
+              onUnpin={() => {}}
+            />
+            <div className="space-y-3 px-4 mt-2">
+              {visiblePosts.length === 0 ? (
+                <ProfileEmptyState tab="posts" isOwner={isOwner} />
               ) : (
                 <>
-                  <ProfileGallery posts={mediaPosts} />
-                  <div className="mt-2 border-t border-[#E5E5E5] pt-2">
-                    <ProfileVideos posts={mediaPosts} />
-                  </div>
+                  {visiblePosts.map((post) => (
+                    <SocialPostCard
+                      key={post.id}
+                      post={post as any}
+                      commentCount={commentCounts[post.id] ?? (post as any).replyCount ?? 0}
+                      onCommentClick={(postId) => setOpenCommentPostId(postId)}
+                    />
+                  ))}
+                  {hasNextPage && activeTab === "all" && (
+                    <button
+                      onClick={fetchNextPage}
+                      disabled={isFetchingNextPage}
+                      className="w-full py-3 text-sm font-semibold text-[#666666] hover:text-[#111111] transition-colors"
+                    >
+                      {isFetchingNextPage ? "Loading…" : "Load more"}
+                    </button>
+                  )}
                 </>
               )}
             </div>
-          )}
-
-          {/* ABOUT */}
-          {currentTab === "about" && (
-            <div className="px-4">
-              <ProfileAboutTab
-                profile={profile}
-                isOwner={isOwner}
-                onEdit={() => setIsEditOpen(true)}
-              />
-            </div>
-          )}
-
+          </div>
         </motion.div>
       </AnimatePresence>
 
