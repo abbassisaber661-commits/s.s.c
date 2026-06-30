@@ -44,11 +44,9 @@ export default function Journey() {
     <div dir="rtl" className="min-h-screen bg-background text-foreground overflow-y-auto pb-24">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border/50 px-4 py-3 flex items-center gap-3">
-        <Link href="/">
-          <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-        </Link>
+        <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={() => window.history.back()}>
+          <ChevronLeft className="w-5 h-5" />
+        </button>
         <div className="flex-1">
           <h1 className="text-lg font-black">رحلة اللاعب</h1>
           <p className="text-xs text-muted-foreground">تتبّع تقدمك وأهدافك</p>

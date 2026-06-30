@@ -59,7 +59,7 @@ export default function TrendingPage() {
       {/* Header */}
       <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b bg-white"
         style={{ borderColor: "#E4E6EB", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-        <button onClick={() => { playTap(); navigate("/social"); }}
+        <button onClick={() => { playTap(); window.history.back(); }}
           className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all">
           <ArrowLeft className="w-5 h-5" />
         </button>

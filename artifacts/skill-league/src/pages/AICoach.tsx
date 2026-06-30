@@ -124,7 +124,7 @@ export default function AICoach() {
     <div dir={rtl ? 'rtl' : 'ltr'} className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/60 px-4 py-3 flex items-center gap-3">
-        <Link href="/"><button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={playTap}><ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} /></button></Link>
+        <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={() => { playTap(); window.history.back(); }}><ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} /></button>
         <div className="flex items-center gap-2 flex-1">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
             <Bot className="w-4 h-4 text-primary" />

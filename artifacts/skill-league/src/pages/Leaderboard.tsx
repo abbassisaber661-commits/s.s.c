@@ -84,11 +84,9 @@ export default function Leaderboard() {
     >
       {/* ── Header ── */}
       <div className="flex items-center gap-3 px-4 pt-5 pb-3">
-        <Link href="/">
-          <Button variant="ghost" size="icon" className="rounded-full shrink-0">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="icon" className="rounded-full shrink-0" onClick={() => window.history.back()}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
         <h1 className="text-xl font-black flex-1" style={{ color: "rgba(255,255,255,0.92)" }}>
           🏅 الترتيب
         </h1>

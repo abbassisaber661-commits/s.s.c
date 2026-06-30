@@ -63,7 +63,7 @@ export default function Analytics() {
   return (
     <div className="min-h-screen bg-background pb-28">
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <Link href="/"><button className="p-2 rounded-xl hover:bg-card"><ArrowLeft size={20} /></button></Link>
+        <button className="p-2 rounded-xl hover:bg-card" onClick={() => window.history.back()}><ArrowLeft size={20} /></button>
         <div className="flex-1">
           <h1 className="font-bold text-lg flex items-center gap-2">📊 التحليلات</h1>
           {lastUpdated && <p className="text-xs text-muted-foreground">آخر تحديث: {lastUpdated.toLocaleTimeString("ar")}</p>}

@@ -275,7 +275,7 @@ export default function Tournament() {
     return (
       <div className="min-h-screen bg-background flex flex-col p-5 max-w-md mx-auto pb-10">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/"><button className="p-2 rounded-full hover:bg-card"><ArrowLeft className="w-5 h-5" /></button></Link>
+          <button className="p-2 rounded-full hover:bg-card" onClick={() => window.history.back()}><ArrowLeft className="w-5 h-5" /></button>
           <h1 className="text-2xl font-bold flex-1">البطولات</h1>
           <Trophy className="w-6 h-6 text-yellow-400" />
         </div>

@@ -62,7 +62,7 @@ export default function ReleasePage() {
     <div className="min-h-screen pb-24" dir={rtl ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <Link href="/"><button className="p-1.5 rounded-lg hover:bg-muted"><ArrowLeft size={18} /></button></Link>
+        <button className="p-1.5 rounded-lg hover:bg-muted" onClick={() => window.history.back()}><ArrowLeft size={18} /></button>
         <div className="flex-1">
           <h1 className="font-bold text-base flex items-center gap-2"><Rocket size={16} className="text-primary" />نسخة الإصدار (RC)</h1>
           {data && <p className="text-[10px] text-muted-foreground">v{data.version} · {data.date}</p>}

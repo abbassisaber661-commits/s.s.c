@@ -92,11 +92,9 @@ export default function Marketplace() {
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm px-4 py-3 space-y-3">
         <div className="flex items-center gap-3">
-          <Link href="/">
-            <button className="p-2 rounded-xl hover:bg-[#F5F5F7] transition-colors">
-              <ArrowLeft size={20} className="text-[#111111]" />
-            </button>
-          </Link>
+          <button className="p-2 rounded-xl hover:bg-[#F5F5F7] transition-colors" onClick={() => window.history.back()}>
+            <ArrowLeft size={20} className="text-[#111111]" />
+          </button>
           <div className="flex-1">
             <h1 className="font-bold text-lg flex items-center gap-2 text-[#111111]">
               <ShoppingBag size={18} className="text-[#FFD60A]" /> السوق الداخلي

@@ -101,7 +101,7 @@ export default function PvP() {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col max-w-md mx-auto px-4 py-5 pb-24" dir="rtl">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/"><button className="p-2 rounded-full hover:bg-card active:scale-95 transition-transform"><ArrowLeft className="w-5 h-5" /></button></Link>
+          <button className="p-2 rounded-full hover:bg-card active:scale-95 transition-transform" onClick={() => window.history.back()}><ArrowLeft className="w-5 h-5" /></button>
           <h1 className="text-2xl font-bold flex-1 flex items-center gap-2"><Swords className="w-6 h-6 text-primary" />معركة PvP</h1>
           <div className="flex items-center gap-2">
             <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full ${connected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>

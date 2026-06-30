@@ -293,7 +293,7 @@ export default function ReelsPage() {
       <div className="absolute top-0 left-0 right-0 z-20 flex flex-col">
         <div className="flex items-center justify-between px-4 pt-safe pt-4 pb-2">
           <button
-            onClick={() => navigate("/social")}
+            onClick={() => window.history.back()}
             className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white"
           >
             <ArrowLeft size={20} />

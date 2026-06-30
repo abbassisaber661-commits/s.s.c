@@ -216,11 +216,9 @@ export default function Settings() {
         className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b"
         style={{ background: "#FFFFFF", borderColor: "#E4E6EB", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}
       >
-        <Link href="/">
-          <button className="p-1.5 rounded-xl hover:bg-gray-100 active:scale-95 transition-transform">
-            <ArrowLeft className="w-5 h-5" style={{ color: "#050505" }} />
-          </button>
-        </Link>
+        <button className="p-1.5 rounded-xl hover:bg-gray-100 active:scale-95 transition-transform" onClick={() => window.history.back()}>
+          <ArrowLeft className="w-5 h-5" style={{ color: "#050505" }} />
+        </button>
         <h1 className="text-lg font-black" style={{ color: "#050505" }}>الإعدادات</h1>
       </div>
 

@@ -50,7 +50,7 @@ export default function Career() {
   return (
     <div dir={rtl ? 'rtl' : 'ltr'} className="min-h-screen bg-background text-foreground pb-24">
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/60 px-4 py-3 flex items-center gap-3">
-        <Link href="/"><button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={playTap}><ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} /></button></Link>
+        <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={() => { playTap(); window.history.back(); }}><ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} /></button>
         <h1 className="text-lg font-black flex-1">🛣️ {language === 'ar' ? 'مسار المهنة' : 'Career'}</h1>
         {unclaimedEarned.length > 0 && (
           <span className="min-w-[20px] h-5 rounded-full bg-primary text-primary-foreground text-xs font-black flex items-center justify-center px-1">

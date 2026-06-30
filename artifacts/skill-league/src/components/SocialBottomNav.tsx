@@ -61,7 +61,7 @@ export default function SocialBottomNav() {
   }
 
   function handleBack() {
-    navigate("/");
+    window.history.back();
   }
 
   const LEFT_ITEMS = [

@@ -113,11 +113,9 @@ export default function Store() {
 
       {/* ── Header ── */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/60 px-4 py-3 flex items-center gap-3">
-        <Link href="/">
-          <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={playTap}>
-            <ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} />
-          </button>
-        </Link>
+        <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={() => { playTap(); window.history.back(); }}>
+          <ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} />
+        </button>
         <h1 className="text-lg font-black flex-1">🛍️ {t('nav_store')}</h1>
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/15 border border-yellow-500/30 rounded-xl text-sm font-black text-yellow-400">
           {coins} 🪙
