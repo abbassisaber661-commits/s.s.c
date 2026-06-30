@@ -204,7 +204,7 @@ function AppShell() {
         <Route component={NotFound} />
       </Switch>
 
-      {!hideNav && <BottomNav unreadMessages={unread} />}
+      {!hideNav && !showSocialNav && <BottomNav unreadMessages={unread} />}
       {showSocialNav && <SocialBottomNav />}
     </>
   );
