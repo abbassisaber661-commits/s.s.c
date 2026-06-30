@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCcw, Menu } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { compressImageToBase64 } from "@/lib/imageUtils";
 
 import { useTranslation } from "@/hooks/useTranslation";
 import { useProfileData } from "@/hooks/useProfileData";
@@ -89,11 +90,7 @@ export default function ProfilePage() {
     try {
       let avatarStr: string | undefined;
       if (data.avatar instanceof File) {
-        avatarStr = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(data.avatar as File);
-        });
+        avatarStr = await compressImageToBase64(data.avatar);
       } else {
         avatarStr = data.avatar || undefined;
       }
@@ -119,15 +116,14 @@ export default function ProfilePage() {
     const pid = getStoredPlayerId() ?? userId;
     if (!pid) { toast.error("Not logged in"); return; }
     try {
-      const avatarStr = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => resolve(ev.target?.result as string);
-        reader.readAsDataURL(file);
-      });
-      await api.players.sync(pid, { avatar: avatarStr } as any);
+      const avatarStr = await compressImageToBase64(file);
+      console.log("[avatar-upload] compressed size:", avatarStr.length, "bytes");
+      const result = await api.players.sync(pid, { avatar: avatarStr } as any);
+      console.log("[avatar-upload] PATCH response:", result);
       toast.success("Avatar updated!");
       refetch();
-    } catch {
+    } catch (err) {
+      console.error("[avatar-upload] FAILED:", err);
       toast.error("Failed to update avatar");
     }
     e.target.value = "";
@@ -139,15 +135,14 @@ export default function ProfilePage() {
     const pid = getStoredPlayerId() ?? userId;
     if (!pid) { toast.error("Not logged in"); return; }
     try {
-      const coverStr = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => resolve(ev.target?.result as string);
-        reader.readAsDataURL(file);
-      });
-      await api.players.sync(pid, { cover: coverStr } as any);
+      const coverStr = await compressImageToBase64(file);
+      console.log("[cover-upload] compressed size:", coverStr.length, "bytes");
+      const result = await api.players.sync(pid, { cover: coverStr } as any);
+      console.log("[cover-upload] PATCH response:", result);
       toast.success("Cover updated!");
       refetch();
-    } catch {
+    } catch (err) {
+      console.error("[cover-upload] FAILED:", err);
       toast.error("Failed to update cover");
     }
     e.target.value = "";

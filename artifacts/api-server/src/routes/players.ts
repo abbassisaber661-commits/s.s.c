@@ -249,11 +249,29 @@ router.patch("/players/:id", async (req, res) => {
     for (const key of allowed) {
       if (key in req.body) updates[key] = req.body[key];
     }
+
+    req.log.info({
+      playerId: req.params.id,
+      bodyKeys: Object.keys(req.body),
+      hasAvatar: "avatar" in req.body,
+      avatarLen: typeof req.body.avatar === "string" ? req.body.avatar.length : null,
+      hasCover: "cover" in req.body,
+      coverLen: typeof req.body.cover === "string" ? req.body.cover.length : null,
+      updatesKeys: Object.keys(updates),
+    }, "[PATCH /players/:id] incoming");
+
     const [updated] = await db.update(playersTable)
       .set(updates as Partial<typeof playersTable.$inferSelect>)
       .where(eq(playersTable.id, req.params.id))
       .returning();
     if (!updated) { res.status(404).json({ error: "not found" }); return; }
+
+    req.log.info({
+      playerId: updated.id,
+      avatarLen: typeof updated.avatar === "string" ? updated.avatar.length : null,
+      coverLen: typeof updated.cover === "string" ? updated.cover.length : null,
+    }, "[PATCH /players/:id] DB updated OK");
+
     res.json(updated);
   } catch (err) {
     req.log.error({ err }, "patch player error");
