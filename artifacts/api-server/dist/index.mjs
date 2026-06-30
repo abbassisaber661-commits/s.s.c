@@ -86151,8 +86151,7 @@ router4.post("/players", async (req, res) => {
         updatedAt: /* @__PURE__ */ new Date(),
         lastActiveAt: /* @__PURE__ */ new Date(),
         ...typeof language === "string" && { language },
-        ...typeof piUid === "string" && { piUid, verificationStatus: "verified" },
-        ...typeof avatar === "string" && { avatar }
+        ...typeof piUid === "string" && { piUid, verificationStatus: "verified" }
       }).where(eq(playersTable.id, id));
       const [updated] = await db.select().from(playersTable).where(eq(playersTable.id, id));
       res.json(updated);

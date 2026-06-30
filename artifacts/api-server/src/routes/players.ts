@@ -214,8 +214,7 @@ router.post("/players", async (req, res) => {
       await db.update(playersTable)
         .set({ username: String(username), updatedAt: new Date(), lastActiveAt: new Date(),
                ...(typeof language === "string" && { language }),
-               ...(typeof piUid === "string" && { piUid, verificationStatus: "verified" }),
-               ...(typeof avatar === "string" && { avatar }) })
+               ...(typeof piUid === "string" && { piUid, verificationStatus: "verified" }) })
         .where(eq(playersTable.id, id as string));
       const [updated] = await db.select().from(playersTable).where(eq(playersTable.id, id as string));
       res.json(updated);

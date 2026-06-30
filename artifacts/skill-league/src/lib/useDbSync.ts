@@ -69,7 +69,6 @@ export function useDbSync(
         id,
         username: username || d.username || 'Player',
         language: d.language,
-        avatar: '🎮',
       });
       syncedRef.current = true;
     } catch { /* offline — fail silently */ }
