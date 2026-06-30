@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Search, MessageSquare, Bell } from "lucide-react";
+import { Loader2, Search, MessageSquare, Bell, Users, User, Menu } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useLocation } from "wouter";
 
@@ -133,62 +133,80 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-24">
 
-      {/* ── Top Navigation Bar ── */}
+      {/* ── Social Top Bar ── */}
       <div className="sticky top-0 z-30 bg-white border-b border-[#E5E5E5] shadow-sm">
-        <div className="max-w-2xl mx-auto flex items-center justify-between px-4 py-3">
+        <div className="max-w-2xl mx-auto flex items-center px-3 py-2.5 gap-1">
 
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <span className="font-black text-xl text-[#111111] select-none">
-              SkillLeague
-            </span>
-            <div
-              className={`w-2 h-2 rounded-full ml-1 ${connected ? "bg-green-500" : "bg-red-400"}`}
-              title={connected ? "Live" : "Offline"}
-            />
-          </div>
+          {/* 🔔 Notifications */}
+          <button
+            onClick={() => navigate("/notifications")}
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell size={19} />
+            {notifCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                {notifCount > 9 ? "9+" : notifCount}
+              </span>
+            )}
+          </button>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-1">
+          {/* ✉️ Messages */}
+          <button
+            onClick={() => navigate("/messages")}
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Messages"
+          >
+            <MessageSquare size={19} />
+            {dmCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                {dmCount > 9 ? "9+" : dmCount}
+              </span>
+            )}
+          </button>
 
-            {/* Search */}
-            <button
-              onClick={() => navigate("/search")}
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#666666] hover:bg-[#F5F5F7] transition-colors"
-              aria-label="Search"
-            >
-              <Search size={20} />
-            </button>
+          {/* Friend shortcut */}
+          <button
+            onClick={() => navigate("/friends")}
+            className="px-3 h-8 rounded-xl flex items-center gap-1.5 text-[#444444] text-xs font-semibold hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Friends"
+          >
+            <Users size={15} />
+            <span>Friend</span>
+          </button>
 
-            {/* Messages */}
-            <button
-              onClick={() => navigate("/messages")}
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#666666] hover:bg-[#F5F5F7] transition-colors"
-              aria-label="Messages"
-            >
-              <MessageSquare size={20} />
-              {dmCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                  {dmCount > 9 ? "9+" : dmCount}
-                </span>
-              )}
-            </button>
+          {/* 🔎 Search */}
+          <button
+            onClick={() => navigate("/search")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Search"
+          >
+            <Search size={19} />
+          </button>
 
-            {/* Notifications */}
-            <button
-              onClick={() => navigate("/notifications")}
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#666666] hover:bg-[#F5F5F7] transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-              {notifCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                  {notifCount > 9 ? "9+" : notifCount}
-                </span>
-              )}
-            </button>
+          {/* ── "social" label — centered ── */}
+          <span className="flex-1 text-center text-sm font-black tracking-tight text-[#111111] select-none pointer-events-none">
+            social
+          </span>
 
-          </div>
+          {/* 👤 Profile */}
+          <button
+            onClick={() => navigate("/profile")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Profile"
+          >
+            <User size={19} />
+          </button>
+
+          {/* ☰ Settings */}
+          <button
+            onClick={() => navigate("/settings")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Settings"
+          >
+            <Menu size={19} />
+          </button>
+
         </div>
       </div>
 
