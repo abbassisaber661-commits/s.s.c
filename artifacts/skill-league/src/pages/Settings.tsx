@@ -1,211 +1,377 @@
-// src/pages/Settings.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Settings2, CheckCircle2, LogOut, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, ChevronRight, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { validateUsername } from "@/lib/anti-cheat";
-import { useTranslation } from "@/hooks/useTranslation"; // ✅ إضافة الترجمة
+import { LANGUAGES } from "@/lib/i18n";
+import type { Language } from "@/lib/i18n";
 
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = "1.1.0";
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
+// ─── Theme helpers ──────────────────────────────────────────────────────────
+const THEME_KEY = "sl_theme";
+
+function getStoredTheme(): "dark" | "light" {
+  try {
+    return (localStorage.getItem(THEME_KEY) as "dark" | "light") || "dark";
+  } catch {
+    return "dark";
+  }
+}
+
+function applyTheme(theme: "dark" | "light") {
+  const el = document.documentElement;
+  el.classList.remove("dark", "light");
+  el.classList.add(theme);
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {}
+}
+
+// ─── Privacy helpers ─────────────────────────────────────────────────────────
+const PRIVACY_KEY = "sl_privacy";
+interface PrivacySettings {
+  privateAccount: boolean;
+  showActivity: boolean;
+}
+function getPrivacy(): PrivacySettings {
+  try {
+    return JSON.parse(localStorage.getItem(PRIVACY_KEY) || "{}");
+  } catch {
+    return { privateAccount: false, showActivity: true };
+  }
+}
+function savePrivacy(p: PrivacySettings) {
+  try {
+    localStorage.setItem(PRIVACY_KEY, JSON.stringify(p));
+  } catch {}
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-xs font-black uppercase tracking-widest px-1 mb-2" style={{ color: '#65676B' }}>
+    <div
+      className="text-[11px] font-black uppercase tracking-widest px-1 mb-1.5 mt-5"
+      style={{ color: "#8A8D91" }}
+    >
       {children}
     </div>
   );
 }
 
+function Row({
+  label,
+  sub,
+  right,
+  onClick,
+  danger,
+  last,
+}: {
+  label: string;
+  sub?: string;
+  right?: React.ReactNode;
+  onClick?: () => void;
+  danger?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={!onClick}
+      className="w-full flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-black/5 active:bg-black/10 disabled:cursor-default"
+      style={{
+        borderBottom: last ? "none" : "1px solid #E4E6EB",
+        textAlign: "left",
+      }}
+    >
+      <div className="flex-1 min-w-0">
+        <div
+          className="text-sm font-semibold leading-snug"
+          style={{ color: danger ? "#E41E3F" : "#050505" }}
+        >
+          {label}
+        </div>
+        {sub && (
+          <div className="text-xs mt-0.5" style={{ color: "#65676B" }}>
+            {sub}
+          </div>
+        )}
+      </div>
+      {right !== undefined ? (
+        <div className="ml-3 shrink-0">{right}</div>
+      ) : onClick ? (
+        <ChevronRight className="w-4 h-4 ml-3 shrink-0" style={{ color: "#BEC3C9" }} />
+      ) : null}
+    </button>
+  );
+}
+
+function Toggle({
+  value,
+  onChange,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className="relative w-11 h-6 rounded-full transition-colors shrink-0"
+      style={{ background: value ? "#1877F2" : "#BEC3C9" }}
+      aria-checked={value}
+      role="switch"
+    >
+      <span
+        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
+        style={{ transform: value ? "translateX(20px)" : "translateX(0)" }}
+      />
+    </button>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function Settings() {
-  const { t } = useTranslation(); // ✅ استخدم الترجمة
-  const { username, updateUsername, logout } = useGame();
+  const { username, updateUsername, logout, language, setLanguage } = useGame();
   const [, setLocation] = useLocation();
 
-  const [draft, setDraft]               = useState(username);
-  const [nameError, setNameError]       = useState<string | null>(null);
-  const [saved, setSaved]               = useState(false);
-  const [showUsernameEdit, setShowUsernameEdit] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">(getStoredTheme);
+  const [privacy, setPrivacy] = useState<PrivacySettings>(() => {
+    const stored = getPrivacy();
+    return {
+      privateAccount: stored.privateAccount ?? false,
+      showActivity: stored.showActivity ?? true,
+    };
+  });
 
-  function handleSaveName() {
+  const [showUsernameEdit, setShowUsernameEdit] = useState(false);
+  const [showLangPicker, setShowLangPicker] = useState(false);
+  const [draft, setDraft] = useState(username);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [usernameSaved, setUsernameSaved] = useState(false);
+  const [cacheCleared, setCacheCleared] = useState(false);
+
+  // Sync draft when username changes externally
+  useEffect(() => { setDraft(username); }, [username]);
+
+  function handleThemeToggle() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    applyTheme(next);
+  }
+
+  function handlePrivacyChange(key: keyof PrivacySettings, val: boolean) {
+    const next = { ...privacy, [key]: val };
+    setPrivacy(next);
+    savePrivacy(next);
+  }
+
+  function handleSaveUsername() {
     const { valid, reason } = validateUsername(draft);
-    if (!valid) { 
-      setNameError(reason ?? t('settingsPage.usernameError')); 
-      return; 
+    if (!valid) {
+      setNameError(reason ?? "Invalid username");
+      return;
     }
     updateUsername(draft);
     setNameError(null);
-    setSaved(true);
-    setTimeout(() => { setSaved(false); setShowUsernameEdit(false); }, 1500);
+    setUsernameSaved(true);
+    setTimeout(() => {
+      setUsernameSaved(false);
+      setShowUsernameEdit(false);
+    }, 1200);
+  }
+
+  function handleClearCache() {
+    try {
+      sessionStorage.clear();
+      // Clear only cache-specific localStorage keys (NOT player data / auth)
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.includes("_cache") || k.includes("_feed_") || k.includes("_posts_"))) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch {}
+    setCacheCleared(true);
+    setTimeout(() => setCacheCleared(false), 2000);
   }
 
   function handleLogout() {
     logout();
-    setLocation('/');
+    setLocation("/");
   }
 
-  return (
-    <div className="min-h-screen pb-16" style={{ background: '#F0F2F5', color: '#050505' }}>
+  const currentLang = LANGUAGES.find(l => l.code === language);
 
-      {/* ── Header ── */}
+  const BG = "#F0F2F5";
+  const CARD = { background: "#FFFFFF", border: "1px solid #E4E6EB", borderRadius: "16px", overflow: "hidden" };
+
+  return (
+    <div className="min-h-screen pb-24" style={{ background: BG, color: "#050505" }}>
+
+      {/* Header */}
       <div
-        className="sticky top-0 z-20 border-b px-4 py-3 flex items-center gap-3"
-        style={{ background: '#FFFFFF', borderColor: '#E4E6EB', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}
+        className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b"
+        style={{ background: "#FFFFFF", borderColor: "#E4E6EB", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}
       >
         <Link href="/">
           <button className="p-1.5 rounded-xl hover:bg-gray-100 active:scale-95 transition-transform">
-            <ArrowLeft className="w-5 h-5" style={{ color: '#050505' }} />
+            <ArrowLeft className="w-5 h-5" style={{ color: "#050505" }} />
           </button>
         </Link>
-        <Settings2 className="w-5 h-5" style={{ color: '#1877F2' }} />
-        <h1 className="text-lg font-black flex-1" style={{ color: '#050505' }}>
-          {t('settingsPage.title')}
-        </h1>
+        <h1 className="text-lg font-black" style={{ color: "#050505" }}>الإعدادات</h1>
       </div>
 
-      <div className="max-w-md mx-auto px-4 pt-5 space-y-5">
+      <div className="max-w-md mx-auto px-4">
 
-        {/* ══ 1. ACCOUNT ══ */}
-        <div>
-          <SectionHeader>{t('settingsPage.accountSection')}</SectionHeader>
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}
-            className="rounded-2xl overflow-hidden"
-            style={{ background: '#FFFFFF', border: '1px solid #E4E6EB' }}
+        {/* ── GENERAL ───────────────────────────────────────── */}
+        <SectionLabel>عام</SectionLabel>
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }} style={CARD}>
+          <Link href="/profile-settings">
+            <Row label="تعديل الملف الشخصي" sub="الصورة والغلاف والسيرة الذاتية" />
+          </Link>
+          <div>
+            <Row
+              label="تغيير اسم المستخدم"
+              sub={"@" + username}
+              onClick={() => setShowUsernameEdit(v => !v)}
+              last={!showUsernameEdit}
+            />
+            {showUsernameEdit && (
+              <div className="px-4 pb-4 space-y-2" style={{ borderBottom: "none" }}>
+                <div className="flex gap-2">
+                  <input
+                    value={draft}
+                    onChange={e => setDraft(e.target.value)}
+                    maxLength={20}
+                    placeholder="اسم المستخدم الجديد"
+                    className="flex-1 rounded-xl px-3 py-2 text-sm outline-none"
+                    style={{ background: "#F0F2F5", border: "1px solid #E4E6EB", color: "#050505" }}
+                  />
+                  <button
+                    onClick={handleSaveUsername}
+                    className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-colors"
+                    style={{ background: usernameSaved ? "#2D8A3E" : "#1877F2" }}
+                  >
+                    {usernameSaved ? "✓" : "حفظ"}
+                  </button>
+                </div>
+                {nameError && <p className="text-xs" style={{ color: "#E41E3F" }}>{nameError}</p>}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ── APPEARANCE ────────────────────────────────────── */}
+        <SectionLabel>المظهر</SectionLabel>
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} style={CARD}>
+          {/* Dark / Light toggle */}
+          <Row
+            label={theme === "dark" ? "الوضع الداكن" : "الوضع الفاتح"}
+            sub={theme === "dark" ? "انقر للتبديل إلى الفاتح" : "انقر للتبديل إلى الداكن"}
+            right={<Toggle value={theme === "dark"} onChange={handleThemeToggle} />}
+            onClick={handleThemeToggle}
+          />
+
+          {/* Language */}
+          <div>
+            <Row
+              label="اللغة"
+              sub={currentLang ? currentLang.native + " — " + currentLang.label : language}
+              onClick={() => setShowLangPicker(v => !v)}
+              last={!showLangPicker}
+            />
+            {showLangPicker && (
+              <div className="pb-2" style={{ borderTop: "1px solid #E4E6EB" }}>
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => { setLanguage(lang.code as Language); setShowLangPicker(false); }}
+                    className="w-full flex items-center justify-between px-4 py-2.5 transition-colors hover:bg-gray-50 active:bg-gray-100"
+                  >
+                    <span className="text-sm font-semibold" style={{ color: lang.code === language ? "#1877F2" : "#050505" }}>
+                      {lang.native}
+                    </span>
+                    <span className="text-xs" style={{ color: "#65676B" }}>{lang.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ── PRIVATE / PRIVACY ─────────────────────────────── */}
+        <SectionLabel>الخصوصية</SectionLabel>
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} style={CARD}>
+          <Row
+            label="حساب خاص"
+            sub="فقط المتابعون يمكنهم رؤية ملفك"
+            right={
+              <Toggle
+                value={privacy.privateAccount}
+                onChange={v => handlePrivacyChange("privateAccount", v)}
+              />
+            }
+            onClick={() => handlePrivacyChange("privateAccount", !privacy.privateAccount)}
+          />
+          <Row
+            label="إظهار حالة النشاط"
+            sub="يمكن للآخرين رؤية متى كنت نشطاً"
+            right={
+              <Toggle
+                value={privacy.showActivity}
+                onChange={v => handlePrivacyChange("showActivity", v)}
+              />
+            }
+            onClick={() => handlePrivacyChange("showActivity", !privacy.showActivity)}
+            last
+          />
+        </motion.div>
+
+        {/* ── DATA ──────────────────────────────────────────── */}
+        <SectionLabel>البيانات</SectionLabel>
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={CARD}>
+          <Row
+            label={cacheCleared ? "تم المسح ✓" : "مسح ذاكرة التخزين المؤقت"}
+            sub="يمسح البيانات المؤقتة فقط — لا يؤثر على تقدمك"
+            onClick={handleClearCache}
+          />
+          <div
+            className="flex items-center justify-between px-4 py-3.5"
           >
-            {/* Change Username */}
-            <div style={{ borderBottom: '1px solid #E4E6EB' }}>
-              <button
-                onClick={() => setShowUsernameEdit(v => !v)}
-                className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 active:bg-gray-100 text-left"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold" style={{ color: '#050505' }}>
-                    {t('settingsPage.changeUsername')}
-                  </div>
-                  <div className="text-xs mt-0.5" style={{ color: '#65676B' }}>
-                    @{username}
-                  </div>
-                </div>
-                <ChevronRight
-                  className="w-4 h-4 shrink-0 transition-transform duration-200"
-                  style={{ color: '#65676B', transform: showUsernameEdit ? 'rotate(90deg)' : 'none' }}
-                />
-              </button>
-              {showUsernameEdit && (
-                <div className="px-4 pb-4 space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      value={draft}
-                      onChange={e => setDraft(e.target.value)}
-                      className="flex-1 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      style={{ background: '#F0F2F5', border: '1px solid #E4E6EB', color: '#050505' }}
-                      maxLength={20}
-                      placeholder={t('settingsPage.usernamePlaceholder')}
-                    />
-                    <Button size="sm" onClick={handleSaveName} className="px-4">
-                      {saved ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : t('common.save')}
-                    </Button>
-                  </div>
-                  {nameError && <p className="text-xs text-red-500">{nameError}</p>}
-                </div>
-              )}
-            </div>
+            <span className="text-sm" style={{ color: "#65676B" }}>إصدار التطبيق</span>
+            <span className="text-sm font-semibold" style={{ color: "#050505" }}>{APP_VERSION}</span>
+          </div>
+        </motion.div>
 
-            {/* Log Out */}
+        {/* ── SUPPORT ───────────────────────────────────────── */}
+        <SectionLabel>الدعم</SectionLabel>
+        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} style={CARD}>
+          <Link href="/privacy">
+            <Row label="سياسة الخصوصية" />
+          </Link>
+          <Link href="/terms">
+            <Row label="شروط الخدمة" last />
+          </Link>
+        </motion.div>
+
+        {/* ── LOGOUT ────────────────────────────────────────── */}
+        <div className="mt-5">
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} style={CARD}>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-red-50 active:bg-red-100 text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-red-50 active:bg-red-100"
             >
-              <div className="flex-1">
-                <div className="text-sm font-semibold" style={{ color: '#E41E3F' }}>
-                  {t('common.logout')}
-                </div>
-              </div>
-              <LogOut className="w-4 h-4 shrink-0" style={{ color: '#E41E3F' }} />
+              <LogOut className="w-4 h-4 shrink-0" style={{ color: "#E41E3F" }} />
+              <span className="text-sm font-bold" style={{ color: "#E41E3F" }}>تسجيل الخروج</span>
             </button>
           </motion.div>
         </div>
 
-        {/* ══ 2. PRIVACY & LEGAL ══ */}
-        <div>
-          <SectionHeader>{t('settingsPage.privacySection')}</SectionHeader>
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}
-            className="rounded-2xl overflow-hidden"
-            style={{ background: '#FFFFFF', border: '1px solid #E4E6EB' }}
-          >
-            {/* Device Data */}
-            <div className="px-4 py-3.5" style={{ borderBottom: '1px solid #E4E6EB' }}>
-              <div className="text-sm font-semibold mb-1" style={{ color: '#050505' }}>
-                {t('settingsPage.deviceDataTitle')}
-              </div>
-              <div className="text-xs leading-relaxed mb-2" style={{ color: '#65676B' }}>
-                {t('settingsPage.deviceDataDescription')}
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: '#E7F3E8', color: '#2D8A3E' }}>
-                  {t('settingsPage.deviceDataTag1')}
-                </span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ background: '#F0E9FF', color: '#7B2FF7' }}>
-                  {t('settingsPage.deviceDataTag2')}
-                </span>
-              </div>
-            </div>
-
-            {/* Privacy Policy */}
-            <Link href="/privacy">
-              <div
-                className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 active:bg-gray-100 cursor-pointer"
-                style={{ borderBottom: '1px solid #E4E6EB' }}
-              >
-                <div className="flex-1 text-sm font-semibold" style={{ color: '#1877F2' }}>
-                  {t('settingsPage.privacyPolicy')}
-                </div>
-                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: '#65676B' }} />
-              </div>
-            </Link>
-
-            {/* Terms of Service */}
-            <Link href="/terms">
-              <div className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-gray-50 active:bg-gray-100 cursor-pointer">
-                <div className="flex-1 text-sm font-semibold" style={{ color: '#1877F2' }}>
-                  {t('settingsPage.termsOfService')}
-                </div>
-                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: '#65676B' }} />
-              </div>
-            </Link>
-          </motion.div>
-        </div>
-
-        {/* ══ 3. APP INFO ══ */}
-        <div>
-          <SectionHeader>{t('settingsPage.appInfoSection')}</SectionHeader>
-          <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-            className="rounded-2xl overflow-hidden"
-            style={{ background: '#FFFFFF', border: '1px solid #E4E6EB' }}
-          >
-            {[
-              { label: t('settingsPage.versionLabel'),    value: APP_VERSION },
-              { label: t('settingsPage.platformLabel'),   value: 'Pi Network' },
-              { label: t('settingsPage.poweredByLabel'), value: 'SkillLeague / Pi Network' },
-            ].map((row, i, arr) => (
-              <div
-                key={row.label}
-                className="flex items-center justify-between px-4 py-3.5"
-                style={{ borderBottom: i < arr.length - 1 ? '1px solid #E4E6EB' : 'none' }}
-              >
-                <span className="text-sm" style={{ color: '#65676B' }}>{row.label}</span>
-                <span className="text-sm font-semibold" style={{ color: '#050505' }}>{row.value}</span>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-
-        <p className="text-center text-xs pb-6" style={{ color: '#BEC3C9' }}>
-          SkillLeague · Powered by Pi Network
+        <p className="text-center text-xs mt-6 pb-6" style={{ color: "#BEC3C9" }}>
+          SkillLeague v{APP_VERSION}
         </p>
 
       </div>

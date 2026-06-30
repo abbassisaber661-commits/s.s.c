@@ -3,6 +3,7 @@ import {
   Route,
   Router as WouterRouter,
   useLocation,
+  Link,
 } from "wouter";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -66,8 +67,6 @@ import Settings from "@/pages/Settings";
 import BottomNav from "@/components/BottomNav";
 import SocialBottomNav from "@/components/SocialBottomNav";
 import LiveNotifToast from "@/components/LiveNotifToast";
-import LanguageSelector from "@/components/LanguageSelector";
-import type { Language } from "@/lib/i18n";
 
 // Utils
 import { getNotifications, unreadCount } from "@/lib/messages";
@@ -115,6 +114,16 @@ function AppShell() {
   const hideNav = NO_NAV_PATHS.some((p) => location.startsWith(p));
   const showSocialNav = !hideNav && SOCIAL_PATHS.some((p) => location.startsWith(p));
 
+  // Initialise theme from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sl_theme") as "dark" | "light" | null;
+      const theme = saved === "light" ? "light" : "dark";
+      document.documentElement.classList.remove("dark", "light");
+      document.documentElement.classList.add(theme);
+    } catch {}
+  }, []);
+
   // 🔐 Auth Guard
   if (
     !isAuthenticated &&
@@ -123,11 +132,24 @@ function AppShell() {
     return <AuthScreen />;
   }
 
-  const { language, setLanguage } = useGame();
+  const onSettingsPage = location === "/settings";
 
   return (
     <>
       <LiveNotifToast />
+
+      {/* ── Hamburger (☰) — Settings entry — top-right, always visible on nav pages ── */}
+      {!hideNav && !onSettingsPage && (
+        <Link href="/settings">
+          <button
+            className="fixed top-3 right-3 z-50 w-10 h-10 flex items-center justify-center rounded-2xl active:scale-90 transition-transform"
+            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}
+            aria-label="Settings"
+          >
+            <span className="text-white font-bold text-lg leading-none select-none">☰</span>
+          </button>
+        </Link>
+      )}
 
       <Switch>
         {/* ================= CORE ================= */}
@@ -184,16 +206,6 @@ function AppShell() {
 
       {!hideNav && <BottomNav unreadMessages={unread} />}
       {showSocialNav && <SocialBottomNav />}
-
-      {!hideNav && (
-        <div className="fixed right-3 z-40" style={{ bottom: "76px" }}>
-          <LanguageSelector
-            current={(language as Language) ?? "en"}
-            onChange={(lang: Language) => setLanguage(lang)}
-            upward
-          />
-        </div>
-      )}
     </>
   );
 }
