@@ -559,6 +559,29 @@ export const api = {
       ),
   },
 
+  /* ── DN Leaderboard & Trending ── */
+  leaderboardDN: {
+    topEarners: (limit = 20) =>
+      get<{ playerId: string; username: string; totalReceivedDN: number; totalReceived: number }[]>(
+        `/leaderboard/top-earners?limit=${limit}`
+      ),
+    topSupporters: (limit = 20) =>
+      get<{ playerId: string; username: string; totalSentDN: number; totalSent: number }[]>(
+        `/leaderboard/top-supporters?limit=${limit}`
+      ),
+    topPosts: (limit = 20) =>
+      get<{ postId: string; authorUsername: string; authorId: string; content: string; imageUrl: string | null; totalGiftAmount: number; totalGiftCount: number; lastGiftTime: string }[]>(
+        `/leaderboard/top-posts?limit=${limit}`
+      ),
+  },
+
+  trending: {
+    posts: (limit = 10) =>
+      get<{ postId: string; authorUsername: string; authorId: string; content: string; imageUrl: string | null; createdAt: string; totalGiftAmount: number; totalGiftCount: number; last24hAmount: number; trendScore: number }[]>(
+        `/trending/posts?limit=${limit}`
+      ),
+  },
+
   /* ── Gift Ledger Analytics ── */
   gifts: {
     postStats: (postId: string) =>

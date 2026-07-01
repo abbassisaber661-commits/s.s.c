@@ -28,6 +28,7 @@ import storiesRouter           from "./stories.js";
 import jobsRouter              from "./jobs.js";
 import walletRouter            from "./wallet.js";
 import giftLedgerRouter        from "./gift-ledger.js";
+import giftLeaderboardRouter   from "./gift-leaderboard.js";
 
 const router: IRouter = Router();
 
@@ -60,5 +61,6 @@ router.use(storiesRouter);
 router.use(jobsRouter);
 router.use(walletRouter);
 router.use(giftLedgerRouter);
+router.use(giftLeaderboardRouter);
 
 export default router;
