@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Search, MessageSquare, Bell, Users, User, Menu } from "lucide-react";
+import { Loader2, Search, MessageCircle, Bell, Users, User, Menu } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useLocation } from "wouter";
 
@@ -157,7 +157,7 @@ export default function FeedPage() {
             className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
             aria-label="Messages"
           >
-            <MessageSquare size={19} />
+            <MessageCircle size={19} />
             {dmCount > 0 && (
               <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
                 {dmCount > 9 ? "9+" : dmCount}
