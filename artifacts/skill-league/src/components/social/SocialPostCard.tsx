@@ -1,7 +1,12 @@
 // src/components/social/SocialPostCard.tsx
-import React, { memo, useState, useCallback, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { MessageCircle, Share2, Heart, Bookmark, BookmarkCheck, Eye } from "lucide-react";
+import React, {
+  memo, useState, useCallback, useEffect, useRef,
+} from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  MessageCircle, Share2, Heart, Bookmark, BookmarkCheck,
+  Eye, Gift, Play, Pause, Volume2, VolumeX,
+} from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -26,18 +31,76 @@ const fmt = (n: number) =>
 const age = (ts: number, rtl: boolean) => {
   const d = Date.now() - ts;
   if (rtl) {
-    if (d < 60_000) return "الآن";
+    if (d < 60_000)    return "الآن";
     if (d < 3_600_000) return `${Math.floor(d / 60_000)}د`;
     if (d < 86_400_000) return `${Math.floor(d / 3_600_000)}س`;
     return `${Math.floor(d / 86_400_000)}ي`;
   }
-  if (d < 60_000) return "now";
+  if (d < 60_000)    return "now";
   if (d < 3_600_000) return `${Math.floor(d / 60_000)}m`;
   if (d < 86_400_000) return `${Math.floor(d / 3_600_000)}h`;
   return `${Math.floor(d / 86_400_000)}d`;
 };
 
-// ─── Follow button (non-owner only) ──────────────────────────────────────────
+// ─── Scroll-pause detection hook ─────────────────────────────────────────────
+
+function useScrollPaused(delay = 600) {
+  const [paused, setPaused] = useState(true);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setPaused(false);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setPaused(true), delay);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [delay]);
+
+  return paused;
+}
+
+// ─── Gift button ──────────────────────────────────────────────────────────────
+
+const GiftButton = memo(function GiftButton({
+  visible, rtl,
+}: { visible: boolean; rtl: boolean }) {
+  const handleGift = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast(rtl ? "🎁 قريباً — نظام الهدايا قيد التطوير" : "🎁 Coming soon — Gifts system in development", {
+      duration: 2000,
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.button
+          key="gift-btn"
+          initial={{ opacity: 0, scale: 0.7, y: -4 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.7, y: -4 }}
+          transition={{ type: "spring", stiffness: 340, damping: 22 }}
+          onClick={handleGift}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-[#111111] select-none"
+          style={{
+            background: "linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)",
+            boxShadow: "0 0 10px 2px rgba(255,214,10,0.55), 0 2px 6px rgba(0,0,0,0.12)",
+          }}
+        >
+          <Gift size={12} className="shrink-0" />
+          <span>{rtl ? "هدية" : "Gift"}</span>
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+});
+
+// ─── Follow button ────────────────────────────────────────────────────────────
 
 const FollowBtn = memo(function FollowBtn({
   meId, themId, rtl,
@@ -75,7 +138,7 @@ const FollowBtn = memo(function FollowBtn({
     <button
       onClick={handle}
       className={cn(
-        "text-xs px-3 py-1 rounded-full font-bold transition-colors",
+        "text-xs px-3 py-1 rounded-full font-bold transition-colors shrink-0",
         following
           ? "bg-[#F0F0F0] text-[#444444]"
           : "bg-[#FFD60A] text-[#111111]"
@@ -84,6 +147,144 @@ const FollowBtn = memo(function FollowBtn({
       {following
         ? (rtl ? "متابَع" : "Following")
         : (rtl ? "متابعة" : "Follow")}
+    </button>
+  );
+});
+
+// ─── Video player ─────────────────────────────────────────────────────────────
+
+const VideoPost = memo(function VideoPost({ src }: { src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [progress, setProgress] = useState(0);
+
+  const MAX_SECONDS = 30;
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+    if (playing) { v.pause(); setPlaying(false); }
+    else { v.play().catch(() => {}); setPlaying(true); }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+  };
+
+  const onTimeUpdate = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    const dur = Math.min(v.duration || MAX_SECONDS, MAX_SECONDS);
+    if (v.currentTime >= MAX_SECONDS) {
+      v.pause();
+      v.currentTime = 0;
+      setPlaying(false);
+      setProgress(0);
+      return;
+    }
+    setProgress((v.currentTime / dur) * 100);
+  };
+
+  const onEnded = () => {
+    setPlaying(false);
+    setProgress(0);
+  };
+
+  return (
+    <div className="relative w-full bg-black" style={{ aspectRatio: "16/9", maxHeight: 340 }}>
+      <video
+        ref={videoRef}
+        src={src}
+        className="w-full h-full object-cover"
+        playsInline
+        muted={muted}
+        preload="metadata"
+        onTimeUpdate={onTimeUpdate}
+        onEnded={onEnded}
+        onClick={togglePlay}
+        style={{ display: "block", cursor: "pointer" }}
+      />
+
+      {/* Play/Pause overlay */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        style={{ background: playing ? "transparent" : "rgba(0,0,0,0.28)" }}
+      >
+        <AnimatePresence>
+          {!playing && (
+            <motion.div
+              key="play-icon"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.6 }}
+              className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30"
+            >
+              <Play size={24} className="text-white fill-white ml-1" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Mute button */}
+      <button
+        onClick={toggleMute}
+        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white transition-opacity hover:bg-black/60"
+      >
+        {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+      </button>
+
+      {/* 30s badge */}
+      <div className="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-sm text-white text-[10px] font-semibold">
+        max 30s
+      </div>
+
+      {/* Progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+        <div
+          className="h-full bg-[#FFD60A] transition-all"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+});
+
+// ─── Action button ────────────────────────────────────────────────────────────
+
+const ActionBtn = memo(function ActionBtn({
+  onClick, icon, label, active = false, activeColor = "text-[#FFD60A]",
+  count,
+}: {
+  onClick?: (e: React.MouseEvent) => void;
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  activeColor?: string;
+  count?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex-1 py-3 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90 select-none",
+        active ? activeColor : "text-[#888888] hover:text-[#444444]"
+      )}
+    >
+      <div className="relative">
+        {icon}
+        {typeof count === "number" && count > 0 && (
+          <span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[8px] font-black rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5 leading-none">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
+      </div>
+      <span className="text-[10px] font-medium leading-none">{label}</span>
     </button>
   );
 });
@@ -114,21 +315,18 @@ const SocialPostCard = memo(function SocialPostCard({
   const rtl = isRTL(language);
   const dir = rtl ? "rtl" : "ltr";
 
-  // Resolve current player — prop takes priority, then game context
   const currentPlayerId = currentPlayerIdProp ?? authUser?.uid ?? undefined;
   const isOwner = !!currentPlayerId && currentPlayerId === post.authorId;
 
-  // ── mutations (self-contained — no parent callback needed) ──
-  const { mutate: likePost }  = useLikePost();
-  const { mutate: savePost  } = useSavePost();
+  const { mutate: likePost } = useLikePost();
+  const { mutate: savePost } = useSavePost();
 
-  // ── visibility (hide from feed client-side) ──
+  const scrollPaused = useScrollPaused(600);
+
   const [hidden, setHidden] = useState(false);
-
-  // ── post content (editable by owner) ──
   const [content, setContent] = useState(post.content);
 
-  // ── like — initialised from server state ──
+  // ── like ──
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [likes, setLikes] = useState(post.likes ?? 0);
 
@@ -139,13 +337,12 @@ const SocialPostCard = memo(function SocialPostCard({
 
   const handleLike = useCallback(() => {
     const next = !liked;
-    // Optimistic local state (the mutation also patches React Query cache)
     setLiked(next);
     setLikes((l) => l + (next ? 1 : -1));
     likePost({ postId: post.id, like: next });
   }, [liked, post.id, likePost]);
 
-  // ── save — initialised from server state (no localStorage) ──
+  // ── save ──
   const [saved, setSaved] = useState(post.savedByMe ?? false);
 
   useEffect(() => {
@@ -159,7 +356,7 @@ const SocialPostCard = memo(function SocialPostCard({
     savePost(
       { postId: post.id, saved },
       {
-        onError: () => setSaved(!next), // roll back on failure
+        onError: () => setSaved(!next),
         onSuccess: (data) => {
           setSaved(data.saved);
           toast.success(data.saved
@@ -170,14 +367,12 @@ const SocialPostCard = memo(function SocialPostCard({
     );
   }, [saved, post.id, savePost, rtl]);
 
-  // ── views — initialised from server, fire-and-forget on first intersection ──
-  const postRef  = useRef<HTMLElement>(null);
-  const viewed   = useRef(false);
+  // ── views ──
+  const postRef = useRef<HTMLElement>(null);
+  const viewed  = useRef(false);
   const [views, setViews] = useState(post.views ?? 0);
 
-  useEffect(() => {
-    setViews(post.views ?? 0);
-  }, [post.views]);
+  useEffect(() => { setViews(post.views ?? 0); }, [post.views]);
 
   useEffect(() => {
     if (!postRef.current || viewed.current) return;
@@ -185,7 +380,6 @@ const SocialPostCard = memo(function SocialPostCard({
       if (!entry.isIntersecting) return;
       viewed.current = true;
       obs.disconnect();
-      // Fire-and-forget — update local count optimistically
       setViews((v) => v + 1);
       api.community.viewPost(post.id).then((res) => {
         if (res.views !== undefined) setViews(res.views);
@@ -196,7 +390,8 @@ const SocialPostCard = memo(function SocialPostCard({
   }, [post.id]);
 
   // ── share ──
-  const handleShare = useCallback(async () => {
+  const handleShare = useCallback(async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     const url = `${window.location.origin}/post/${post.id}`;
     try {
       if (navigator.share) {
@@ -208,53 +403,69 @@ const SocialPostCard = memo(function SocialPostCard({
     } catch {}
   }, [post, content, rtl]);
 
-  // ── hide (client-side) ──
   if (hidden) return null;
 
-  // ─── action bar labels ───────────────────────────────────────────────────
-  const likeLabel    = liked ? (rtl ? "أعجبني" : "Liked")  : (rtl ? "إعجاب"  : "Like");
-  const commentLabel = rtl ? "تعليق"   : "Comment";
-  const shareLabel   = rtl ? "مشاركة"  : "Share";
-  const saveLabel    = saved ? (rtl ? "محفوظ"  : "Saved")  : (rtl ? "حفظ"    : "Save");
+  // ── detect video post ──
+  const isVideo = post.type === "video" ||
+    (post.imageUrl && /\.(mp4|webm|mov|ogg)(\?|$)/i.test(post.imageUrl));
 
-  // ── render ──────────────────────────────────────────────────────────────────
+  const likeLabel    = rtl ? "إعجاب"  : "Like";
+  const commentLabel = rtl ? "تعليق"  : "Comment";
+  const shareLabel   = rtl ? "مشاركة" : "Share";
+  const saveLabel    = rtl ? "حفظ"    : "Save";
+  const giftLabel    = rtl ? "هدية"   : "Gift";
+
   return (
     <motion.article
       ref={postRef}
       dir={dir}
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22 }}
       className={cn(
-        "bg-white rounded-2xl border border-[#E5E5E5] shadow-sm",
+        "bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden",
+        "shadow-[0_1px_4px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]",
         className
       )}
-      style={{ overflow: "visible" }}
     >
-      {/* ── inner wrapper clips rounded corners for image ── */}
-      <div className="rounded-2xl overflow-hidden">
+      {/* ── HEADER ──────────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
+        {/* Avatar */}
+        <button
+          onClick={() => navigate(`/profile/${post.authorId}`)}
+          className="shrink-0"
+        >
+          <Avatar username={post.authorName} />
+        </button>
 
-        {/* ── HEADER ─────────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          {/* Avatar + name */}
-          <button
-            onClick={() => navigate(`/profile/${post.authorId}`)}
-            className="flex items-center gap-3 flex-1 min-w-0"
-          >
-            <Avatar username={post.authorName} />
-            <div className={cn("min-w-0", rtl ? "text-right" : "text-left")}>
-              <div className="font-semibold text-sm text-[#111111] truncate leading-tight">
-                {post.authorName}
-              </div>
-              <div className="text-xs text-[#888888]">
-                Lv.{post.authorLevel} · {age(post.timestamp, rtl)}
-              </div>
-            </div>
-          </button>
+        {/* Name + meta + gift */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => navigate(`/profile/${post.authorId}`)}
+              className={cn("font-bold text-sm text-[#0D0D0D] truncate leading-tight hover:underline", rtl ? "text-right" : "text-left")}
+            >
+              {post.authorName}
+            </button>
+            {/* Gift badge — appears when scrolling stops */}
+            <GiftButton visible={scrollPaused} rtl={rtl} />
+          </div>
+          <div className="text-[11px] text-[#9B9B9B] mt-0.5 flex items-center gap-1">
+            <span>Lv.{post.authorLevel}</span>
+            <span>·</span>
+            <span>{age(post.timestamp, rtl)}</span>
+            {post.isPinned && (
+              <>
+                <span>·</span>
+                <span className="text-[#FFD60A] font-semibold">{rtl ? "📌 مثبّت" : "📌 Pinned"}</span>
+              </>
+            )}
+          </div>
+        </div>
 
-          {/* Follow (non-owner) */}
+        {/* Follow + Options */}
+        <div className="flex items-center gap-1 shrink-0">
           <FollowBtn meId={currentPlayerId} themId={post.authorId} rtl={rtl} />
-
-          {/* ⋯ options menu */}
           <PostOptionsMenu
             postId={post.id}
             authorId={post.authorId ?? ""}
@@ -266,107 +477,134 @@ const SocialPostCard = memo(function SocialPostCard({
             onHide={() => setHidden(true)}
           />
         </div>
+      </div>
 
-        {/* ── CONTENT ──────────────────────────────────────────────────── */}
-        {content && (
-          <div className={cn(
-            "px-4 pb-3 text-sm whitespace-pre-wrap text-[#111111] leading-relaxed",
-            rtl ? "text-right" : "text-left"
-          )}>
-            {content}
-          </div>
-        )}
-
-        {/* ── IMAGE ────────────────────────────────────────────────────── */}
-        {post.imageUrl && (
-          <img
-            src={post.imageUrl}
-            className="w-full max-h-96 object-cover"
-            alt=""
-            loading="lazy"
-          />
-        )}
-
-        {/* ── STATS ROW ────────────────────────────────────────────────── */}
-        <div
-          dir={dir}
-          className="px-4 pt-3 pb-1 text-xs text-[#888888] flex items-center gap-3"
-        >
-          {likes > 0 && (
-            <span className="flex items-center gap-1">
-              <Heart size={11} className="fill-red-400 text-red-400" />
-              {fmt(likes)}
-            </span>
-          )}
-          {commentCount > 0 && (
-            <span>{fmt(commentCount)} {rtl ? "تعليق" : "comments"}</span>
-          )}
-          {views > 0 && (
-            <span className={cn("flex items-center gap-1", rtl ? "mr-auto" : "ml-auto")}>
-              <Eye size={11} />
-              {fmt(views)}
-            </span>
-          )}
+      {/* ── CONTENT ─────────────────────────────────────────────────────────── */}
+      {content && (
+        <div className={cn(
+          "px-3.5 pb-2.5 text-[14px] leading-[1.55] text-[#1A1A1A] whitespace-pre-wrap",
+          rtl ? "text-right" : "text-left"
+        )}>
+          {content}
         </div>
+      )}
 
-        {/* ── ACTION BAR ───────────────────────────────────────────────── */}
-        <div
-          dir={dir}
-          className="flex items-center border-t border-[#F0F0F0] mt-1"
-        >
-          {/* LIKE */}
-          <button
-            onClick={handleLike}
-            className={cn(
-              "flex-1 py-2.5 flex items-center justify-center gap-1.5 text-sm font-medium transition-all active:scale-90",
-              liked ? "text-red-500" : "text-[#888888] hover:text-red-400"
-            )}
-          >
-            <Heart size={17} className={cn("transition-all", liked && "fill-red-500")} />
-            <span className="text-xs">{likeLabel}</span>
-          </button>
+      {/* ── MEDIA ───────────────────────────────────────────────────────────── */}
+      {post.imageUrl && (
+        isVideo ? (
+          <VideoPost src={post.imageUrl} />
+        ) : (
+          <div className="relative">
+            <img
+              src={post.imageUrl}
+              className="w-full object-cover"
+              style={{ maxHeight: 400 }}
+              alt=""
+              loading="lazy"
+            />
+          </div>
+        )
+      )}
 
-          <div className="w-px h-5 bg-[#F0F0F0]" />
-
-          {/* COMMENT */}
+      {/* ── STATS ROW ───────────────────────────────────────────────────────── */}
+      <div dir={dir} className="px-3.5 pt-2.5 pb-0.5 flex items-center gap-3 text-[11px] text-[#AAAAAA]">
+        {likes > 0 && (
+          <span className="flex items-center gap-1">
+            <span className="text-red-400 text-sm">❤️</span>
+            {fmt(likes)}
+          </span>
+        )}
+        {commentCount > 0 && (
           <button
             onClick={() => onCommentClick?.(post.id)}
-            className="flex-1 py-2.5 text-[#888888] hover:text-[#444444] flex items-center justify-center gap-1.5 text-sm font-medium transition-colors active:scale-90"
+            className="hover:underline"
           >
-            <MessageCircle size={17} />
-            <span className="text-xs">{commentLabel}</span>
+            {fmt(commentCount)} {rtl ? "تعليق" : "comments"}
           </button>
+        )}
+        {views > 0 && (
+          <span className={cn("flex items-center gap-1", rtl ? "mr-auto" : "ml-auto")}>
+            <Eye size={11} />
+            {fmt(views)}
+          </span>
+        )}
+      </div>
 
-          <div className="w-px h-5 bg-[#F0F0F0]" />
+      {/* ── DIVIDER ─────────────────────────────────────────────────────────── */}
+      <div className="mx-3.5 mt-1 border-t border-[#F2F2F2]" />
 
-          {/* SHARE */}
-          <button
-            onClick={handleShare}
-            className="flex-1 py-2.5 text-[#888888] hover:text-[#444444] flex items-center justify-center gap-1.5 text-sm font-medium transition-colors active:scale-90"
-          >
-            <Share2 size={17} />
-            <span className="text-xs">{shareLabel}</span>
-          </button>
+      {/* ── ACTION BAR ──────────────────────────────────────────────────────── */}
+      <div dir={dir} className="flex items-center">
 
-          <div className="w-px h-5 bg-[#F0F0F0]" />
+        {/* LIKE */}
+        <ActionBtn
+          onClick={handleLike}
+          active={liked}
+          activeColor="text-red-500"
+          icon={
+            <Heart
+              size={18}
+              className={cn("transition-all duration-200", liked && "fill-red-500")}
+            />
+          }
+          label={likeLabel}
+        />
 
-          {/* SAVE */}
-          <button
-            onClick={handleSave}
-            className={cn(
-              "flex-1 py-2.5 flex items-center justify-center gap-1.5 text-sm font-medium transition-all active:scale-90",
-              saved ? "text-[#FFD60A]" : "text-[#888888] hover:text-[#444444]"
-            )}
-          >
-            {saved
-              ? <BookmarkCheck size={17} className="fill-[#FFD60A]" />
-              : <Bookmark size={17} />
-            }
-            <span className="text-xs">{saveLabel}</span>
-          </button>
-        </div>
+        <div className="w-px h-7 bg-[#F0F0F0]" />
 
-      </div>{/* end inner clip wrapper */}
+        {/* COMMENT */}
+        <ActionBtn
+          onClick={() => onCommentClick?.(post.id)}
+          icon={<MessageCircle size={18} />}
+          label={commentLabel}
+          count={commentCount > 0 ? commentCount : undefined}
+        />
+
+        <div className="w-px h-7 bg-[#F0F0F0]" />
+
+        {/* SHARE */}
+        <ActionBtn
+          onClick={handleShare}
+          icon={<Share2 size={18} />}
+          label={shareLabel}
+        />
+
+        <div className="w-px h-7 bg-[#F0F0F0]" />
+
+        {/* SAVE */}
+        <ActionBtn
+          onClick={handleSave}
+          active={saved}
+          activeColor="text-[#FFD60A]"
+          icon={
+            saved
+              ? <BookmarkCheck size={18} className="fill-[#FFD60A]" />
+              : <Bookmark size={18} />
+          }
+          label={saveLabel}
+        />
+
+        <div className="w-px h-7 bg-[#F0F0F0]" />
+
+        {/* GIFT (UI placeholder) */}
+        <ActionBtn
+          onClick={(e) => {
+            e.stopPropagation();
+            toast(rtl ? "🎁 قريباً — نظام الهدايا قيد التطوير" : "🎁 Coming soon — Gifts in development", { duration: 2000 });
+          }}
+          active={false}
+          icon={
+            <Gift
+              size={18}
+              className="text-[#FF9500]"
+              style={{ filter: "drop-shadow(0 0 4px rgba(255,149,0,0.5))" }}
+            />
+          }
+          label={giftLabel}
+          activeColor="text-[#FF9500]"
+        />
+
+      </div>
     </motion.article>
   );
 });
