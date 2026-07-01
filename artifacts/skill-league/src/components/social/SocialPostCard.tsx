@@ -81,19 +81,32 @@ const GiftButton = memo(function GiftButton({
       {visible && (
         <motion.button
           key="gift-btn"
-          initial={{ opacity: 0, scale: 0.7, y: -4 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.7, y: -4 }}
-          transition={{ type: "spring", stiffness: 340, damping: 22 }}
+          initial={{ opacity: 0, scale: 0.75 }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            x: [0, 2, -2, 2, 0],
+          }}
+          exit={{ opacity: 0, scale: 0.75 }}
+          transition={{
+            opacity: { duration: 0.25 },
+            scale: { duration: 0.25 },
+            x: {
+              duration: 2.8,
+              repeat: Infinity,
+              ease: "easeInOut",
+              repeatType: "loop",
+            },
+          }}
           onClick={handleGift}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold text-[#111111] select-none"
+          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold text-[#111111] select-none shrink-0"
           style={{
             background: "linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)",
-            boxShadow: "0 0 10px 2px rgba(255,214,10,0.55), 0 2px 6px rgba(0,0,0,0.12)",
+            boxShadow: "0 0 8px 2px rgba(255,214,10,0.5), 0 0 16px 4px rgba(255,149,0,0.25), 0 1px 4px rgba(0,0,0,0.1)",
           }}
         >
-          <Gift size={12} className="shrink-0" />
-          <span>{rtl ? "هدية" : "Gift"}</span>
+          <Gift size={11} className="shrink-0" />
+          <span>{rtl ? "DN هدية" : "Gift DN"}</span>
         </motion.button>
       )}
     </AnimatePresence>
@@ -440,26 +453,33 @@ const SocialPostCard = memo(function SocialPostCard({
 
         {/* Name + meta + gift */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => navigate(`/profile/${post.authorId}`)}
-              className={cn("font-bold text-sm text-[#0D0D0D] truncate leading-tight hover:underline", rtl ? "text-right" : "text-left")}
-            >
-              {post.authorName}
-            </button>
-            {/* Gift badge — appears when scrolling stops */}
-            <GiftButton visible={scrollPaused} rtl={rtl} />
-          </div>
-          <div className="text-[11px] text-[#9B9B9B] mt-0.5 flex items-center gap-1">
-            <span>Lv.{post.authorLevel}</span>
-            <span>·</span>
-            <span>{age(post.timestamp, rtl)}</span>
-            {post.isPinned && (
-              <>
-                <span>·</span>
-                <span className="text-[#FFD60A] font-semibold">{rtl ? "📌 مثبّت" : "📌 Pinned"}</span>
-              </>
+          {/* Row 1 — Username */}
+          <button
+            onClick={() => navigate(`/profile/${post.authorId}`)}
+            className={cn(
+              "font-bold text-sm text-[#0D0D0D] truncate leading-tight hover:underline block w-full",
+              rtl ? "text-right" : "text-left"
             )}
+          >
+            {post.authorName}
+          </button>
+
+          {/* Row 2 — Time · Level   [🎁 Gift DN] */}
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[11px] text-[#9B9B9B] flex items-center gap-1 shrink-0">
+              <span>Lv.{post.authorLevel}</span>
+              <span>·</span>
+              <span>{age(post.timestamp, rtl)}</span>
+              {post.isPinned && (
+                <>
+                  <span>·</span>
+                  <span className="text-[#FFD60A] font-semibold">{rtl ? "📌 مثبّت" : "📌 Pinned"}</span>
+                </>
+              )}
+            </span>
+
+            {/* 🎁 Gift button — floats under username, shows on scroll pause */}
+            <GiftButton visible={scrollPaused} rtl={rtl} />
           </div>
         </div>
 
