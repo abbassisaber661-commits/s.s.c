@@ -138,8 +138,8 @@ function AppShell() {
     <>
       <LiveNotifToast />
 
-      {/* ── Hamburger (☰) — Settings entry — top-right, always visible on nav pages ── */}
-      {!hideNav && !onSettingsPage && (
+      {/* ── Hamburger (☰) — Settings entry — top-right, hidden on social pages (FeedPage has its own) ── */}
+      {!hideNav && !onSettingsPage && !showSocialNav && (
         <Link href="/settings">
           <button
             className="fixed top-3 right-3 z-50 w-10 h-10 flex items-center justify-center rounded-2xl active:scale-90 transition-transform"
