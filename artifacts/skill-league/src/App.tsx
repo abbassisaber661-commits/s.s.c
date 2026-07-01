@@ -16,7 +16,7 @@ import { RealtimeProvider } from "@/contexts/RealtimeProvider";
 
 // Core
 import HomeScreen from "@/pages/HomeScreen";
-import AuthScreen from "@/pages/AuthScreen";
+import EntryFlow from "@/pages/EntryFlow";
 import NotFound from "@/pages/not-found";
 
 // Game
@@ -124,12 +124,12 @@ function AppShell() {
     } catch {}
   }, []);
 
-  // 🔐 Auth Guard
+  // 🔐 Auth Guard — guests always see entry flow on every open
   if (
-    !isAuthenticated &&
+    (!isAuthenticated || isGuest) &&
     !PUBLIC_PATHS.some((p) => location.startsWith(p))
   ) {
-    return <AuthScreen />;
+    return <EntryFlow />;
   }
 
   const onSettingsPage = location === "/settings";

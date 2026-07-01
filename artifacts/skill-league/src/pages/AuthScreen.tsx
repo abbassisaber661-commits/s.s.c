@@ -251,25 +251,21 @@ export default function AuthScreen() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
               className="w-full flex flex-col gap-3"
             >
-              {/* Google Account */}
-              <button
-                onClick={() => { resetForm(); setStep('google-form'); }}
-                className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 font-bold text-base transition-all active:scale-95"
-                style={{ background: 'white', color: '#1f1f1f', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
-              >
-                <GoogleIcon size={22} />
-                <span>تسجيل الدخول بـ Google</span>
-              </button>
+              {/* Google Account — hidden from UI, code preserved */}
+              <div style={{ display: 'none' }}>
+                <button onClick={() => { resetForm(); setStep('google-form'); }}>
+                  <GoogleIcon size={22} />
+                  <span>تسجيل الدخول بـ Google</span>
+                </button>
+              </div>
 
-              {/* Gmail */}
-              <button
-                onClick={() => { resetForm(); setStep('gmail-form'); }}
-                className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 font-bold text-base transition-all active:scale-95"
-                style={{ background: '#EA4335', color: 'white', boxShadow: '0 4px 20px rgba(234,67,53,0.4)' }}
-              >
-                <GmailIcon size={22} />
-                <span>تسجيل الدخول بـ Gmail</span>
-              </button>
+              {/* Gmail — hidden from UI, code preserved */}
+              <div style={{ display: 'none' }}>
+                <button onClick={() => { resetForm(); setStep('gmail-form'); }}>
+                  <GmailIcon size={22} />
+                  <span>تسجيل الدخول بـ Gmail</span>
+                </button>
+              </div>
 
               {error && (
                 <motion.p initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
