@@ -27,6 +27,9 @@ import { PostModal }         from "@/components/profile/PostModal";
 import SocialPostCard        from "@/components/social/SocialPostCard";
 import { CommentsSheet }     from "@/components/social/CommentsSheet";
 
+import CreatorDashboard from "@/components/profile/CreatorDashboard";
+import { useCreatorStats } from "@/hooks/useCreatorStats";
+
 import type { SortOption } from "@/components/profile/ProfileSortFilter";
 import type { CommunityPost } from "@/shared/community";
 
@@ -79,6 +82,8 @@ export default function ProfilePage() {
 
   const currentPlayerId = getStoredPlayerId() ?? undefined;
   const isOwner = !routeParams?.userId || routeParams.userId === authUser?.uid;
+
+  const creatorStats = useCreatorStats(userId || "1", profile?.postsCount ?? 0);
 
   const handleFollowToggle = useCallback(async () => {
     if (!profile) return;
@@ -322,6 +327,14 @@ export default function ProfilePage() {
           />
         </motion.div>
       )}
+
+      {/* ── Creator Dashboard ── */}
+      <CreatorDashboard
+        stats={creatorStats}
+        postsCount={profile.postsCount}
+        joinedAt={profile.joinedAt}
+        username={profile.username}
+      />
 
       {/* ── Unified Tab Bar ── */}
       <div className="mt-4">
