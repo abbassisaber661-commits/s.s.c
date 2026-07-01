@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { eq, count, and } from "drizzle-orm";
 import { db, followersTable, playersTable } from "@workspace/db";
+import { createNotification } from "../lib/notificationService.js";
 import { nanoid } from "../lib/nanoid.js";
 
 const router = Router();
@@ -189,6 +190,20 @@ router.post("/followers/follow", async (req, res) => {
       ));
     if (existing.length === 0) {
       await db.insert(followersTable).values({ id: nanoid(), followerId, followingId });
+
+      // ── Real-time follow notification ──
+      db.select({ username: playersTable.username, avatar: playersTable.avatar })
+        .from(playersTable).where(eq(playersTable.id, followerId)).limit(1)
+        .then(([follower]) => {
+          if (!follower) return;
+          createNotification({
+            playerId: followingId,
+            type: "follow",
+            title: `👤 ${follower.username} started following you`,
+            body: "Tap to visit their profile",
+            data: { followerId, followerUsername: follower.username, followerAvatar: follower.avatar ?? "" },
+          }).catch(() => {});
+        }).catch(() => {});
     }
     res.json({ ok: true });
   } catch (err) {

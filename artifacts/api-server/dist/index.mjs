@@ -58529,30 +58529,6 @@ var require_jsonwebtoken = __commonJS({
   }
 });
 
-// src/lib/logger.ts
-var import_pino, isProduction, logger;
-var init_logger2 = __esm({
-  "src/lib/logger.ts"() {
-    "use strict";
-    import_pino = __toESM(require_pino(), 1);
-    isProduction = process.env.NODE_ENV === "production";
-    logger = (0, import_pino.default)({
-      level: process.env.LOG_LEVEL ?? "info",
-      redact: [
-        "req.headers.authorization",
-        "req.headers.cookie",
-        "res.headers['set-cookie']"
-      ],
-      ...isProduction ? {} : {
-        transport: {
-          target: "pino-pretty",
-          options: { colorize: true }
-        }
-      }
-    });
-  }
-});
-
 // ../../node_modules/.pnpm/negotiator@0.6.3/node_modules/negotiator/lib/charset.js
 var require_charset2 = __commonJS({
   "../../node_modules/.pnpm/negotiator@0.6.3/node_modules/negotiator/lib/charset.js"(exports, module) {
@@ -79882,6 +79858,30 @@ var init_wrapper = __esm({
   }
 });
 
+// src/lib/logger.ts
+var import_pino, isProduction, logger;
+var init_logger2 = __esm({
+  "src/lib/logger.ts"() {
+    "use strict";
+    import_pino = __toESM(require_pino(), 1);
+    isProduction = process.env.NODE_ENV === "production";
+    logger = (0, import_pino.default)({
+      level: process.env.LOG_LEVEL ?? "info",
+      redact: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "res.headers['set-cookie']"
+      ],
+      ...isProduction ? {} : {
+        transport: {
+          target: "pino-pretty",
+          options: { colorize: true }
+        }
+      }
+    });
+  }
+});
+
 // src/ws/socket-manager.ts
 function getArenaConfig(leagueId) {
   return ARENA_CONFIG[leagueId?.toLowerCase()] ?? DEFAULT_ARENA;
@@ -79956,7 +79956,7 @@ function makeBotPlayer(playerLevel, playerElo, leagueId) {
   const diff = getBotDifficulty(leagueId);
   const offsets = { easy: -4, medium: 0, hard: 4 };
   const eloOffsets = { easy: -80, medium: 0, hard: 80 };
-  const names = BOT_NAMES2[diff];
+  const names = BOT_NAMES[diff];
   return {
     socketId: "bot",
     playerId: "bot",
@@ -80643,7 +80643,7 @@ function setupSocketIO(server2) {
   });
   return io2;
 }
-var ARENA_CONFIG, DEFAULT_ARENA, antiCheatMap, COLORS, BOT_NAMES2, matchmakingQueue, rooms, playerSockets, lbInterval, ioInstance, previousTop10;
+var ARENA_CONFIG, DEFAULT_ARENA, antiCheatMap, COLORS, BOT_NAMES, matchmakingQueue, rooms, playerSockets, lbInterval, ioInstance, previousTop10;
 var init_socket_manager = __esm({
   "src/ws/socket-manager.ts"() {
     "use strict";
@@ -80670,7 +80670,7 @@ var init_socket_manager = __esm({
       { id: "purple", name: "\u0628\u0646\u0641\u0633\u062C\u064A", hex: "#A855F7" },
       { id: "orange", name: "\u0628\u0631\u062A\u0642\u0627\u0644\u064A", hex: "#F97316" }
     ];
-    BOT_NAMES2 = {
+    BOT_NAMES = {
       easy: ["SlowBot_E", "EasyAI_1", "Beginner_X", "Novice_Bot", "LearnAI_3"],
       medium: ["MindBot_M", "MidAI_7", "SmartBot_2", "AveragePro", "SteadyAI"],
       hard: ["MasterAI", "EliteBot_H", "OmegaMind", "ApexAI_X", "UltraCore"]
@@ -87535,12 +87535,11 @@ var import_express6 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
 init_nanoid();
+init_notificationService();
 var router6 = (0, import_express6.Router)();
-async function notify(playerId, type, title, body, data = {}) {
-  try {
-    await db.insert(notificationsTable).values({ id: nanoid3(), playerId, type, title, body, data });
-  } catch {
-  }
+function notify(playerId, type, title, body, data = {}) {
+  createNotification({ playerId, type, title, body, data }).catch(() => {
+  });
 }
 function extractHashtags(text2) {
   const matches = text2.match(/#[\w\u0600-\u06FF]+/g) ?? [];
@@ -88646,6 +88645,7 @@ var analytics_default = router10;
 var import_express11 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_notificationService();
 init_nanoid();
 var router11 = (0, import_express11.Router)();
 router11.get("/followers/:playerId", async (req, res) => {
@@ -88770,6 +88770,18 @@ router11.post("/followers/follow", async (req, res) => {
     ));
     if (existing.length === 0) {
       await db.insert(followersTable).values({ id: nanoid3(), followerId, followingId });
+      db.select({ username: playersTable.username, avatar: playersTable.avatar }).from(playersTable).where(eq(playersTable.id, followerId)).limit(1).then(([follower]) => {
+        if (!follower) return;
+        createNotification({
+          playerId: followingId,
+          type: "follow",
+          title: `\u{1F464} ${follower.username} started following you`,
+          body: "Tap to visit their profile",
+          data: { followerId, followerUsername: follower.username, followerAvatar: follower.avatar ?? "" }
+        }).catch(() => {
+        });
+      }).catch(() => {
+      });
     }
     res.json({ ok: true });
   } catch (err) {
@@ -89522,7 +89534,7 @@ var SEASON_DAYS = 30;
 var DAILY_MATCH_COUNTS = Array.from({ length: 30 }, () => 1);
 var PROMOTION_PCT = 0.2;
 var RELEGATION_PCT = 0.2;
-var BOT_NAMES = [
+var BOT_NAMES2 = [
   "Nova_X",
   "BlazeFire",
   "StarQ",
@@ -89733,7 +89745,7 @@ function currentSeasonDay(season) {
   return getSeasonCurrentRound(season);
 }
 function pickBot(exclude) {
-  const pool2 = BOT_NAMES.filter((n) => n !== exclude);
+  const pool2 = BOT_NAMES2.filter((n) => n !== exclude);
   return pool2[Math.floor(Math.random() * pool2.length)];
 }
 function simulateResult(difficulty) {

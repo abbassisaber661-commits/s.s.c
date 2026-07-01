@@ -1,16 +1,15 @@
 import { Router } from "express";
 import { eq, desc, and, asc, sql, inArray } from "drizzle-orm";
-import { db, postsTable, postLikesTable, postCommentsTable, postSavesTable, notificationsTable } from "@workspace/db";
+import { db, postsTable, postLikesTable, postCommentsTable, postSavesTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { recordPost, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
+import { createNotification } from "../lib/notificationService.js";
 
 const router = Router();
 
-// helper: fire-and-forget notification
-async function notify(playerId: string, type: string, title: string, body: string, data: Record<string, unknown> = {}) {
-  try {
-    await db.insert(notificationsTable).values({ id: nanoid(), playerId, type, title, body, data });
-  } catch {}
+// helper: fire-and-forget notification (real-time via socket + DB)
+function notify(playerId: string, type: string, title: string, body: string, data: Record<string, unknown> = {}) {
+  createNotification({ playerId, type: type as "post_like" | "post_comment" | "follow" | "gift" | "gift_sent" | "rank" | "dn" | "system", title, body, data }).catch(() => {});
 }
 
 // helper: extract hashtags
