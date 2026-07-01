@@ -97,7 +97,9 @@ export default function UserProfile() {
             type:        (p.type as PostType) ?? "text",
             timestamp:   new Date(p.createdAt ?? Date.now()).getTime(),
             likes:       p.likes ?? 0,
-            likedByMe:   false,
+            views:       p.views ?? 0,
+            likedByMe:   p.likedByMe ?? false,
+            savedByMe:   p.savedByMe ?? false,
             boosted:     false,
             boostExpiry: null,
           }));

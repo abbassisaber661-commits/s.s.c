@@ -54214,7 +54214,7 @@ var init_matches = __esm({
 });
 
 // ../../lib/db/src/schema/community.ts
-var postsTable, postLikesTable, postCommentsTable, jobsTable, insertPostSchema, insertCommentSchema, insertJobSchema;
+var postsTable, postLikesTable, postSavesTable, postCommentsTable, jobsTable, insertPostSchema, insertCommentSchema, insertJobSchema;
 var init_community = __esm({
   "../../lib/db/src/schema/community.ts"() {
     "use strict";
@@ -54231,11 +54231,18 @@ var init_community = __esm({
       meta: jsonb("meta").$type().default({}),
       likes: integer("likes").notNull().default(0),
       replies: integer("replies").notNull().default(0),
+      views: integer("views").notNull().default(0),
       isPinned: boolean("is_pinned").notNull().default(false),
       isPublic: boolean("is_public").notNull().default(true),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     postLikesTable = pgTable("post_likes", {
+      id: text("id").primaryKey(),
+      postId: text("post_id").notNull(),
+      playerId: text("player_id").notNull(),
+      createdAt: timestamp("created_at").notNull().defaultNow()
+    });
+    postSavesTable = pgTable("post_saves", {
       id: text("id").primaryKey(),
       postId: text("post_id").notNull(),
       playerId: text("player_id").notNull(),
@@ -54256,7 +54263,6 @@ var init_community = __esm({
       title: text("title").notNull(),
       description: text("description").notNull(),
       jobType: text("job_type").notNull().default("offer"),
-      // 'offer' | 'request'
       country: text("country").notNull().default(""),
       category: text("category").notNull().default("general"),
       createdAt: timestamp("created_at").notNull().defaultNow()
@@ -54582,6 +54588,7 @@ __export(schema_exports, {
   playersTable: () => playersTable,
   postCommentsTable: () => postCommentsTable,
   postLikesTable: () => postLikesTable,
+  postSavesTable: () => postSavesTable,
   postsTable: () => postsTable,
   pvpMatchesTable: () => pvpMatchesTable,
   pvpRoomsTable: () => pvpRoomsTable,
@@ -54645,6 +54652,7 @@ __export(src_exports, {
   pool: () => pool,
   postCommentsTable: () => postCommentsTable,
   postLikesTable: () => postLikesTable,
+  postSavesTable: () => postSavesTable,
   postsTable: () => postsTable,
   pvpMatchesTable: () => pvpMatchesTable,
   pvpRoomsTable: () => pvpRoomsTable,
@@ -86619,9 +86627,10 @@ function extractMentions(text2) {
   const matches = text2.match(/@[\w]+/g) ?? [];
   return [...new Set(matches.map((t) => t.slice(1).toLowerCase()))];
 }
-function mapPost(row) {
+function mapPost(row, likedPostIds = /* @__PURE__ */ new Set(), savedPostIds = /* @__PURE__ */ new Set()) {
+  const postId = row.id;
   return {
-    id: row.id,
+    id: postId,
     authorId: row.authorId,
     authorName: row.username,
     authorLevel: row.level ?? 1,
@@ -86630,14 +86639,39 @@ function mapPost(row) {
     type: row.type ?? "text",
     timestamp: row.createdAt ? new Date(row.createdAt).getTime() : Date.now(),
     likes: row.likes ?? 0,
-    likedByMe: false,
+    likedByMe: likedPostIds.has(postId),
+    savedByMe: savedPostIds.has(postId),
     replyCount: row.replies ?? 0,
+    views: row.views ?? 0,
+    isPinned: row.isPinned ?? false,
+    isPublic: row.isPublic ?? true,
     // also expose flat fields for legacy consumers
     username: row.username,
     level: row.level ?? 1,
     createdAt: row.createdAt,
     replies: row.replies ?? 0
   };
+}
+async function getPlayerInteractions(playerId, postIds) {
+  const likedPostIds = /* @__PURE__ */ new Set();
+  const savedPostIds = /* @__PURE__ */ new Set();
+  if (!playerId || postIds.length === 0) return { likedPostIds, savedPostIds };
+  try {
+    const [likeRows, saveRows] = await Promise.all([
+      db.select({ postId: postLikesTable.postId }).from(postLikesTable).where(and(
+        eq(postLikesTable.playerId, playerId),
+        inArray(postLikesTable.postId, postIds)
+      )),
+      db.select({ postId: postSavesTable.postId }).from(postSavesTable).where(and(
+        eq(postSavesTable.playerId, playerId),
+        inArray(postSavesTable.postId, postIds)
+      ))
+    ]);
+    likeRows.forEach((r) => likedPostIds.add(r.postId));
+    saveRows.forEach((r) => savedPostIds.add(r.postId));
+  } catch {
+  }
+  return { likedPostIds, savedPostIds };
 }
 router6.get("/community/posts", async (req, res) => {
   try {
@@ -86646,9 +86680,17 @@ router6.get("/community/posts", async (req, res) => {
     const type = String(req.query.type ?? "fyp");
     const hashtag = req.query.hashtag ? String(req.query.hashtag) : null;
     const flat = req.query.format === "flat";
+    const playerId = req.query.playerId ? String(req.query.playerId) : null;
+    const authorId = req.query.authorId ? String(req.query.authorId) : null;
     const offset = (page - 1) * limit;
     let query;
-    if (type === "trending") {
+    if (authorId) {
+      if (type === "trending") {
+        query = db.select().from(postsTable).where(eq(postsTable.authorId, authorId)).orderBy(desc(postsTable.likes)).limit(limit + 1).offset(offset);
+      } else {
+        query = db.select().from(postsTable).where(eq(postsTable.authorId, authorId)).orderBy(desc(postsTable.createdAt)).limit(limit + 1).offset(offset);
+      }
+    } else if (type === "trending") {
       query = db.select().from(postsTable).orderBy(desc(postsTable.likes)).limit(limit + 1).offset(offset);
     } else {
       query = db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit + 1).offset(offset);
@@ -86660,12 +86702,14 @@ router6.get("/community/posts", async (req, res) => {
     }
     const hasMore = rows.length > limit;
     const pageRows = rows.slice(0, limit);
+    const postIds = pageRows.map((r) => r.id);
+    const { likedPostIds, savedPostIds } = await getPlayerInteractions(playerId, postIds);
     if (flat) {
-      res.json(pageRows);
+      res.json(pageRows.map((r) => mapPost(r, likedPostIds, savedPostIds)));
       return;
     }
     res.json({
-      data: pageRows.map(mapPost),
+      data: pageRows.map((r) => mapPost(r, likedPostIds, savedPostIds)),
       nextPage: hasMore ? page + 1 : null,
       total: pageRows.length
     });
@@ -86766,25 +86810,99 @@ router6.post("/community/posts/:id/like", async (req, res) => {
   }
 });
 router6.patch("/community/posts/:id/like", async (req, res) => {
-  const { playerId } = req.body;
+  const { playerId, playerUsername } = req.body;
   const pid = playerId ? String(playerId) : null;
   try {
     if (pid) {
       const existing = await db.select({ id: postLikesTable.id }).from(postLikesTable).where(and(eq(postLikesTable.postId, req.params.id), eq(postLikesTable.playerId, pid))).limit(1);
       if (existing.length) {
         await db.delete(postLikesTable).where(eq(postLikesTable.id, existing[0].id));
-        const [post2] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
-        const newLikes2 = Math.max(0, (post2?.likes ?? 1) - 1);
-        await db.update(postsTable).set({ likes: newLikes2 }).where(eq(postsTable.id, req.params.id));
-        res.json({ liked: false, likes: newLikes2, likedByMe: false, postId: req.params.id });
+        const [post3] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
+        const newLikes3 = Math.max(0, (post3?.likes ?? 1) - 1);
+        await db.update(postsTable).set({ likes: newLikes3 }).where(eq(postsTable.id, req.params.id));
+        res.json({ liked: false, likes: newLikes3, likedByMe: false, postId: req.params.id });
         return;
       }
       await db.insert(postLikesTable).values({ id: nanoid3(), postId: req.params.id, playerId: pid });
+      const [post2] = await db.select({ likes: postsTable.likes, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, req.params.id));
+      const newLikes2 = (post2?.likes ?? 0) + 1;
+      await db.update(postsTable).set({ likes: newLikes2 }).where(eq(postsTable.id, req.params.id));
+      recordLikeGiven(pid).catch(() => {
+      });
+      if (post2?.authorId && post2.authorId !== pid) {
+        const liker = String(playerUsername || pid);
+        notify(
+          post2.authorId,
+          "like",
+          `\u2764\uFE0F ${liker} liked your post`,
+          `"${(post2.content ?? "").slice(0, 60)}${(post2.content ?? "").length > 60 ? "..." : ""}"`,
+          { postId: req.params.id, likerId: pid, likerUsername: liker }
+        );
+      }
+      res.json({ liked: true, likes: newLikes2, likedByMe: true, postId: req.params.id });
+      return;
     }
     const [post] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
     const newLikes = (post?.likes ?? 0) + 1;
     await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
-    res.json({ liked: true, likes: newLikes, likedByMe: true, postId: req.params.id });
+    res.json({ liked: true, likes: newLikes, likedByMe: false, postId: req.params.id });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router6.post("/community/posts/:id/view", async (req, res) => {
+  try {
+    await db.update(postsTable).set({ views: sql`${postsTable.views} + 1` }).where(eq(postsTable.id, req.params.id));
+    const [post] = await db.select({ views: postsTable.views }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
+    res.json({ ok: true, views: post?.views ?? 0, postId: req.params.id });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router6.post("/community/posts/:id/save", async (req, res) => {
+  try {
+    const { playerId } = req.body;
+    if (!playerId) {
+      res.status(400).json({ error: "playerId required" });
+      return;
+    }
+    const pid = String(playerId);
+    const existing = await db.select({ id: postSavesTable.id }).from(postSavesTable).where(and(eq(postSavesTable.postId, req.params.id), eq(postSavesTable.playerId, pid))).limit(1);
+    if (existing.length) {
+      await db.delete(postSavesTable).where(eq(postSavesTable.id, existing[0].id));
+      res.json({ saved: false, postId: req.params.id });
+    } else {
+      await db.insert(postSavesTable).values({ id: nanoid3(), postId: req.params.id, playerId: pid });
+      res.json({ saved: true, postId: req.params.id });
+    }
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router6.get("/community/saved", async (req, res) => {
+  try {
+    const playerId = req.query.playerId ? String(req.query.playerId) : null;
+    if (!playerId) {
+      res.status(400).json({ error: "playerId required" });
+      return;
+    }
+    const saveRows = await db.select({ postId: postSavesTable.postId }).from(postSavesTable).where(eq(postSavesTable.playerId, playerId)).orderBy(desc(postSavesTable.createdAt));
+    const postIds = saveRows.map((r) => r.postId);
+    if (postIds.length === 0) {
+      res.json({ data: [], nextPage: null, total: 0 });
+      return;
+    }
+    const posts = await db.select().from(postsTable).where(inArray(postsTable.id, postIds)).orderBy(desc(postsTable.createdAt));
+    const savedSet = new Set(postIds);
+    const { likedPostIds } = await getPlayerInteractions(playerId, postIds);
+    res.json({
+      data: posts.map((p) => mapPost(p, likedPostIds, savedSet)),
+      nextPage: null,
+      total: posts.length
+    });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });

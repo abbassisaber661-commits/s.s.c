@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +8,7 @@ import { compressImageToBase64 } from "@/lib/imageUtils";
 
 import { useTranslation } from "@/hooks/useTranslation";
 import { useProfileData } from "@/hooks/useProfileData";
+import { usePosts, useSavedPosts } from "@/hooks/useCommunity";
 import { useFollowUser } from "@/hooks/useFollowUser";
 import { useGame } from "@/contexts/GameContext";
 
@@ -26,11 +27,10 @@ import { PostModal }         from "@/components/profile/PostModal";
 import SocialPostCard        from "@/components/social/SocialPostCard";
 import { CommentsSheet }     from "@/components/social/CommentsSheet";
 
-import { getSavedPostIds } from "@/lib/savedPosts";
-import type { Post } from "@/types/profile";
 import type { SortOption } from "@/components/profile/ProfileSortFilter";
+import type { CommunityPost } from "@/shared/community";
 
-const sortPosts = (posts: Post[], sort: SortOption): Post[] => {
+const sortPosts = (posts: CommunityPost[], sort: SortOption): CommunityPost[] => {
   const copy = [...posts];
   switch (sort) {
     case "oldest":     return copy.sort((a, b) => a.timestamp - b.timestamp);
@@ -47,16 +47,26 @@ export default function ProfilePage() {
   const { authUser } = useGame();
   const userId = routeParams?.userId ?? authUser?.uid ?? "";
 
+  // ── Profile metadata (player info, followers, following) ──
   const {
-    profile, posts, isLoading, isError, refetch,
-    fetchNextPage, hasNextPage, isFetchingNextPage,
+    profile, isLoading, isError, refetch,
   } = useProfileData(userId || "1");
+
+  // ── Posts — shared React Query cache, per-user likedByMe/savedByMe ──
+  const {
+    data: postsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = usePosts("latest", userId || "1");
+
+  // ── Saved posts (backend-persistent, owner only) ──
+  const { data: savedData } = useSavedPosts();
 
   const followMutation = useFollowUser(userId || "1");
 
   const [activeTab, setActiveTab]   = useState<ActiveTab>("all");
-  const [savedIds, setSavedIds]     = useState<string[]>([]);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditOpen, setIsEditOpen]   = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -64,11 +74,10 @@ export default function ProfilePage() {
   const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
   const [commentCounts, setCommentCounts]         = useState<Record<string, number>>({});
 
-  useEffect(() => { setSavedIds(getSavedPostIds()); }, []);
-
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef  = useRef<HTMLInputElement>(null);
 
+  const currentPlayerId = getStoredPlayerId() ?? undefined;
   const isOwner = !routeParams?.userId || routeParams.userId === authUser?.uid;
 
   const handleFollowToggle = useCallback(async () => {
@@ -117,13 +126,10 @@ export default function ProfilePage() {
     if (!pid) { toast.error("Not logged in"); return; }
     try {
       const avatarStr = await compressImageToBase64(file);
-      console.log("[avatar-upload] compressed size:", avatarStr.length, "bytes");
-      const result = await api.players.sync(pid, { avatar: avatarStr } as any);
-      console.log("[avatar-upload] PATCH response:", result);
+      await api.players.sync(pid, { avatar: avatarStr } as any);
       toast.success("Avatar updated!");
       refetch();
-    } catch (err) {
-      console.error("[avatar-upload] FAILED:", err);
+    } catch {
       toast.error("Failed to update avatar");
     }
     e.target.value = "";
@@ -136,30 +142,36 @@ export default function ProfilePage() {
     if (!pid) { toast.error("Not logged in"); return; }
     try {
       const coverStr = await compressImageToBase64(file);
-      console.log("[cover-upload] compressed size:", coverStr.length, "bytes");
-      const result = await api.players.sync(pid, { cover: coverStr } as any);
-      console.log("[cover-upload] PATCH response:", result);
+      await api.players.sync(pid, { cover: coverStr } as any);
       toast.success("Cover updated!");
       refetch();
-    } catch (err) {
-      console.error("[cover-upload] FAILED:", err);
+    } catch {
       toast.error("Failed to update cover");
     }
     e.target.value = "";
   }, [userId, refetch]);
 
-  const allPosts    = posts ?? [];
-  const pinnedPosts = allPosts.filter((p) => p.isPinned);
+  // ── Flatten paginated data ──
+  const allPosts   = useMemo(() =>
+    postsData?.pages.flatMap((p) => p.data) ?? [],
+    [postsData],
+  );
+  const savedPosts = useMemo(() =>
+    savedData?.pages.flatMap((p) => p.data) ?? [],
+    [savedData],
+  );
+
+  const pinnedPosts = useMemo(() => allPosts.filter((p) => p.isPinned), [allPosts]);
   const nonPinned   = useMemo(() => allPosts.filter((p) => !p.isPinned), [allPosts]);
 
   const filteredPosts = useMemo(() => {
     switch (activeTab) {
-      case "video": return nonPinned.filter((p) => p.type === "reel" || (p as any).type === "video");
+      case "video": return nonPinned.filter((p) => p.type === "video");
       case "image": return nonPinned.filter((p) => p.type === "image");
-      case "saved": return nonPinned.filter((p) => savedIds.includes(p.id) || p.isSaved);
+      case "saved": return savedPosts;
       default:      return nonPinned;
     }
-  }, [activeTab, nonPinned, savedIds]);
+  }, [activeTab, nonPinned, savedPosts]);
 
   const visiblePosts = useMemo(
     () => sortPosts(filteredPosts, sort),
@@ -312,26 +324,27 @@ export default function ProfilePage() {
               </div>
             )}
             <ProfilePinnedPosts
-              posts={activeTab === "all" ? pinnedPosts : []}
+              posts={activeTab === "all" ? (pinnedPosts as any[]) : []}
               isOwner={isOwner}
               onUnpin={() => {}}
             />
             <div className="space-y-3 px-4 mt-2">
               {visiblePosts.length === 0 ? (
-                <ProfileEmptyState tab="posts" isOwner={isOwner} />
+                <ProfileEmptyState tab={activeTab === "saved" ? "saved" : "posts"} isOwner={isOwner} />
               ) : (
                 <>
                   {visiblePosts.map((post) => (
                     <SocialPostCard
                       key={post.id}
-                      post={post as any}
-                      commentCount={commentCounts[post.id] ?? (post as any).replyCount ?? 0}
+                      post={post}
+                      currentPlayerId={currentPlayerId}
+                      commentCount={commentCounts[post.id] ?? post.replyCount ?? 0}
                       onCommentClick={(postId) => setOpenCommentPostId(postId)}
                     />
                   ))}
                   {hasNextPage && activeTab === "all" && (
                     <button
-                      onClick={fetchNextPage}
+                      onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}
                       className="w-full py-3 text-sm font-semibold text-[#666666] hover:text-[#111111] transition-colors"
                     >
@@ -363,7 +376,7 @@ export default function ProfilePage() {
       )}
 
       <PostModal
-        post={selectedPost}
+        post={selectedPost as any}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
@@ -382,12 +395,13 @@ export default function ProfilePage() {
           onClose={() => setOpenCommentPostId(null)}
           initialCount={
             commentCounts[openCommentPostId] ??
-            ((allPosts.find((p) => p.id === openCommentPostId) as any)?.replyCount ?? 0)
+            (allPosts.find((p) => p.id === openCommentPostId)?.replyCount ?? 0)
           }
           onCountChange={(delta) => {
             setCommentCounts((prev) => ({
               ...prev,
-              [openCommentPostId]: (prev[openCommentPostId] ?? (allPosts.find((p) => p.id === openCommentPostId) as any)?.replyCount ?? 0) + delta,
+              [openCommentPostId]: (prev[openCommentPostId] ??
+                (allPosts.find((p) => p.id === openCommentPostId)?.replyCount ?? 0)) + delta,
             }));
           }}
         />

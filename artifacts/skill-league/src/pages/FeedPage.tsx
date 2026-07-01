@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 
 import { useGame } from "@/contexts/GameContext";
 import { useRealtime } from "@/contexts/RealtimeContext";
-import { usePosts, useCreatePost, useLikePost } from "@/hooks/useCommunity";
+import { usePosts, useCreatePost } from "@/hooks/useCommunity";
 import { SocialPostCard } from "@/components/social/SocialPostCard";
 import { CommentsSheet } from "@/components/social/CommentsSheet";
 import { CreatePostModal, type CreatePostData } from "@/components/social/CreatePostModal";
@@ -80,7 +80,6 @@ export default function FeedPage() {
   } = usePosts("fyp");
 
   const { mutate: createPost } = useCreatePost();
-  const { mutate: likePost } = useLikePost();
 
   const playerId = getStoredPlayerId();
 
@@ -128,13 +127,6 @@ export default function FeedPage() {
       setIsOpen(false);
     },
     [createPost, username]
-  );
-
-  const handleLike = useCallback(
-    (postId: string, liked: boolean) => {
-      likePost({ postId, like: liked });
-    },
-    [likePost]
   );
 
   return (
@@ -261,7 +253,6 @@ export default function FeedPage() {
                 <SocialPostCard
                   post={post}
                   commentCount={commentCounts[post.id] ?? post.replyCount ?? 0}
-                  onLikeChange={handleLike}
                   onCommentClick={(postId) => setOpenCommentPostId(postId)}
                 />
               </motion.div>

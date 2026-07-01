@@ -175,6 +175,57 @@ export declare const postsTable: import("drizzle-orm/pg-core").PgTableWithColumn
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        views: import("drizzle-orm/pg-core").PgColumn<{
+            name: "views";
+            tableName: "posts";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        isPinned: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_pinned";
+            tableName: "posts";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        isPublic: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_public";
+            tableName: "posts";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "posts";
@@ -253,6 +304,81 @@ export declare const postLikesTable: import("drizzle-orm/pg-core").PgTableWithCo
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "post_likes";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+export declare const postSavesTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "post_saves";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "post_saves";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        postId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "post_id";
+            tableName: "post_saves";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        playerId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "player_id";
+            tableName: "post_saves";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "post_saves";
             dataType: "date";
             columnType: "PgTimestamp";
             data: Date;
@@ -550,6 +676,9 @@ export declare const insertPostSchema: z.ZodObject<{
     meta: z.ZodOptional<z.ZodNullable<z.ZodType<Record<string, unknown>, Record<string, unknown>, z.core.$ZodTypeInternals<Record<string, unknown>, Record<string, unknown>>>>>;
     likes: z.ZodOptional<z.ZodInt>;
     replies: z.ZodOptional<z.ZodInt>;
+    views: z.ZodOptional<z.ZodInt>;
+    isPinned: z.ZodOptional<z.ZodBoolean>;
+    isPublic: z.ZodOptional<z.ZodBoolean>;
 }, {
     out: {};
     in: {};
@@ -579,6 +708,7 @@ export declare const insertJobSchema: z.ZodObject<{
 }>;
 export type Post = typeof postsTable.$inferSelect;
 export type PostLike = typeof postLikesTable.$inferSelect;
+export type PostSave = typeof postSavesTable.$inferSelect;
 export type PostComment = typeof postCommentsTable.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
 //# sourceMappingURL=community.d.ts.map

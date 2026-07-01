@@ -65,9 +65,11 @@ export function createPost(
     type,
     timestamp: Date.now(),
     likes: 0,
+    views: 0,
     boosted: false,
     boostExpiry: null,
     likedByMe: false,
+    savedByMe: false,
   };
 }
 
@@ -138,9 +140,11 @@ function getSeedPosts(): CommunityPost[] {
       type: "text",
       timestamp: now - 12 * 60_000,
       likes: 14,
+      views: 0,
       boosted: true,
       boostExpiry: now + 10 * 3600_000,
       likedByMe: false,
+      savedByMe: false,
     },
     {
       id: "seed_2",
@@ -152,9 +156,11 @@ function getSeedPosts(): CommunityPost[] {
       type: "text",
       timestamp: now - 40 * 60_000,
       likes: 8,
+      views: 0,
       boosted: false,
       boostExpiry: null,
       likedByMe: false,
+      savedByMe: false,
     },
     {
       id: "seed_3",
@@ -166,9 +172,11 @@ function getSeedPosts(): CommunityPost[] {
       type: "text",
       timestamp: now - 2 * 3600_000,
       likes: 22,
+      views: 0,
       boosted: false,
       boostExpiry: null,
       likedByMe: false,
+      savedByMe: false,
     },
     {
       id: "seed_4",
@@ -180,9 +188,11 @@ function getSeedPosts(): CommunityPost[] {
       type: "text",
       timestamp: now - 5 * 3600_000,
       likes: 5,
+      views: 0,
       boosted: false,
       boostExpiry: null,
       likedByMe: false,
+      savedByMe: false,
     },
     {
       id: "seed_5",
@@ -194,9 +204,11 @@ function getSeedPosts(): CommunityPost[] {
       type: "text",
       timestamp: now - 8 * 3600_000,
       likes: 3,
+      views: 0,
       boosted: false,
       boostExpiry: null,
       likedByMe: false,
+      savedByMe: false,
     },
   ];
   saveCommunityPosts(posts);

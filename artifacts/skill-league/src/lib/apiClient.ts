@@ -125,14 +125,19 @@ export const api = {
   /* ── Community ── */
   community: {
     /** Paginated feed — used by useCommunity / FeedPage / infinite scroll */
-    getPosts: (type: string, page = 1, limit = 15) =>
-      apiFetch<PaginatedResponse<CommunityPost>>(
-        `/community/posts?type=${type}&page=${page}&limit=${limit}`,
-      ),
+    getPosts: (type: string, page = 1, limit = 15, playerId?: string | null, authorId?: string | null) => {
+      const qs = new URLSearchParams({ type, page: String(page), limit: String(limit) });
+      if (playerId) qs.set("playerId", playerId);
+      if (authorId) qs.set("authorId", authorId);
+      return apiFetch<PaginatedResponse<CommunityPost>>(`/community/posts?${qs}`);
+    },
 
     /** Legacy flat array — used by Community.tsx / Home.tsx / services */
-    posts: (limit = 30): Promise<ApiPost[]> =>
-      get<ApiPost[]>(`/community/posts?limit=${limit}&format=flat`),
+    posts: (limit = 30, playerId?: string | null): Promise<ApiPost[]> => {
+      const qs = new URLSearchParams({ limit: String(limit), format: "flat" });
+      if (playerId) qs.set("playerId", playerId);
+      return get<ApiPost[]>(`/community/posts?${qs}`);
+    },
 
     /** Creates a post — payload MUST include authorId for backend to accept */
     createPost: (payload: CreatePostPayload) =>
@@ -206,6 +211,26 @@ export const api = {
     /** Toggle public / private visibility (owner only) */
     setVisibility: (postId: string, authorId: string, isPublic: boolean) =>
       patch<{ ok: boolean; isPublic: boolean }>(`/community/posts/${postId}/visibility`, { authorId, isPublic }),
+
+    /** Toggle save/unsave a post for the current player — backend-persistent */
+    savePost: (postId: string, playerId: string) =>
+      post<{ saved: boolean; postId: string }>(
+        `/community/posts/${postId}/save`,
+        { playerId },
+      ),
+
+    /** Increment view count — fire-and-forget from IntersectionObserver */
+    viewPost: (postId: string) =>
+      post<{ ok: boolean; views: number; postId: string }>(
+        `/community/posts/${postId}/view`,
+        {},
+      ),
+
+    /** Fetch all saved posts for a player */
+    getSavedPosts: (playerId: string, page = 1, limit = 15) =>
+      apiFetch<PaginatedResponse<CommunityPost>>(
+        `/community/saved?playerId=${playerId}&page=${page}&limit=${limit}`,
+      ),
 
     /** Report a post (any user) */
     reportPost: (postId: string, reporterId: string, reason?: string) =>

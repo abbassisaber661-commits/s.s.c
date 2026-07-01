@@ -23,7 +23,7 @@ function fmt(ts: string) {
 
 export default function TrendingPage() {
   const [, navigate] = useLocation();
-  const [window, setWindow] = useState<Window>("24h");
+  const [trendWindow, setTrendWindow] = useState<Window>("24h");
   const [tab, setTab]       = useState<TrendTab>("posts");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<{
@@ -36,11 +36,11 @@ export default function TrendingPage() {
 
   useEffect(() => {
     setLoading(true);
-    api.social.trending(window)
+    api.social.trending(trendWindow)
       .then(d => setData(d as any))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [window]);
+  }, [trendWindow]);
 
   const WINDOWS: { id: Window; label: string }[] = [
     { id: "24h", label: "24h" },
@@ -59,7 +59,7 @@ export default function TrendingPage() {
       {/* Header */}
       <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b bg-white"
         style={{ borderColor: "#E4E6EB", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-        <button onClick={() => { playTap(); window.history.back(); }}
+        <button onClick={() => { playTap(); globalThis.history.back(); }}
           className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -70,9 +70,9 @@ export default function TrendingPage() {
         <div className="flex gap-1">
           {WINDOWS.map(w => (
             <button key={w.id}
-              onClick={() => { playTap(); setWindow(w.id); }}
+              onClick={() => { playTap(); setTrendWindow(w.id); }}
               className="px-3 py-1 rounded-full text-xs font-bold transition-all active:scale-95"
-              style={window === w.id
+              style={trendWindow === w.id
                 ? { background: "#1877F2", color: "#fff" }
                 : { background: "#F0F2F5", color: "#65676B" }}>
               {w.label}
@@ -115,7 +115,7 @@ export default function TrendingPage() {
                     <span className="text-xs font-black uppercase tracking-wider text-gray-600">Trending Now</span>
                   </div>
                   {data.trendingPosts.length === 0
-                    ? <EmptyCard emoji="🔥" text={`No trending posts in the last ${window}`} />
+                    ? <EmptyCard emoji="🔥" text={`No trending posts in the last ${trendWindow}`} />
                     : <div className="space-y-2">
                         {data.trendingPosts.map((p, i) => (
                           <TrendPostCard key={p.id} post={p} rank={i + 1} navigate={navigate} />

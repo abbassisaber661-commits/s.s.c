@@ -9,9 +9,8 @@ import { cn } from "@/lib/utils";
 import Avatar from "@/components/Avatar";
 import { PostOptionsMenu } from "@/components/social/PostOptionsMenu";
 import type { CommunityPost } from "@/shared/community";
-import { toggleSave, isSaved } from "@/lib/savedPosts";
-import { getPostMeta, incrementView, incrementShare } from "@/lib/postMeta";
-import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { useLikePost, useSavePost } from "@/hooks/useCommunity";
+import { api } from "@/lib/apiClient";
 import { useGame } from "@/contexts/GameContext";
 import { isRTL } from "@/lib/i18n";
 
@@ -36,14 +35,6 @@ const age = (ts: number, rtl: boolean) => {
   if (d < 3_600_000) return `${Math.floor(d / 60_000)}m`;
   if (d < 86_400_000) return `${Math.floor(d / 3_600_000)}h`;
   return `${Math.floor(d / 86_400_000)}d`;
-};
-
-// ─── action bar label helper ─────────────────────────────────────────────────
-const labels = {
-  like:    { ar: "إعجاب",   liked_ar: "أعجبني",  en: "Like",    liked_en: "Liked"    },
-  comment: { ar: "تعليق",   en: "Comment" },
-  share:   { ar: "مشاركة",  en: "Share"   },
-  save:    { ar: "حفظ",     saved_ar: "محفوظ", en: "Save", saved_en: "Saved" },
 };
 
 // ─── Follow button (non-owner only) ──────────────────────────────────────────
@@ -101,8 +92,8 @@ const FollowBtn = memo(function FollowBtn({
 
 interface Props {
   post: CommunityPost;
+  currentPlayerId?: string;
   commentCount?: number;
-  onLikeChange?: (postId: string, liked: boolean) => void;
   onCommentClick?: (postId: string) => void;
   onDelete?: (postId: string) => void;
   className?: string;
@@ -112,19 +103,24 @@ interface Props {
 
 const SocialPostCard = memo(function SocialPostCard({
   post,
+  currentPlayerId: currentPlayerIdProp,
   commentCount = 0,
-  onLikeChange,
   onCommentClick,
   onDelete,
   className,
 }: Props) {
   const [, navigate] = useLocation();
-  const { language } = useGame();
+  const { language, authUser } = useGame();
   const rtl = isRTL(language);
   const dir = rtl ? "rtl" : "ltr";
 
-  const currentPlayerId = getStoredPlayerId() ?? undefined;
+  // Resolve current player — prop takes priority, then game context
+  const currentPlayerId = currentPlayerIdProp ?? authUser?.uid ?? undefined;
   const isOwner = !!currentPlayerId && currentPlayerId === post.authorId;
+
+  // ── mutations (self-contained — no parent callback needed) ──
+  const { mutate: likePost }  = useLikePost();
+  const { mutate: savePost  } = useSavePost();
 
   // ── visibility (hide from feed client-side) ──
   const [hidden, setHidden] = useState(false);
@@ -132,38 +128,56 @@ const SocialPostCard = memo(function SocialPostCard({
   // ── post content (editable by owner) ──
   const [content, setContent] = useState(post.content);
 
-  // ── like ──
-  const [liked, setLiked] = useState(post.likedByMe);
-  const [likes, setLikes] = useState(post.likes);
+  // ── like — initialised from server state ──
+  const [liked, setLiked] = useState(post.likedByMe ?? false);
+  const [likes, setLikes] = useState(post.likes ?? 0);
 
   useEffect(() => {
-    setLiked(post.likedByMe);
-    setLikes(post.likes);
+    setLiked(post.likedByMe ?? false);
+    setLikes(post.likes ?? 0);
   }, [post.likedByMe, post.likes]);
 
   const handleLike = useCallback(() => {
     const next = !liked;
+    // Optimistic local state (the mutation also patches React Query cache)
     setLiked(next);
     setLikes((l) => l + (next ? 1 : -1));
-    onLikeChange?.(post.id, next);
-  }, [liked, post.id, onLikeChange]);
+    likePost({ postId: post.id, like: next });
+  }, [liked, post.id, likePost]);
 
-  // ── save ──
-  const [saved, setSaved] = useState(() => isSaved(post.id));
+  // ── save — initialised from server state (no localStorage) ──
+  const [saved, setSaved] = useState(post.savedByMe ?? false);
+
+  useEffect(() => {
+    setSaved(post.savedByMe ?? false);
+  }, [post.savedByMe]);
 
   const handleSave = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
-    const next = toggleSave(post.id);
+    const next = !saved;
     setSaved(next);
-    toast.success(next
-      ? (rtl ? "تم الحفظ" : "Saved")
-      : (rtl ? "تم إلغاء الحفظ" : "Removed"));
-  }, [post.id, rtl]);
+    savePost(
+      { postId: post.id, saved },
+      {
+        onError: () => setSaved(!next), // roll back on failure
+        onSuccess: (data) => {
+          setSaved(data.saved);
+          toast.success(data.saved
+            ? (rtl ? "تم الحفظ" : "Saved")
+            : (rtl ? "تم إلغاء الحفظ" : "Removed"));
+        },
+      },
+    );
+  }, [saved, post.id, savePost, rtl]);
 
-  // ── views (intersection observer) ──
-  const postRef = useRef<HTMLElement>(null);
-  const viewed  = useRef(false);
-  const [views, setViews] = useState(() => getPostMeta(post.id).views);
+  // ── views — initialised from server, fire-and-forget on first intersection ──
+  const postRef  = useRef<HTMLElement>(null);
+  const viewed   = useRef(false);
+  const [views, setViews] = useState(post.views ?? 0);
+
+  useEffect(() => {
+    setViews(post.views ?? 0);
+  }, [post.views]);
 
   useEffect(() => {
     if (!postRef.current || viewed.current) return;
@@ -171,7 +185,11 @@ const SocialPostCard = memo(function SocialPostCard({
       if (!entry.isIntersecting) return;
       viewed.current = true;
       obs.disconnect();
-      setViews(incrementView(post.id).views);
+      // Fire-and-forget — update local count optimistically
+      setViews((v) => v + 1);
+      api.community.viewPost(post.id).then((res) => {
+        if (res.views !== undefined) setViews(res.views);
+      }).catch(() => {});
     }, { threshold: 0.6 });
     obs.observe(postRef.current);
     return () => obs.disconnect();
@@ -188,17 +206,16 @@ const SocialPostCard = memo(function SocialPostCard({
         toast.success(rtl ? "تم نسخ الرابط" : "Link copied");
       }
     } catch {}
-    incrementShare(post.id);
   }, [post, content, rtl]);
 
   // ── hide (client-side) ──
   if (hidden) return null;
 
   // ─── action bar labels ───────────────────────────────────────────────────
-  const likeLabel    = liked ? (rtl ? "أعجبني" : "Liked")   : (rtl ? "إعجاب"   : "Like");
+  const likeLabel    = liked ? (rtl ? "أعجبني" : "Liked")  : (rtl ? "إعجاب"  : "Like");
   const commentLabel = rtl ? "تعليق"   : "Comment";
   const shareLabel   = rtl ? "مشاركة"  : "Share";
-  const saveLabel    = saved ? (rtl ? "محفوظ"  : "Saved")   : (rtl ? "حفظ"     : "Save");
+  const saveLabel    = saved ? (rtl ? "محفوظ"  : "Saved")  : (rtl ? "حفظ"    : "Save");
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
@@ -237,13 +254,13 @@ const SocialPostCard = memo(function SocialPostCard({
           {/* Follow (non-owner) */}
           <FollowBtn meId={currentPlayerId} themId={post.authorId} rtl={rtl} />
 
-          {/* ⋯ options menu — strict owner vs viewer */}
+          {/* ⋯ options menu */}
           <PostOptionsMenu
             postId={post.id}
-            authorId={post.authorId}
+            authorId={post.authorId ?? ""}
             isOwner={isOwner}
-            isPinned={(post as any).isPinned ?? false}
-            isPublic={(post as any).isPublic ?? true}
+            isPinned={post.isPinned ?? false}
+            isPublic={post.isPublic ?? true}
             onEditDone={(newContent) => setContent(newContent)}
             onDeleteDone={() => onDelete?.(post.id)}
             onHide={() => setHidden(true)}

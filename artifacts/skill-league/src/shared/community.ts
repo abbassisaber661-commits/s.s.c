@@ -29,7 +29,12 @@ export interface CommunityPost {
 
   likes: number;
   likedByMe: boolean;
+  savedByMe: boolean;
+  views: number;
   replyCount?: number;
+
+  isPinned?: boolean;
+  isPublic?: boolean;
 
   boosted?: boolean;
   boostExpiry?: number | null;
@@ -69,4 +74,6 @@ export interface ApiPost {
   likes: number;
   replies?: number;
   likedByMe?: boolean;
+  savedByMe?: boolean;
+  views?: number;
 }

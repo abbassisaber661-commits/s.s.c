@@ -39,7 +39,9 @@ function mapApiPost(p: any, likedIds: string[]): CommunityPost {
     type: (p.type as PostType) ?? "text",
     timestamp: new Date(p.createdAt).getTime(),
     likes: p.likes ?? 0,
-    likedByMe: likedIds.includes(p.id),
+    views: p.views ?? 0,
+    likedByMe: p.likedByMe ?? likedIds.includes(p.id),
+    savedByMe: p.savedByMe ?? false,
     boosted: false,
     boostExpiry: null,
   };
