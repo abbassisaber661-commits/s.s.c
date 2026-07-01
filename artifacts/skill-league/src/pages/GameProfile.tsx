@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "wouter";
 import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 import { getLevelTitle, xpProgressInLevel } from "@/lib/xp";
 
@@ -60,6 +61,18 @@ export default function GameProfile() {
 
   return (
     <div className="min-h-screen text-white bg-black overflow-hidden">
+
+      {/* ── Back button ── */}
+      <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center gap-3">
+        <button
+          onClick={() => window.history.back()}
+          className="p-2 rounded-xl hover:bg-white/10 transition-colors active:scale-90"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5 text-white/70" />
+        </button>
+        <span className="text-sm font-bold text-white/60">Game Profile</span>
+      </div>
 
       {/* HERO */}
       <div className="p-6 flex items-center gap-4">

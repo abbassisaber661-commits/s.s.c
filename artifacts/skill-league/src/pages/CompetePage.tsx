@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 
 const TOURNAMENTS = [
@@ -82,8 +83,20 @@ export default function CompetePage() {
         ))}
       </div>
 
+      {/* ── Back button ── */}
+      <div className="relative z-20 px-4 pt-4">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white/60 hover:text-white hover:bg-white/10 transition-all text-sm font-semibold active:scale-95"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </button>
+      </div>
+
       {/* ══ HEADER ══ */}
-      <div className="relative z-10 px-5 pt-8 pb-6">
+      <div className="relative z-10 px-5 pt-4 pb-6">
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}

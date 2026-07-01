@@ -111,13 +111,12 @@ export default function Seasons() {
       {/* Header */}
       <div className="sticky top-0 z-20 backdrop-blur-xl px-4 py-3 flex items-center gap-3"
         style={{ background: "rgba(7,1,15,0.88)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-        <Link href="/">
-          <motion.button whileTap={{ scale: 0.9 }}
-            className="w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <ArrowLeft className="w-4 h-4 text-white/60" />
-          </motion.button>
-        </Link>
+        <motion.button whileTap={{ scale: 0.9 }}
+          onClick={() => window.history.back()}
+          className="w-9 h-9 rounded-xl flex items-center justify-center"
+          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <ArrowLeft className="w-4 h-4 text-white/60" />
+        </motion.button>
         <div className="flex-1">
           <h1 className="text-lg font-black"
             style={{ background: `linear-gradient(135deg, #fff, ${season.color})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>

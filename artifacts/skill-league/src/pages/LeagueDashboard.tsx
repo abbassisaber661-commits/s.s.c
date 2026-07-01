@@ -921,7 +921,7 @@ export default function LeagueDashboard() {
       {/* Header */}
       <div className="sticky top-0 z-20 bg-[#0d0f1a]/90 backdrop-blur border-b border-white/5 px-4 pt-safe-top">
         <div className="max-w-2xl mx-auto flex items-center gap-3 py-3">
-          <button onClick={() => nav('/')} className="text-white/50 hover:text-white transition-colors">
+          <button onClick={() => window.history.back()} className="text-white/50 hover:text-white transition-colors">
             ← رجوع
           </button>
           <div className="flex-1 text-center">

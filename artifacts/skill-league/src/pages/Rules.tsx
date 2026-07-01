@@ -68,11 +68,9 @@ export default function Rules() {
   return (
     <div className="min-h-screen bg-background p-5 flex flex-col max-w-md mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <ArrowLeft className="w-6 h-6" />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => window.history.back()}>
+          <ArrowLeft className="w-6 h-6" />
+        </Button>
         <h1 className="text-2xl font-bold">{t('rules')}</h1>
       </div>
 

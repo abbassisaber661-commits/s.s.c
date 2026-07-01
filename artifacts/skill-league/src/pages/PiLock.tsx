@@ -40,11 +40,9 @@ export default function PiLock() {
     <div className="min-h-screen bg-background text-foreground pb-10">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <Link href="/">
-          <button className="p-1 rounded-lg hover:bg-card active:scale-95 transition-transform">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </Link>
+        <button className="p-1 rounded-lg hover:bg-card active:scale-95 transition-transform" onClick={() => window.history.back()}>
+          <ArrowLeft className="w-5 h-5" />
+        </button>
         <Lock className="w-5 h-5 text-primary" />
         <h1 className="text-lg font-bold flex-1">Pi Lock System</h1>
       </div>

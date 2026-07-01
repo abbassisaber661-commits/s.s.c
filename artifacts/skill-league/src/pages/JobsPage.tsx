@@ -103,10 +103,10 @@ export default function JobsPage() {
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm px-4 py-3 flex items-center gap-3">
         <button
-          onClick={() => navigate("~/")}
+          onClick={() => window.history.back()}
           className="p-2 rounded-xl hover:bg-[#F5F5F7] transition-colors active:scale-90"
         >
-          <ArrowLeft className="w-5 h-5 rotate-180 text-[#111111]" />
+          <ArrowLeft className="w-5 h-5 text-[#111111]" />
         </button>
         <Briefcase className="w-5 h-5 text-[#FFD60A]" />
         <h1 className="text-lg font-black flex-1 text-[#111111]">الوظائف 💼</h1>
