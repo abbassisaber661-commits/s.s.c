@@ -2,12 +2,11 @@ import React, { createContext, useContext } from "react";
 import { Socket } from "socket.io-client";
 import { LiveLeaderEntry, RealtimeNotif, ChatMessage } from "./RealtimeProvider";
 
-/* ───────────── CONTEXT TYPE ───────────── */
-
 interface RealtimeCtx {
   connected: boolean;
   liveLeaderboard: LiveLeaderEntry[];
   pushNotifs: RealtimeNotif[];
+  unreadCount: number;
   dmMessages: ChatMessage[];
 
   clearDmMessages: () => void;
@@ -29,15 +28,12 @@ interface RealtimeCtx {
   subscribeLeaderboard: () => void;
   subscribeCommunity: () => void;
   markNotifRead: (id: string) => void;
+  clearNotifications: () => void;
 
   socket: Socket | null;
 }
 
-/* ───────────── CREATE CONTEXT ───────────── */
-
 export const RealtimeContext = createContext<RealtimeCtx | null>(null);
-
-/* ───────────── HOOK ───────────── */
 
 export function useRealtime() {
   const ctx = useContext(RealtimeContext);

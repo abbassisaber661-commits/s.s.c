@@ -67,6 +67,7 @@ import Settings from "@/pages/Settings";
 import BottomNav from "@/components/BottomNav";
 import SocialBottomNav from "@/components/SocialBottomNav";
 import LiveNotifToast from "@/components/LiveNotifToast";
+import NotificationBell from "@/components/NotificationBell";
 
 // Utils
 import { getNotifications, unreadCount } from "@/lib/messages";
@@ -144,17 +145,30 @@ function AppShell() {
     <>
       <LiveNotifToast />
 
-      {/* ── Hamburger (☰) — Settings entry — top-right, hidden on social pages (FeedPage has its own) ── */}
+      {/* ── Top-right cluster: Bell + Settings — hidden on social/settings pages ── */}
       {!hideNav && !onSettingsPage && !showSocialNav && (
-        <Link href="/settings">
-          <button
-            className="fixed top-3 right-3 z-50 w-10 h-10 flex items-center justify-center rounded-2xl active:scale-90 transition-transform"
-            style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)" }}
-            aria-label="Settings"
-          >
-            <span className="text-white font-bold text-lg leading-none select-none">☰</span>
-          </button>
-        </Link>
+        <div
+          style={{
+            position: "fixed",
+            top: 12,
+            right: 12,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <NotificationBell />
+          <Link href="/settings">
+            <button
+              className="w-10 h-10 flex items-center justify-center rounded-2xl active:scale-90 transition-transform"
+              style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.08)" }}
+              aria-label="Settings"
+            >
+              <span className="text-white font-bold text-lg leading-none select-none">☰</span>
+            </button>
+          </Link>
+        </div>
       )}
 
       <Switch>

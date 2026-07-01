@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq, desc, and, gt, lt, sum, sql } from "drizzle-orm";
 import { db, walletsTable, walletTransactionsTable, giftLedgerTable, playersTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
+import { createNotification } from "../lib/notificationService.js";
 
 const router = Router();
 
@@ -176,6 +177,24 @@ router.post("/wallet/gift", async (req, res) => {
       req.log.warn({ err: e }, "gift ledger insert failed (non-fatal)");
     });
 
+    // ── Notifications: real-time push to both parties ──
+    const giftEmoji = emoji ? String(emoji).slice(0, 8) : "🎁";
+    createNotification({
+      playerId: String(receiverId),
+      type: "gift",
+      title: `${giftEmoji} هدية من ${senderPlayer.username}`,
+      body: note ? `${dn} DN — "${note}"` : `استقبلت ${dn} DN`,
+      data: { senderId: String(senderId), amount: dn, emoji: giftEmoji, newBalance: newReceiverBalance },
+    }).catch(() => {});
+
+    createNotification({
+      playerId: String(senderId),
+      type: "gift_sent",
+      title: `${giftEmoji} أرسلت هدية إلى ${receiverPlayer.username}`,
+      body: `${dn} DN — رصيدك الجديد: ${newSenderBalance} DN`,
+      data: { receiverId: String(receiverId), amount: dn, emoji: giftEmoji, newBalance: newSenderBalance },
+    }).catch(() => {});
+
     res.status(201).json({
       ok:                  true,
       senderBalance:       newSenderBalance,
@@ -222,6 +241,17 @@ router.post("/wallet/credit", async (req, res) => {
       description: String(description || ""),
       balanceAfter: newBalance,
     }).returning();
+
+    // ── Notification for positive DN credits ──
+    if (dn > 0) {
+      createNotification({
+        playerId: String(playerId),
+        type:  "dn",
+        title: `💰 استقبلت ${dn} DN`,
+        body:  String(description || `رصيدك الجديد: ${newBalance} DN`),
+        data:  { amount: dn, newBalance, txType: String(type) },
+      }).catch(() => {});
+    }
 
     res.status(201).json({ ok: true, transaction: tx, newBalance });
   } catch (err) {

@@ -54716,6 +54716,24 @@ var init_src = __esm({
   }
 });
 
+// src/lib/nanoid.ts
+import { randomBytes as randomBytes2 } from "crypto";
+function nanoid3(size = 21) {
+  const bytes = randomBytes2(size);
+  let id = "";
+  for (let i = 0; i < size; i++) {
+    id += ALPHABET[bytes[i] % ALPHABET.length];
+  }
+  return id;
+}
+var ALPHABET;
+var init_nanoid = __esm({
+  "src/lib/nanoid.ts"() {
+    "use strict";
+    ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  }
+});
+
 // ../../node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS({
   "../../node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer/index.js"(exports, module) {
@@ -58508,6 +58526,30 @@ var require_jsonwebtoken = __commonJS({
       NotBeforeError: require_NotBeforeError(),
       TokenExpiredError: require_TokenExpiredError()
     };
+  }
+});
+
+// src/lib/logger.ts
+var import_pino, isProduction, logger;
+var init_logger2 = __esm({
+  "src/lib/logger.ts"() {
+    "use strict";
+    import_pino = __toESM(require_pino(), 1);
+    isProduction = process.env.NODE_ENV === "production";
+    logger = (0, import_pino.default)({
+      level: process.env.LOG_LEVEL ?? "info",
+      redact: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "res.headers['set-cookie']"
+      ],
+      ...isProduction ? {} : {
+        transport: {
+          target: "pino-pretty",
+          options: { colorize: true }
+        }
+      }
+    });
   }
 });
 
@@ -79831,6 +79873,860 @@ var require_dist4 = __commonJS({
   }
 });
 
+// ../../node_modules/.pnpm/socket.io@4.8.3/node_modules/socket.io/wrapper.mjs
+var import_dist, Server, Namespace, Socket;
+var init_wrapper = __esm({
+  "../../node_modules/.pnpm/socket.io@4.8.3/node_modules/socket.io/wrapper.mjs"() {
+    import_dist = __toESM(require_dist4(), 1);
+    ({ Server, Namespace, Socket } = import_dist.default);
+  }
+});
+
+// src/ws/socket-manager.ts
+function getArenaConfig(leagueId) {
+  return ARENA_CONFIG[leagueId?.toLowerCase()] ?? DEFAULT_ARENA;
+}
+function computeLP(elo) {
+  if (elo < 1100) {
+    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 800) / 300 * 1e3))), leagueDivision: "training" };
+  } else if (elo < 1400) {
+    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 1100) / 300 * 1e3))), leagueDivision: "coin" };
+  } else if (elo < 1700) {
+    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 1400) / 300 * 1e3))), leagueDivision: "pro" };
+  } else {
+    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 1700) / 400 * 1e3))), leagueDivision: "champion" };
+  }
+}
+function checkAntiCheat(socketId, responseMs, score) {
+  const MIN_HUMAN_MS = 120;
+  if (responseMs < MIN_HUMAN_MS) {
+    return { ok: false, reason: "too_fast" };
+  }
+  let state = antiCheatMap.get(socketId);
+  if (!state) {
+    state = { sessionStart: Date.now(), answers: [], suspiciousCount: 0, lastFlagged: 0 };
+    antiCheatMap.set(socketId, state);
+  }
+  state.answers.push(responseMs);
+  if (state.answers.length > 20) state.answers.shift();
+  if (state.answers.length >= 5) {
+    const avg3 = state.answers.reduce((a, b) => a + b, 0) / state.answers.length;
+    if (avg3 < 200) {
+      state.suspiciousCount++;
+      if (state.suspiciousCount >= 3) {
+        return { ok: false, reason: "inhuman_speed" };
+      }
+    }
+  }
+  return { ok: true };
+}
+function generateChallenge(optionCount = 4) {
+  const shuffled = [...COLORS].sort(() => Math.random() - 0.5);
+  const options = shuffled.slice(0, optionCount);
+  const target = options[Math.floor(Math.random() * options.length)];
+  const isStroop = Math.random() < 0.5;
+  const displayColor = isStroop ? COLORS.filter((c) => c.id !== target.id)[Math.floor(Math.random() * (COLORS.length - 1))] : target;
+  return {
+    id: Math.random().toString(36).slice(2),
+    type: isStroop ? "stroop" : "match",
+    target,
+    displayColor,
+    options,
+    question: isStroop ? `\u0627\u0636\u063A\u0637 \u0639\u0644\u0649: ${target.name}` : "\u0627\u0636\u063A\u0637 \u0639\u0644\u0649 \u0627\u0644\u0644\u0648\u0646 \u0627\u0644\u0645\u0637\u0627\u0628\u0642",
+    timeoutMs: 2500
+  };
+}
+function getBotDifficulty(leagueId) {
+  return leagueId === "elite" ? "hard" : leagueId === "silver" ? "medium" : "easy";
+}
+function getBotAccuracy(diff) {
+  return { easy: 0.5, medium: 0.73, hard: 0.92 }[diff];
+}
+function getBotReaction(diff, challengeType, avgResponseMs) {
+  const base = { easy: 1800, medium: 1100, hard: 550 }[diff];
+  const jitter = (Math.random() - 0.5) * 400;
+  const memExtra = challengeType === "memory" ? 400 : 0;
+  let adaptive = 0;
+  if (avgResponseMs && diff === "hard") {
+    adaptive = avgResponseMs < 600 ? -100 : 100;
+  }
+  return Math.max(180, base + jitter + memExtra + adaptive);
+}
+function makeBotPlayer(playerLevel, playerElo, leagueId) {
+  const diff = getBotDifficulty(leagueId);
+  const offsets = { easy: -4, medium: 0, hard: 4 };
+  const eloOffsets = { easy: -80, medium: 0, hard: 80 };
+  const names = BOT_NAMES2[diff];
+  return {
+    socketId: "bot",
+    playerId: "bot",
+    name: names[Math.floor(Math.random() * names.length)],
+    level: Math.max(1, Math.min(100, playerLevel + offsets[diff] + Math.floor(Math.random() * 3) - 1)),
+    elo: Math.max(800, playerElo + eloOffsets[diff] + Math.floor(Math.random() * 40) - 20),
+    score: 0,
+    correct: 0,
+    errors: 0,
+    streak: 0,
+    answeredCurrentRound: false,
+    lastAnswerTime: 0,
+    answerSpeeds: []
+  };
+}
+function scorePvpAnswer(correct, elapsedMs, timeoutMs, streak) {
+  if (!correct) return -2;
+  const speedBonus = Math.round(Math.max(0, (timeoutMs - elapsedMs) / timeoutMs) * 5);
+  const streakBonus = streak >= 3 ? 5 : 0;
+  return 10 + speedBonus + streakBonus;
+}
+function getIO() {
+  return ioInstance;
+}
+async function broadcastLeaderboard(io2) {
+  try {
+    const rows = await db.select({
+      id: playersTable.id,
+      username: playersTable.username,
+      avatar: playersTable.avatar,
+      level: playersTable.level,
+      elo: playersTable.elo,
+      fame: playersTable.fame,
+      pvpWins: playersTable.pvpWins,
+      verificationStatus: playersTable.verificationStatus
+    }).from(playersTable).orderBy(desc(playersTable.elo)).limit(50);
+    if (rows.length > 0) {
+      io2.emit("leaderboard:update", rows);
+      const currentTop10 = new Set(rows.slice(0, 10).map((r) => r.id));
+      for (const playerId of currentTop10) {
+        if (!previousTop10.has(playerId)) {
+          const rank = rows.findIndex((r) => r.id === playerId) + 1;
+          Promise.resolve().then(() => (init_notificationService(), notificationService_exports)).then(({ createNotification: createNotification2 }) => {
+            createNotification2({
+              playerId,
+              type: "rank",
+              title: "\u{1F3C6} \u062F\u062E\u0644\u062A \u0623\u0641\u0636\u0644 10!",
+              body: `\u0623\u0646\u062A \u0627\u0644\u0622\u0646 \u0641\u064A \u0627\u0644\u0645\u0631\u062A\u0628\u0629 #${rank} \u0639\u0644\u0649 \u0644\u0648\u062D\u0629 \u0627\u0644\u0645\u062A\u0635\u062F\u0631\u064A\u0646`,
+              data: { rank }
+            }).catch(() => {
+            });
+          }).catch(() => {
+          });
+        }
+      }
+      previousTop10.clear();
+      for (const id of currentTop10) previousTop10.add(id);
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("relation") && msg.includes("does not exist")) return;
+    logger.error({ err }, "leaderboard broadcast error");
+  }
+}
+function nanoid6() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+function processQueue(io2) {
+  const entries = Array.from(matchmakingQueue.values());
+  const now = Date.now();
+  for (let i = 0; i < entries.length; i++) {
+    const a = entries[i];
+    if (!matchmakingQueue.has(a.socketId)) continue;
+    const waitMs = now - a.joinedAt;
+    let matched = null;
+    for (let j = i + 1; j < entries.length; j++) {
+      const b = entries[j];
+      if (!matchmakingQueue.has(b.socketId)) continue;
+      if (b.leagueId !== a.leagueId) continue;
+      const eloDiff = Math.abs(a.playerElo - b.playerElo);
+      const eloCap = waitMs > 1e4 ? 400 : 200;
+      if (eloDiff <= eloCap) {
+        matched = b;
+        break;
+      }
+    }
+    if (matched) {
+      matchmakingQueue.delete(a.socketId);
+      matchmakingQueue.delete(matched.socketId);
+      createRoom(io2, a, matched);
+    } else if (waitMs > 12e3) {
+      matchmakingQueue.delete(a.socketId);
+      createBotRoom(io2, a);
+    }
+  }
+}
+function createRoom(io2, playerA, playerB) {
+  const roomId = `room_${nanoid6()}`;
+  const makePlayer = (q) => ({
+    socketId: q.socketId,
+    playerId: q.playerId,
+    name: q.playerName,
+    level: q.playerLevel,
+    elo: q.playerElo,
+    score: 0,
+    correct: 0,
+    errors: 0,
+    streak: 0,
+    answeredCurrentRound: false,
+    lastAnswerTime: 0,
+    answerSpeeds: []
+  });
+  const room = {
+    roomId,
+    leagueId: playerA.leagueId,
+    stake: playerA.stake,
+    playerA: makePlayer(playerA),
+    playerB: makePlayer(playerB),
+    currentChallenge: null,
+    roundNumber: 0,
+    roundStartTime: 0,
+    status: "countdown",
+    roundTimer: null,
+    gameTimer: null,
+    startTime: 0,
+    duration: 60
+  };
+  rooms.set(roomId, room);
+  const sA = io2.sockets.sockets.get(playerA.socketId);
+  const sB = io2.sockets.sockets.get(playerB.socketId);
+  sA?.join(roomId);
+  sB?.join(roomId);
+  io2.to(roomId).emit("match:found", {
+    roomId,
+    isBot: false,
+    playerA: { name: playerA.playerName, level: playerA.playerLevel, elo: playerA.playerElo },
+    playerB: { name: playerB.playerName, level: playerB.playerLevel, elo: playerB.playerElo }
+  });
+  logger.info({ roomId, playerA: playerA.playerId, playerB: playerB.playerId }, "PvP room created");
+  setTimeout(() => startRoom(io2, roomId), 3e3);
+}
+function createBotRoom(io2, player) {
+  const roomId = `room_${nanoid6()}`;
+  const bot = makeBotPlayer(player.playerLevel, player.playerElo, player.leagueId);
+  const room = {
+    roomId,
+    leagueId: player.leagueId,
+    stake: player.stake,
+    playerA: {
+      socketId: player.socketId,
+      playerId: player.playerId,
+      name: player.playerName,
+      level: player.playerLevel,
+      elo: player.playerElo,
+      score: 0,
+      correct: 0,
+      errors: 0,
+      streak: 0,
+      answeredCurrentRound: false,
+      lastAnswerTime: 0,
+      answerSpeeds: []
+    },
+    playerB: bot,
+    currentChallenge: null,
+    roundNumber: 0,
+    roundStartTime: 0,
+    status: "countdown",
+    roundTimer: null,
+    gameTimer: null,
+    startTime: 0,
+    duration: 60
+  };
+  rooms.set(roomId, room);
+  const sock = io2.sockets.sockets.get(player.socketId);
+  sock?.join(roomId);
+  io2.to(roomId).emit("match:found", {
+    roomId,
+    isBot: true,
+    botDifficulty: getBotDifficulty(player.leagueId),
+    playerA: { name: player.playerName, level: player.playerLevel, elo: player.playerElo },
+    playerB: { name: bot.name, level: bot.level, elo: bot.elo }
+  });
+  logger.info({ roomId, player: player.playerId, bot: bot.name }, "Bot room created");
+  setTimeout(() => startRoom(io2, roomId), 3e3);
+}
+function startRoom(io2, roomId) {
+  const room = rooms.get(roomId);
+  if (!room) return;
+  room.status = "playing";
+  room.startTime = Date.now();
+  room.gameTimer = setTimeout(() => endRoom(io2, roomId), room.duration * 1e3);
+  io2.to(roomId).emit("match:start", { roomId, duration: room.duration });
+  nextRound(io2, roomId);
+}
+function nextRound(io2, roomId) {
+  const room = rooms.get(roomId);
+  if (!room || room.status !== "playing") return;
+  const challenge = generateChallenge(4);
+  room.currentChallenge = challenge;
+  room.roundNumber++;
+  room.roundStartTime = Date.now();
+  room.playerA.answeredCurrentRound = false;
+  room.playerB.answeredCurrentRound = false;
+  io2.to(roomId).emit("round:new", { challenge, roundNumber: room.roundNumber });
+  if (room.playerB.socketId === "bot") {
+    const diff = getBotDifficulty(room.leagueId);
+    const playerAvgSpeed = room.playerA.answerSpeeds.length > 0 ? room.playerA.answerSpeeds.reduce((a, b) => a + b, 0) / room.playerA.answerSpeeds.length : void 0;
+    const botMs = getBotReaction(diff, challenge.type, playerAvgSpeed);
+    const botAcc = getBotAccuracy(diff);
+    const botCorrect = Math.random() < botAcc;
+    room.roundTimer = setTimeout(() => {
+      if (!room || room.status !== "playing") return;
+      if (room.playerB.answeredCurrentRound) return;
+      const pts = scorePvpAnswer(botCorrect, botMs, challenge.timeoutMs, room.playerB.streak);
+      room.playerB.score = Math.max(0, room.playerB.score + pts);
+      if (botCorrect) {
+        room.playerB.correct++;
+        room.playerB.streak++;
+      } else {
+        room.playerB.errors++;
+        room.playerB.streak = 0;
+      }
+      room.playerB.answeredCurrentRound = true;
+      io2.to(roomId).emit("round:bot_answer", {
+        correct: botCorrect,
+        scoreB: room.playerB.score,
+        streakB: room.playerB.streak
+      });
+      setTimeout(() => {
+        if (!room.playerA.answeredCurrentRound) {
+          room.playerA.errors++;
+          room.playerA.streak = 0;
+          room.playerA.answeredCurrentRound = true;
+          io2.to(roomId).emit("round:timeout", {
+            scoreA: room.playerA.score,
+            scoreB: room.playerB.score
+          });
+        }
+        setTimeout(() => nextRound(io2, roomId), 400);
+      }, 700);
+    }, botMs);
+  } else {
+    room.roundTimer = setTimeout(() => {
+      if (!room || room.status !== "playing") return;
+      if (!room.playerA.answeredCurrentRound) {
+        room.playerA.errors++;
+        room.playerA.streak = 0;
+        room.playerA.answeredCurrentRound = true;
+      }
+      if (!room.playerB.answeredCurrentRound) {
+        room.playerB.errors++;
+        room.playerB.streak = 0;
+        room.playerB.answeredCurrentRound = true;
+      }
+      io2.to(roomId).emit("round:timeout", {
+        scoreA: room.playerA.score,
+        scoreB: room.playerB.score
+      });
+      setTimeout(() => nextRound(io2, roomId), 400);
+    }, challenge.timeoutMs + 500);
+  }
+}
+function endRoom(io2, roomId) {
+  const room = rooms.get(roomId);
+  if (!room) return;
+  if (room.roundTimer) clearTimeout(room.roundTimer);
+  if (room.gameTimer) clearTimeout(room.gameTimer);
+  room.status = "finished";
+  const isBot = room.playerB.socketId === "bot";
+  const won = room.playerA.score > room.playerB.score;
+  const draw = room.playerA.score === room.playerB.score;
+  const arena = getArenaConfig(room.leagueId);
+  const K = isBot ? arena.eloK / 2 : arena.eloK;
+  const expectedA = 1 / (1 + Math.pow(10, (room.playerB.elo - room.playerA.elo) / 400));
+  const scoreVal = won ? 1 : draw ? 0.5 : 0;
+  const eloChange = Math.round(K * (scoreVal - expectedA));
+  const coinsWon = won ? Math.round(room.stake * arena.winMultiplier) : draw ? Math.round(room.stake * arena.drawMultiplier) : 0;
+  const coinsNet = coinsWon;
+  const xpGained = isBot ? won ? 60 : draw ? 20 : 8 : won ? 120 + (arena.eloK - 16) * 2 : draw ? 50 : 25;
+  const newEloA = Math.max(800, room.playerA.elo + eloChange);
+  const { lp: newLpA, leagueDivision: newDivA } = computeLP(newEloA);
+  const lpChangeA = newLpA - computeLP(room.playerA.elo).lp;
+  io2.to(roomId).emit("match:end", {
+    roomId,
+    scoreA: room.playerA.score,
+    scoreB: room.playerB.score,
+    correctA: room.playerA.correct,
+    correctB: room.playerB.correct,
+    won,
+    draw,
+    isBot,
+    leagueId: room.leagueId,
+    stake: room.stake,
+    coinReward: coinsWon,
+    coinsNet,
+    eloChange,
+    xpGained,
+    newLp: newLpA,
+    lpChange: lpChangeA,
+    newLeagueDivision: newDivA
+  });
+  logger.info({ roomId, scoreA: room.playerA.score, scoreB: room.playerB.score, won, eloChange, coinsNet, newDivA }, "Match ended");
+  ;
+  (async () => {
+    try {
+      const matchId = `${roomId}_${Date.now()}`;
+      const winnerId = won ? room.playerA.playerId : draw ? null : isBot ? "bot" : room.playerB.playerId;
+      const bWon = !won && !draw;
+      const bDraw = draw;
+      const bEloChange = Math.round(K * (1 - scoreVal - (1 - expectedA)));
+      const bCoinsWon = bWon ? Math.round(room.stake * arena.winMultiplier) : bDraw ? Math.round(room.stake * arena.drawMultiplier) : 0;
+      const bCoinsNet = bCoinsWon;
+      const bXp = isBot ? 0 : bWon ? 120 + (arena.eloK - 16) * 2 : bDraw ? 50 : 25;
+      const newEloB = Math.max(800, room.playerB.elo + bEloChange);
+      const { lp: newLpB, leagueDivision: newDivB } = computeLP(newEloB);
+      await db.insert(pvpMatchesTable).values({
+        id: matchId,
+        playerAId: room.playerA.playerId,
+        playerBId: isBot ? "bot" : room.playerB.playerId,
+        winnerId,
+        playerAScore: room.playerA.score,
+        playerBScore: room.playerB.score,
+        leagueId: room.leagueId,
+        matchType: isBot ? "bot" : "pvp",
+        duration: room.duration,
+        coinsStake: room.stake,
+        eloChangeA: eloChange,
+        eloChangeB: isBot ? 0 : bEloChange,
+        coinsWonA: coinsWon,
+        coinsWonB: isBot ? 0 : bCoinsWon,
+        xpGainedA: xpGained,
+        xpGainedB: isBot ? 0 : bXp,
+        finishedAt: /* @__PURE__ */ new Date()
+      }).onConflictDoNothing();
+      if (room.playerA.playerId && room.playerA.playerId !== "bot") {
+        const [aRow] = await db.update(playersTable).set({
+          elo: sql`GREATEST(800, ${playersTable.elo} + ${eloChange})`,
+          lp: newLpA,
+          leagueDivision: newDivA,
+          coins: sql`GREATEST(0, ${playersTable.coins} + ${coinsNet})`,
+          xp: sql`${playersTable.xp} + ${xpGained}`,
+          pvpWins: won ? sql`${playersTable.pvpWins} + 1` : playersTable.pvpWins,
+          pvpLosses: !won && !draw ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
+          pvpWinStreak: won ? sql`${playersTable.pvpWinStreak} + 1` : sql`0`,
+          bestPvpStreak: won ? sql`GREATEST(${playersTable.bestPvpStreak}, ${playersTable.pvpWinStreak} + 1)` : playersTable.bestPvpStreak,
+          matchesPlayed: sql`${playersTable.matchesPlayed} + 1`,
+          matchesWon: won ? sql`${playersTable.matchesWon} + 1` : playersTable.matchesWon,
+          updatedAt: /* @__PURE__ */ new Date(),
+          lastActiveAt: /* @__PURE__ */ new Date()
+        }).where(eq(playersTable.id, room.playerA.playerId)).returning({ coins: playersTable.coins });
+        if (coinsWon > 0) {
+          await db.insert(coinTransactionsTable).values({
+            id: `${matchId}_a`,
+            playerId: room.playerA.playerId,
+            amount: coinsWon,
+            type: "win",
+            source: isBot ? "bot_match" : "pvp_match",
+            description: `${isBot ? "Bot" : "PvP"} match ${arena.displayName} \u2014 ${won ? "win" : "draw"} reward`,
+            balanceAfter: aRow?.coins ?? 0
+          }).onConflictDoNothing();
+        }
+      }
+      if (!isBot && room.playerB.playerId && room.playerB.playerId !== "bot") {
+        const [bRow] = await db.update(playersTable).set({
+          elo: sql`GREATEST(800, ${playersTable.elo} + ${bEloChange})`,
+          lp: newLpB,
+          leagueDivision: newDivB,
+          coins: sql`GREATEST(0, ${playersTable.coins} + ${bCoinsNet})`,
+          xp: sql`${playersTable.xp} + ${bXp}`,
+          pvpWins: bWon ? sql`${playersTable.pvpWins} + 1` : playersTable.pvpWins,
+          pvpLosses: !bWon && !bDraw ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
+          pvpWinStreak: bWon ? sql`${playersTable.pvpWinStreak} + 1` : sql`0`,
+          bestPvpStreak: bWon ? sql`GREATEST(${playersTable.bestPvpStreak}, ${playersTable.pvpWinStreak} + 1)` : playersTable.bestPvpStreak,
+          matchesPlayed: sql`${playersTable.matchesPlayed} + 1`,
+          matchesWon: bWon ? sql`${playersTable.matchesWon} + 1` : playersTable.matchesWon,
+          updatedAt: /* @__PURE__ */ new Date(),
+          lastActiveAt: /* @__PURE__ */ new Date()
+        }).where(eq(playersTable.id, room.playerB.playerId)).returning({ coins: playersTable.coins });
+        if (bCoinsWon > 0) {
+          await db.insert(coinTransactionsTable).values({
+            id: `${matchId}_b`,
+            playerId: room.playerB.playerId,
+            amount: bCoinsWon,
+            type: "win",
+            source: "pvp_match",
+            description: `PvP match ${arena.displayName} \u2014 ${bWon ? "win" : "draw"} reward`,
+            balanceAfter: bRow?.coins ?? 0
+          }).onConflictDoNothing();
+        }
+      }
+      await broadcastLeaderboard(io2);
+    } catch (err) {
+      logger.error({ err }, "endRoom DB persistence error");
+    }
+  })();
+  setTimeout(() => rooms.delete(roomId), 3e4);
+}
+function setupSocketIO(server2) {
+  const io2 = new Server(server2, {
+    cors: { origin: "*", methods: ["GET", "POST"] },
+    path: "/api/socket.io",
+    transports: ["websocket", "polling"]
+  });
+  ioInstance = io2;
+  setInterval(() => processQueue(io2), 1e3);
+  if (!lbInterval) {
+    setTimeout(() => {
+      broadcastLeaderboard(io2);
+      lbInterval = setInterval(() => broadcastLeaderboard(io2), 1e4);
+    }, 1e4);
+  }
+  io2.on("connection", (socket) => {
+    logger.info({ socketId: socket.id }, "Socket connected");
+    let connectedPlayerId = null;
+    socket.on("player:connect", ({ playerId }) => {
+      connectedPlayerId = playerId;
+      playerSockets.set(playerId, socket.id);
+      socket.join(`player:${playerId}`);
+      socket.emit("player:connected", { ok: true });
+      logger.info({ playerId, socketId: socket.id }, "Player connected");
+    });
+    socket.on("matchmaking:join", async (data) => {
+      const arena = getArenaConfig(data.leagueId);
+      const stake = arena.entryCost;
+      let stakeDeducted = false;
+      if (stake > 0 && data.playerId && data.playerId !== "bot") {
+        try {
+          const [player] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, data.playerId)).limit(1);
+          if (!player || player.coins < stake) {
+            socket.emit("matchmaking:error", { reason: "insufficient_coins", required: stake, have: player?.coins ?? 0 });
+            return;
+          }
+          await db.update(playersTable).set({ coins: sql`GREATEST(0, ${playersTable.coins} - ${stake})` }).where(eq(playersTable.id, data.playerId));
+          await db.insert(coinTransactionsTable).values({
+            id: `stake_${Date.now()}_${data.playerId.slice(-6)}`,
+            playerId: data.playerId,
+            amount: -stake,
+            type: "stake",
+            source: "arena_entry",
+            description: `Arena entry reserved: ${arena.displayName}`,
+            balanceAfter: player.coins - stake
+          }).onConflictDoNothing();
+          stakeDeducted = true;
+        } catch (err) {
+          logger.error({ err }, "matchmaking:join stake deduction error");
+          socket.emit("matchmaking:error", { reason: "server_error" });
+          return;
+        }
+      }
+      const entry = {
+        socketId: socket.id,
+        playerId: data.playerId,
+        playerName: data.playerName,
+        playerLevel: data.playerLevel,
+        playerElo: data.playerElo,
+        leagueId: data.leagueId,
+        stake,
+        stakeDeducted,
+        joinedAt: Date.now()
+      };
+      matchmakingQueue.set(socket.id, entry);
+      socket.emit("matchmaking:searching", { leagueId: data.leagueId, stake });
+      logger.info({ playerId: data.playerId, leagueId: data.leagueId, stake, stakeDeducted }, "Player joined queue");
+    });
+    socket.on("matchmaking:cancel", async () => {
+      const entry = matchmakingQueue.get(socket.id);
+      matchmakingQueue.delete(socket.id);
+      if (entry?.stakeDeducted && entry.stake > 0 && entry.playerId !== "bot") {
+        try {
+          await db.update(playersTable).set({ coins: sql`${playersTable.coins} + ${entry.stake}` }).where(eq(playersTable.id, entry.playerId));
+          await db.insert(coinTransactionsTable).values({
+            id: `refund_${Date.now()}_${entry.playerId.slice(-6)}`,
+            playerId: entry.playerId,
+            amount: entry.stake,
+            type: "refund",
+            source: "arena_cancel",
+            description: `Arena entry refunded: ${entry.leagueId}`,
+            balanceAfter: 0
+          }).onConflictDoNothing();
+        } catch (err) {
+          logger.error({ err }, "matchmaking:cancel refund error");
+        }
+      }
+      socket.emit("matchmaking:cancelled");
+    });
+    socket.on("round:answer", (data) => {
+      const room = rooms.get(data.roomId);
+      if (!room || room.status !== "playing") return;
+      const isPlayerA = room.playerA.socketId === socket.id;
+      const player = isPlayerA ? room.playerA : room.playerB;
+      if (player.answeredCurrentRound) return;
+      const ac = checkAntiCheat(socket.id, data.elapsedMs, player.score);
+      if (!ac.ok) {
+        socket.emit("anticheat:warning", { reason: ac.reason });
+        return;
+      }
+      const challenge = room.currentChallenge;
+      if (!challenge) return;
+      const correct = data.colorId === challenge.target.id;
+      const pts = scorePvpAnswer(correct, data.elapsedMs, challenge.timeoutMs, player.streak);
+      player.score = Math.max(0, player.score + pts);
+      if (correct) {
+        player.correct++;
+        player.streak++;
+      } else {
+        player.errors++;
+        player.streak = 0;
+      }
+      player.answeredCurrentRound = true;
+      player.lastAnswerTime = Date.now();
+      player.answerSpeeds.push(data.elapsedMs);
+      if (player.answerSpeeds.length > 10) player.answerSpeeds.shift();
+      if (room.roundTimer) clearTimeout(room.roundTimer);
+      io2.to(data.roomId).emit("round:answered", {
+        by: isPlayerA ? "A" : "B",
+        correct,
+        scoreA: room.playerA.score,
+        scoreB: room.playerB.score,
+        streakA: room.playerA.streak,
+        streakB: room.playerB.streak,
+        elapsedMs: data.elapsedMs
+      });
+      if (room.playerA.answeredCurrentRound && room.playerB.answeredCurrentRound) {
+        setTimeout(() => nextRound(io2, data.roomId), 600);
+      } else if (room.playerB.socketId === "bot") {
+      } else {
+        room.roundTimer = setTimeout(() => {
+          if (!room.playerA.answeredCurrentRound) {
+            room.playerA.errors++;
+            room.playerA.streak = 0;
+            room.playerA.answeredCurrentRound = true;
+          }
+          if (!room.playerB.answeredCurrentRound) {
+            room.playerB.errors++;
+            room.playerB.streak = 0;
+            room.playerB.answeredCurrentRound = true;
+          }
+          io2.to(data.roomId).emit("round:timeout", { scoreA: room.playerA.score, scoreB: room.playerB.score });
+          setTimeout(() => nextRound(io2, data.roomId), 400);
+        }, 2e3);
+      }
+    });
+    socket.on("match:forfeit", (data) => {
+      const room = rooms.get(data.roomId);
+      if (!room) return;
+      endRoom(io2, data.roomId);
+    });
+    socket.on("chat:message", async (data) => {
+      if (!data.content?.trim() || data.content.length > 500) return;
+      const ac = checkAntiCheat(socket.id + "_chat", 500, 0);
+      if (!ac.ok) {
+        socket.emit("chat:error", { reason: "rate_limited" });
+        return;
+      }
+      const msg = {
+        id: Math.random().toString(36).slice(2),
+        fromId: data.fromId,
+        fromName: data.fromName,
+        toId: data.toId,
+        content: data.content.trim(),
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      if (data.roomType === "dm") {
+        const targetSocketId = playerSockets.get(data.toId);
+        if (targetSocketId) {
+          io2.to(targetSocketId).emit("chat:dm", msg);
+        }
+        socket.emit("chat:dm:sent", msg);
+        try {
+          await db.insert(messagesTable).values({
+            id: msg.id,
+            fromId: data.fromId,
+            toId: data.toId,
+            content: msg.content
+          });
+        } catch (err) {
+          logger.error({ err }, "chat:message db error");
+        }
+      } else {
+        io2.to(data.toId).emit("chat:room", msg);
+      }
+    });
+    socket.on("community:subscribe", () => {
+      socket.join("community:feed");
+    });
+    socket.on("community:post", async (data) => {
+      const hasContent = typeof data.content === "string" && data.content.trim().length > 0;
+      const hasImage = typeof data.imageUrl === "string" && data.imageUrl.length > 0;
+      if (!hasContent && !hasImage) return;
+      if (hasContent && data.content.length > 500) return;
+      try {
+        const [post] = await db.insert(postsTable).values({
+          id: Math.random().toString(36).slice(2),
+          authorId: data.authorId,
+          username: data.username,
+          level: data.level,
+          content: hasContent ? data.content.trim() : "",
+          imageUrl: hasImage ? data.imageUrl : null,
+          type: data.type || "text",
+          meta: {}
+        }).returning();
+        io2.to("community:feed").emit("community:new_post", post);
+      } catch (err) {
+        logger.error({ err }, "community:post error");
+      }
+    });
+    socket.on("community:like", async (data) => {
+      io2.to("community:feed").emit("community:like_update", {
+        postId: data.postId,
+        playerId: data.playerId,
+        liked: data.liked
+      });
+    });
+    socket.on("notification:send", async (data) => {
+      const targetSocketId = playerSockets.get(data.toPlayerId);
+      if (targetSocketId) {
+        io2.to(targetSocketId).emit("notification:push", {
+          id: Math.random().toString(36).slice(2),
+          type: data.type,
+          title: data.title,
+          body: data.body,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        });
+      }
+    });
+    socket.on("leaderboard:subscribe", async () => {
+      socket.join("leaderboard");
+      try {
+        const rows = await db.select({
+          id: playersTable.id,
+          username: playersTable.username,
+          avatar: playersTable.avatar,
+          level: playersTable.level,
+          elo: playersTable.elo,
+          fame: playersTable.fame,
+          pvpWins: playersTable.pvpWins,
+          verificationStatus: playersTable.verificationStatus
+        }).from(playersTable).orderBy(desc(playersTable.elo)).limit(50);
+        if (rows.length > 0) socket.emit("leaderboard:update", rows);
+      } catch (err) {
+        logger.error({ err }, "leaderboard:subscribe snapshot error");
+      }
+    });
+    socket.on("tournament:subscribe", ({ tournamentId }) => {
+      socket.join(`tournament:${tournamentId}`);
+    });
+    socket.on("tournament:bracket_update", (data) => {
+      io2.to(`tournament:${data.tournamentId}`).emit("tournament:bracket", data.bracket);
+    });
+    socket.on("disconnect", async () => {
+      const queueEntry = matchmakingQueue.get(socket.id);
+      matchmakingQueue.delete(socket.id);
+      antiCheatMap.delete(socket.id);
+      antiCheatMap.delete(socket.id + "_chat");
+      if (connectedPlayerId) {
+        playerSockets.delete(connectedPlayerId);
+      }
+      if (queueEntry?.stakeDeducted && queueEntry.stake > 0 && queueEntry.playerId !== "bot") {
+        try {
+          await db.update(playersTable).set({ coins: sql`${playersTable.coins} + ${queueEntry.stake}` }).where(eq(playersTable.id, queueEntry.playerId));
+          await db.insert(coinTransactionsTable).values({
+            id: `refund_dc_${Date.now()}_${queueEntry.playerId.slice(-6)}`,
+            playerId: queueEntry.playerId,
+            amount: queueEntry.stake,
+            type: "refund",
+            source: "arena_disconnect",
+            description: `Arena entry refunded (disconnected): ${queueEntry.leagueId}`,
+            balanceAfter: 0
+          }).onConflictDoNothing();
+          logger.info({ playerId: queueEntry.playerId, stake: queueEntry.stake }, "Stake refunded on disconnect");
+        } catch (err) {
+          logger.error({ err }, "disconnect stake refund error");
+        }
+      }
+      for (const [roomId, room] of rooms) {
+        if (room.playerA.socketId === socket.id || room.playerB.socketId === socket.id) {
+          if (room.status === "playing") {
+            endRoom(io2, roomId);
+          }
+        }
+      }
+      logger.info({ socketId: socket.id }, "Socket disconnected");
+    });
+  });
+  return io2;
+}
+var ARENA_CONFIG, DEFAULT_ARENA, antiCheatMap, COLORS, BOT_NAMES2, matchmakingQueue, rooms, playerSockets, lbInterval, ioInstance, previousTop10;
+var init_socket_manager = __esm({
+  "src/ws/socket-manager.ts"() {
+    "use strict";
+    init_wrapper();
+    init_src();
+    init_drizzle_orm();
+    init_logger2();
+    ARENA_CONFIG = {
+      training: { entryCost: 0, winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Training" },
+      bronze: { entryCost: 0, winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Bronze" },
+      coin: { entryCost: 50, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Coin" },
+      silver: { entryCost: 50, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Silver" },
+      pro: { entryCost: 200, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Pro" },
+      elite: { entryCost: 200, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Elite" },
+      champion: { entryCost: 500, winMultiplier: 4, drawMultiplier: 1.2, eloK: 48, displayName: "Champion" }
+    };
+    DEFAULT_ARENA = { entryCost: 0, winMultiplier: 2, drawMultiplier: 0.7, eloK: 24, displayName: "Standard" };
+    antiCheatMap = /* @__PURE__ */ new Map();
+    COLORS = [
+      { id: "red", name: "\u0623\u062D\u0645\u0631", hex: "#EF4444" },
+      { id: "blue", name: "\u0623\u0632\u0631\u0642", hex: "#3B82F6" },
+      { id: "green", name: "\u0623\u062E\u0636\u0631", hex: "#22C55E" },
+      { id: "yellow", name: "\u0623\u0635\u0641\u0631", hex: "#EAB308" },
+      { id: "purple", name: "\u0628\u0646\u0641\u0633\u062C\u064A", hex: "#A855F7" },
+      { id: "orange", name: "\u0628\u0631\u062A\u0642\u0627\u0644\u064A", hex: "#F97316" }
+    ];
+    BOT_NAMES2 = {
+      easy: ["SlowBot_E", "EasyAI_1", "Beginner_X", "Novice_Bot", "LearnAI_3"],
+      medium: ["MindBot_M", "MidAI_7", "SmartBot_2", "AveragePro", "SteadyAI"],
+      hard: ["MasterAI", "EliteBot_H", "OmegaMind", "ApexAI_X", "UltraCore"]
+    };
+    matchmakingQueue = /* @__PURE__ */ new Map();
+    rooms = /* @__PURE__ */ new Map();
+    playerSockets = /* @__PURE__ */ new Map();
+    lbInterval = null;
+    ioInstance = null;
+    previousTop10 = /* @__PURE__ */ new Set();
+  }
+});
+
+// src/lib/notificationService.ts
+var notificationService_exports = {};
+__export(notificationService_exports, {
+  createNotification: () => createNotification
+});
+async function createNotification(payload) {
+  try {
+    const id = nanoid3();
+    const now = /* @__PURE__ */ new Date();
+    await db.insert(notificationsTable).values({
+      id,
+      playerId: payload.playerId,
+      type: payload.type,
+      title: payload.title,
+      body: payload.body,
+      data: payload.data ?? {}
+    });
+    const io2 = getIO();
+    if (io2) {
+      io2.to(`player:${payload.playerId}`).emit("notification:push", {
+        id,
+        type: payload.type,
+        title: payload.title,
+        body: payload.body,
+        data: payload.data ?? {},
+        read: false,
+        createdAt: now.toISOString()
+      });
+    }
+  } catch (err) {
+    logger.warn({ err, playerId: payload.playerId }, "createNotification failed (non-fatal)");
+  }
+}
+var init_notificationService = __esm({
+  "src/lib/notificationService.ts"() {
+    "use strict";
+    init_src();
+    init_nanoid();
+    init_socket_manager();
+    init_logger2();
+  }
+});
+
 // src/index.ts
 import { createServer } from "http";
 
@@ -85463,18 +86359,7 @@ var bcryptjs_default = {
 // src/routes/auth.ts
 init_drizzle_orm();
 init_src();
-
-// src/lib/nanoid.ts
-import { randomBytes as randomBytes2 } from "crypto";
-var ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-function nanoid3(size = 21) {
-  const bytes = randomBytes2(size);
-  let id = "";
-  for (let i = 0; i < size; i++) {
-    id += ALPHABET[bytes[i] % ALPHABET.length];
-  }
-  return id;
-}
+init_nanoid();
 
 // src/middleware/auth.ts
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
@@ -85652,6 +86537,7 @@ setInterval(() => {
 // src/lib/daily-rewards.ts
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var TASK_COINS = {
   login: 5,
   social: 10,
@@ -86033,6 +86919,7 @@ var pi_auth_default = router3;
 var import_express4 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router4 = (0, import_express4.Router)();
 var LP_DIVISION_RANGES = {
   training: { min: 0, max: 99 },
@@ -86327,6 +87214,7 @@ var players_default = router4;
 var import_express5 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router5 = (0, import_express5.Router)();
 function getTier(lp) {
   if (lp >= 500) return "champion";
@@ -86646,6 +87534,7 @@ var matches_default = router5;
 var import_express6 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router6 = (0, import_express6.Router)();
 async function notify(playerId, type, title, body, data = {}) {
   try {
@@ -87112,6 +88001,7 @@ var community_default = router6;
 var import_express7 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 
 // src/lib/economy-engine.ts
 var GEM_TABLE = {
@@ -87429,6 +88319,7 @@ var economy_default = router7;
 var import_express8 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router8 = (0, import_express8.Router)();
 router8.get("/notifications/:playerId", async (req, res) => {
   try {
@@ -87518,6 +88409,7 @@ var notifications_default = router8;
 var import_express9 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router9 = (0, import_express9.Router)();
 router9.get("/messages/inbox/:playerId", async (req, res) => {
   try {
@@ -87669,6 +88561,7 @@ var messages_default = router9;
 var import_express10 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router10 = (0, import_express10.Router)();
 router10.get("/analytics/dashboard", async (req, res) => {
   try {
@@ -87753,6 +88646,7 @@ var analytics_default = router10;
 var import_express11 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router11 = (0, import_express11.Router)();
 router11.get("/followers/:playerId", async (req, res) => {
   try {
@@ -87904,6 +88798,7 @@ var followers_default = router11;
 var import_express12 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router12 = (0, import_express12.Router)();
 router12.get("/marketplace", async (req, res) => {
   try {
@@ -88134,6 +89029,7 @@ var security_default = router13;
 var import_express14 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router14 = (0, import_express14.Router)();
 var PI_PRODUCTS = {
   "vip_silver": { name: "VIP Silver (30 days)", vipTier: "silver", description: "Silver VIP membership" },
@@ -88255,6 +89151,7 @@ var pi_payments_default = router14;
 // src/routes/beta.ts
 var import_express15 = __toESM(require_express2(), 1);
 init_src();
+init_nanoid();
 var router15 = (0, import_express15.Router)();
 var INVITE_CODES = /* @__PURE__ */ new Map();
 var WAITLIST = [];
@@ -89160,29 +90057,10 @@ function refreshMatchStatuses() {
 // src/lib/bot-simulator.ts
 init_src();
 init_drizzle_orm();
+init_logger2();
 import { randomUUID as randomUUID2 } from "node:crypto";
 import { readFileSync as readFileSync3, writeFileSync as writeFileSync3, existsSync as existsSync3 } from "node:fs";
 import { resolve as resolve3 } from "node:path";
-
-// src/lib/logger.ts
-var import_pino = __toESM(require_pino(), 1);
-var isProduction = process.env.NODE_ENV === "production";
-var logger = (0, import_pino.default)({
-  level: process.env.LOG_LEVEL ?? "info",
-  redact: [
-    "req.headers.authorization",
-    "req.headers.cookie",
-    "res.headers['set-cookie']"
-  ],
-  ...isProduction ? {} : {
-    transport: {
-      target: "pino-pretty",
-      options: { colorize: true }
-    }
-  }
-});
-
-// src/lib/bot-simulator.ts
 function skillLevelFromAccuracy(accuracy) {
   if (accuracy >= 87) return "elite";
   if (accuracy >= 68) return "advanced";
@@ -89880,6 +90758,7 @@ function xpToNextLevel(xp) {
 // src/routes/league-system.ts
 init_drizzle_orm();
 init_src();
+init_nanoid();
 import { readFileSync as readFileSync5, writeFileSync as writeFileSync5, existsSync as existsSync5 } from "node:fs";
 import { resolve as resolve5 } from "node:path";
 var router18 = (0, import_express18.Router)();
@@ -90576,6 +91455,7 @@ init_src();
 // src/lib/shop-service.ts
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var SHOP_ITEMS = {
   post_promotion: {
     id: "post_promotion",
@@ -90672,6 +91552,7 @@ async function getShopCatalog(playerId) {
 }
 
 // src/routes/daily-economy.ts
+init_nanoid();
 init_src();
 var router21 = (0, import_express21.Router)();
 var SEASON_GEM_TABLE = {
@@ -92051,6 +92932,7 @@ var economy_stabilizer_default = router24;
 var import_express25 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router25 = (0, import_express25.Router)();
 function extractHashtags2(text2) {
   const matches = text2.match(/#[\w\u0600-\u06FF]+/g) ?? [];
@@ -92358,6 +93240,7 @@ var social_default = router25;
 var import_express26 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router26 = (0, import_express26.Router)();
 var STORY_TTL_MS = 24 * 60 * 60 * 1e3;
 function emitViewUpdate(_storyId) {
@@ -92635,6 +93518,7 @@ var stories_default = router26;
 var import_express27 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
 var router27 = (0, import_express27.Router)();
 router27.get("/jobs", async (req, res) => {
   try {
@@ -92715,6 +93599,8 @@ var jobs_default = router27;
 var import_express28 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
+init_nanoid();
+init_notificationService();
 var router28 = (0, import_express28.Router)();
 async function getOrCreateWallet(playerId) {
   const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
@@ -92826,6 +93712,23 @@ router28.post("/wallet/gift", async (req, res) => {
     }).catch((e) => {
       req.log.warn({ err: e }, "gift ledger insert failed (non-fatal)");
     });
+    const giftEmoji = emoji3 ? String(emoji3).slice(0, 8) : "\u{1F381}";
+    createNotification({
+      playerId: String(receiverId),
+      type: "gift",
+      title: `${giftEmoji} \u0647\u062F\u064A\u0629 \u0645\u0646 ${senderPlayer.username}`,
+      body: note ? `${dn} DN \u2014 "${note}"` : `\u0627\u0633\u062A\u0642\u0628\u0644\u062A ${dn} DN`,
+      data: { senderId: String(senderId), amount: dn, emoji: giftEmoji, newBalance: newReceiverBalance }
+    }).catch(() => {
+    });
+    createNotification({
+      playerId: String(senderId),
+      type: "gift_sent",
+      title: `${giftEmoji} \u0623\u0631\u0633\u0644\u062A \u0647\u062F\u064A\u0629 \u0625\u0644\u0649 ${receiverPlayer.username}`,
+      body: `${dn} DN \u2014 \u0631\u0635\u064A\u062F\u0643 \u0627\u0644\u062C\u062F\u064A\u062F: ${newSenderBalance} DN`,
+      data: { receiverId: String(receiverId), amount: dn, emoji: giftEmoji, newBalance: newSenderBalance }
+    }).catch(() => {
+    });
     res.status(201).json({
       ok: true,
       senderBalance: newSenderBalance,
@@ -92865,6 +93768,16 @@ router28.post("/wallet/credit", async (req, res) => {
       description: String(description || ""),
       balanceAfter: newBalance
     }).returning();
+    if (dn > 0) {
+      createNotification({
+        playerId: String(playerId),
+        type: "dn",
+        title: `\u{1F4B0} \u0627\u0633\u062A\u0642\u0628\u0644\u062A ${dn} DN`,
+        body: String(description || `\u0631\u0635\u064A\u062F\u0643 \u0627\u0644\u062C\u062F\u064A\u062F: ${newBalance} DN`),
+        data: { amount: dn, newBalance, txType: String(type) }
+      }).catch(() => {
+      });
+    }
     res.status(201).json({ ok: true, transaction: tx, newBalance });
   } catch (err) {
     req.log.error({ err });
@@ -93127,6 +94040,7 @@ router31.use(gift_leaderboard_default);
 var routes_default = router31;
 
 // src/app.ts
+init_logger2();
 var app = (0, import_express32.default)();
 app.use(
   (0, import_pino_http.default)({
@@ -93224,782 +94138,14 @@ router32.put("/", (req, res) => {
 });
 var profile_default = router32;
 
-// ../../node_modules/.pnpm/socket.io@4.8.3/node_modules/socket.io/wrapper.mjs
-var import_dist = __toESM(require_dist4(), 1);
-var { Server, Namespace, Socket } = import_dist.default;
-
-// src/ws/socket-manager.ts
-init_src();
-init_drizzle_orm();
-var ARENA_CONFIG = {
-  training: { entryCost: 0, winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Training" },
-  bronze: { entryCost: 0, winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Bronze" },
-  coin: { entryCost: 50, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Coin" },
-  silver: { entryCost: 50, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Silver" },
-  pro: { entryCost: 200, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Pro" },
-  elite: { entryCost: 200, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Elite" },
-  champion: { entryCost: 500, winMultiplier: 4, drawMultiplier: 1.2, eloK: 48, displayName: "Champion" }
-};
-var DEFAULT_ARENA = { entryCost: 0, winMultiplier: 2, drawMultiplier: 0.7, eloK: 24, displayName: "Standard" };
-function getArenaConfig(leagueId) {
-  return ARENA_CONFIG[leagueId?.toLowerCase()] ?? DEFAULT_ARENA;
-}
-function computeLP(elo) {
-  if (elo < 1100) {
-    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 800) / 300 * 1e3))), leagueDivision: "training" };
-  } else if (elo < 1400) {
-    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 1100) / 300 * 1e3))), leagueDivision: "coin" };
-  } else if (elo < 1700) {
-    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 1400) / 300 * 1e3))), leagueDivision: "pro" };
-  } else {
-    return { lp: Math.max(0, Math.min(1e3, Math.round((elo - 1700) / 400 * 1e3))), leagueDivision: "champion" };
-  }
-}
-var antiCheatMap = /* @__PURE__ */ new Map();
-function checkAntiCheat(socketId, responseMs, score) {
-  const MIN_HUMAN_MS = 120;
-  if (responseMs < MIN_HUMAN_MS) {
-    return { ok: false, reason: "too_fast" };
-  }
-  let state = antiCheatMap.get(socketId);
-  if (!state) {
-    state = { sessionStart: Date.now(), answers: [], suspiciousCount: 0, lastFlagged: 0 };
-    antiCheatMap.set(socketId, state);
-  }
-  state.answers.push(responseMs);
-  if (state.answers.length > 20) state.answers.shift();
-  if (state.answers.length >= 5) {
-    const avg3 = state.answers.reduce((a, b) => a + b, 0) / state.answers.length;
-    if (avg3 < 200) {
-      state.suspiciousCount++;
-      if (state.suspiciousCount >= 3) {
-        return { ok: false, reason: "inhuman_speed" };
-      }
-    }
-  }
-  return { ok: true };
-}
-var COLORS = [
-  { id: "red", name: "\u0623\u062D\u0645\u0631", hex: "#EF4444" },
-  { id: "blue", name: "\u0623\u0632\u0631\u0642", hex: "#3B82F6" },
-  { id: "green", name: "\u0623\u062E\u0636\u0631", hex: "#22C55E" },
-  { id: "yellow", name: "\u0623\u0635\u0641\u0631", hex: "#EAB308" },
-  { id: "purple", name: "\u0628\u0646\u0641\u0633\u062C\u064A", hex: "#A855F7" },
-  { id: "orange", name: "\u0628\u0631\u062A\u0642\u0627\u0644\u064A", hex: "#F97316" }
-];
-function generateChallenge(optionCount = 4) {
-  const shuffled = [...COLORS].sort(() => Math.random() - 0.5);
-  const options = shuffled.slice(0, optionCount);
-  const target = options[Math.floor(Math.random() * options.length)];
-  const isStroop = Math.random() < 0.5;
-  const displayColor = isStroop ? COLORS.filter((c) => c.id !== target.id)[Math.floor(Math.random() * (COLORS.length - 1))] : target;
-  return {
-    id: Math.random().toString(36).slice(2),
-    type: isStroop ? "stroop" : "match",
-    target,
-    displayColor,
-    options,
-    question: isStroop ? `\u0627\u0636\u063A\u0637 \u0639\u0644\u0649: ${target.name}` : "\u0627\u0636\u063A\u0637 \u0639\u0644\u0649 \u0627\u0644\u0644\u0648\u0646 \u0627\u0644\u0645\u0637\u0627\u0628\u0642",
-    timeoutMs: 2500
-  };
-}
-function getBotDifficulty(leagueId) {
-  return leagueId === "elite" ? "hard" : leagueId === "silver" ? "medium" : "easy";
-}
-function getBotAccuracy(diff) {
-  return { easy: 0.5, medium: 0.73, hard: 0.92 }[diff];
-}
-function getBotReaction(diff, challengeType, avgResponseMs) {
-  const base = { easy: 1800, medium: 1100, hard: 550 }[diff];
-  const jitter = (Math.random() - 0.5) * 400;
-  const memExtra = challengeType === "memory" ? 400 : 0;
-  let adaptive = 0;
-  if (avgResponseMs && diff === "hard") {
-    adaptive = avgResponseMs < 600 ? -100 : 100;
-  }
-  return Math.max(180, base + jitter + memExtra + adaptive);
-}
-var BOT_NAMES2 = {
-  easy: ["SlowBot_E", "EasyAI_1", "Beginner_X", "Novice_Bot", "LearnAI_3"],
-  medium: ["MindBot_M", "MidAI_7", "SmartBot_2", "AveragePro", "SteadyAI"],
-  hard: ["MasterAI", "EliteBot_H", "OmegaMind", "ApexAI_X", "UltraCore"]
-};
-function makeBotPlayer(playerLevel, playerElo, leagueId) {
-  const diff = getBotDifficulty(leagueId);
-  const offsets = { easy: -4, medium: 0, hard: 4 };
-  const eloOffsets = { easy: -80, medium: 0, hard: 80 };
-  const names = BOT_NAMES2[diff];
-  return {
-    socketId: "bot",
-    playerId: "bot",
-    name: names[Math.floor(Math.random() * names.length)],
-    level: Math.max(1, Math.min(100, playerLevel + offsets[diff] + Math.floor(Math.random() * 3) - 1)),
-    elo: Math.max(800, playerElo + eloOffsets[diff] + Math.floor(Math.random() * 40) - 20),
-    score: 0,
-    correct: 0,
-    errors: 0,
-    streak: 0,
-    answeredCurrentRound: false,
-    lastAnswerTime: 0,
-    answerSpeeds: []
-  };
-}
-function scorePvpAnswer(correct, elapsedMs, timeoutMs, streak) {
-  if (!correct) return -2;
-  const speedBonus = Math.round(Math.max(0, (timeoutMs - elapsedMs) / timeoutMs) * 5);
-  const streakBonus = streak >= 3 ? 5 : 0;
-  return 10 + speedBonus + streakBonus;
-}
-var matchmakingQueue = /* @__PURE__ */ new Map();
-var rooms = /* @__PURE__ */ new Map();
-var playerSockets = /* @__PURE__ */ new Map();
-var lbInterval = null;
-async function broadcastLeaderboard(io2) {
-  try {
-    const rows = await db.select({
-      id: playersTable.id,
-      username: playersTable.username,
-      avatar: playersTable.avatar,
-      level: playersTable.level,
-      elo: playersTable.elo,
-      fame: playersTable.fame,
-      pvpWins: playersTable.pvpWins,
-      verificationStatus: playersTable.verificationStatus
-    }).from(playersTable).orderBy(desc(playersTable.elo)).limit(50);
-    if (rows.length > 0) {
-      io2.emit("leaderboard:update", rows);
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("relation") && msg.includes("does not exist")) return;
-    logger.error({ err }, "leaderboard broadcast error");
-  }
-}
-function nanoid6() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
-}
-function processQueue(io2) {
-  const entries = Array.from(matchmakingQueue.values());
-  const now = Date.now();
-  for (let i = 0; i < entries.length; i++) {
-    const a = entries[i];
-    if (!matchmakingQueue.has(a.socketId)) continue;
-    const waitMs = now - a.joinedAt;
-    let matched = null;
-    for (let j = i + 1; j < entries.length; j++) {
-      const b = entries[j];
-      if (!matchmakingQueue.has(b.socketId)) continue;
-      if (b.leagueId !== a.leagueId) continue;
-      const eloDiff = Math.abs(a.playerElo - b.playerElo);
-      const eloCap = waitMs > 1e4 ? 400 : 200;
-      if (eloDiff <= eloCap) {
-        matched = b;
-        break;
-      }
-    }
-    if (matched) {
-      matchmakingQueue.delete(a.socketId);
-      matchmakingQueue.delete(matched.socketId);
-      createRoom(io2, a, matched);
-    } else if (waitMs > 12e3) {
-      matchmakingQueue.delete(a.socketId);
-      createBotRoom(io2, a);
-    }
-  }
-}
-function createRoom(io2, playerA, playerB) {
-  const roomId = `room_${nanoid6()}`;
-  const makePlayer = (q) => ({
-    socketId: q.socketId,
-    playerId: q.playerId,
-    name: q.playerName,
-    level: q.playerLevel,
-    elo: q.playerElo,
-    score: 0,
-    correct: 0,
-    errors: 0,
-    streak: 0,
-    answeredCurrentRound: false,
-    lastAnswerTime: 0,
-    answerSpeeds: []
-  });
-  const room = {
-    roomId,
-    leagueId: playerA.leagueId,
-    stake: playerA.stake,
-    playerA: makePlayer(playerA),
-    playerB: makePlayer(playerB),
-    currentChallenge: null,
-    roundNumber: 0,
-    roundStartTime: 0,
-    status: "countdown",
-    roundTimer: null,
-    gameTimer: null,
-    startTime: 0,
-    duration: 60
-  };
-  rooms.set(roomId, room);
-  const sA = io2.sockets.sockets.get(playerA.socketId);
-  const sB = io2.sockets.sockets.get(playerB.socketId);
-  sA?.join(roomId);
-  sB?.join(roomId);
-  io2.to(roomId).emit("match:found", {
-    roomId,
-    isBot: false,
-    playerA: { name: playerA.playerName, level: playerA.playerLevel, elo: playerA.playerElo },
-    playerB: { name: playerB.playerName, level: playerB.playerLevel, elo: playerB.playerElo }
-  });
-  logger.info({ roomId, playerA: playerA.playerId, playerB: playerB.playerId }, "PvP room created");
-  setTimeout(() => startRoom(io2, roomId), 3e3);
-}
-function createBotRoom(io2, player) {
-  const roomId = `room_${nanoid6()}`;
-  const bot = makeBotPlayer(player.playerLevel, player.playerElo, player.leagueId);
-  const room = {
-    roomId,
-    leagueId: player.leagueId,
-    stake: player.stake,
-    playerA: {
-      socketId: player.socketId,
-      playerId: player.playerId,
-      name: player.playerName,
-      level: player.playerLevel,
-      elo: player.playerElo,
-      score: 0,
-      correct: 0,
-      errors: 0,
-      streak: 0,
-      answeredCurrentRound: false,
-      lastAnswerTime: 0,
-      answerSpeeds: []
-    },
-    playerB: bot,
-    currentChallenge: null,
-    roundNumber: 0,
-    roundStartTime: 0,
-    status: "countdown",
-    roundTimer: null,
-    gameTimer: null,
-    startTime: 0,
-    duration: 60
-  };
-  rooms.set(roomId, room);
-  const sock = io2.sockets.sockets.get(player.socketId);
-  sock?.join(roomId);
-  io2.to(roomId).emit("match:found", {
-    roomId,
-    isBot: true,
-    botDifficulty: getBotDifficulty(player.leagueId),
-    playerA: { name: player.playerName, level: player.playerLevel, elo: player.playerElo },
-    playerB: { name: bot.name, level: bot.level, elo: bot.elo }
-  });
-  logger.info({ roomId, player: player.playerId, bot: bot.name }, "Bot room created");
-  setTimeout(() => startRoom(io2, roomId), 3e3);
-}
-function startRoom(io2, roomId) {
-  const room = rooms.get(roomId);
-  if (!room) return;
-  room.status = "playing";
-  room.startTime = Date.now();
-  room.gameTimer = setTimeout(() => endRoom(io2, roomId), room.duration * 1e3);
-  io2.to(roomId).emit("match:start", { roomId, duration: room.duration });
-  nextRound(io2, roomId);
-}
-function nextRound(io2, roomId) {
-  const room = rooms.get(roomId);
-  if (!room || room.status !== "playing") return;
-  const challenge = generateChallenge(4);
-  room.currentChallenge = challenge;
-  room.roundNumber++;
-  room.roundStartTime = Date.now();
-  room.playerA.answeredCurrentRound = false;
-  room.playerB.answeredCurrentRound = false;
-  io2.to(roomId).emit("round:new", { challenge, roundNumber: room.roundNumber });
-  if (room.playerB.socketId === "bot") {
-    const diff = getBotDifficulty(room.leagueId);
-    const playerAvgSpeed = room.playerA.answerSpeeds.length > 0 ? room.playerA.answerSpeeds.reduce((a, b) => a + b, 0) / room.playerA.answerSpeeds.length : void 0;
-    const botMs = getBotReaction(diff, challenge.type, playerAvgSpeed);
-    const botAcc = getBotAccuracy(diff);
-    const botCorrect = Math.random() < botAcc;
-    room.roundTimer = setTimeout(() => {
-      if (!room || room.status !== "playing") return;
-      if (room.playerB.answeredCurrentRound) return;
-      const pts = scorePvpAnswer(botCorrect, botMs, challenge.timeoutMs, room.playerB.streak);
-      room.playerB.score = Math.max(0, room.playerB.score + pts);
-      if (botCorrect) {
-        room.playerB.correct++;
-        room.playerB.streak++;
-      } else {
-        room.playerB.errors++;
-        room.playerB.streak = 0;
-      }
-      room.playerB.answeredCurrentRound = true;
-      io2.to(roomId).emit("round:bot_answer", {
-        correct: botCorrect,
-        scoreB: room.playerB.score,
-        streakB: room.playerB.streak
-      });
-      setTimeout(() => {
-        if (!room.playerA.answeredCurrentRound) {
-          room.playerA.errors++;
-          room.playerA.streak = 0;
-          room.playerA.answeredCurrentRound = true;
-          io2.to(roomId).emit("round:timeout", {
-            scoreA: room.playerA.score,
-            scoreB: room.playerB.score
-          });
-        }
-        setTimeout(() => nextRound(io2, roomId), 400);
-      }, 700);
-    }, botMs);
-  } else {
-    room.roundTimer = setTimeout(() => {
-      if (!room || room.status !== "playing") return;
-      if (!room.playerA.answeredCurrentRound) {
-        room.playerA.errors++;
-        room.playerA.streak = 0;
-        room.playerA.answeredCurrentRound = true;
-      }
-      if (!room.playerB.answeredCurrentRound) {
-        room.playerB.errors++;
-        room.playerB.streak = 0;
-        room.playerB.answeredCurrentRound = true;
-      }
-      io2.to(roomId).emit("round:timeout", {
-        scoreA: room.playerA.score,
-        scoreB: room.playerB.score
-      });
-      setTimeout(() => nextRound(io2, roomId), 400);
-    }, challenge.timeoutMs + 500);
-  }
-}
-function endRoom(io2, roomId) {
-  const room = rooms.get(roomId);
-  if (!room) return;
-  if (room.roundTimer) clearTimeout(room.roundTimer);
-  if (room.gameTimer) clearTimeout(room.gameTimer);
-  room.status = "finished";
-  const isBot = room.playerB.socketId === "bot";
-  const won = room.playerA.score > room.playerB.score;
-  const draw = room.playerA.score === room.playerB.score;
-  const arena = getArenaConfig(room.leagueId);
-  const K = isBot ? arena.eloK / 2 : arena.eloK;
-  const expectedA = 1 / (1 + Math.pow(10, (room.playerB.elo - room.playerA.elo) / 400));
-  const scoreVal = won ? 1 : draw ? 0.5 : 0;
-  const eloChange = Math.round(K * (scoreVal - expectedA));
-  const coinsWon = won ? Math.round(room.stake * arena.winMultiplier) : draw ? Math.round(room.stake * arena.drawMultiplier) : 0;
-  const coinsNet = coinsWon;
-  const xpGained = isBot ? won ? 60 : draw ? 20 : 8 : won ? 120 + (arena.eloK - 16) * 2 : draw ? 50 : 25;
-  const newEloA = Math.max(800, room.playerA.elo + eloChange);
-  const { lp: newLpA, leagueDivision: newDivA } = computeLP(newEloA);
-  const lpChangeA = newLpA - computeLP(room.playerA.elo).lp;
-  io2.to(roomId).emit("match:end", {
-    roomId,
-    scoreA: room.playerA.score,
-    scoreB: room.playerB.score,
-    correctA: room.playerA.correct,
-    correctB: room.playerB.correct,
-    won,
-    draw,
-    isBot,
-    leagueId: room.leagueId,
-    stake: room.stake,
-    coinReward: coinsWon,
-    coinsNet,
-    eloChange,
-    xpGained,
-    newLp: newLpA,
-    lpChange: lpChangeA,
-    newLeagueDivision: newDivA
-  });
-  logger.info({ roomId, scoreA: room.playerA.score, scoreB: room.playerB.score, won, eloChange, coinsNet, newDivA }, "Match ended");
-  ;
-  (async () => {
-    try {
-      const matchId = `${roomId}_${Date.now()}`;
-      const winnerId = won ? room.playerA.playerId : draw ? null : isBot ? "bot" : room.playerB.playerId;
-      const bWon = !won && !draw;
-      const bDraw = draw;
-      const bEloChange = Math.round(K * (1 - scoreVal - (1 - expectedA)));
-      const bCoinsWon = bWon ? Math.round(room.stake * arena.winMultiplier) : bDraw ? Math.round(room.stake * arena.drawMultiplier) : 0;
-      const bCoinsNet = bCoinsWon;
-      const bXp = isBot ? 0 : bWon ? 120 + (arena.eloK - 16) * 2 : bDraw ? 50 : 25;
-      const newEloB = Math.max(800, room.playerB.elo + bEloChange);
-      const { lp: newLpB, leagueDivision: newDivB } = computeLP(newEloB);
-      await db.insert(pvpMatchesTable).values({
-        id: matchId,
-        playerAId: room.playerA.playerId,
-        playerBId: isBot ? "bot" : room.playerB.playerId,
-        winnerId,
-        playerAScore: room.playerA.score,
-        playerBScore: room.playerB.score,
-        leagueId: room.leagueId,
-        matchType: isBot ? "bot" : "pvp",
-        duration: room.duration,
-        coinsStake: room.stake,
-        eloChangeA: eloChange,
-        eloChangeB: isBot ? 0 : bEloChange,
-        coinsWonA: coinsWon,
-        coinsWonB: isBot ? 0 : bCoinsWon,
-        xpGainedA: xpGained,
-        xpGainedB: isBot ? 0 : bXp,
-        finishedAt: /* @__PURE__ */ new Date()
-      }).onConflictDoNothing();
-      if (room.playerA.playerId && room.playerA.playerId !== "bot") {
-        const [aRow] = await db.update(playersTable).set({
-          elo: sql`GREATEST(800, ${playersTable.elo} + ${eloChange})`,
-          lp: newLpA,
-          leagueDivision: newDivA,
-          coins: sql`GREATEST(0, ${playersTable.coins} + ${coinsNet})`,
-          xp: sql`${playersTable.xp} + ${xpGained}`,
-          pvpWins: won ? sql`${playersTable.pvpWins} + 1` : playersTable.pvpWins,
-          pvpLosses: !won && !draw ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
-          pvpWinStreak: won ? sql`${playersTable.pvpWinStreak} + 1` : sql`0`,
-          bestPvpStreak: won ? sql`GREATEST(${playersTable.bestPvpStreak}, ${playersTable.pvpWinStreak} + 1)` : playersTable.bestPvpStreak,
-          matchesPlayed: sql`${playersTable.matchesPlayed} + 1`,
-          matchesWon: won ? sql`${playersTable.matchesWon} + 1` : playersTable.matchesWon,
-          updatedAt: /* @__PURE__ */ new Date(),
-          lastActiveAt: /* @__PURE__ */ new Date()
-        }).where(eq(playersTable.id, room.playerA.playerId)).returning({ coins: playersTable.coins });
-        if (coinsWon > 0) {
-          await db.insert(coinTransactionsTable).values({
-            id: `${matchId}_a`,
-            playerId: room.playerA.playerId,
-            amount: coinsWon,
-            type: "win",
-            source: isBot ? "bot_match" : "pvp_match",
-            description: `${isBot ? "Bot" : "PvP"} match ${arena.displayName} \u2014 ${won ? "win" : "draw"} reward`,
-            balanceAfter: aRow?.coins ?? 0
-          }).onConflictDoNothing();
-        }
-      }
-      if (!isBot && room.playerB.playerId && room.playerB.playerId !== "bot") {
-        const [bRow] = await db.update(playersTable).set({
-          elo: sql`GREATEST(800, ${playersTable.elo} + ${bEloChange})`,
-          lp: newLpB,
-          leagueDivision: newDivB,
-          coins: sql`GREATEST(0, ${playersTable.coins} + ${bCoinsNet})`,
-          xp: sql`${playersTable.xp} + ${bXp}`,
-          pvpWins: bWon ? sql`${playersTable.pvpWins} + 1` : playersTable.pvpWins,
-          pvpLosses: !bWon && !bDraw ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
-          pvpWinStreak: bWon ? sql`${playersTable.pvpWinStreak} + 1` : sql`0`,
-          bestPvpStreak: bWon ? sql`GREATEST(${playersTable.bestPvpStreak}, ${playersTable.pvpWinStreak} + 1)` : playersTable.bestPvpStreak,
-          matchesPlayed: sql`${playersTable.matchesPlayed} + 1`,
-          matchesWon: bWon ? sql`${playersTable.matchesWon} + 1` : playersTable.matchesWon,
-          updatedAt: /* @__PURE__ */ new Date(),
-          lastActiveAt: /* @__PURE__ */ new Date()
-        }).where(eq(playersTable.id, room.playerB.playerId)).returning({ coins: playersTable.coins });
-        if (bCoinsWon > 0) {
-          await db.insert(coinTransactionsTable).values({
-            id: `${matchId}_b`,
-            playerId: room.playerB.playerId,
-            amount: bCoinsWon,
-            type: "win",
-            source: "pvp_match",
-            description: `PvP match ${arena.displayName} \u2014 ${bWon ? "win" : "draw"} reward`,
-            balanceAfter: bRow?.coins ?? 0
-          }).onConflictDoNothing();
-        }
-      }
-      await broadcastLeaderboard(io2);
-    } catch (err) {
-      logger.error({ err }, "endRoom DB persistence error");
-    }
-  })();
-  setTimeout(() => rooms.delete(roomId), 3e4);
-}
-function setupSocketIO(server2) {
-  const io2 = new Server(server2, {
-    cors: { origin: "*", methods: ["GET", "POST"] },
-    path: "/api/socket.io",
-    transports: ["websocket", "polling"]
-  });
-  setInterval(() => processQueue(io2), 1e3);
-  if (!lbInterval) {
-    setTimeout(() => {
-      broadcastLeaderboard(io2);
-      lbInterval = setInterval(() => broadcastLeaderboard(io2), 1e4);
-    }, 1e4);
-  }
-  io2.on("connection", (socket) => {
-    logger.info({ socketId: socket.id }, "Socket connected");
-    let connectedPlayerId = null;
-    socket.on("player:connect", ({ playerId }) => {
-      connectedPlayerId = playerId;
-      playerSockets.set(playerId, socket.id);
-      socket.join(`player:${playerId}`);
-      socket.emit("player:connected", { ok: true });
-      logger.info({ playerId, socketId: socket.id }, "Player connected");
-    });
-    socket.on("matchmaking:join", async (data) => {
-      const arena = getArenaConfig(data.leagueId);
-      const stake = arena.entryCost;
-      let stakeDeducted = false;
-      if (stake > 0 && data.playerId && data.playerId !== "bot") {
-        try {
-          const [player] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, data.playerId)).limit(1);
-          if (!player || player.coins < stake) {
-            socket.emit("matchmaking:error", { reason: "insufficient_coins", required: stake, have: player?.coins ?? 0 });
-            return;
-          }
-          await db.update(playersTable).set({ coins: sql`GREATEST(0, ${playersTable.coins} - ${stake})` }).where(eq(playersTable.id, data.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id: `stake_${Date.now()}_${data.playerId.slice(-6)}`,
-            playerId: data.playerId,
-            amount: -stake,
-            type: "stake",
-            source: "arena_entry",
-            description: `Arena entry reserved: ${arena.displayName}`,
-            balanceAfter: player.coins - stake
-          }).onConflictDoNothing();
-          stakeDeducted = true;
-        } catch (err) {
-          logger.error({ err }, "matchmaking:join stake deduction error");
-          socket.emit("matchmaking:error", { reason: "server_error" });
-          return;
-        }
-      }
-      const entry = {
-        socketId: socket.id,
-        playerId: data.playerId,
-        playerName: data.playerName,
-        playerLevel: data.playerLevel,
-        playerElo: data.playerElo,
-        leagueId: data.leagueId,
-        stake,
-        stakeDeducted,
-        joinedAt: Date.now()
-      };
-      matchmakingQueue.set(socket.id, entry);
-      socket.emit("matchmaking:searching", { leagueId: data.leagueId, stake });
-      logger.info({ playerId: data.playerId, leagueId: data.leagueId, stake, stakeDeducted }, "Player joined queue");
-    });
-    socket.on("matchmaking:cancel", async () => {
-      const entry = matchmakingQueue.get(socket.id);
-      matchmakingQueue.delete(socket.id);
-      if (entry?.stakeDeducted && entry.stake > 0 && entry.playerId !== "bot") {
-        try {
-          await db.update(playersTable).set({ coins: sql`${playersTable.coins} + ${entry.stake}` }).where(eq(playersTable.id, entry.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id: `refund_${Date.now()}_${entry.playerId.slice(-6)}`,
-            playerId: entry.playerId,
-            amount: entry.stake,
-            type: "refund",
-            source: "arena_cancel",
-            description: `Arena entry refunded: ${entry.leagueId}`,
-            balanceAfter: 0
-          }).onConflictDoNothing();
-        } catch (err) {
-          logger.error({ err }, "matchmaking:cancel refund error");
-        }
-      }
-      socket.emit("matchmaking:cancelled");
-    });
-    socket.on("round:answer", (data) => {
-      const room = rooms.get(data.roomId);
-      if (!room || room.status !== "playing") return;
-      const isPlayerA = room.playerA.socketId === socket.id;
-      const player = isPlayerA ? room.playerA : room.playerB;
-      if (player.answeredCurrentRound) return;
-      const ac = checkAntiCheat(socket.id, data.elapsedMs, player.score);
-      if (!ac.ok) {
-        socket.emit("anticheat:warning", { reason: ac.reason });
-        return;
-      }
-      const challenge = room.currentChallenge;
-      if (!challenge) return;
-      const correct = data.colorId === challenge.target.id;
-      const pts = scorePvpAnswer(correct, data.elapsedMs, challenge.timeoutMs, player.streak);
-      player.score = Math.max(0, player.score + pts);
-      if (correct) {
-        player.correct++;
-        player.streak++;
-      } else {
-        player.errors++;
-        player.streak = 0;
-      }
-      player.answeredCurrentRound = true;
-      player.lastAnswerTime = Date.now();
-      player.answerSpeeds.push(data.elapsedMs);
-      if (player.answerSpeeds.length > 10) player.answerSpeeds.shift();
-      if (room.roundTimer) clearTimeout(room.roundTimer);
-      io2.to(data.roomId).emit("round:answered", {
-        by: isPlayerA ? "A" : "B",
-        correct,
-        scoreA: room.playerA.score,
-        scoreB: room.playerB.score,
-        streakA: room.playerA.streak,
-        streakB: room.playerB.streak,
-        elapsedMs: data.elapsedMs
-      });
-      if (room.playerA.answeredCurrentRound && room.playerB.answeredCurrentRound) {
-        setTimeout(() => nextRound(io2, data.roomId), 600);
-      } else if (room.playerB.socketId === "bot") {
-      } else {
-        room.roundTimer = setTimeout(() => {
-          if (!room.playerA.answeredCurrentRound) {
-            room.playerA.errors++;
-            room.playerA.streak = 0;
-            room.playerA.answeredCurrentRound = true;
-          }
-          if (!room.playerB.answeredCurrentRound) {
-            room.playerB.errors++;
-            room.playerB.streak = 0;
-            room.playerB.answeredCurrentRound = true;
-          }
-          io2.to(data.roomId).emit("round:timeout", { scoreA: room.playerA.score, scoreB: room.playerB.score });
-          setTimeout(() => nextRound(io2, data.roomId), 400);
-        }, 2e3);
-      }
-    });
-    socket.on("match:forfeit", (data) => {
-      const room = rooms.get(data.roomId);
-      if (!room) return;
-      endRoom(io2, data.roomId);
-    });
-    socket.on("chat:message", async (data) => {
-      if (!data.content?.trim() || data.content.length > 500) return;
-      const ac = checkAntiCheat(socket.id + "_chat", 500, 0);
-      if (!ac.ok) {
-        socket.emit("chat:error", { reason: "rate_limited" });
-        return;
-      }
-      const msg = {
-        id: Math.random().toString(36).slice(2),
-        fromId: data.fromId,
-        fromName: data.fromName,
-        toId: data.toId,
-        content: data.content.trim(),
-        createdAt: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      if (data.roomType === "dm") {
-        const targetSocketId = playerSockets.get(data.toId);
-        if (targetSocketId) {
-          io2.to(targetSocketId).emit("chat:dm", msg);
-        }
-        socket.emit("chat:dm:sent", msg);
-        try {
-          await db.insert(messagesTable).values({
-            id: msg.id,
-            fromId: data.fromId,
-            toId: data.toId,
-            content: msg.content
-          });
-        } catch (err) {
-          logger.error({ err }, "chat:message db error");
-        }
-      } else {
-        io2.to(data.toId).emit("chat:room", msg);
-      }
-    });
-    socket.on("community:subscribe", () => {
-      socket.join("community:feed");
-    });
-    socket.on("community:post", async (data) => {
-      const hasContent = typeof data.content === "string" && data.content.trim().length > 0;
-      const hasImage = typeof data.imageUrl === "string" && data.imageUrl.length > 0;
-      if (!hasContent && !hasImage) return;
-      if (hasContent && data.content.length > 500) return;
-      try {
-        const [post] = await db.insert(postsTable).values({
-          id: Math.random().toString(36).slice(2),
-          authorId: data.authorId,
-          username: data.username,
-          level: data.level,
-          content: hasContent ? data.content.trim() : "",
-          imageUrl: hasImage ? data.imageUrl : null,
-          type: data.type || "text",
-          meta: {}
-        }).returning();
-        io2.to("community:feed").emit("community:new_post", post);
-      } catch (err) {
-        logger.error({ err }, "community:post error");
-      }
-    });
-    socket.on("community:like", async (data) => {
-      io2.to("community:feed").emit("community:like_update", {
-        postId: data.postId,
-        playerId: data.playerId,
-        liked: data.liked
-      });
-    });
-    socket.on("notification:send", async (data) => {
-      const targetSocketId = playerSockets.get(data.toPlayerId);
-      if (targetSocketId) {
-        io2.to(targetSocketId).emit("notification:push", {
-          id: Math.random().toString(36).slice(2),
-          type: data.type,
-          title: data.title,
-          body: data.body,
-          createdAt: (/* @__PURE__ */ new Date()).toISOString()
-        });
-      }
-    });
-    socket.on("leaderboard:subscribe", async () => {
-      socket.join("leaderboard");
-      try {
-        const rows = await db.select({
-          id: playersTable.id,
-          username: playersTable.username,
-          avatar: playersTable.avatar,
-          level: playersTable.level,
-          elo: playersTable.elo,
-          fame: playersTable.fame,
-          pvpWins: playersTable.pvpWins,
-          verificationStatus: playersTable.verificationStatus
-        }).from(playersTable).orderBy(desc(playersTable.elo)).limit(50);
-        if (rows.length > 0) socket.emit("leaderboard:update", rows);
-      } catch (err) {
-        logger.error({ err }, "leaderboard:subscribe snapshot error");
-      }
-    });
-    socket.on("tournament:subscribe", ({ tournamentId }) => {
-      socket.join(`tournament:${tournamentId}`);
-    });
-    socket.on("tournament:bracket_update", (data) => {
-      io2.to(`tournament:${data.tournamentId}`).emit("tournament:bracket", data.bracket);
-    });
-    socket.on("disconnect", async () => {
-      const queueEntry = matchmakingQueue.get(socket.id);
-      matchmakingQueue.delete(socket.id);
-      antiCheatMap.delete(socket.id);
-      antiCheatMap.delete(socket.id + "_chat");
-      if (connectedPlayerId) {
-        playerSockets.delete(connectedPlayerId);
-      }
-      if (queueEntry?.stakeDeducted && queueEntry.stake > 0 && queueEntry.playerId !== "bot") {
-        try {
-          await db.update(playersTable).set({ coins: sql`${playersTable.coins} + ${queueEntry.stake}` }).where(eq(playersTable.id, queueEntry.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id: `refund_dc_${Date.now()}_${queueEntry.playerId.slice(-6)}`,
-            playerId: queueEntry.playerId,
-            amount: queueEntry.stake,
-            type: "refund",
-            source: "arena_disconnect",
-            description: `Arena entry refunded (disconnected): ${queueEntry.leagueId}`,
-            balanceAfter: 0
-          }).onConflictDoNothing();
-          logger.info({ playerId: queueEntry.playerId, stake: queueEntry.stake }, "Stake refunded on disconnect");
-        } catch (err) {
-          logger.error({ err }, "disconnect stake refund error");
-        }
-      }
-      for (const [roomId, room] of rooms) {
-        if (room.playerA.socketId === socket.id || room.playerB.socketId === socket.id) {
-          if (room.status === "playing") {
-            endRoom(io2, roomId);
-          }
-        }
-      }
-      logger.info({ socketId: socket.id }, "Socket disconnected");
-    });
-  });
-  return io2;
-}
+// src/index.ts
+init_socket_manager();
+init_logger2();
 
 // src/lib/seed.ts
 init_drizzle_orm();
 init_src();
+init_logger2();
 var FIXED_BOTS = [
   {
     id: "sl_bot_01",

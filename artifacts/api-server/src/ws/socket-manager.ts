@@ -235,6 +235,13 @@ const playerSockets = new Map<string, string>();
 // Leaderboard broadcast interval
 let lbInterval: ReturnType<typeof setInterval> | null = null;
 
+// ─── Exported IO instance (for notification service) ──────────────────────────
+let ioInstance: IOServer | null = null;
+export function getIO(): IOServer | null { return ioInstance; }
+
+// ─── Rank notification tracking (top-10 ELO) ──────────────────────────────────
+const previousTop10: Set<string> = new Set();
+
 // ─── DB Leaderboard Broadcast ─────────────────────────────────────────────────
 
 async function broadcastLeaderboard(io: IOServer) {
@@ -249,8 +256,31 @@ async function broadcastLeaderboard(io: IOServer) {
       pvpWins:            playersTable.pvpWins,
       verificationStatus: playersTable.verificationStatus,
     }).from(playersTable).orderBy(desc(playersTable.elo)).limit(50);
+
     if (rows.length > 0) {
       io.emit("leaderboard:update", rows);
+
+      // ── Rank-change notifications: detect new top-10 entrants ──
+      const currentTop10 = new Set(rows.slice(0, 10).map((r) => r.id));
+      for (const playerId of currentTop10) {
+        if (!previousTop10.has(playerId)) {
+          // Player just entered top 10 — find their rank
+          const rank = rows.findIndex((r) => r.id === playerId) + 1;
+          // Fire-and-forget — import notification service lazily to avoid circular dep
+          import("../lib/notificationService.js").then(({ createNotification }) => {
+            createNotification({
+              playerId,
+              type: "rank",
+              title: "🏆 دخلت أفضل 10!",
+              body: `أنت الآن في المرتبة #${rank} على لوحة المتصدرين`,
+              data: { rank },
+            }).catch(() => {});
+          }).catch(() => {});
+        }
+      }
+      // Update tracking set
+      previousTop10.clear();
+      for (const id of currentTop10) previousTop10.add(id);
     }
   } catch (err: unknown) {
     // Silently skip if tables are not yet created (cold start / schema not pushed yet)
@@ -672,6 +702,7 @@ export function setupSocketIO(server: HttpServer): IOServer {
     path: "/api/socket.io",
     transports: ["websocket", "polling"],
   });
+  ioInstance = io;
 
   setInterval(() => processQueue(io), 1000);
 

@@ -16,6 +16,8 @@ export interface RealtimeNotif {
   type: string;
   title: string;
   body: string;
+  data?: Record<string, unknown>;
+  read?: boolean;
   createdAt: string;
 }
 
@@ -51,8 +53,8 @@ export function RealtimeProvider({
   const [connected, setConnected] = useState(false);
   const [liveLeaderboard, setLiveLeaderboard] = useState<LiveLeaderEntry[]>([]);
   const [pushNotifs, setPushNotifs] = useState<RealtimeNotif[]>([]);
-  const [dmMessages, setDmMessages] = useState<ChatMessage[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [dmMessages, setDmMessages] = useState<ChatMessage[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
 
@@ -71,15 +73,12 @@ export function RealtimeProvider({
       setLiveLeaderboard(data);
     });
 
-    // ✅ NOTIFICATIONS FIXED (PRO STYLE)
     socket.on("notification:push", (notif: RealtimeNotif) => {
       setPushNotifs((prev) => {
         const exists = prev.some((n) => n.id === notif.id);
         if (exists) return prev;
-
         setUnreadCount((c) => c + 1);
-
-        return [notif, ...prev].slice(0, 50);
+        return [notif, ...prev].slice(0, 100);
       });
     });
 
@@ -154,9 +153,7 @@ export function RealtimeProvider({
   const markNotifRead = useCallback((id: string) => {
     setPushNotifs((prev) => {
       const exists = prev.some((n) => n.id === id);
-      if (exists) {
-        setUnreadCount((c) => Math.max(0, c - 1));
-      }
+      if (exists) setUnreadCount((c) => Math.max(0, c - 1));
       return prev.filter((n) => n.id !== id);
     });
   }, []);
@@ -174,6 +171,7 @@ export function RealtimeProvider({
         connected,
         liveLeaderboard,
         pushNotifs,
+        unreadCount,
         dmMessages,
         clearDmMessages,
         sendDm,
@@ -181,6 +179,7 @@ export function RealtimeProvider({
         subscribeLeaderboard,
         subscribeCommunity,
         markNotifRead,
+        clearNotifications,
         socket: socketRef.current,
       }}
     >
