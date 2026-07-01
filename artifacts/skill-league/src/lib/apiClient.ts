@@ -187,6 +187,29 @@ export const api = {
         method: "DELETE",
         body: JSON.stringify({ authorId }),
       }),
+
+    /** Delete a post (owner only) */
+    deletePost: (postId: string, authorId: string) =>
+      apiFetch<{ ok: boolean }>(`/community/posts/${postId}`, {
+        method: "DELETE",
+        body: JSON.stringify({ authorId }),
+      }),
+
+    /** Edit post content (owner only) */
+    editPost: (postId: string, authorId: string, content: string) =>
+      patch<{ ok: boolean }>(`/community/posts/${postId}`, { authorId, content }),
+
+    /** Pin / unpin a post (owner only) */
+    pinPost: (postId: string, authorId: string, isPinned: boolean) =>
+      patch<{ ok: boolean; isPinned: boolean }>(`/community/posts/${postId}/pin`, { authorId, isPinned }),
+
+    /** Toggle public / private visibility (owner only) */
+    setVisibility: (postId: string, authorId: string, isPublic: boolean) =>
+      patch<{ ok: boolean; isPublic: boolean }>(`/community/posts/${postId}/visibility`, { authorId, isPublic }),
+
+    /** Report a post (any user) */
+    reportPost: (postId: string, reporterId: string, reason?: string) =>
+      post<{ ok: boolean }>(`/community/posts/${postId}/report`, { reporterId, reason }),
   },
 
   /* ── Auth ── */

@@ -103,6 +103,12 @@ const SocialPostCard = memo(function SocialPostCard({
   const currentPlayerId = getStoredPlayerId() ?? undefined;
   const isOwner = !!currentPlayerId && currentPlayerId === post.authorId;
 
+  // ── visibility (hide from feed client-side) ──
+  const [hidden, setHidden] = useState(false);
+
+  // ── post content (editable by owner) ──
+  const [content, setContent] = useState(post.content);
+
   // ── like ──
   const [liked, setLiked] = useState(post.likedByMe);
   const [likes, setLikes] = useState(post.likes);
@@ -151,20 +157,17 @@ const SocialPostCard = memo(function SocialPostCard({
     const url = `${window.location.origin}/post/${post.id}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: post.authorName, text: post.content, url });
+        await navigator.share({ title: post.authorName, text: content, url });
       } else {
         await navigator.clipboard.writeText(url);
         toast.success("تم نسخ الرابط");
       }
     } catch {}
     incrementShare(post.id);
-  }, [post]);
+  }, [post, content]);
 
-  // ── delete (owner only) ──
-  const handleDelete = useCallback(() => {
-    onDelete?.(post.id);
-    toast.success("تم حذف المنشور");
-  }, [post.id, onDelete]);
+  // ── hide (client-side) ──
+  if (hidden) return null;
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
@@ -198,21 +201,23 @@ const SocialPostCard = memo(function SocialPostCard({
         {/* Follow (non-owner) */}
         <FollowBtn meId={currentPlayerId} themId={post.authorId} />
 
-        {/* ⋯ options menu */}
+        {/* ⋯ options menu — strict owner vs viewer */}
         <PostOptionsMenu
           postId={post.id}
+          authorId={post.authorId}
           isOwner={isOwner}
-          isSaved={saved}
-          onSave={() => handleSave()}
-          onDelete={isOwner ? handleDelete : undefined}
-          onReport={!isOwner ? () => toast.success("تم الإبلاغ") : undefined}
+          isPinned={(post as any).isPinned ?? false}
+          isPublic={(post as any).isPublic ?? true}
+          onEditDone={(newContent) => setContent(newContent)}
+          onDeleteDone={() => onDelete?.(post.id)}
+          onHide={() => setHidden(true)}
         />
       </div>
 
       {/* ── CONTENT ────────────────────────────────────────────────────────── */}
-      {post.content && (
+      {content && (
         <div className="px-4 pb-3 text-sm whitespace-pre-wrap text-[#111111] leading-relaxed">
-          {post.content}
+          {content}
         </div>
       )}
 

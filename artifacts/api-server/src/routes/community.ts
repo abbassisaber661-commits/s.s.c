@@ -283,6 +283,75 @@ router.delete("/community/posts/:id", async (req, res) => {
   }
 });
 
+// PATCH /community/posts/:id — edit content / imageUrl (owner only)
+router.patch("/community/posts/:id", async (req, res) => {
+  try {
+    const { authorId, content, imageUrl } = req.body as Record<string, unknown>;
+    if (!authorId) { res.status(400).json({ error: "authorId required" }); return; }
+    if (typeof content === "string" && content.length > 500) { res.status(400).json({ error: "too long" }); return; }
+    const updates: Record<string, unknown> = {};
+    if (typeof content === "string") updates.content = content.trim();
+    if (imageUrl !== undefined) updates.imageUrl = imageUrl || null;
+    if (Object.keys(updates).length === 0) { res.status(400).json({ error: "nothing to update" }); return; }
+    await db.update(postsTable).set(updates as any).where(
+      and(eq(postsTable.id, req.params.id), eq(postsTable.authorId, String(authorId)))
+    );
+    const [updated] = await db.select().from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
+    res.json(updated ? mapPost(updated as unknown as Record<string, unknown>) : { ok: true });
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// PATCH /community/posts/:id/pin — toggle pin (owner only)
+router.patch("/community/posts/:id/pin", async (req, res) => {
+  try {
+    const { authorId, isPinned } = req.body as Record<string, unknown>;
+    if (!authorId) { res.status(400).json({ error: "authorId required" }); return; }
+    await db.update(postsTable).set({ isPinned: Boolean(isPinned) }).where(
+      and(eq(postsTable.id, req.params.id), eq(postsTable.authorId, String(authorId)))
+    );
+    res.json({ ok: true, isPinned: Boolean(isPinned) });
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// PATCH /community/posts/:id/visibility — toggle public/private (owner only)
+router.patch("/community/posts/:id/visibility", async (req, res) => {
+  try {
+    const { authorId, isPublic } = req.body as Record<string, unknown>;
+    if (!authorId) { res.status(400).json({ error: "authorId required" }); return; }
+    await db.update(postsTable).set({ isPublic: Boolean(isPublic) }).where(
+      and(eq(postsTable.id, req.params.id), eq(postsTable.authorId, String(authorId)))
+    );
+    res.json({ ok: true, isPublic: Boolean(isPublic) });
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// POST /community/posts/:id/report — report post (any authenticated user)
+router.post("/community/posts/:id/report", async (req, res) => {
+  try {
+    const { reporterId, reason } = req.body as Record<string, unknown>;
+    if (!reporterId) { res.status(400).json({ error: "reporterId required" }); return; }
+    const [postRow] = await db.select({ authorId: postsTable.authorId }).from(postsTable)
+      .where(eq(postsTable.id, req.params.id)).limit(1);
+    if (!postRow) { res.status(404).json({ error: "post not found" }); return; }
+    await notify(
+      postRow.authorId,
+      "system",
+      "Post reported",
+      `Your post was reported${reason ? `: ${reason}` : ""}`,
+      { postId: req.params.id, reporterId: String(reporterId), reason: reason ?? "" }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
 router.delete("/community/posts/:postId/comments/:commentId", async (req, res) => {
   try {
     const { authorId } = req.body as Record<string, unknown>;

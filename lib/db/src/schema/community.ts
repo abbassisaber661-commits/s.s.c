@@ -13,6 +13,8 @@ export const postsTable = pgTable('posts', {
   meta:       jsonb('meta').$type<Record<string, unknown>>().default({}),
   likes:      integer('likes').notNull().default(0),
   replies:    integer('replies').notNull().default(0),
+  isPinned:   boolean('is_pinned').notNull().default(false),
+  isPublic:   boolean('is_public').notNull().default(true),
   createdAt:  timestamp('created_at').notNull().defaultNow(),
 });
 
