@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 import Avatar from "@/components/Avatar";
 import { PostOptionsMenu } from "@/components/social/PostOptionsMenu";
+import GiftModal from "@/components/social/GiftModal";
 import type { CommunityPost } from "@/shared/community";
 import { useLikePost, useSavePost } from "@/hooks/useCommunity";
 import { api } from "@/lib/apiClient";
@@ -64,18 +65,11 @@ function useScrollPaused(delay = 600) {
   return paused;
 }
 
-// ─── Gift button ──────────────────────────────────────────────────────────────
+// ─── Gift button (header floating badge) ─────────────────────────────────────
 
 const GiftButton = memo(function GiftButton({
-  visible, rtl,
-}: { visible: boolean; rtl: boolean }) {
-  const handleGift = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast(rtl ? "🎁 قريباً — نظام الهدايا قيد التطوير" : "🎁 Coming soon — Gifts system in development", {
-      duration: 2000,
-    });
-  };
-
+  visible, rtl, onClick,
+}: { visible: boolean; rtl: boolean; onClick: (e: React.MouseEvent) => void }) {
   return (
     <AnimatePresence>
       {visible && (
@@ -98,7 +92,7 @@ const GiftButton = memo(function GiftButton({
               repeatType: "loop",
             },
           }}
-          onClick={handleGift}
+          onClick={onClick}
           className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold text-[#111111] select-none shrink-0"
           style={{
             background: "linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)",
@@ -338,6 +332,7 @@ const SocialPostCard = memo(function SocialPostCard({
 
   const [hidden, setHidden] = useState(false);
   const [content, setContent] = useState(post.content);
+  const [giftOpen, setGiftOpen] = useState(false);
 
   // ── like ──
   const [liked, setLiked] = useState(post.likedByMe ?? false);
@@ -479,7 +474,13 @@ const SocialPostCard = memo(function SocialPostCard({
             </span>
 
             {/* 🎁 Gift button — floats under username, shows on scroll pause */}
-            <GiftButton visible={scrollPaused} rtl={rtl} />
+            {!isOwner && (
+              <GiftButton
+                visible={scrollPaused}
+                rtl={rtl}
+                onClick={(e) => { e.stopPropagation(); setGiftOpen(true); }}
+              />
+            )}
           </div>
         </div>
 
@@ -606,25 +607,34 @@ const SocialPostCard = memo(function SocialPostCard({
 
         <div className="w-px h-7 bg-[#F0F0F0]" />
 
-        {/* GIFT (UI placeholder) */}
-        <ActionBtn
-          onClick={(e) => {
-            e.stopPropagation();
-            toast(rtl ? "🎁 قريباً — نظام الهدايا قيد التطوير" : "🎁 Coming soon — Gifts in development", { duration: 2000 });
-          }}
-          active={false}
-          icon={
-            <Gift
-              size={18}
-              className="text-[#FF9500]"
-              style={{ filter: "drop-shadow(0 0 4px rgba(255,149,0,0.5))" }}
-            />
-          }
-          label={giftLabel}
-          activeColor="text-[#FF9500]"
-        />
+        {/* GIFT */}
+        {!isOwner && (
+          <ActionBtn
+            onClick={(e) => { e.stopPropagation(); setGiftOpen(true); }}
+            active={false}
+            icon={
+              <Gift
+                size={18}
+                className="text-[#FF9500]"
+                style={{ filter: "drop-shadow(0 0 4px rgba(255,149,0,0.5))" }}
+              />
+            }
+            label={giftLabel}
+            activeColor="text-[#FF9500]"
+          />
+        )}
 
       </div>
+
+      {/* ── GIFT MODAL ────────────────────────────────────────────── */}
+      {!isOwner && post.authorId && (
+        <GiftModal
+          isOpen={giftOpen}
+          onClose={() => setGiftOpen(false)}
+          receiverId={post.authorId}
+          receiverName={post.authorName}
+        />
+      )}
     </motion.article>
   );
 });
