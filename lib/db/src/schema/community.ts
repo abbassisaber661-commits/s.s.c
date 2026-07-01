@@ -13,12 +13,20 @@ export const postsTable = pgTable('posts', {
   meta:       jsonb('meta').$type<Record<string, unknown>>().default({}),
   likes:      integer('likes').notNull().default(0),
   replies:    integer('replies').notNull().default(0),
+  views:      integer('views').notNull().default(0),
   isPinned:   boolean('is_pinned').notNull().default(false),
   isPublic:   boolean('is_public').notNull().default(true),
   createdAt:  timestamp('created_at').notNull().defaultNow(),
 });
 
 export const postLikesTable = pgTable('post_likes', {
+  id:        text('id').primaryKey(),
+  postId:    text('post_id').notNull(),
+  playerId:  text('player_id').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const postSavesTable = pgTable('post_saves', {
   id:        text('id').primaryKey(),
   postId:    text('post_id').notNull(),
   playerId:  text('player_id').notNull(),
@@ -40,7 +48,7 @@ export const jobsTable = pgTable('jobs', {
   authorName:  text('author_name').notNull(),
   title:       text('title').notNull(),
   description: text('description').notNull(),
-  jobType:     text('job_type').notNull().default('offer'), // 'offer' | 'request'
+  jobType:     text('job_type').notNull().default('offer'),
   country:     text('country').notNull().default(''),
   category:    text('category').notNull().default('general'),
   createdAt:   timestamp('created_at').notNull().defaultNow(),
@@ -52,5 +60,6 @@ export const insertJobSchema     = createInsertSchema(jobsTable).omit({ createdA
 
 export type Post        = typeof postsTable.$inferSelect;
 export type PostLike    = typeof postLikesTable.$inferSelect;
+export type PostSave    = typeof postSavesTable.$inferSelect;
 export type PostComment = typeof postCommentsTable.$inferSelect;
 export type InsertPost  = z.infer<typeof insertPostSchema>;

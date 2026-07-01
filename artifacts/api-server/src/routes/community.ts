@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { eq, desc, and, asc, sql } from "drizzle-orm";
-import { db, postsTable, postLikesTable, postCommentsTable, notificationsTable } from "@workspace/db";
+import { eq, desc, and, asc, sql, inArray } from "drizzle-orm";
+import { db, postsTable, postLikesTable, postCommentsTable, postSavesTable, notificationsTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { recordPost, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
 
@@ -26,9 +26,14 @@ function extractMentions(text: string): string[] {
 }
 
 // helper: map DB row → CommunityPost shape expected by the frontend
-function mapPost(row: Record<string, unknown>) {
+function mapPost(
+  row: Record<string, unknown>,
+  likedPostIds: Set<string> = new Set(),
+  savedPostIds: Set<string> = new Set(),
+) {
+  const postId = row.id as string;
   return {
-    id:          row.id,
+    id:          postId,
     authorId:    row.authorId,
     authorName:  row.username,
     authorLevel: row.level ?? 1,
@@ -37,8 +42,12 @@ function mapPost(row: Record<string, unknown>) {
     type:        row.type ?? "text",
     timestamp:   row.createdAt ? new Date(row.createdAt as string).getTime() : Date.now(),
     likes:       row.likes ?? 0,
-    likedByMe:   false,
+    likedByMe:   likedPostIds.has(postId),
+    savedByMe:   savedPostIds.has(postId),
     replyCount:  row.replies ?? 0,
+    views:       row.views ?? 0,
+    isPinned:    row.isPinned ?? false,
+    isPublic:    row.isPublic ?? true,
     // also expose flat fields for legacy consumers
     username:    row.username,
     level:       row.level ?? 1,
@@ -47,24 +56,71 @@ function mapPost(row: Record<string, unknown>) {
   };
 }
 
+// helper: fetch liked/saved post IDs for a given player
+async function getPlayerInteractions(playerId: string | null, postIds: string[]) {
+  const likedPostIds = new Set<string>();
+  const savedPostIds = new Set<string>();
+
+  if (!playerId || postIds.length === 0) return { likedPostIds, savedPostIds };
+
+  try {
+    const [likeRows, saveRows] = await Promise.all([
+      db.select({ postId: postLikesTable.postId })
+        .from(postLikesTable)
+        .where(and(
+          eq(postLikesTable.playerId, playerId),
+          inArray(postLikesTable.postId, postIds),
+        )),
+      db.select({ postId: postSavesTable.postId })
+        .from(postSavesTable)
+        .where(and(
+          eq(postSavesTable.playerId, playerId),
+          inArray(postSavesTable.postId, postIds),
+        )),
+    ]);
+    likeRows.forEach(r => likedPostIds.add(r.postId));
+    saveRows.forEach(r => savedPostIds.add(r.postId));
+  } catch {}
+
+  return { likedPostIds, savedPostIds };
+}
+
 // GET /community/posts
-// Supports: ?type=fyp|following|trending|latest  ?page=1  ?limit=10  ?hashtag=  ?format=flat
+// Supports: ?type=fyp|following|trending|latest  ?page=1  ?limit=10  ?hashtag=  ?format=flat  ?playerId=  ?authorId=
 router.get("/community/posts", async (req, res) => {
   try {
-    const limit   = Math.min(Number(req.query.limit) || 30, 100);
-    const page    = Math.max(Number(req.query.page)  || 1, 1);
-    const type    = String(req.query.type ?? "fyp");
-    const hashtag = req.query.hashtag ? String(req.query.hashtag) : null;
-    const flat    = req.query.format === "flat";
+    const limit    = Math.min(Number(req.query.limit) || 30, 100);
+    const page     = Math.max(Number(req.query.page)  || 1, 1);
+    const type     = String(req.query.type ?? "fyp");
+    const hashtag  = req.query.hashtag  ? String(req.query.hashtag)  : null;
+    const flat     = req.query.format === "flat";
+    const playerId = req.query.playerId ? String(req.query.playerId) : null;
+    const authorId = req.query.authorId ? String(req.query.authorId) : null;
 
-    const offset  = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    // Build order: trending → likes desc, everything else → createdAt desc
+    // Build base query with optional authorId filter
     let query;
-    if (type === "trending") {
-      query = db.select().from(postsTable).orderBy(desc(postsTable.likes)).limit(limit + 1).offset(offset);
+    if (authorId) {
+      if (type === "trending") {
+        query = db.select().from(postsTable)
+          .where(eq(postsTable.authorId, authorId))
+          .orderBy(desc(postsTable.likes))
+          .limit(limit + 1).offset(offset);
+      } else {
+        query = db.select().from(postsTable)
+          .where(eq(postsTable.authorId, authorId))
+          .orderBy(desc(postsTable.createdAt))
+          .limit(limit + 1).offset(offset);
+      }
+    } else if (type === "trending") {
+      query = db.select().from(postsTable)
+        .orderBy(desc(postsTable.likes))
+        .limit(limit + 1).offset(offset);
     } else {
-      query = db.select().from(postsTable).orderBy(desc(postsTable.createdAt)).limit(limit + 1).offset(offset);
+      query = db.select().from(postsTable)
+        .orderBy(desc(postsTable.createdAt))
+        .limit(limit + 1).offset(offset);
     }
 
     let rows = await query;
@@ -76,18 +132,21 @@ router.get("/community/posts", async (req, res) => {
     }
 
     // Determine if there's a next page
-    const hasMore = rows.length > limit;
+    const hasMore  = rows.length > limit;
     const pageRows = rows.slice(0, limit);
 
-    // Legacy flat-array mode (used by services that haven't been updated yet)
+    // Fetch per-player interaction state
+    const postIds = pageRows.map((r: any) => r.id as string);
+    const { likedPostIds, savedPostIds } = await getPlayerInteractions(playerId, postIds);
+
+    // Legacy flat-array mode
     if (flat) {
-      res.json(pageRows);
+      res.json(pageRows.map((r: any) => mapPost(r as Record<string, unknown>, likedPostIds, savedPostIds)));
       return;
     }
 
-    // Paginated response (used by usePosts / useInfiniteQuery)
     res.json({
-      data:     pageRows.map(mapPost),
+      data:     pageRows.map((r: any) => mapPost(r as Record<string, unknown>, likedPostIds, savedPostIds)),
       nextPage: hasMore ? page + 1 : null,
       total:    pageRows.length,
     });
@@ -101,7 +160,6 @@ router.post("/community/posts", async (req, res) => {
     const { authorId, username, level, content, imageUrl, type, meta } = req.body as Record<string, unknown>;
     const hasContent = typeof content === "string" && content.trim().length > 0;
     const hasImage   = typeof imageUrl === "string" && imageUrl.length > 0;
-    // authorId is optional for guest posts — fall back to "guest"
     if (!hasContent && !hasImage) { res.status(400).json({ error: "missing fields" }); return; }
     if (hasContent && String(content).length > 500) { res.status(400).json({ error: "too long" }); return; }
 
@@ -120,10 +178,8 @@ router.post("/community/posts", async (req, res) => {
       meta: { ...(meta as Record<string, unknown> || {}), hashtags, mentions },
     }).returning();
 
-    // Economy hook: daily post coin (fire-and-forget, skip for guest)
     if (authorId) recordPost(String(authorId)).catch(() => {});
 
-    // Mention notifications (fire-and-forget)
     if (mentions.length > 0) {
       const { playersTable } = await import("@workspace/db");
       const { ilike } = await import("drizzle-orm");
@@ -191,16 +247,17 @@ router.post("/community/posts/:id/like", async (req, res) => {
   }
 });
 
-// PATCH /community/posts/:id/like — legacy client (sends { like: boolean } without playerId)
+// PATCH /community/posts/:id/like — toggle like (used by useLikePost in FeedPage)
 router.patch("/community/posts/:id/like", async (req, res) => {
-  const { playerId } = req.body as Record<string, unknown>;
-  // If no playerId, just adjust the like counter without per-user tracking
+  const { playerId, playerUsername } = req.body as Record<string, unknown>;
   const pid = playerId ? String(playerId) : null;
   try {
     if (pid) {
       const existing = await db.select({ id: postLikesTable.id }).from(postLikesTable)
         .where(and(eq(postLikesTable.postId, req.params.id), eq(postLikesTable.playerId, pid))).limit(1);
+
       if (existing.length) {
+        // Unlike
         await db.delete(postLikesTable).where(eq(postLikesTable.id, existing[0].id));
         const [post] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
         const newLikes = Math.max(0, (post?.likes ?? 1) - 1);
@@ -208,13 +265,104 @@ router.patch("/community/posts/:id/like", async (req, res) => {
         res.json({ liked: false, likes: newLikes, likedByMe: false, postId: req.params.id });
         return;
       }
+
+      // Like
       await db.insert(postLikesTable).values({ id: nanoid(), postId: req.params.id, playerId: pid });
+      const [post] = await db.select({ likes: postsTable.likes, authorId: postsTable.authorId, content: postsTable.content }).from(postsTable).where(eq(postsTable.id, req.params.id));
+      const newLikes = (post?.likes ?? 0) + 1;
+      await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
+
+      recordLikeGiven(pid).catch(() => {});
+
+      if (post?.authorId && post.authorId !== pid) {
+        const liker = String(playerUsername || pid);
+        notify(
+          post.authorId,
+          "like",
+          `❤️ ${liker} liked your post`,
+          `"${(post.content ?? '').slice(0, 60)}${(post.content ?? '').length > 60 ? '...' : ''}"`,
+          { postId: req.params.id, likerId: pid, likerUsername: liker }
+        );
+      }
+
+      res.json({ liked: true, likes: newLikes, likedByMe: true, postId: req.params.id });
+      return;
     }
-    // No playerId or new like — just increment
+
+    // No playerId — just increment (guest/legacy)
     const [post] = await db.select({ likes: postsTable.likes }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
     const newLikes = (post?.likes ?? 0) + 1;
     await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
-    res.json({ liked: true, likes: newLikes, likedByMe: true, postId: req.params.id });
+    res.json({ liked: true, likes: newLikes, likedByMe: false, postId: req.params.id });
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// POST /community/posts/:id/view — increment view count (fire-and-forget from client)
+router.post("/community/posts/:id/view", async (req, res) => {
+  try {
+    await db.update(postsTable)
+      .set({ views: sql`${postsTable.views} + 1` })
+      .where(eq(postsTable.id, req.params.id));
+    const [post] = await db.select({ views: postsTable.views }).from(postsTable).where(eq(postsTable.id, req.params.id)).limit(1);
+    res.json({ ok: true, views: post?.views ?? 0, postId: req.params.id });
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// POST /community/posts/:id/save — toggle save for current player
+router.post("/community/posts/:id/save", async (req, res) => {
+  try {
+    const { playerId } = req.body as Record<string, unknown>;
+    if (!playerId) { res.status(400).json({ error: "playerId required" }); return; }
+    const pid = String(playerId);
+
+    const existing = await db.select({ id: postSavesTable.id }).from(postSavesTable)
+      .where(and(eq(postSavesTable.postId, req.params.id), eq(postSavesTable.playerId, pid))).limit(1);
+
+    if (existing.length) {
+      await db.delete(postSavesTable).where(eq(postSavesTable.id, existing[0].id));
+      res.json({ saved: false, postId: req.params.id });
+    } else {
+      await db.insert(postSavesTable).values({ id: nanoid(), postId: req.params.id, playerId: pid });
+      res.json({ saved: true, postId: req.params.id });
+    }
+  } catch (err) {
+    req.log.error({ err }); res.status(500).json({ error: "internal" });
+  }
+});
+
+// GET /community/saved?playerId= — fetch all saved posts for a player
+router.get("/community/saved", async (req, res) => {
+  try {
+    const playerId = req.query.playerId ? String(req.query.playerId) : null;
+    if (!playerId) { res.status(400).json({ error: "playerId required" }); return; }
+
+    const saveRows = await db.select({ postId: postSavesTable.postId })
+      .from(postSavesTable)
+      .where(eq(postSavesTable.playerId, playerId))
+      .orderBy(desc(postSavesTable.createdAt));
+
+    const postIds = saveRows.map(r => r.postId);
+    if (postIds.length === 0) {
+      res.json({ data: [], nextPage: null, total: 0 });
+      return;
+    }
+
+    const posts = await db.select().from(postsTable)
+      .where(inArray(postsTable.id, postIds))
+      .orderBy(desc(postsTable.createdAt));
+
+    const savedSet = new Set(postIds);
+    const { likedPostIds } = await getPlayerInteractions(playerId, postIds);
+
+    res.json({
+      data: posts.map((p: any) => mapPost(p as Record<string, unknown>, likedPostIds, savedSet)),
+      nextPage: null,
+      total: posts.length,
+    });
   } catch (err) {
     req.log.error({ err }); res.status(500).json({ error: "internal" });
   }
