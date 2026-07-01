@@ -104,7 +104,7 @@ const PUBLIC_PATHS = [
 
 function AppShell() {
   const [location] = useLocation();
-  const { isAuthenticated } = useGame();
+  const { isAuthenticated, isGuest } = useGame();
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -124,9 +124,15 @@ function AppShell() {
     } catch {}
   }, []);
 
-  // 🔐 Auth Guard — guests always see entry flow on every open
+  // 🔐 Auth Guard
+  // - Unauthenticated users → always show entry flow
+  // - Pi/paid users → persistent across sessions, skip entry flow
+  // - Guests → sessionStorage flag allows them through for the current session only;
+  //   on next app open the flag is gone → entry flow appears again
+  const guestSessionActive = (() => { try { return sessionStorage.getItem("sl_guest_active") === "1"; } catch { return false; } })();
+
   if (
-    (!isAuthenticated || isGuest) &&
+    (!isAuthenticated || (isGuest && !guestSessionActive)) &&
     !PUBLIC_PATHS.some((p) => location.startsWith(p))
   ) {
     return <EntryFlow />;

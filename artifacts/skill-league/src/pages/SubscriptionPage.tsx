@@ -112,6 +112,7 @@ export default function SubscriptionPage({ onBack }: Props) {
     setError("");
 
     if (plan.id === "guest") {
+      try { sessionStorage.setItem("sl_guest_active", "1"); } catch {}
       loginAsGuest();
       return;
     }
