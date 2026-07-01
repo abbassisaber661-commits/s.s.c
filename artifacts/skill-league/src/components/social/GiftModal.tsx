@@ -18,11 +18,12 @@ interface Props {
   onClose: () => void;
   receiverId: string;
   receiverName: string;
+  postId?: string;        // passed from SocialPostCard for ledger tracking
 }
 
 type Step = "pick" | "sending" | "success" | "error";
 
-export default function GiftModal({ isOpen, onClose, receiverId, receiverName }: Props) {
+export default function GiftModal({ isOpen, onClose, receiverId, receiverName, postId }: Props) {
   const senderId = getStoredPlayerId() ?? "";
   const qc = useQueryClient();
 
@@ -72,8 +73,8 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName }:
     if (!canSend) return;
     setStep("sending");
     try {
-      const note = [emoji, message].filter(Boolean).join(" ").trim();
-      const res = await api.wallet.sendGift(senderId, receiverId, resolvedAmount, note || undefined);
+      const note = message.trim();
+      const res = await api.wallet.sendGift(senderId, receiverId, resolvedAmount, note || undefined, postId, emoji);
       setFinalBalance(res.senderBalance);
       // invalidate wallet caches for both players
       qc.invalidateQueries({ queryKey: ["wallet", "balance", senderId] });

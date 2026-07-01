@@ -98,6 +98,18 @@ export const walletTransactionsTable = pgTable('wallet_transactions', {
   createdAt:   timestamp('created_at').notNull().defaultNow(),
 });
 
+// ─── Gift Ledger — permanent analytics record per gift ────────────────────────
+export const giftLedgerTable = pgTable('gift_ledger', {
+  id:         text('id').primaryKey(),
+  senderId:   text('sender_id').notNull(),
+  receiverId: text('receiver_id').notNull(),
+  postId:     text('post_id'),            // null when sent from profile/wallet page
+  amount:     integer('amount').notNull(),
+  emoji:      text('emoji').notNull().default('🎁'),
+  message:    text('message').notNull().default(''),
+  createdAt:  timestamp('created_at').notNull().defaultNow(),
+});
+
 export const insertCoinTxSchema      = createInsertSchema(coinTransactionsTable).omit({ createdAt: true });
 export const insertStorePurchSchema  = createInsertSchema(storePurchasesTable).omit({ createdAt: true });
 export const insertBoostSchema       = createInsertSchema(boostUsageTable).omit({ createdAt: true });
@@ -109,3 +121,4 @@ export type Season                  = typeof seasonsTable.$inferSelect;
 export type UserDailyEconomy        = typeof userDailyEconomyTable.$inferSelect;
 export type Wallet                  = typeof walletsTable.$inferSelect;
 export type WalletTransaction       = typeof walletTransactionsTable.$inferSelect;
+export type GiftLedgerEntry         = typeof giftLedgerTable.$inferSelect;

@@ -633,6 +633,7 @@ const SocialPostCard = memo(function SocialPostCard({
           onClose={() => setGiftOpen(false)}
           receiverId={post.authorId}
           receiverName={post.authorName}
+          postId={post.id}
         />
       )}
     </motion.article>

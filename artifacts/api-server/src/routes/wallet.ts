@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, desc, and, gt, lt, sum, sql } from "drizzle-orm";
-import { db, walletsTable, walletTransactionsTable, playersTable } from "@workspace/db";
+import { db, walletsTable, walletTransactionsTable, giftLedgerTable, playersTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 
 const router = Router();
@@ -87,7 +87,7 @@ router.get("/wallet/:playerId/transactions", async (req, res) => {
 /* ─── POST /wallet/gift ─── */
 router.post("/wallet/gift", async (req, res) => {
   try {
-    const { senderId, receiverId, amount, message } = req.body as Record<string, unknown>;
+    const { senderId, receiverId, amount, message, postId, emoji } = req.body as Record<string, unknown>;
 
     if (!senderId || !receiverId || !amount) {
       res.status(400).json({ error: "senderId, receiverId, amount required" });
@@ -162,6 +162,19 @@ router.post("/wallet/gift", async (req, res) => {
         balanceAfter: newReceiverBalance,
       },
     ]);
+
+    // ── Ledger: permanent analytics record (non-blocking side-effect) ──
+    db.insert(giftLedgerTable).values({
+      id:         nanoid(),
+      senderId:   String(senderId),
+      receiverId: String(receiverId),
+      postId:     postId ? String(postId) : null,
+      amount:     dn,
+      emoji:      emoji ? String(emoji).slice(0, 8) : "🎁",
+      message:    note ?? "",
+    }).catch((e) => {
+      req.log.warn({ err: e }, "gift ledger insert failed (non-fatal)");
+    });
 
     res.status(201).json({
       ok:                  true,

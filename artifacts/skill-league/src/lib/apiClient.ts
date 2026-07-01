@@ -546,16 +546,41 @@ export const api = {
         limit: number;
       }>(`/wallet/${playerId}/transactions?filter=${filter}&page=${page}&limit=${limit}`),
 
-    sendGift: (senderId: string, receiverId: string, amount: number, message?: string) =>
+    sendGift: (senderId: string, receiverId: string, amount: number, message?: string, postId?: string, emoji?: string) =>
       post<{ ok: boolean; senderBalance: number; receiverBalance: number }>(
         "/wallet/gift",
-        { senderId, receiverId, amount, message },
+        { senderId, receiverId, amount, message, postId, emoji },
       ),
 
     credit: (playerId: string, amount: number, type: string, description?: string) =>
       post<{ ok: boolean; newBalance: number }>(
         "/wallet/credit",
         { playerId, amount, type, description },
+      ),
+  },
+
+  /* ── Gift Ledger Analytics ── */
+  gifts: {
+    postStats: (postId: string) =>
+      get<{
+        totalGiftAmount: number;
+        totalGiftCount:  number;
+        lastGiftTime:    string | null;
+        topSenders:      { senderId: string; username: string; totalAmount: number; giftCount: number }[];
+      }>(`/gifts/post/${postId}/stats`),
+
+    userStats: (userId: string) =>
+      get<{
+        totalSentDN:           number;
+        totalReceivedDN:       number;
+        totalGiftTransactions: number;
+        totalSent:             number;
+        totalReceived:         number;
+      }>(`/gifts/user/${userId}/stats`),
+
+    userHistory: (userId: string, dir: "sent" | "received" | "both" = "both", page = 1, limit = 20) =>
+      get<{ data: unknown[]; total: number; page: number; limit: number }>(
+        `/gifts/user/${userId}/history?dir=${dir}&page=${page}&limit=${limit}`
       ),
   },
 

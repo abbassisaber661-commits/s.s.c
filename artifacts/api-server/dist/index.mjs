@@ -763,8 +763,8 @@ var require_depd = __commonJS({
       return deprecate;
     }
     function eehaslisteners(emitter, type) {
-      var count2 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
-      return count2 > 0;
+      var count3 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
+      return count3 > 0;
     }
     function isignored(namespace) {
       if (process.noDeprecation) {
@@ -18333,14 +18333,14 @@ var require_urlencoded = __commonJS({
       };
     }
     function parameterCount(body, limit) {
-      let count2 = 0;
+      let count3 = 0;
       let index = -1;
       do {
-        count2++;
-        if (count2 > limit) return void 0;
+        count3++;
+        if (count3 > limit) return void 0;
         index = body.indexOf("&", index + 1);
       } while (index !== -1);
-      return count2;
+      return count3;
     }
   }
 });
@@ -20501,27 +20501,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router31;
+    module.exports = Router32;
     module.exports.Route = Route;
-    function Router31(options) {
-      if (!(this instanceof Router31)) {
-        return new Router31(options);
+    function Router32(options) {
+      if (!(this instanceof Router32)) {
+        return new Router32(options);
       }
       const opts = options || {};
-      function router31(req, res, next) {
-        router31.handle(req, res, next);
+      function router32(req, res, next) {
+        router32.handle(req, res, next);
       }
-      Object.setPrototypeOf(router31, this);
-      router31.caseSensitive = opts.caseSensitive;
-      router31.mergeParams = opts.mergeParams;
-      router31.params = {};
-      router31.strict = opts.strict;
-      router31.stack = [];
-      return router31;
+      Object.setPrototypeOf(router32, this);
+      router32.caseSensitive = opts.caseSensitive;
+      router32.mergeParams = opts.mergeParams;
+      router32.params = {};
+      router32.strict = opts.strict;
+      router32.stack = [];
+      return router32;
     }
-    Router31.prototype = function() {
+    Router32.prototype = function() {
     };
-    Router31.prototype.param = function param2(name2, fn) {
+    Router32.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20541,7 +20541,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router31.prototype.handle = function handle(req, res, callback) {
+    Router32.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20668,7 +20668,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router31.prototype.use = function use(handler) {
+    Router32.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -20701,7 +20701,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router31.prototype.route = function route(path) {
+    Router32.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -20716,7 +20716,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router31.prototype[method] = function(path) {
+      Router32.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20899,13 +20899,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve6 = __require("node:path").resolve;
     var once = require_once();
-    var Router31 = require_router();
+    var Router32 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router31 = null;
+      var router32 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20914,13 +20914,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router31 === null) {
-            router31 = new Router31({
+          if (router32 === null) {
+            router32 = new Router32({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router31;
+          return router32;
         }
       });
     };
@@ -20991,15 +20991,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router31 = this.router;
+      var router32 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router31.use(path, fn2);
+          return router32.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router31.use(path, function mounted_app(req, res, next) {
+        router32.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -21553,13 +21553,13 @@ var require_mediaType = __commonJS({
       return spec.q > 0;
     }
     function quoteCount(string4) {
-      var count2 = 0;
+      var count3 = 0;
       var index = 0;
       while ((index = string4.indexOf('"', index)) !== -1) {
-        count2++;
+        count3++;
         index++;
       }
-      return count2;
+      return count3;
     }
     function splitKeyValuePair(str) {
       var index = str.indexOf("=");
@@ -22864,8 +22864,8 @@ var require_send = __commonJS({
       }
     }
     function hasListeners(emitter, type) {
-      var count2 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
-      return count2 > 0;
+      var count3 = typeof emitter.listenerCount !== "function" ? emitter.listeners(type).length : emitter.listenerCount(type);
+      return count3 > 0;
     }
     function normalizeList(val, name2) {
       var list = [].concat(val || []);
@@ -23572,7 +23572,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router31 = require_router();
+    var Router32 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23594,8 +23594,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router31.Route;
-    exports.Router = Router31;
+    exports.Route = Router32.Route;
+    exports.Router = Router32;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -33345,11 +33345,11 @@ var require_binaryParsers = __commonJS({
         var array2 = [];
         var i2;
         if (dimension.length > 1) {
-          var count2 = dimension.shift();
-          for (i2 = 0; i2 < count2; i2++) {
+          var count3 = dimension.shift();
+          for (i2 = 0; i2 < count3; i2++) {
             array2[i2] = parse3(dimension, elementType2);
           }
-          dimension.unshift(count2);
+          dimension.unshift(count3);
         } else {
           for (i2 = 0; i2 < dimension[0]; i2++) {
             array2[i2] = parseElement(elementType2);
@@ -45626,8 +45626,8 @@ var init_az = __esm({
 });
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/be.js
-function getBelarusianPlural(count2, one, few, many) {
-  const absCount = Math.abs(count2);
+function getBelarusianPlural(count3, one, few, many) {
+  const absCount = Math.abs(count3);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
   if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
@@ -48928,8 +48928,8 @@ var init_pt = __esm({
 });
 
 // ../../node_modules/.pnpm/zod@3.25.76/node_modules/zod/v4/locales/ru.js
-function getRussianPlural(count2, one, few, many) {
-  const absCount = Math.abs(count2);
+function getRussianPlural(count3, one, few, many) {
+  const absCount = Math.abs(count3);
   const lastDigit = absCount % 10;
   const lastTwoDigits = absCount % 100;
   if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
@@ -54274,7 +54274,7 @@ var init_community = __esm({
 });
 
 // ../../lib/db/src/schema/economy.ts
-var coinTransactionsTable, storePurchasesTable, boostUsageTable, seasonsTable, userDailyEconomyTable, walletsTable, walletTransactionsTable, insertCoinTxSchema, insertStorePurchSchema, insertBoostSchema;
+var coinTransactionsTable, storePurchasesTable, boostUsageTable, seasonsTable, userDailyEconomyTable, walletsTable, walletTransactionsTable, giftLedgerTable, insertCoinTxSchema, insertStorePurchSchema, insertBoostSchema;
 var init_economy = __esm({
   "../../lib/db/src/schema/economy.ts"() {
     "use strict";
@@ -54361,6 +54361,17 @@ var init_economy = __esm({
       description: text("description").notNull().default(""),
       relatedId: text("related_id"),
       balanceAfter: integer("balance_after").notNull().default(0),
+      createdAt: timestamp("created_at").notNull().defaultNow()
+    });
+    giftLedgerTable = pgTable("gift_ledger", {
+      id: text("id").primaryKey(),
+      senderId: text("sender_id").notNull(),
+      receiverId: text("receiver_id").notNull(),
+      postId: text("post_id"),
+      // null when sent from profile/wallet page
+      amount: integer("amount").notNull(),
+      emoji: text("emoji").notNull().default("\u{1F381}"),
+      message: text("message").notNull().default(""),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     insertCoinTxSchema = createInsertSchema(coinTransactionsTable).omit({ createdAt: true });
@@ -54583,6 +54594,7 @@ __export(schema_exports, {
   coinTransactionsTable: () => coinTransactionsTable,
   dailyStatsTable: () => dailyStatsTable,
   followersTable: () => followersTable,
+  giftLedgerTable: () => giftLedgerTable,
   insertBoostSchema: () => insertBoostSchema,
   insertBotSchema: () => insertBotSchema,
   insertCoinTxSchema: () => insertCoinTxSchema,
@@ -54648,6 +54660,7 @@ __export(src_exports, {
   dailyStatsTable: () => dailyStatsTable,
   db: () => db,
   followersTable: () => followersTable,
+  giftLedgerTable: () => giftLedgerTable,
   insertBoostSchema: () => insertBoostSchema,
   insertBotSchema: () => insertBotSchema,
   insertCoinTxSchema: () => insertCoinTxSchema,
@@ -58890,13 +58903,13 @@ var require_mediaType2 = __commonJS({
       return spec.q > 0;
     }
     function quoteCount(string4) {
-      var count2 = 0;
+      var count3 = 0;
       var index = 0;
       while ((index = string4.indexOf('"', index)) !== -1) {
-        count2++;
+        count3++;
         index++;
       }
-      return count2;
+      return count3;
     }
     function splitKeyValuePair(str) {
       var index = str.indexOf("=");
@@ -67900,11 +67913,11 @@ var require_cjs = __commonJS({
     var encodePayload = (packets, callback) => {
       const length = packets.length;
       const encodedPackets = new Array(length);
-      let count2 = 0;
+      let count3 = 0;
       packets.forEach((packet, i) => {
         (0, encodePacket_js_1.encodePacket)(packet, false, (encodedPacket) => {
           encodedPackets[i] = encodedPacket;
-          if (++count2 === length) {
+          if (++count3 === length) {
             callback(encodedPackets.join(SEPARATOR));
           }
         });
@@ -68364,11 +68377,11 @@ var require_parser_v3 = __commonJS({
     }
     function map2(ary, each, done) {
       const results = new Array(ary.length);
-      let count2 = 0;
+      let count3 = 0;
       for (let i = 0; i < ary.length; i++) {
         each(ary[i], (error40, msg) => {
           results[i] = msg;
-          if (++count2 === ary.length) {
+          if (++count3 === ary.length) {
             done(null, results);
           }
         });
@@ -79822,12 +79835,12 @@ var require_dist4 = __commonJS({
 import { createServer } from "http";
 
 // src/app.ts
-var import_express30 = __toESM(require_express2(), 1);
+var import_express31 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express29 = __toESM(require_express2(), 1);
+var import_express30 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -88937,9 +88950,9 @@ function joinLeague(leagueId, playerId, playerName) {
   };
   const matches = [];
   let matchNum = 1;
-  DAILY_MATCH_COUNTS.forEach((count2, dayIdx) => {
+  DAILY_MATCH_COUNTS.forEach((count3, dayIdx) => {
     const day = dayIdx + 1;
-    for (let i = 0; i < count2; i++) {
+    for (let i = 0; i < count3; i++) {
       matches.push({
         id: randomUUID(),
         seasonId: season.id,
@@ -89131,17 +89144,17 @@ function getPrizeBreakdown(seasonId) {
 }
 function refreshMatchStatuses() {
   const s = store2();
-  let count2 = 0;
+  let count3 = 0;
   const activeSeasions = s.seasons.filter((x) => x.status === "active");
   activeSeasions.forEach((season) => {
     const currentDay = currentSeasonDay(season);
     s.matches.filter((m) => m.seasonId === season.id && m.status === "upcoming" && m.scheduledDay <= currentDay).forEach((m) => {
       m.status = "available";
-      count2++;
+      count3++;
     });
   });
-  if (count2 > 0) save();
-  return count2;
+  if (count3 > 0) save();
+  return count3;
 }
 
 // src/lib/bot-simulator.ts
@@ -90287,8 +90300,8 @@ router18.post("/league-system/admin/advance-season", async (req, res) => {
   res.json({ ...result, promotionRewards: promotionRewardResults });
 });
 router18.post("/league-system/admin/refresh-matches", (_req, res) => {
-  const count2 = refreshMatchStatuses();
-  res.json({ refreshed: count2 });
+  const count3 = refreshMatchStatuses();
+  res.json({ refreshed: count3 });
 });
 var _seasonSchedulerInterval = null;
 async function autoAdvanceExpiredSeasons() {
@@ -91452,7 +91465,7 @@ async function getEconomyMetrics(periodDays = 7) {
   const totalSpent = Number(spendRows[0]?.total ?? 0);
   const allPlayers = await db.select({ id: playersTable.id, coins: playersTable.coins, gems: playersTable.gems }).from(playersTable);
   const totalUsers = allPlayers.length || 1;
-  const totalGems = allPlayers.reduce((sum4, p) => sum4 + (p.gems ?? 0), 0);
+  const totalGems = allPlayers.reduce((sum5, p) => sum5 + (p.gems ?? 0), 0);
   const gemsPerLeague = {
     div3: allPlayers.filter((p) => (p.gems ?? 0) <= 1).length,
     div2: allPlayers.filter((p) => (p.gems ?? 0) === 2).length,
@@ -92110,7 +92123,7 @@ router25.get("/social/search", async (req, res) => {
           }
         }
       }
-      results.hashtags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag, count2]) => ({ tag, count: count2 }));
+      results.hashtags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag, count3]) => ({ tag, count: count3 }));
     }
     res.json(results);
   } catch (err) {
@@ -92749,7 +92762,7 @@ router28.get("/wallet/:playerId/transactions", async (req, res) => {
 });
 router28.post("/wallet/gift", async (req, res) => {
   try {
-    const { senderId, receiverId, amount, message } = req.body;
+    const { senderId, receiverId, amount, message, postId, emoji: emoji3 } = req.body;
     if (!senderId || !receiverId || !amount) {
       res.status(400).json({ error: "senderId, receiverId, amount required" });
       return;
@@ -92802,6 +92815,17 @@ router28.post("/wallet/gift", async (req, res) => {
         balanceAfter: newReceiverBalance
       }
     ]);
+    db.insert(giftLedgerTable).values({
+      id: nanoid3(),
+      senderId: String(senderId),
+      receiverId: String(receiverId),
+      postId: postId ? String(postId) : null,
+      amount: dn,
+      emoji: emoji3 ? String(emoji3).slice(0, 8) : "\u{1F381}",
+      message: note ?? ""
+    }).catch((e) => {
+      req.log.warn({ err: e }, "gift ledger insert failed (non-fatal)");
+    });
     res.status(201).json({
       ok: true,
       senderBalance: newSenderBalance,
@@ -92849,40 +92873,126 @@ router28.post("/wallet/credit", async (req, res) => {
 });
 var wallet_default = router28;
 
-// src/routes/index.ts
+// src/routes/gift-ledger.ts
+var import_express29 = __toESM(require_express2(), 1);
+init_drizzle_orm();
+init_src();
 var router29 = (0, import_express29.Router)();
-router29.use(health_default);
-router29.use(auth_default);
-router29.use(pi_auth_default);
-router29.use(arenas_default);
-router29.use(players_default);
-router29.use(matches_default);
-router29.use(community_default);
-router29.use(economy_default);
-router29.use(notifications_default);
-router29.use(messages_default);
-router29.use(analytics_default);
-router29.use(followers_default);
-router29.use(marketplace_default);
-router29.use(security_default);
-router29.use(pi_payments_default);
-router29.use(beta_default);
-router29.use(monitor_default);
-router29.use(release_default);
-router29.use(league_system_default);
-router29.use(game_layer_default);
-router29.use(daily_economy_default);
-router29.use(audit_default);
-router29.use(economy_balance_default);
-router29.use(economy_stabilizer_default);
-router29.use(social_default);
-router29.use(stories_default);
-router29.use(jobs_default);
-router29.use(wallet_default);
-var routes_default = router29;
+router29.get("/gifts/post/:postId/stats", async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const [agg] = await db.select({
+      totalGiftAmount: sql`coalesce(sum(${giftLedgerTable.amount}), 0)`,
+      totalGiftCount: sql`coalesce(count(*), 0)`,
+      lastGiftTime: max(giftLedgerTable.createdAt)
+    }).from(giftLedgerTable).where(eq(giftLedgerTable.postId, postId));
+    const topSenders = await db.select({
+      senderId: giftLedgerTable.senderId,
+      totalAmount: sql`sum(${giftLedgerTable.amount})`,
+      giftCount: sql`count(*)`
+    }).from(giftLedgerTable).where(eq(giftLedgerTable.postId, postId)).groupBy(giftLedgerTable.senderId).orderBy(desc(sql`sum(${giftLedgerTable.amount})`)).limit(3);
+    const enriched = await Promise.all(
+      topSenders.map(async (s) => {
+        const [p] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, s.senderId)).limit(1);
+        return {
+          senderId: s.senderId,
+          username: p?.username ?? "\u0645\u062C\u0647\u0648\u0644",
+          totalAmount: Number(s.totalAmount),
+          giftCount: Number(s.giftCount)
+        };
+      })
+    );
+    res.json({
+      totalGiftAmount: Number(agg?.totalGiftAmount ?? 0),
+      totalGiftCount: Number(agg?.totalGiftCount ?? 0),
+      lastGiftTime: agg?.lastGiftTime ?? null,
+      topSenders: enriched
+    });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router29.get("/gifts/user/:userId/stats", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const [sent] = await db.select({
+      totalSentDN: sql`coalesce(sum(${giftLedgerTable.amount}), 0)`,
+      sentCount: sql`coalesce(count(*), 0)`
+    }).from(giftLedgerTable).where(eq(giftLedgerTable.senderId, userId));
+    const [received] = await db.select({
+      totalReceivedDN: sql`coalesce(sum(${giftLedgerTable.amount}), 0)`,
+      receivedCount: sql`coalesce(count(*), 0)`
+    }).from(giftLedgerTable).where(eq(giftLedgerTable.receiverId, userId));
+    res.json({
+      totalSentDN: Number(sent?.totalSentDN ?? 0),
+      totalReceivedDN: Number(received?.totalReceivedDN ?? 0),
+      totalGiftTransactions: Number(sent?.sentCount ?? 0) + Number(received?.receivedCount ?? 0),
+      totalSent: Number(sent?.sentCount ?? 0),
+      totalReceived: Number(received?.receivedCount ?? 0)
+    });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router29.get("/gifts/user/:userId/history", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Number(req.query.limit) || 20);
+    const dir = String(req.query.dir || "both");
+    const conditions = dir === "sent" ? eq(giftLedgerTable.senderId, userId) : dir === "received" ? eq(giftLedgerTable.receiverId, userId) : sql`(${giftLedgerTable.senderId} = ${userId} OR ${giftLedgerTable.receiverId} = ${userId})`;
+    const rows = await db.select().from(giftLedgerTable).where(conditions).orderBy(desc(giftLedgerTable.createdAt)).limit(limit).offset((page - 1) * limit);
+    const [cnt] = await db.select({ count: sql`count(*)` }).from(giftLedgerTable).where(conditions);
+    res.json({
+      data: rows,
+      total: Number(cnt?.count ?? 0),
+      page,
+      limit
+    });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+var gift_ledger_default = router29;
+
+// src/routes/index.ts
+var router30 = (0, import_express30.Router)();
+router30.use(health_default);
+router30.use(auth_default);
+router30.use(pi_auth_default);
+router30.use(arenas_default);
+router30.use(players_default);
+router30.use(matches_default);
+router30.use(community_default);
+router30.use(economy_default);
+router30.use(notifications_default);
+router30.use(messages_default);
+router30.use(analytics_default);
+router30.use(followers_default);
+router30.use(marketplace_default);
+router30.use(security_default);
+router30.use(pi_payments_default);
+router30.use(beta_default);
+router30.use(monitor_default);
+router30.use(release_default);
+router30.use(league_system_default);
+router30.use(game_layer_default);
+router30.use(daily_economy_default);
+router30.use(audit_default);
+router30.use(economy_balance_default);
+router30.use(economy_stabilizer_default);
+router30.use(social_default);
+router30.use(stories_default);
+router30.use(jobs_default);
+router30.use(wallet_default);
+router30.use(gift_ledger_default);
+var routes_default = router30;
 
 // src/app.ts
-var app = (0, import_express30.default)();
+var app = (0, import_express31.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -92903,8 +93013,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express30.default.json({ limit: "10mb" }));
-app.use(import_express30.default.urlencoded({ extended: true, limit: "10mb" }));
+app.use(import_express31.default.json({ limit: "10mb" }));
+app.use(import_express31.default.urlencoded({ extended: true, limit: "10mb" }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();
@@ -92927,8 +93037,8 @@ app.use("/api", routes_default);
 var app_default = app;
 
 // src/routes/profile.ts
-var import_express31 = __toESM(require_express2(), 1);
-var router30 = (0, import_express31.Router)();
+var import_express32 = __toESM(require_express2(), 1);
+var router31 = (0, import_express32.Router)();
 var profile = {
   id: "1",
   username: "user123",
@@ -92938,7 +93048,7 @@ var profile = {
   location: "Tunisia",
   website: "https://example.com"
 };
-router30.get("/", (req, res) => {
+router31.get("/", (req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -92952,7 +93062,7 @@ router30.get("/", (req, res) => {
     });
   }
 });
-router30.put("/", (req, res) => {
+router31.put("/", (req, res) => {
   try {
     const { username, bio, avatar, fullName, location, website } = req.body;
     profile = {
@@ -92977,7 +93087,7 @@ router30.put("/", (req, res) => {
     });
   }
 });
-var profile_default = router30;
+var profile_default = router31;
 
 // ../../node_modules/.pnpm/socket.io@4.8.3/node_modules/socket.io/wrapper.mjs
 var import_dist = __toESM(require_dist4(), 1);

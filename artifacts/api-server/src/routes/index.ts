@@ -27,6 +27,7 @@ import socialRouter            from "./social.js";
 import storiesRouter           from "./stories.js";
 import jobsRouter              from "./jobs.js";
 import walletRouter            from "./wallet.js";
+import giftLedgerRouter        from "./gift-ledger.js";
 
 const router: IRouter = Router();
 
@@ -58,5 +59,6 @@ router.use(socialRouter);
 router.use(storiesRouter);
 router.use(jobsRouter);
 router.use(walletRouter);
+router.use(giftLedgerRouter);
 
 export default router;
