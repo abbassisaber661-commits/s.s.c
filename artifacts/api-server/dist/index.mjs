@@ -20501,27 +20501,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router30;
+    module.exports = Router31;
     module.exports.Route = Route;
-    function Router30(options) {
-      if (!(this instanceof Router30)) {
-        return new Router30(options);
+    function Router31(options) {
+      if (!(this instanceof Router31)) {
+        return new Router31(options);
       }
       const opts = options || {};
-      function router30(req, res, next) {
-        router30.handle(req, res, next);
+      function router31(req, res, next) {
+        router31.handle(req, res, next);
       }
-      Object.setPrototypeOf(router30, this);
-      router30.caseSensitive = opts.caseSensitive;
-      router30.mergeParams = opts.mergeParams;
-      router30.params = {};
-      router30.strict = opts.strict;
-      router30.stack = [];
-      return router30;
+      Object.setPrototypeOf(router31, this);
+      router31.caseSensitive = opts.caseSensitive;
+      router31.mergeParams = opts.mergeParams;
+      router31.params = {};
+      router31.strict = opts.strict;
+      router31.stack = [];
+      return router31;
     }
-    Router30.prototype = function() {
+    Router31.prototype = function() {
     };
-    Router30.prototype.param = function param2(name2, fn) {
+    Router31.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20541,7 +20541,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router30.prototype.handle = function handle(req, res, callback) {
+    Router31.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20668,7 +20668,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router30.prototype.use = function use(handler) {
+    Router31.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -20701,7 +20701,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router30.prototype.route = function route(path) {
+    Router31.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -20716,7 +20716,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router30.prototype[method] = function(path) {
+      Router31.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20899,13 +20899,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve6 = __require("node:path").resolve;
     var once = require_once();
-    var Router30 = require_router();
+    var Router31 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router30 = null;
+      var router31 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20914,13 +20914,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router30 === null) {
-            router30 = new Router30({
+          if (router31 === null) {
+            router31 = new Router31({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router30;
+          return router31;
         }
       });
     };
@@ -20991,15 +20991,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router30 = this.router;
+      var router31 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router30.use(path, fn2);
+          return router31.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router30.use(path, function mounted_app(req, res, next) {
+        router31.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23572,7 +23572,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router30 = require_router();
+    var Router31 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23594,8 +23594,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router30.Route;
-    exports.Router = Router30;
+    exports.Route = Router31.Route;
+    exports.Router = Router31;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -54274,7 +54274,7 @@ var init_community = __esm({
 });
 
 // ../../lib/db/src/schema/economy.ts
-var coinTransactionsTable, storePurchasesTable, boostUsageTable, seasonsTable, userDailyEconomyTable, insertCoinTxSchema, insertStorePurchSchema, insertBoostSchema;
+var coinTransactionsTable, storePurchasesTable, boostUsageTable, seasonsTable, userDailyEconomyTable, walletsTable, walletTransactionsTable, insertCoinTxSchema, insertStorePurchSchema, insertBoostSchema;
 var init_economy = __esm({
   "../../lib/db/src/schema/economy.ts"() {
     "use strict";
@@ -54346,6 +54346,23 @@ var init_economy = __esm({
       createdAt: timestamp("created_at").notNull().defaultNow(),
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     }, (t) => [uniqueIndex("ude_player_date_idx").on(t.playerId, t.date)]);
+    walletsTable = pgTable("wallets", {
+      id: text("id").primaryKey(),
+      playerId: text("player_id").notNull().unique(),
+      dnBalance: integer("dn_balance").notNull().default(0),
+      createdAt: timestamp("created_at").notNull().defaultNow(),
+      updatedAt: timestamp("updated_at").notNull().defaultNow()
+    });
+    walletTransactionsTable = pgTable("wallet_transactions", {
+      id: text("id").primaryKey(),
+      playerId: text("player_id").notNull(),
+      amount: integer("amount").notNull(),
+      type: text("type").notNull(),
+      description: text("description").notNull().default(""),
+      relatedId: text("related_id"),
+      balanceAfter: integer("balance_after").notNull().default(0),
+      createdAt: timestamp("created_at").notNull().defaultNow()
+    });
     insertCoinTxSchema = createInsertSchema(coinTransactionsTable).omit({ createdAt: true });
     insertStorePurchSchema = createInsertSchema(storePurchasesTable).omit({ createdAt: true });
     insertBoostSchema = createInsertSchema(boostUsageTable).omit({ createdAt: true });
@@ -54597,7 +54614,9 @@ __export(schema_exports, {
   storiesTable: () => storiesTable,
   suspiciousActivityTable: () => suspiciousActivityTable,
   tournamentsTable: () => tournamentsTable,
-  userDailyEconomyTable: () => userDailyEconomyTable
+  userDailyEconomyTable: () => userDailyEconomyTable,
+  walletTransactionsTable: () => walletTransactionsTable,
+  walletsTable: () => walletsTable
 });
 var init_schema2 = __esm({
   "../../lib/db/src/schema/index.ts"() {
@@ -54661,7 +54680,9 @@ __export(src_exports, {
   storiesTable: () => storiesTable,
   suspiciousActivityTable: () => suspiciousActivityTable,
   tournamentsTable: () => tournamentsTable,
-  userDailyEconomyTable: () => userDailyEconomyTable
+  userDailyEconomyTable: () => userDailyEconomyTable,
+  walletTransactionsTable: () => walletTransactionsTable,
+  walletsTable: () => walletsTable
 });
 var Pool3, pool, db;
 var init_src = __esm({
@@ -79801,12 +79822,12 @@ var require_dist4 = __commonJS({
 import { createServer } from "http";
 
 // src/app.ts
-var import_express29 = __toESM(require_express2(), 1);
+var import_express30 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express28 = __toESM(require_express2(), 1);
+var import_express29 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -91431,7 +91452,7 @@ async function getEconomyMetrics(periodDays = 7) {
   const totalSpent = Number(spendRows[0]?.total ?? 0);
   const allPlayers = await db.select({ id: playersTable.id, coins: playersTable.coins, gems: playersTable.gems }).from(playersTable);
   const totalUsers = allPlayers.length || 1;
-  const totalGems = allPlayers.reduce((sum3, p) => sum3 + (p.gems ?? 0), 0);
+  const totalGems = allPlayers.reduce((sum4, p) => sum4 + (p.gems ?? 0), 0);
   const gemsPerLeague = {
     div3: allPlayers.filter((p) => (p.gems ?? 0) <= 1).length,
     div2: allPlayers.filter((p) => (p.gems ?? 0) === 2).length,
@@ -92677,39 +92698,191 @@ router27.delete("/jobs/:id", async (req, res) => {
 });
 var jobs_default = router27;
 
-// src/routes/index.ts
+// src/routes/wallet.ts
+var import_express28 = __toESM(require_express2(), 1);
+init_drizzle_orm();
+init_src();
 var router28 = (0, import_express28.Router)();
-router28.use(health_default);
-router28.use(auth_default);
-router28.use(pi_auth_default);
-router28.use(arenas_default);
-router28.use(players_default);
-router28.use(matches_default);
-router28.use(community_default);
-router28.use(economy_default);
-router28.use(notifications_default);
-router28.use(messages_default);
-router28.use(analytics_default);
-router28.use(followers_default);
-router28.use(marketplace_default);
-router28.use(security_default);
-router28.use(pi_payments_default);
-router28.use(beta_default);
-router28.use(monitor_default);
-router28.use(release_default);
-router28.use(league_system_default);
-router28.use(game_layer_default);
-router28.use(daily_economy_default);
-router28.use(audit_default);
-router28.use(economy_balance_default);
-router28.use(economy_stabilizer_default);
-router28.use(social_default);
-router28.use(stories_default);
-router28.use(jobs_default);
-var routes_default = router28;
+async function getOrCreateWallet(playerId) {
+  const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
+  if (existing) return existing;
+  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0 }).returning();
+  return created;
+}
+router28.get("/wallet/:playerId", async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const wallet = await getOrCreateWallet(playerId);
+    const [incomeRow] = await db.select({ total: sql`coalesce(sum(amount),0)` }).from(walletTransactionsTable).where(and(eq(walletTransactionsTable.playerId, playerId), gt(walletTransactionsTable.amount, 0)));
+    const [spendingRow] = await db.select({ total: sql`coalesce(sum(abs(amount)),0)` }).from(walletTransactionsTable).where(and(eq(walletTransactionsTable.playerId, playerId), lt(walletTransactionsTable.amount, 0)));
+    res.json({
+      dnBalance: wallet.dnBalance,
+      totalIncome: Number(incomeRow?.total ?? 0),
+      totalSpending: Number(spendingRow?.total ?? 0)
+    });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router28.get("/wallet/:playerId/transactions", async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Number(req.query.limit) || 20);
+    const filter = String(req.query.filter || "all");
+    const conditions = [eq(walletTransactionsTable.playerId, playerId)];
+    if (filter === "income") conditions.push(gt(walletTransactionsTable.amount, 0));
+    if (filter === "spending") conditions.push(lt(walletTransactionsTable.amount, 0));
+    const rows = await db.select().from(walletTransactionsTable).where(and(...conditions)).orderBy(desc(walletTransactionsTable.createdAt)).limit(limit).offset((page - 1) * limit);
+    const [countRow] = await db.select({ count: sql`count(*)` }).from(walletTransactionsTable).where(and(...conditions));
+    res.json({
+      data: rows,
+      total: Number(countRow?.count ?? 0),
+      page,
+      limit
+    });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router28.post("/wallet/gift", async (req, res) => {
+  try {
+    const { senderId, receiverId, amount, message } = req.body;
+    if (!senderId || !receiverId || !amount) {
+      res.status(400).json({ error: "senderId, receiverId, amount required" });
+      return;
+    }
+    const dn = Math.abs(Number(amount));
+    if (!Number.isInteger(dn) || dn <= 0) {
+      res.status(400).json({ error: "amount must be a positive integer" });
+      return;
+    }
+    if (String(senderId) === String(receiverId)) {
+      res.status(400).json({ error: "cannot gift yourself" });
+      return;
+    }
+    const [senderPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, String(senderId))).limit(1);
+    const [receiverPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, String(receiverId))).limit(1);
+    if (!senderPlayer || !receiverPlayer) {
+      res.status(404).json({ error: "player not found" });
+      return;
+    }
+    const senderWallet = await getOrCreateWallet(String(senderId));
+    const receiverWallet = await getOrCreateWallet(String(receiverId));
+    if (senderWallet.dnBalance < dn) {
+      res.status(400).json({ error: "insufficient DN balance" });
+      return;
+    }
+    const newSenderBalance = senderWallet.dnBalance - dn;
+    const newReceiverBalance = receiverWallet.dnBalance + dn;
+    const note = String(message || "").slice(0, 200) || void 0;
+    await db.update(walletsTable).set({ dnBalance: newSenderBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, String(senderId)));
+    await db.update(walletsTable).set({ dnBalance: newReceiverBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, String(receiverId)));
+    const senderTxId = nanoid3();
+    const receiverTxId = nanoid3();
+    await db.insert(walletTransactionsTable).values([
+      {
+        id: senderTxId,
+        playerId: String(senderId),
+        amount: -dn,
+        type: "gift_sent",
+        description: note ? `\u0647\u062F\u064A\u0629 \u0625\u0644\u0649 ${receiverPlayer.username}: ${note}` : `\u0647\u062F\u064A\u0629 \u0625\u0644\u0649 ${receiverPlayer.username}`,
+        relatedId: String(receiverId),
+        balanceAfter: newSenderBalance
+      },
+      {
+        id: receiverTxId,
+        playerId: String(receiverId),
+        amount: dn,
+        type: "gift_received",
+        description: note ? `\u0647\u062F\u064A\u0629 \u0645\u0646 ${senderPlayer.username}: ${note}` : `\u0647\u062F\u064A\u0629 \u0645\u0646 ${senderPlayer.username}`,
+        relatedId: String(senderId),
+        balanceAfter: newReceiverBalance
+      }
+    ]);
+    res.status(201).json({
+      ok: true,
+      senderBalance: newSenderBalance,
+      receiverBalance: newReceiverBalance,
+      senderTxId,
+      receiverTxId
+    });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router28.post("/wallet/credit", async (req, res) => {
+  try {
+    const { playerId, amount, type, description } = req.body;
+    if (!playerId || !amount || !type) {
+      res.status(400).json({ error: "playerId, amount, type required" });
+      return;
+    }
+    const dn = Number(amount);
+    if (!Number.isInteger(dn) || dn === 0) {
+      res.status(400).json({ error: "amount must be a non-zero integer" });
+      return;
+    }
+    const wallet = await getOrCreateWallet(String(playerId));
+    const newBalance = wallet.dnBalance + dn;
+    if (newBalance < 0) {
+      res.status(400).json({ error: "insufficient balance" });
+      return;
+    }
+    await db.update(walletsTable).set({ dnBalance: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, String(playerId)));
+    const [tx] = await db.insert(walletTransactionsTable).values({
+      id: nanoid3(),
+      playerId: String(playerId),
+      amount: dn,
+      type: String(type),
+      description: String(description || ""),
+      balanceAfter: newBalance
+    }).returning();
+    res.status(201).json({ ok: true, transaction: tx, newBalance });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+var wallet_default = router28;
+
+// src/routes/index.ts
+var router29 = (0, import_express29.Router)();
+router29.use(health_default);
+router29.use(auth_default);
+router29.use(pi_auth_default);
+router29.use(arenas_default);
+router29.use(players_default);
+router29.use(matches_default);
+router29.use(community_default);
+router29.use(economy_default);
+router29.use(notifications_default);
+router29.use(messages_default);
+router29.use(analytics_default);
+router29.use(followers_default);
+router29.use(marketplace_default);
+router29.use(security_default);
+router29.use(pi_payments_default);
+router29.use(beta_default);
+router29.use(monitor_default);
+router29.use(release_default);
+router29.use(league_system_default);
+router29.use(game_layer_default);
+router29.use(daily_economy_default);
+router29.use(audit_default);
+router29.use(economy_balance_default);
+router29.use(economy_stabilizer_default);
+router29.use(social_default);
+router29.use(stories_default);
+router29.use(jobs_default);
+router29.use(wallet_default);
+var routes_default = router29;
 
 // src/app.ts
-var app = (0, import_express29.default)();
+var app = (0, import_express30.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -92730,8 +92903,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express29.default.json({ limit: "10mb" }));
-app.use(import_express29.default.urlencoded({ extended: true, limit: "10mb" }));
+app.use(import_express30.default.json({ limit: "10mb" }));
+app.use(import_express30.default.urlencoded({ extended: true, limit: "10mb" }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();
@@ -92754,8 +92927,8 @@ app.use("/api", routes_default);
 var app_default = app;
 
 // src/routes/profile.ts
-var import_express30 = __toESM(require_express2(), 1);
-var router29 = (0, import_express30.Router)();
+var import_express31 = __toESM(require_express2(), 1);
+var router30 = (0, import_express31.Router)();
 var profile = {
   id: "1",
   username: "user123",
@@ -92765,7 +92938,7 @@ var profile = {
   location: "Tunisia",
   website: "https://example.com"
 };
-router29.get("/", (req, res) => {
+router30.get("/", (req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -92779,7 +92952,7 @@ router29.get("/", (req, res) => {
     });
   }
 });
-router29.put("/", (req, res) => {
+router30.put("/", (req, res) => {
   try {
     const { username, bio, avatar, fullName, location, website } = req.body;
     profile = {
@@ -92804,7 +92977,7 @@ router29.put("/", (req, res) => {
     });
   }
 });
-var profile_default = router29;
+var profile_default = router30;
 
 // ../../node_modules/.pnpm/socket.io@4.8.3/node_modules/socket.io/wrapper.mjs
 var import_dist = __toESM(require_dist4(), 1);

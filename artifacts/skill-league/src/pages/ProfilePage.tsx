@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, RefreshCcw, Menu } from "lucide-react";
+import { AlertCircle, RefreshCcw, Menu, Wallet2 } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 import { compressImageToBase64 } from "@/lib/imageUtils";
 
@@ -266,6 +266,26 @@ export default function ProfilePage() {
             onFollowersClick={() => navigate(`/profile/${profile.id}/followers`)}
             onFollowingClick={() => navigate(`/profile/${profile.id}/following`)}
           />
+          {isOwner && (
+            <div className="mt-2 mx-3 border-t border-[#F0F0F0] pt-2">
+              <button
+                onClick={() => navigate("/wallet")}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#F5F5F7] active:scale-[0.98] transition-all"
+              >
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "linear-gradient(135deg,#1877F2,#0a4fa6)" }}
+                >
+                  <Wallet2 className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1 text-right" dir="rtl">
+                  <div className="text-sm font-bold text-[#111111]">محفظة Denous</div>
+                  <div className="text-xs text-[#65676B]">عرض رصيدك وسجل المعاملات</div>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0C0C0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
 

@@ -522,6 +522,43 @@ export const api = {
       post<{ ok: boolean }>("/notifications", data),
   },
 
+  /* ── Denous Wallet ── */
+  wallet: {
+    getBalance: (playerId: string) =>
+      get<{ dnBalance: number; totalIncome: number; totalSpending: number }>(
+        `/wallet/${playerId}`,
+      ),
+
+    getTransactions: (playerId: string, filter: "all" | "income" | "spending" = "all", page = 1, limit = 20) =>
+      get<{
+        data: {
+          id: string;
+          playerId: string;
+          amount: number;
+          type: string;
+          description: string;
+          relatedId: string | null;
+          balanceAfter: number;
+          createdAt: string;
+        }[];
+        total: number;
+        page: number;
+        limit: number;
+      }>(`/wallet/${playerId}/transactions?filter=${filter}&page=${page}&limit=${limit}`),
+
+    sendGift: (senderId: string, receiverId: string, amount: number, message?: string) =>
+      post<{ ok: boolean; senderBalance: number; receiverBalance: number }>(
+        "/wallet/gift",
+        { senderId, receiverId, amount, message },
+      ),
+
+    credit: (playerId: string, amount: number, type: string, description?: string) =>
+      post<{ ok: boolean; newBalance: number }>(
+        "/wallet/credit",
+        { playerId, amount, type, description },
+      ),
+  },
+
   /* ── Pi Payments ── */
   pi: {
     create: (data: { amount: number; memo: string; [key: string]: unknown }) =>

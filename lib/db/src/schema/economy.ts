@@ -79,12 +79,33 @@ export const userDailyEconomyTable = pgTable('user_daily_economy', {
   updatedAt:                timestamp('updated_at').notNull().defaultNow(),
 }, (t) => [uniqueIndex('ude_player_date_idx').on(t.playerId, t.date)]);
 
+export const walletsTable = pgTable('wallets', {
+  id:         text('id').primaryKey(),
+  playerId:   text('player_id').notNull().unique(),
+  dnBalance:  integer('dn_balance').notNull().default(0),
+  createdAt:  timestamp('created_at').notNull().defaultNow(),
+  updatedAt:  timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const walletTransactionsTable = pgTable('wallet_transactions', {
+  id:          text('id').primaryKey(),
+  playerId:    text('player_id').notNull(),
+  amount:      integer('amount').notNull(),
+  type:        text('type').notNull(),
+  description: text('description').notNull().default(''),
+  relatedId:   text('related_id'),
+  balanceAfter:integer('balance_after').notNull().default(0),
+  createdAt:   timestamp('created_at').notNull().defaultNow(),
+});
+
 export const insertCoinTxSchema      = createInsertSchema(coinTransactionsTable).omit({ createdAt: true });
 export const insertStorePurchSchema  = createInsertSchema(storePurchasesTable).omit({ createdAt: true });
 export const insertBoostSchema       = createInsertSchema(boostUsageTable).omit({ createdAt: true });
 
-export type CoinTransaction    = typeof coinTransactionsTable.$inferSelect;
-export type StorePurchase      = typeof storePurchasesTable.$inferSelect;
-export type BoostUsage         = typeof boostUsageTable.$inferSelect;
-export type Season             = typeof seasonsTable.$inferSelect;
-export type UserDailyEconomy   = typeof userDailyEconomyTable.$inferSelect;
+export type CoinTransaction         = typeof coinTransactionsTable.$inferSelect;
+export type StorePurchase           = typeof storePurchasesTable.$inferSelect;
+export type BoostUsage              = typeof boostUsageTable.$inferSelect;
+export type Season                  = typeof seasonsTable.$inferSelect;
+export type UserDailyEconomy        = typeof userDailyEconomyTable.$inferSelect;
+export type Wallet                  = typeof walletsTable.$inferSelect;
+export type WalletTransaction       = typeof walletTransactionsTable.$inferSelect;

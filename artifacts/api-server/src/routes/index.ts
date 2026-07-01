@@ -26,6 +26,7 @@ import economyStabilizerRouter from "./economy-stabilizer.js";
 import socialRouter            from "./social.js";
 import storiesRouter           from "./stories.js";
 import jobsRouter              from "./jobs.js";
+import walletRouter            from "./wallet.js";
 
 const router: IRouter = Router();
 
@@ -56,5 +57,6 @@ router.use(economyStabilizerRouter);
 router.use(socialRouter);
 router.use(storiesRouter);
 router.use(jobsRouter);
+router.use(walletRouter);
 
 export default router;

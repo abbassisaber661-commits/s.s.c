@@ -1,167 +1,261 @@
-import { useEffect, useState } from "react";
-import { useGame } from "@/contexts/GameContext";
-import { Link } from "wouter";
-import { ArrowLeft, TrendingUp, TrendingDown, Coins } from "lucide-react";
-import { motion } from "framer-motion";
-import {
-  getTransactions, getWalletStats, getTxIcon, getTxColor, DAILY_EARN_LIMIT,
-  type Transaction,
-} from "@/lib/wallet";
-import { getActiveLockTier } from "@/lib/pi-lock";
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet2, RefreshCcw, Gift } from "lucide-react";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
+
+type TxFilter = "all" | "income" | "spending";
+
+const TX_META: Record<string, { icon: string; label: string }> = {
+  gift_sent:     { icon: "🎁", label: "هدية أُرسلت" },
+  gift_received: { icon: "🎁", label: "هدية مُستلمة" },
+  reward:        { icon: "🏆", label: "مكافأة" },
+  game_reward:   { icon: "🎮", label: "مكافأة لعبة" },
+  purchase:      { icon: "🛒", label: "شراء" },
+  refund:        { icon: "💸", label: "استرداد" },
+  season_end:    { icon: "🌀", label: "نهاية الموسم" },
+};
+
+function txMeta(type: string) {
+  return TX_META[type] ?? { icon: "💰", label: type };
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString("ar-SA", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export default function Wallet() {
-  const { coins, totalCoinsEarned, totalCoinsSpent,
-    piLockTierId, piLockExpiry } = useGame();
-  const [txs, setTxs] = useState<Transaction[]>([]);
+  const [, navigate] = useLocation();
+  const [filter, setFilter] = useState<TxFilter>("all");
+  const playerId = getStoredPlayerId() ?? "";
 
-  useEffect(() => { setTxs(getTransactions()); }, []);
+  const balanceQuery = useQuery({
+    queryKey: ["wallet", "balance", playerId],
+    queryFn:  () => api.wallet.getBalance(playerId),
+    enabled:  !!playerId,
+    staleTime: 30_000,
+  });
 
-  const { totalEarned, totalSpent, todayEarned } = getWalletStats(txs);
-  const activeLock = getActiveLockTier(piLockTierId ?? null, piLockExpiry ?? null);
-  const dailyPct   = Math.min(100, Math.round((todayEarned / DAILY_EARN_LIMIT) * 100));
-  const coinBonus  = activeLock?.coinBonus ?? 0;
+  const txQuery = useQuery({
+    queryKey: ["wallet", "transactions", playerId, filter],
+    queryFn:  () => api.wallet.getTransactions(playerId, filter, 1, 30),
+    enabled:  !!playerId,
+    staleTime: 30_000,
+  });
+
+  const balance  = balanceQuery.data?.dnBalance    ?? 0;
+  const income   = balanceQuery.data?.totalIncome  ?? 0;
+  const spending = balanceQuery.data?.totalSpending ?? 0;
+  const txs      = txQuery.data?.data ?? [];
+  const isLoading = balanceQuery.isLoading;
+
+  function refetchAll() {
+    balanceQuery.refetch();
+    txQuery.refetch();
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-10">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <button className="p-1 rounded-lg hover:bg-card active:scale-95 transition-transform" onClick={() => window.history.back()}>
-          <ArrowLeft className="w-5 h-5" />
+    <div className="min-h-screen pb-28" style={{ background: "#F0F2F5" }}>
+
+      {/* ── Header ── */}
+      <div
+        className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 border-b"
+        style={{ background: "#fff", borderColor: "#E4E6EB", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}
+      >
+        <button
+          onClick={() => navigate("/profile")}
+          className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
-        <Coins className="w-5 h-5 text-yellow-400" />
-        <h1 className="text-lg font-bold flex-1">Coins Wallet</h1>
+        <Wallet2 className="w-5 h-5 text-yellow-500" />
+        <h1 className="text-base font-black text-gray-900 flex-1">محفظة Denous</h1>
+        <button
+          onClick={refetchAll}
+          className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all"
+        >
+          <RefreshCcw className="w-4 h-4 text-gray-500" />
+        </button>
       </div>
 
-      <div className="max-w-md mx-auto px-4 pt-4 space-y-4">
+      <div className="max-w-md mx-auto px-4 pt-5 space-y-4">
 
-        {/* Balance Card */}
+        {/* ── Balance Card ── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30 p-5 space-y-2"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #1877F2 0%, #0a4fa6 60%, #07357a 100%)",
+            boxShadow: "0 8px 32px rgba(24,119,242,0.35)",
+          }}
         >
-          <div className="text-xs text-yellow-400/80 uppercase tracking-wider">Current Balance</div>
-          <div className="flex items-end gap-2">
-            <span className="text-5xl font-black tabular-nums text-yellow-400">{coins}</span>
-            <span className="text-xl text-yellow-400/60 mb-1">🪙</span>
+          <div className="px-6 pt-6 pb-4">
+            <div className="text-xs font-bold tracking-widest text-white/60 uppercase mb-1">رصيدك الحالي</div>
+            {isLoading ? (
+              <div className="h-14 w-32 rounded-2xl bg-white/10 animate-pulse" />
+            ) : (
+              <div className="flex items-end gap-3">
+                <span className="text-6xl font-black text-white tabular-nums leading-none">{balance.toLocaleString("ar-SA")}</span>
+                <span className="text-2xl font-black text-white/70 mb-1">DN</span>
+              </div>
+            )}
+            <div className="mt-1 text-xs text-white/50 font-medium">Denous · العملة الرسمية</div>
           </div>
-          {coinBonus > 0 && (
-            <div className="text-xs text-yellow-300 font-semibold">
-              +{coinBonus}% bonus active (Pi Lock)
+
+          {/* Income / Spending sub-row */}
+          <div className="flex border-t border-white/10">
+            <div className="flex-1 flex items-center gap-2 px-5 py-3">
+              <TrendingUp className="w-4 h-4 text-green-300" />
+              <div>
+                <div className="text-xs text-white/50">إجمالي الدخل</div>
+                <div className="text-sm font-black text-green-300 tabular-nums">
+                  {isLoading ? "---" : `+${income.toLocaleString("ar-SA")} DN`}
+                </div>
+              </div>
             </div>
-          )}
-          <div className="flex gap-4 pt-2">
-            <Link href="/store" className="flex-1">
-              <button className="w-full py-2 rounded-xl bg-yellow-500/20 border border-yellow-500/30 text-xs font-bold text-yellow-400 hover:bg-yellow-500/30 active:scale-95 transition-all">
-                🛒 Buy Coins
-              </button>
-            </Link>
-            <Link href="/leagues" className="flex-1">
-              <button className="w-full py-2 rounded-xl bg-green-500/20 border border-green-500/30 text-xs font-bold text-green-400 hover:bg-green-500/30 active:scale-95 transition-all">
-                🎮 Earn More
-              </button>
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Stats Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-          className="grid grid-cols-3 gap-2"
-        >
-          {[
-            { label: 'Total Earned', value: totalEarned || totalCoinsEarned, icon: '↑', color: 'text-green-400' },
-            { label: 'Total Spent',  value: totalSpent  || totalCoinsSpent,  icon: '↓', color: 'text-red-400' },
-            { label: 'Today',        value: todayEarned,  icon: '📅', color: 'text-primary' },
-          ].map(s => (
-            <div key={s.label} className="rounded-2xl border border-border bg-card p-3 text-center">
-              <div className={`text-lg font-black tabular-nums ${s.color}`}>{s.value}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
+            <div className="w-px bg-white/10" />
+            <div className="flex-1 flex items-center gap-2 px-5 py-3">
+              <TrendingDown className="w-4 h-4 text-red-300" />
+              <div>
+                <div className="text-xs text-white/50">إجمالي الإنفاق</div>
+                <div className="text-sm font-black text-red-300 tabular-nums">
+                  {isLoading ? "---" : `-${spending.toLocaleString("ar-SA")} DN`}
+                </div>
+              </div>
             </div>
-          ))}
-        </motion.div>
-
-        {/* Daily earn limit */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-          className="rounded-2xl border border-border bg-card p-4 space-y-2"
-        >
-          <div className="flex justify-between text-xs">
-            <span className="text-muted-foreground">Daily earn limit</span>
-            <span className="font-semibold">{todayEarned} / {DAILY_EARN_LIMIT} 🪙</span>
           </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full ${dailyPct >= 100 ? 'bg-red-500' : 'bg-green-500'}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${dailyPct}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-            />
+        </motion.div>
+
+        {/* ── Quick Action: Send Gift ── */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          onClick={() => navigate("/send-gift")}
+          className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl active:scale-[0.98] transition-all"
+          style={{ background: "#fff", border: "1px solid #E4E6EB", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+        >
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+            style={{ background: "linear-gradient(135deg,#FFB347,#FF6B35)" }}>
+            🎁
           </div>
-          <p className="text-xs text-muted-foreground">
-            {dailyPct >= 100
-              ? '⚠️ Daily limit reached — come back tomorrow'
-              : `${DAILY_EARN_LIMIT - todayEarned} coins remaining today`}
-          </p>
-        </motion.div>
+          <div className="flex-1 text-right" dir="rtl">
+            <div className="text-sm font-bold text-gray-900">أرسل هدية</div>
+            <div className="text-xs text-gray-500">أرسل DN لأي مستخدم فوراً</div>
+          </div>
+          <Gift className="w-4 h-4 text-gray-400" />
+        </motion.button>
 
-        {/* Earn methods */}
+        {/* ── Transaction History ── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-border bg-card p-4 space-y-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-2xl overflow-hidden"
+          style={{ background: "#fff", border: "1px solid #E4E6EB", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
         >
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mb-3">How to Earn</div>
-          {[
-            { icon: '🎮', label: 'Win a match',          reward: '+10–60 🪙' },
-            { icon: '⚔️', label: 'Win PvP battle',       reward: '+66–330 🪙' },
-            { icon: '🏆', label: 'Win a tournament',     reward: '+500–1000 🪙' },
-            { icon: '📅', label: 'Daily challenges',     reward: '+25–40 🪙/day' },
-            { icon: '📋', label: 'Weekly missions',      reward: '+75–200 🪙/week' },
-            { icon: '🏅', label: 'Unlock a trophy',      reward: '+50 🪙 each' },
-            { icon: '🌀', label: 'Season-end reward',    reward: '+50–2000 🪙' },
-            { icon: '💬', label: 'Community (limited)',  reward: '+1–5 fame only' },
-          ].map(r => (
-            <div key={r.label} className="flex items-center gap-3">
-              <span className="text-base w-6 text-center">{r.icon}</span>
-              <span className="flex-1 text-sm text-muted-foreground">{r.label}</span>
-              <span className="text-xs font-bold text-yellow-400">{r.reward}</span>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Transaction history */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-          className="rounded-2xl border border-border bg-card p-4 space-y-3"
-        >
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">Recent Transactions</div>
-          {txs.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No transactions yet — start playing!
-            </p>
-          ) : (
-            txs.slice(0, 20).map((tx, i) => (
-              <motion.div key={tx.id}
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.03 }}
-                className="flex items-center gap-3"
+          {/* Filter tabs */}
+          <div className="flex border-b" style={{ borderColor: "#E4E6EB" }}>
+            {([
+              { id: "all",      label: "الكل" },
+              { id: "income",   label: "📥 الدخل" },
+              { id: "spending", label: "📤 الإنفاق" },
+            ] as { id: TxFilter; label: string }[]).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setFilter(t.id)}
+                className="flex-1 py-3 text-xs font-bold transition-all"
+                style={filter === t.id
+                  ? { color: "#1877F2", borderBottom: "2px solid #1877F2" }
+                  : { color: "#65676B", borderBottom: "2px solid transparent" }}
               >
-                <div className="w-8 h-8 rounded-xl bg-muted/50 flex items-center justify-center text-sm flex-shrink-0">
-                  {getTxIcon(tx.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{tx.label}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(tx.timestamp).toLocaleDateString()}
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* List */}
+          <div className="divide-y divide-[#F0F2F5]">
+            {txQuery.isLoading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-3">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 animate-pulse flex-shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+                    <div className="h-2.5 bg-gray-100 rounded animate-pulse w-1/2" />
                   </div>
+                  <div className="h-4 w-16 bg-gray-100 rounded animate-pulse" />
                 </div>
-                <div className={`text-sm font-black tabular-nums flex-shrink-0`}
-                  style={{ color: getTxColor(tx.amount) }}>
-                  {tx.amount > 0 ? '+' : ''}{tx.amount} 🪙
-                </div>
-              </motion.div>
-            ))
-          )}
+              ))
+            ) : txs.length === 0 ? (
+              <div className="flex flex-col items-center py-12 gap-2" dir="rtl">
+                <span className="text-4xl">💰</span>
+                <p className="text-sm font-semibold text-gray-500">لا توجد معاملات بعد</p>
+                <p className="text-xs text-gray-400">أرسل هدية أو العب لكسب DN</p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {txs.map((tx, i) => {
+                  const meta = txMeta(tx.type);
+                  const isPositive = tx.amount > 0;
+                  return (
+                    <motion.div
+                      key={tx.id}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className="flex items-center gap-3 px-4 py-3"
+                      dir="rtl"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                        style={{ background: isPositive ? "#E8F5E9" : "#FEECEC" }}
+                      >
+                        {meta.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-gray-900 truncate">
+                          {meta.label}
+                        </div>
+                        {tx.description && (
+                          <div className="text-xs text-gray-500 truncate">{tx.description}</div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-0.5">{formatDate(tx.createdAt)}</div>
+                      </div>
+                      <div
+                        className="text-sm font-black tabular-nums flex-shrink-0"
+                        style={{ color: isPositive ? "#1DB954" : "#E53935" }}
+                      >
+                        {isPositive ? "+" : ""}{tx.amount.toLocaleString("ar-SA")} DN
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            )}
+          </div>
         </motion.div>
+
+        {/* ── Info footer ── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-2xl px-5 py-4 text-center space-y-1"
+          style={{ background: "#fff", border: "1px solid #E4E6EB" }}
+          dir="rtl"
+        >
+          <div className="text-xs font-bold text-gray-700">💡 ما هو Denous (DN)؟</div>
+          <div className="text-xs text-gray-500 leading-relaxed">
+            DN هي العملة الرسمية الوحيدة في المنصة.
+            تُستخدم لإرسال الهدايا وشراء الامتيازات.
+            كل المعاملات محفوظة في الخادم فقط.
+          </div>
+        </motion.div>
+
       </div>
     </div>
   );
