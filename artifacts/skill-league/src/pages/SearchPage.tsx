@@ -93,7 +93,7 @@ export default function SearchPage() {
         className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm px-3 py-2 flex items-center gap-2"
       >
         <button
-          onClick={() => { playTap(); navigate(-1 as any); }}
+          onClick={() => { playTap(); navigate("/feed"); }}
           className="p-2 rounded-xl hover:bg-[#F5F5F7] active:scale-90 transition-all flex-shrink-0"
         >
           <ArrowLeft className="w-5 h-5 text-[#111111]" />

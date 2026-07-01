@@ -202,6 +202,17 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto min-h-screen bg-[#F5F5F7] pb-24">
 
+      {/* ── Back to Social button ── */}
+      <div className="absolute top-3 left-3 z-30">
+        <button
+          onClick={() => navigate("/feed")}
+          className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/50 transition-colors"
+          aria-label="Back to Social"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+      </div>
+
       {/* ── Settings button (owner only) ── */}
       {isOwner && (
         <div className="absolute top-3 right-3 z-30">

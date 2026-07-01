@@ -5,6 +5,7 @@ import { ArrowLeft, Send, Phone, Video, MoreVertical } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 import { getSocialLeague } from "@/lib/socialLeague";
 import { api, getStoredPlayerId, type ApiMessage } from "@/lib/apiClient";
+import { useRealtime } from "@/contexts/RealtimeContext";
 import Avatar from "@/components/Avatar";
 
 function getMsgAge(ts: number): string {
@@ -47,6 +48,8 @@ export default function ChatPage() {
   const league = getSocialLeague(myLevel);
   void league;
 
+  const { dmMessages } = useRealtime();
+
   useEffect(() => {
     if (!them) return;
     api.social.search(them, 'users').then(r => {
@@ -76,6 +79,32 @@ export default function ChatPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [myId, theirId]);
+
+  useEffect(() => {
+    if (!theirId || dmMessages.length === 0) return;
+    const latest = dmMessages[dmMessages.length - 1];
+    if (
+      latest &&
+      ((latest.fromId === theirId && latest.toId === myId) ||
+       (latest.fromId === myId && latest.toId === theirId))
+    ) {
+      const asDisplay: DisplayMessage = {
+        id: latest.id,
+        fromId: latest.fromId,
+        toId: latest.toId,
+        text: latest.content,
+        timestamp: new Date(latest.createdAt).getTime(),
+        read: false,
+      };
+      setMessages(prev => {
+        if (prev.some(m => m.id === latest.id)) return prev;
+        return [...prev, asDisplay];
+      });
+      if (latest.toId === myId) {
+        api.messages.read(latest.id).catch(() => {});
+      }
+    }
+  }, [dmMessages.length, theirId, myId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });

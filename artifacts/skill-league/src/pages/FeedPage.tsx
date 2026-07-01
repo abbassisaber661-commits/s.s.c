@@ -98,6 +98,13 @@ export default function FeedPage() {
     if (pushNotifs.length > 0) setNotifCount(c => c + 1);
   }, [pushNotifs.length]);
 
+  const { dmMessages } = useRealtime();
+  useEffect(() => {
+    if (dmMessages.length === 0) return;
+    const last = dmMessages[dmMessages.length - 1];
+    if (last && last.toId === playerId) setDmCount(c => c + 1);
+  }, [dmMessages.length]);
+
   const posts = useMemo(() => {
     return data?.pages?.flatMap((p) => p.data) ?? [];
   }, [data]);
