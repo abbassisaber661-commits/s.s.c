@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { Clapperboard, Image, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export type ActiveTab = "all" | "video" | "image" | "saved";
 
@@ -10,19 +11,21 @@ interface ProfileTabsProps {
   onTabChange: (tab: ActiveTab) => void;
 }
 
-const TABS: { id: ActiveTab; icon?: React.ElementType; label?: string }[] = [
-  { id: "all",   label: "Tout" },
-  { id: "video", icon: Clapperboard },
-  { id: "image", icon: Image },
-  { id: "saved", icon: Bookmark },
-];
-
 export default memo(function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
+  const { isRTL: rtl, t } = useTranslation();
+
+  const TABS: { id: ActiveTab; icon?: React.ElementType; label?: string }[] = [
+    { id: "all",   label: t("all") ?? "All" },
+    { id: "image", icon: Image },
+    { id: "video", icon: Clapperboard },
+    { id: "saved", icon: Bookmark },
+  ];
+
   return (
     <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm">
-      <div className="flex">
+      <div dir={rtl ? "rtl" : "ltr"} className="flex">
         {TABS.map((tab) => {
-          const Icon  = tab.icon;
+          const Icon   = tab.icon;
           const active = activeTab === tab.id;
 
           return (
