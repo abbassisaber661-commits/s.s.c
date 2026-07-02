@@ -34,49 +34,101 @@ export default function VIP() {
     setBuying(tier.id);
     trackFeatureUse(playerId, 'vip_buy_attempt', { tier: tier.id, price: tier.piCost });
 
-    try {
-      // Step 1: Create payment record on our backend
-      const { paymentId } = await api.pi.create({
-        playerId,
-        amount:   tier.piCost,
-        memo:     `SkillLeague VIP — ${tier.name}`,
-        metadata: { tierId: tier.id, productId: `vip_${tier.id}` },
-      });
+    const PiSDK = (window as any).Pi;
 
-      const PiSDK = (window as any).Pi;
+    console.debug('[VIP] handleBuy called', { tier: tier.id, hasPiSDK: !!PiSDK, testMode });
 
-      if (PiSDK && !testMode) {
-        // Real Pi Network payment
-        PiSDK.createPayment({
+    if (PiSDK && !testMode) {
+      // Pi.createPayment() MUST be called synchronously in the user-gesture
+      // handler — no await before this line or Pi Browser will block the wallet.
+      let backendPaymentId: string | null = null;
+
+      console.debug('[VIP] Calling Pi.createPayment() synchronously…');
+
+      try {
+        PiSDK.createPayment(
+          {
+            amount:   tier.piCost,
+            memo:     `SkillLeague VIP — ${tier.name}`,
+            metadata: { tierId: tier.id, productId: `vip_${tier.id}` },
+          },
+          {
+            onReadyForServerApproval: async (piPaymentId: string) => {
+              console.debug('[VIP] onReadyForServerApproval', piPaymentId);
+              try {
+                const { paymentId } = await api.pi.create({
+                  playerId,
+                  amount:   tier.piCost,
+                  memo:     `SkillLeague VIP — ${tier.name}`,
+                  metadata: { tierId: tier.id, productId: `vip_${tier.id}` },
+                });
+                backendPaymentId = paymentId;
+                console.debug('[VIP] Backend payment created', paymentId, '— approving…');
+                await api.pi.approve(paymentId, piPaymentId).catch((e: unknown) => {
+                  console.warn('[VIP] approve failed (non-fatal)', e);
+                });
+                console.debug('[VIP] Payment approved');
+              } catch (e) {
+                console.error('[VIP] onReadyForServerApproval error', e);
+              }
+            },
+
+            onReadyForServerCompletion: async (piPaymentId: string, piTxId: string) => {
+              console.debug('[VIP] onReadyForServerCompletion', piPaymentId, piTxId);
+              try {
+                if (!backendPaymentId) {
+                  console.error('[VIP] backendPaymentId missing — cannot complete');
+                  showToast(language === 'ar' ? '⚠️ خطأ في إتمام الدفع' : '⚠️ Payment completion failed', false);
+                  setBuying(null);
+                  return;
+                }
+                await api.pi.complete(backendPaymentId, piTxId);
+                console.debug('[VIP] Payment completed — activating VIP');
+                finishBuy(tier);
+              } catch (e) {
+                console.error('[VIP] onReadyForServerCompletion error', e);
+                showToast(language === 'ar' ? '⚠️ خطأ في إتمام الدفع' : '⚠️ Payment completion failed', false);
+                setBuying(null);
+              }
+            },
+
+            onCancel: (piPaymentId: string) => {
+              console.debug('[VIP] Payment cancelled by user', piPaymentId);
+              setBuying(null);
+            },
+
+            onError: (error: unknown, payment: unknown) => {
+              console.error('[VIP] Pi payment error', error, payment);
+              showToast(language === 'ar' ? '⚠️ خطأ في الدفع' : '⚠️ Payment error', false);
+              setBuying(null);
+            },
+          },
+        );
+        console.debug('[VIP] Pi.createPayment() call returned — waiting for callbacks…');
+      } catch (e) {
+        console.error('[VIP] Pi.createPayment() threw synchronously', e);
+        showToast(language === 'ar' ? '⚠️ حدث خطأ. حاول مجددًا' : '⚠️ Error. Please try again.', false);
+        setBuying(null);
+      }
+    } else {
+      // Test mode / no Pi SDK — approve and complete immediately
+      console.debug('[VIP] Test mode — simulating payment flow');
+      try {
+        const { paymentId } = await api.pi.create({
+          playerId,
           amount:   tier.piCost,
           memo:     `SkillLeague VIP — ${tier.name}`,
-          metadata: { tierId: tier.id, paymentId },
-        }, {
-          onReadyForServerApproval: async (piPaymentId: string) => {
-            await api.pi.approve(paymentId, piPaymentId).catch(() => {});
-          },
-          onReadyForServerCompletion: async (piPaymentId: string, piTxId: string) => {
-            try {
-              await api.pi.complete(paymentId, piTxId);
-              finishBuy(tier);
-            } catch {
-              showToast(language === 'ar' ? '⚠️ خطأ في إتمام الدفع' : '⚠️ Payment completion failed', false);
-              setBuying(null);
-            }
-          },
-          onCancel: () => setBuying(null),
-          onError:  () => { showToast(language === 'ar' ? '⚠️ خطأ في الدفع' : '⚠️ Payment error', false); setBuying(null); },
+          metadata: { tierId: tier.id, productId: `vip_${tier.id}` },
         });
-      } else {
-        // Test mode / no Pi SDK — approve and complete immediately
         await api.pi.approve(paymentId, `test_pi_${Date.now()}`);
         await new Promise(r => setTimeout(r, 800));
         await api.pi.complete(paymentId, `test_tx_${Date.now()}`);
         finishBuy(tier);
+      } catch (e) {
+        console.error('[VIP] Test mode payment error', e);
+        showToast(language === 'ar' ? '⚠️ حدث خطأ. حاول مجددًا' : '⚠️ Error. Please try again.', false);
+        setBuying(null);
       }
-    } catch {
-      showToast(language === 'ar' ? '⚠️ حدث خطأ. حاول مجددًا' : '⚠️ Error. Please try again.', false);
-      setBuying(null);
     }
   }
 
