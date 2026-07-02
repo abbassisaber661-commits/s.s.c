@@ -5,8 +5,6 @@ import { Wifi, Flame, TrendingUp, Zap, Sparkles } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 import { useRealtime } from "@/contexts/RealtimeContext";
 import { getSocket } from "@/lib/socket";
-import GuestBanner from "@/components/GuestBanner";
-
 import ProfileBar from "@/components/profile/ProfileBar";
 import CreatePost from "@/components/social/CreatePost";
 import FeaturedPlayers from "@/components/social/FeaturedPlayers";
@@ -48,7 +46,7 @@ function mapApiPost(p: any, likedIds: string[]): CommunityPost {
 }
 
 export default function Community() {
-  const { username, level, fame, lastPostTime, setLastPostTime, addFame, isGuest } = useGame();
+  const { username, level, fame, lastPostTime, setLastPostTime, addFame } = useGame();
   const { subscribeCommunity, connected } = useRealtime();
   const usernameRef = useRef(username);
   useEffect(() => { usernameRef.current = username; }, [username]);
@@ -218,12 +216,6 @@ export default function Community() {
 
       {/* ── Body ── */}
       <div className="max-w-md mx-auto pt-4 space-y-5">
-
-        {isGuest && (
-          <div className="px-4">
-            <GuestBanner />
-          </div>
-        )}
 
         <CreatePost onPost={handleNewPost} />
         <FeaturedPlayers />

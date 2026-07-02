@@ -548,6 +548,40 @@ export declare const playersTable: import("drizzle-orm/pg-core").PgTableWithColu
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        verified: import("drizzle-orm/pg-core").PgColumn<{
+            name: "verified";
+            tableName: "players";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        suspended: import("drizzle-orm/pg-core").PgColumn<{
+            name: "suspended";
+            tableName: "players";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         verificationStatus: import("drizzle-orm/pg-core").PgColumn<{
             name: "verification_status";
             tableName: "players";
@@ -561,6 +595,23 @@ export declare const playersTable: import("drizzle-orm/pg-core").PgTableWithColu
             isAutoincrement: false;
             hasRuntimeDefault: false;
             enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        verificationRequestedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "verification_requested_at";
+            tableName: "players";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
             baseColumn: never;
             identity: undefined;
             generated: undefined;
@@ -714,7 +765,10 @@ export declare const insertPlayerSchema: z.ZodObject<{
     dailyChallenges: z.ZodOptional<z.ZodType<Record<string, boolean>, Record<string, boolean>, z.core.$ZodTypeInternals<Record<string, boolean>, Record<string, boolean>>>>;
     bio: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     cover: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    verified: z.ZodOptional<z.ZodBoolean>;
+    suspended: z.ZodOptional<z.ZodBoolean>;
     verificationStatus: z.ZodOptional<z.ZodString>;
+    verificationRequestedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     piUid: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     language: z.ZodOptional<z.ZodString>;
     passwordHash: z.ZodOptional<z.ZodNullable<z.ZodString>>;

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,7 @@ import { useProfileData } from "@/hooks/useProfileData";
 import { usePosts, useSavedPosts } from "@/hooks/useCommunity";
 import { useFollowUser } from "@/hooks/useFollowUser";
 import { useGame } from "@/contexts/GameContext";
+import GuestPaywall from "@/components/profile/GuestPaywall";
 
 import ProfileCoverHeader    from "@/components/profile/ProfileCoverHeader";
 import ProfileSocialStats    from "@/components/profile/ProfileSocialStats";
@@ -29,6 +30,7 @@ import { CommentsSheet }     from "@/components/social/CommentsSheet";
 
 import CreatorDashboard from "@/components/profile/CreatorDashboard";
 import { useCreatorStats } from "@/hooks/useCreatorStats";
+import VerificationRequestButton from "@/components/profile/VerificationRequestButton";
 
 import type { SortOption } from "@/components/profile/ProfileSortFilter";
 import type { CommunityPost } from "@/shared/community";
@@ -47,8 +49,27 @@ export default function ProfilePage() {
   const [, navigate] = useLocation();
 
   const [, routeParams] = useRoute("/profile/:userId?");
-  const { authUser } = useGame();
+  const { authUser, isGuest } = useGame();
   const userId = routeParams?.userId ?? authUser?.uid ?? "";
+
+  // ── Guest paywall ──────────────────────────────────────────────────────────
+  const [paywallVisible, setPaywallVisible] = useState(false);
+
+  useEffect(() => {
+    if (!isGuest) return;
+    // Show the paywall shortly after the profile renders — premium UX delay
+    const t = setTimeout(() => setPaywallVisible(true), 700);
+    return () => clearTimeout(t);
+  }, [isGuest]);
+
+  /** Re-show the paywall and block the action for guest users. */
+  const guardGuest = useCallback(
+    (action: () => void) => {
+      if (isGuest) { setPaywallVisible(true); return; }
+      action();
+    },
+    [isGuest],
+  );
 
   // ── Profile metadata (player info, followers, following) ──
   const {
@@ -87,9 +108,10 @@ export default function ProfilePage() {
 
   const handleFollowToggle = useCallback(async () => {
     if (!profile) return;
+    if (isGuest) { setPaywallVisible(true); return; }
     await followMutation.mutate(profile.isFollowing ? "unfollow" : "follow");
     refetch();
-  }, [profile, followMutation, refetch]);
+  }, [profile, followMutation, refetch, isGuest]);
 
   const handleSaveProfile = useCallback(async (data: {
     username: string;
@@ -127,6 +149,7 @@ export default function ProfilePage() {
   const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
+    if (isGuest) { setPaywallVisible(true); e.target.value = ""; return; }
     const pid = getStoredPlayerId() ?? userId;
     if (!pid) { toast.error("Not logged in"); return; }
     try {
@@ -143,6 +166,7 @@ export default function ProfilePage() {
   const handleCoverUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
+    if (isGuest) { setPaywallVisible(true); e.target.value = ""; return; }
     const pid = getStoredPlayerId() ?? userId;
     if (!pid) { toast.error("Not logged in"); return; }
     try {
@@ -251,8 +275,14 @@ export default function ProfilePage() {
         <ProfileCoverHeader
           profile={profile}
           isOwner={isOwner}
-          onAvatarClick={() => isOwner && avatarInputRef.current?.click()}
-          onCoverClick={() => isOwner && coverInputRef.current?.click()}
+          onAvatarClick={() => {
+            if (isGuest) { setPaywallVisible(true); return; }
+            isOwner && avatarInputRef.current?.click();
+          }}
+          onCoverClick={() => {
+            if (isGuest) { setPaywallVisible(true); return; }
+            isOwner && coverInputRef.current?.click();
+          }}
         />
       </div>
 
@@ -305,12 +335,27 @@ export default function ProfilePage() {
           isOwner={isOwner}
           isFollowing={profile.isFollowing ?? false}
           isFollowLoading={followMutation.isPending}
-          onEditProfile={() => setIsEditOpen(true)}
+          onEditProfile={() => guardGuest(() => setIsEditOpen(true))}
           onShareProfile={() => setIsShareOpen(true)}
           onFollowToggle={handleFollowToggle}
-          onMessage={() => navigate(`/chat/${encodeURIComponent(profile.username)}`)}
+          onMessage={() => guardGuest(() => navigate(`/chat/${encodeURIComponent(profile.username)}`))}
         />
       </motion.div>
+
+      {/* ── Verification Request (owner only, not yet verified) ── */}
+      {isOwner && profile.verification !== "verified" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          className="mt-3 px-4"
+        >
+          <VerificationRequestButton
+            verificationStatus={profile.verificationStatus}
+            onRequested={refetch}
+          />
+        </motion.div>
+      )}
 
       {/* ── League / Level card ── */}
       {(profile.league || profile.level) && (
@@ -372,7 +417,8 @@ export default function ProfilePage() {
                       post={post}
                       currentPlayerId={currentPlayerId}
                       commentCount={commentCounts[post.id] ?? post.replyCount ?? 0}
-                      onCommentClick={(postId) => setOpenCommentPostId(postId)}
+                      onCommentClick={(postId) => guardGuest(() => setOpenCommentPostId(postId))}
+                      onGuestInteract={isGuest ? () => setPaywallVisible(true) : undefined}
                     />
                   ))}
                   {hasNextPage && activeTab === "all" && (
@@ -439,6 +485,12 @@ export default function ProfilePage() {
           }}
         />
       )}
+
+      {/* ── Guest Paywall ─────────────────────────────────────────────────── */}
+      <GuestPaywall
+        visible={paywallVisible}
+        onDismiss={() => setPaywallVisible(false)}
+      />
     </div>
   );
 }

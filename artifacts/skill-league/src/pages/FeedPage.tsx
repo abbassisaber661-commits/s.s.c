@@ -13,7 +13,6 @@ import { CreatePostModal, type CreatePostData } from "@/components/social/Create
 import StoryBar from "@/components/social/StoryBar";
 import FeaturedPlayers from "@/components/social/FeaturedPlayers";
 import TrendingSection from "@/components/social/TrendingSection";
-import GuestBanner from "@/components/GuestBanner";
 import Avatar from "@/components/Avatar";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 
@@ -59,7 +58,7 @@ const CreatePostTrigger = ({ username, onOpen }: { username: string; onOpen: () 
 );
 
 export default function FeedPage() {
-  const { username, isGuest, authUser } = useGame() as any;
+  const { username, authUser } = useGame() as any;
   const { connected, pushNotifs } = useRealtime();
   const [, navigate] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -212,8 +211,6 @@ export default function FeedPage() {
 
       {/* ── Body ── */}
       <div className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
-
-        {isGuest && <GuestBanner />}
 
         {/* Stories */}
         <StoryBar />

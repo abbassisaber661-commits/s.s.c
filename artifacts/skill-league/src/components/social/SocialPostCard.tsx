@@ -304,6 +304,8 @@ interface Props {
   commentCount?: number;
   onCommentClick?: (postId: string) => void;
   onDelete?: (postId: string) => void;
+  /** Called instead of the real action when the viewer is a guest. */
+  onGuestInteract?: () => void;
   className?: string;
 }
 
@@ -315,6 +317,7 @@ const SocialPostCard = memo(function SocialPostCard({
   commentCount = 0,
   onCommentClick,
   onDelete,
+  onGuestInteract,
   className,
 }: Props) {
   const [, navigate] = useLocation();
@@ -344,11 +347,12 @@ const SocialPostCard = memo(function SocialPostCard({
   }, [post.likedByMe, post.likes]);
 
   const handleLike = useCallback(() => {
+    if (onGuestInteract) { onGuestInteract(); return; }
     const next = !liked;
     setLiked(next);
     setLikes((l) => l + (next ? 1 : -1));
     likePost({ postId: post.id, like: next });
-  }, [liked, post.id, likePost]);
+  }, [liked, post.id, likePost, onGuestInteract]);
 
   // ── save ──
   const [saved, setSaved] = useState(post.savedByMe ?? false);
@@ -359,6 +363,7 @@ const SocialPostCard = memo(function SocialPostCard({
 
   const handleSave = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation();
+    if (onGuestInteract) { onGuestInteract(); return; }
     const next = !saved;
     setSaved(next);
     savePost(
@@ -478,7 +483,11 @@ const SocialPostCard = memo(function SocialPostCard({
               <GiftButton
                 visible={scrollPaused}
                 rtl={rtl}
-                onClick={(e) => { e.stopPropagation(); setGiftOpen(true); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onGuestInteract) { onGuestInteract(); return; }
+                  setGiftOpen(true);
+                }}
               />
             )}
           </div>
@@ -575,7 +584,10 @@ const SocialPostCard = memo(function SocialPostCard({
 
         {/* COMMENT */}
         <ActionBtn
-          onClick={() => onCommentClick?.(post.id)}
+          onClick={() => {
+            if (onGuestInteract) { onGuestInteract(); return; }
+            onCommentClick?.(post.id);
+          }}
           icon={<MessageCircle size={18} />}
           label={commentLabel}
           count={commentCount > 0 ? commentCount : undefined}
@@ -610,7 +622,11 @@ const SocialPostCard = memo(function SocialPostCard({
         {/* GIFT */}
         {!isOwner && (
           <ActionBtn
-            onClick={(e) => { e.stopPropagation(); setGiftOpen(true); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onGuestInteract) { onGuestInteract(); return; }
+              setGiftOpen(true);
+            }}
             active={false}
             icon={
               <Gift

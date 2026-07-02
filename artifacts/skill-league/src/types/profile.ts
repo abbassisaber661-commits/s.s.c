@@ -151,6 +151,7 @@ export interface ProfileData {
   isFriend?: boolean;
   isOwner?: boolean;
   verification?: VerificationTier;
+  verificationStatus?: string;
   achievements?: Achievement[];
   badges?: Badge[];
   activityEvents?: ActivityEvent[];

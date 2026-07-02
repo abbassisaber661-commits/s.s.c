@@ -20501,27 +20501,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router33;
+    module.exports = Router35;
     module.exports.Route = Route;
-    function Router33(options) {
-      if (!(this instanceof Router33)) {
-        return new Router33(options);
+    function Router35(options) {
+      if (!(this instanceof Router35)) {
+        return new Router35(options);
       }
       const opts = options || {};
-      function router33(req, res, next) {
-        router33.handle(req, res, next);
+      function router35(req, res, next) {
+        router35.handle(req, res, next);
       }
-      Object.setPrototypeOf(router33, this);
-      router33.caseSensitive = opts.caseSensitive;
-      router33.mergeParams = opts.mergeParams;
-      router33.params = {};
-      router33.strict = opts.strict;
-      router33.stack = [];
-      return router33;
+      Object.setPrototypeOf(router35, this);
+      router35.caseSensitive = opts.caseSensitive;
+      router35.mergeParams = opts.mergeParams;
+      router35.params = {};
+      router35.strict = opts.strict;
+      router35.stack = [];
+      return router35;
     }
-    Router33.prototype = function() {
+    Router35.prototype = function() {
     };
-    Router33.prototype.param = function param2(name2, fn) {
+    Router35.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20541,7 +20541,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router33.prototype.handle = function handle(req, res, callback) {
+    Router35.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20668,7 +20668,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router33.prototype.use = function use(handler) {
+    Router35.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -20701,7 +20701,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router33.prototype.route = function route(path) {
+    Router35.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -20716,7 +20716,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router33.prototype[method] = function(path) {
+      Router35.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20899,13 +20899,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve6 = __require("node:path").resolve;
     var once = require_once();
-    var Router33 = require_router();
+    var Router35 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router33 = null;
+      var router35 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20914,13 +20914,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router33 === null) {
-            router33 = new Router33({
+          if (router35 === null) {
+            router35 = new Router35({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router33;
+          return router35;
         }
       });
     };
@@ -20991,15 +20991,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router33 = this.router;
+      var router35 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router33.use(path, fn2);
+          return router35.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router33.use(path, function mounted_app(req, res, next) {
+        router35.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23572,7 +23572,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router33 = require_router();
+    var Router35 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23594,8 +23594,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router33.Route;
-    exports.Router = Router33;
+    exports.Route = Router35.Route;
+    exports.Router = Router35;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -54120,7 +54120,10 @@ var init_players = __esm({
       dailyChallenges: jsonb("daily_challenges").$type().notNull().default({}),
       bio: text("bio"),
       cover: text("cover"),
-      verificationStatus: text("verification_status").notNull().default("unverified"),
+      verified: boolean("verified").notNull().default(false),
+      suspended: boolean("suspended").notNull().default(false),
+      verificationStatus: text("verification_status").notNull().default("none"),
+      verificationRequestedAt: timestamp("verification_requested_at"),
       piUid: text("pi_uid"),
       language: text("language").notNull().default("en"),
       passwordHash: text("password_hash"),
@@ -80731,12 +80734,12 @@ var init_notificationService = __esm({
 import { createServer } from "http";
 
 // src/app.ts
-var import_express32 = __toESM(require_express2(), 1);
+var import_express34 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express31 = __toESM(require_express2(), 1);
+var import_express33 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -93146,7 +93149,9 @@ router25.get("/social/profile/:id", async (req, res) => {
       bio: playersTable.bio,
       cover: playersTable.cover,
       createdAt: playersTable.createdAt,
-      lastActiveAt: playersTable.lastActiveAt
+      lastActiveAt: playersTable.lastActiveAt,
+      verified: playersTable.verified,
+      verificationStatus: playersTable.verificationStatus
     }).from(playersTable).where(eq(playersTable.id, id)).limit(1);
     if (!player) {
       res.status(404).json({ error: "Player not found" });
@@ -93180,7 +93185,9 @@ router25.get("/social/profile/:id", async (req, res) => {
         language: player.language ?? "en",
         avatar: player.avatar ?? null,
         bio: player.bio ?? null,
-        cover: player.cover ?? null
+        cover: player.cover ?? null,
+        verified: player.verified ?? false,
+        verificationStatus: player.verificationStatus ?? "none"
       },
       followers: followersCount,
       following: followingCount,
@@ -94017,43 +94024,245 @@ router30.get("/trending/posts", async (req, res) => {
 });
 var gift_leaderboard_default = router30;
 
-// src/routes/index.ts
+// src/routes/verification.ts
+var import_express31 = __toESM(require_express2(), 1);
+init_src();
+init_src();
+init_drizzle_orm();
 var router31 = (0, import_express31.Router)();
-router31.use(health_default);
-router31.use(auth_default);
-router31.use(pi_auth_default);
-router31.use(arenas_default);
-router31.use(players_default);
-router31.use(matches_default);
-router31.use(community_default);
-router31.use(economy_default);
-router31.use(notifications_default);
-router31.use(messages_default);
-router31.use(analytics_default);
-router31.use(followers_default);
-router31.use(marketplace_default);
-router31.use(security_default);
-router31.use(pi_payments_default);
-router31.use(beta_default);
-router31.use(monitor_default);
-router31.use(release_default);
-router31.use(league_system_default);
-router31.use(game_layer_default);
-router31.use(daily_economy_default);
-router31.use(audit_default);
-router31.use(economy_balance_default);
-router31.use(economy_stabilizer_default);
-router31.use(social_default);
-router31.use(stories_default);
-router31.use(jobs_default);
-router31.use(wallet_default);
-router31.use(gift_ledger_default);
-router31.use(gift_leaderboard_default);
-var routes_default = router31;
+router31.post("/verification/request", requireAuth, async (req, res) => {
+  const playerId = req.auth.playerId;
+  try {
+    const [player] = await db.select({ id: playersTable.id, verificationStatus: playersTable.verificationStatus }).from(playersTable).where(eq(playersTable.id, playerId));
+    if (!player) {
+      res.status(404).json({ error: "player_not_found" });
+      return;
+    }
+    if (player.verificationStatus === "pending") {
+      res.status(400).json({ error: "already_pending" });
+      return;
+    }
+    if (player.verificationStatus === "approved") {
+      res.status(400).json({ error: "already_approved" });
+      return;
+    }
+    await db.update(playersTable).set({ verificationStatus: "pending", verificationRequestedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, playerId));
+    res.json({ ok: true, status: "pending" });
+  } catch (err) {
+    req.log.error({ err }, "verification request error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router31.get("/verification/status/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const [player] = await db.select({
+      id: playersTable.id,
+      username: playersTable.username,
+      verified: playersTable.verified,
+      verificationStatus: playersTable.verificationStatus
+    }).from(playersTable).where(eq(playersTable.id, userId));
+    if (!player) {
+      res.status(404).json({ error: "not_found" });
+      return;
+    }
+    res.json(player);
+  } catch (err) {
+    req.log.error({ err }, "verification status error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router31.get("/verification/pending", requireAdmin, async (req, res) => {
+  try {
+    const pending = await db.select({
+      id: playersTable.id,
+      username: playersTable.username,
+      avatar: playersTable.avatar,
+      level: playersTable.level,
+      matchesPlayed: playersTable.matchesPlayed,
+      verificationStatus: playersTable.verificationStatus,
+      verificationRequestedAt: playersTable.verificationRequestedAt,
+      createdAt: playersTable.createdAt
+    }).from(playersTable).where(eq(playersTable.verificationStatus, "pending"));
+    res.json(pending);
+  } catch (err) {
+    req.log.error({ err }, "verification pending error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router31.patch("/verification/:userId/approve", requireAdmin, async (req, res) => {
+  const userId = String(req.params.userId);
+  try {
+    const [existing] = await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, userId));
+    if (!existing) {
+      res.status(404).json({ error: "player_not_found" });
+      return;
+    }
+    await db.update(playersTable).set({ verified: true, verificationStatus: "approved" }).where(eq(playersTable.id, userId));
+    res.json({ ok: true, userId, status: "approved" });
+  } catch (err) {
+    req.log.error({ err }, "verification approve error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router31.patch("/verification/:userId/reject", requireAdmin, async (req, res) => {
+  const userId = String(req.params.userId);
+  try {
+    const [existing] = await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, userId));
+    if (!existing) {
+      res.status(404).json({ error: "player_not_found" });
+      return;
+    }
+    await db.update(playersTable).set({ verified: false, verificationStatus: "rejected" }).where(eq(playersTable.id, userId));
+    res.json({ ok: true, userId, status: "rejected" });
+  } catch (err) {
+    req.log.error({ err }, "verification reject error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+var verification_default = router31;
+
+// src/routes/owner-admin.ts
+var import_express32 = __toESM(require_express2(), 1);
+init_src();
+init_src();
+init_drizzle_orm();
+var router32 = (0, import_express32.Router)();
+router32.get("/owner/overview", requireAdmin, async (req, res) => {
+  try {
+    const [stats] = await db.execute(`
+      SELECT
+        (SELECT COUNT(*)                FROM players)                                                    AS total_players,
+        (SELECT COUNT(*)                FROM players WHERE last_active_at > NOW() - INTERVAL '7 days')  AS active_7d,
+        (SELECT COUNT(*)                FROM players WHERE last_active_at > NOW() - INTERVAL '24 hours')AS active_24h,
+        (SELECT COUNT(*)                FROM players WHERE verified = true)                             AS verified_players,
+        (SELECT COUNT(*)                FROM players WHERE verification_status = 'pending')             AS pending_verifications,
+        (SELECT COUNT(*)                FROM players WHERE suspended = true)                            AS suspended_players,
+        (SELECT COUNT(*)                FROM players WHERE created_at > NOW() - INTERVAL '24 hours')   AS new_players_24h,
+        (SELECT COUNT(*)                FROM pvp_matches  WHERE created_at > NOW() - INTERVAL '24 hours') AS matches_24h,
+        (SELECT COALESCE(COUNT(*),0)    FROM wallet_transactions WHERE type = 'gift')                  AS total_gifts,
+        (SELECT COALESCE(SUM(ABS(amount)),0) FROM wallet_transactions)                                 AS total_dn_volume,
+        (SELECT COUNT(*)                FROM suspicious_activity WHERE resolved = FALSE)               AS open_flags
+    `);
+    res.json(stats.rows?.[0] ?? {});
+  } catch (err) {
+    req.log.error({ err }, "owner overview error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router32.get("/owner/users", requireAdmin, async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+    const search = req.query.search?.trim() ?? "";
+    const offset = (page - 1) * limit;
+    const base = db.select({
+      id: playersTable.id,
+      username: playersTable.username,
+      avatar: playersTable.avatar,
+      level: playersTable.level,
+      matchesPlayed: playersTable.matchesPlayed,
+      verified: playersTable.verified,
+      verificationStatus: playersTable.verificationStatus,
+      suspended: playersTable.suspended,
+      createdAt: playersTable.createdAt,
+      lastActiveAt: playersTable.lastActiveAt
+    }).from(playersTable);
+    const rows = search ? await base.where(ilike(playersTable.username, `%${search}%`)).orderBy(desc(playersTable.createdAt)).limit(limit).offset(offset) : await base.orderBy(desc(playersTable.createdAt)).limit(limit).offset(offset);
+    const [totalRow] = search ? await db.select({ cnt: count() }).from(playersTable).where(ilike(playersTable.username, `%${search}%`)) : await db.select({ cnt: count() }).from(playersTable);
+    res.json({ users: rows, total: totalRow?.cnt ?? 0, page, limit });
+  } catch (err) {
+    req.log.error({ err }, "owner users error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router32.patch("/owner/users/:userId/force-verify", requireAdmin, async (req, res) => {
+  const userId = String(req.params.userId);
+  try {
+    const [existing] = await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, userId));
+    if (!existing) {
+      res.status(404).json({ error: "player_not_found" });
+      return;
+    }
+    await db.update(playersTable).set({ verified: true, verificationStatus: "approved" }).where(eq(playersTable.id, userId));
+    res.json({ ok: true, userId, verified: true, verificationStatus: "approved" });
+  } catch (err) {
+    req.log.error({ err }, "force-verify error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router32.patch("/owner/users/:userId/remove-verify", requireAdmin, async (req, res) => {
+  const userId = String(req.params.userId);
+  try {
+    const [existing] = await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, userId));
+    if (!existing) {
+      res.status(404).json({ error: "player_not_found" });
+      return;
+    }
+    await db.update(playersTable).set({ verified: false, verificationStatus: "none" }).where(eq(playersTable.id, userId));
+    res.json({ ok: true, userId, verified: false, verificationStatus: "none" });
+  } catch (err) {
+    req.log.error({ err }, "remove-verify error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router32.patch("/owner/users/:userId/suspend", requireAdmin, async (req, res) => {
+  const userId = String(req.params.userId);
+  try {
+    const [existing] = await db.select({ id: playersTable.id, suspended: playersTable.suspended }).from(playersTable).where(eq(playersTable.id, userId));
+    if (!existing) {
+      res.status(404).json({ error: "player_not_found" });
+      return;
+    }
+    const newSuspended = !existing.suspended;
+    await db.update(playersTable).set({ suspended: newSuspended }).where(eq(playersTable.id, userId));
+    res.json({ ok: true, userId, suspended: newSuspended });
+  } catch (err) {
+    req.log.error({ err }, "suspend error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+var owner_admin_default = router32;
+
+// src/routes/index.ts
+var router33 = (0, import_express33.Router)();
+router33.use(health_default);
+router33.use(auth_default);
+router33.use(pi_auth_default);
+router33.use(arenas_default);
+router33.use(players_default);
+router33.use(matches_default);
+router33.use(community_default);
+router33.use(economy_default);
+router33.use(notifications_default);
+router33.use(messages_default);
+router33.use(analytics_default);
+router33.use(followers_default);
+router33.use(marketplace_default);
+router33.use(security_default);
+router33.use(pi_payments_default);
+router33.use(beta_default);
+router33.use(monitor_default);
+router33.use(release_default);
+router33.use(league_system_default);
+router33.use(game_layer_default);
+router33.use(daily_economy_default);
+router33.use(audit_default);
+router33.use(economy_balance_default);
+router33.use(economy_stabilizer_default);
+router33.use(social_default);
+router33.use(stories_default);
+router33.use(jobs_default);
+router33.use(wallet_default);
+router33.use(gift_ledger_default);
+router33.use(gift_leaderboard_default);
+router33.use(verification_default);
+router33.use(owner_admin_default);
+var routes_default = router33;
 
 // src/app.ts
 init_logger2();
-var app = (0, import_express32.default)();
+var app = (0, import_express34.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -94074,8 +94283,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express32.default.json({ limit: "10mb" }));
-app.use(import_express32.default.urlencoded({ extended: true, limit: "10mb" }));
+app.use(import_express34.default.json({ limit: "10mb" }));
+app.use(import_express34.default.urlencoded({ extended: true, limit: "10mb" }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();
@@ -94098,8 +94307,8 @@ app.use("/api", routes_default);
 var app_default = app;
 
 // src/routes/profile.ts
-var import_express33 = __toESM(require_express2(), 1);
-var router32 = (0, import_express33.Router)();
+var import_express35 = __toESM(require_express2(), 1);
+var router34 = (0, import_express35.Router)();
 var profile = {
   id: "1",
   username: "user123",
@@ -94109,7 +94318,7 @@ var profile = {
   location: "Tunisia",
   website: "https://example.com"
 };
-router32.get("/", (req, res) => {
+router34.get("/", (req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -94123,7 +94332,7 @@ router32.get("/", (req, res) => {
     });
   }
 });
-router32.put("/", (req, res) => {
+router34.put("/", (req, res) => {
   try {
     const { username, bio, avatar, fullName, location, website } = req.body;
     profile = {
@@ -94148,7 +94357,7 @@ router32.put("/", (req, res) => {
     });
   }
 });
-var profile_default = router32;
+var profile_default = router34;
 
 // src/index.ts
 init_socket_manager();

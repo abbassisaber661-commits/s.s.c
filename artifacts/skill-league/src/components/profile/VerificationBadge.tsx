@@ -10,7 +10,6 @@ import {
   Brush,
   Globe,
   UserCog,
-  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { VerificationTier } from "@/types/profile";
@@ -19,77 +18,94 @@ interface BadgeConfig {
   icon: React.ElementType;
   color: string;
   bg: string;
+  glowColor: string;
   label: string;
   description: string;
+  isPrimary?: boolean;
 }
 
 const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
   verified: {
     icon: BadgeCheck,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
+    color: "text-white",
+    bg: "bg-blue-500",
+    glowColor: "rgba(59,130,246,0.7)",
     label: "Verified",
     description: "This account has been verified by SkillLeague.",
+    isPrimary: true,
   },
   official: {
     icon: Globe,
-    color: "text-sky-500",
-    bg: "bg-sky-500/10",
+    color: "text-white",
+    bg: "bg-sky-500",
+    glowColor: "rgba(14,165,233,0.6)",
     label: "Official",
     description: "This is an official SkillLeague account.",
+    isPrimary: true,
   },
   premium: {
     icon: Crown,
-    color: "text-yellow-400",
-    bg: "bg-yellow-400/10",
+    color: "text-white",
+    bg: "bg-yellow-400",
+    glowColor: "rgba(250,204,21,0.6)",
     label: "Premium",
     description: "This player has an active Premium subscription.",
   },
   partner: {
     icon: Star,
-    color: "text-purple-500",
-    bg: "bg-purple-500/10",
+    color: "text-white",
+    bg: "bg-purple-500",
+    glowColor: "rgba(168,85,247,0.6)",
     label: "Partner",
     description: "Official SkillLeague content partner.",
   },
   creator: {
     icon: Brush,
-    color: "text-pink-500",
-    bg: "bg-pink-500/10",
+    color: "text-white",
+    bg: "bg-pink-500",
+    glowColor: "rgba(236,72,153,0.6)",
     label: "Creator",
     description: "A recognized content creator on the platform.",
   },
   developer: {
     icon: Code2,
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
+    color: "text-white",
+    bg: "bg-emerald-500",
+    glowColor: "rgba(16,185,129,0.6)",
     label: "Developer",
     description: "A member of the SkillLeague development team.",
   },
   moderator: {
     icon: UserCog,
-    color: "text-orange-500",
-    bg: "bg-orange-500/10",
+    color: "text-white",
+    bg: "bg-orange-500",
+    glowColor: "rgba(249,115,22,0.6)",
     label: "Moderator",
     description: "A community moderator helping keep the platform safe.",
   },
   ambassador: {
     icon: Megaphone,
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10",
+    color: "text-white",
+    bg: "bg-indigo-500",
+    glowColor: "rgba(99,102,241,0.6)",
     label: "Ambassador",
     description: "An official SkillLeague brand ambassador.",
   },
   staff: {
     icon: Shield,
-    color: "text-green-500",
-    bg: "bg-green-500/10",
+    color: "text-white",
+    bg: "bg-green-500",
+    glowColor: "rgba(34,197,94,0.6)",
     label: "Staff",
     description: "A member of the SkillLeague staff team.",
   },
 };
 
-const SIZE_MAP = { sm: 13, md: 17, lg: 21 };
+const SIZE_MAP = {
+  sm: { icon: 10, wrapper: "w-4 h-4" },
+  md: { icon: 13, wrapper: "w-5 h-5" },
+  lg: { icon: 17, wrapper: "w-7 h-7" },
+};
 
 interface VerificationBadgeProps {
   tier?: VerificationTier;
@@ -108,7 +124,7 @@ export const VerificationBadge = memo(
     if (!config) return null;
 
     const Icon = config.icon;
-    const iconSize = SIZE_MAP[size];
+    const { icon: iconSize, wrapper: wrapperSize } = SIZE_MAP[size];
 
     return (
       <span
@@ -117,13 +133,41 @@ export const VerificationBadge = memo(
         onMouseLeave={() => setHovered(false)}
         onTouchStart={() => setHovered((v) => !v)}
       >
-        <span
-          title={!showTooltip ? config.label : undefined}
-          className={cn("inline-flex items-center", config.color, className)}
+        {/* Badge circle */}
+        <motion.span
+          className={cn(
+            "inline-flex items-center justify-center rounded-full flex-shrink-0",
+            config.bg,
+            config.color,
+            wrapperSize,
+            className,
+          )}
+          style={{
+            boxShadow: config.isPrimary
+              ? `0 0 8px ${config.glowColor}, 0 0 16px ${config.glowColor.replace("0.7", "0.35").replace("0.6", "0.25")}`
+              : undefined,
+          }}
+          animate={
+            config.isPrimary
+              ? {
+                  boxShadow: [
+                    `0 0 6px ${config.glowColor}, 0 0 12px ${config.glowColor.replace("0.7", "0.2").replace("0.6", "0.15")}`,
+                    `0 0 12px ${config.glowColor}, 0 0 24px ${config.glowColor.replace("0.7", "0.45").replace("0.6", "0.35")}`,
+                    `0 0 6px ${config.glowColor}, 0 0 12px ${config.glowColor.replace("0.7", "0.2").replace("0.6", "0.15")}`,
+                  ],
+                }
+              : undefined
+          }
+          transition={
+            config.isPrimary
+              ? { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+              : undefined
+          }
         >
-          <Icon size={iconSize} strokeWidth={2.5} />
-        </span>
+          <Icon size={iconSize} strokeWidth={2.8} />
+        </motion.span>
 
+        {/* Tooltip */}
         {showTooltip && (
           <AnimatePresence>
             {hovered && (
@@ -135,30 +179,34 @@ export const VerificationBadge = memo(
                 className={cn(
                   "absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50",
                   "w-44 pointer-events-none",
-                  "bg-gray-900 dark:bg-gray-800 text-white",
-                  "rounded-xl px-3 py-2 shadow-2xl text-center"
+                  "bg-gray-900 text-white",
+                  "rounded-xl px-3 py-2 shadow-2xl text-center",
                 )}
+                style={{ boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)` }}
               >
                 <div
                   className={cn(
-                    "w-7 h-7 rounded-lg flex items-center justify-center mx-auto mb-1.5",
-                    config.bg
+                    "w-8 h-8 rounded-xl flex items-center justify-center mx-auto mb-1.5",
+                    config.bg,
                   )}
+                  style={{
+                    boxShadow: config.isPrimary ? `0 0 12px ${config.glowColor}` : undefined,
+                  }}
                 >
-                  <Icon size={14} className={config.color} />
+                  <Icon size={15} className="text-white" />
                 </div>
                 <p className="text-xs font-bold">{config.label}</p>
                 <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed">
                   {config.description}
                 </p>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-gray-900" />
               </motion.div>
             )}
           </AnimatePresence>
         )}
       </span>
     );
-  }
+  },
 );
 
 VerificationBadge.displayName = "VerificationBadge";

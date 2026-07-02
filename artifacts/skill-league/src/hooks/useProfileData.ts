@@ -62,6 +62,12 @@ export function useProfileData(userId: string) {
         } catch {}
       }
 
+      // Map verificationStatus → verification tier for badge display
+      const rawStatus: string = p.verificationStatus ?? "none";
+      const isVerified: boolean = p.verified === true || p.verified === 1;
+      const verificationTier =
+        (isVerified || rawStatus === "approved") ? "verified" as const : undefined;
+
       const mapped: ProfileData = {
         id:          p.id ?? safeUserId,
         username:    p.username ?? res.username ?? "User",
@@ -78,8 +84,10 @@ export function useProfileData(userId: string) {
         savedCount: 0,
         isFollowing,
 
-        totalLikes: res.likesReceived ?? 0,
-        joinedAt:   res.joinedAt     ?? undefined,
+        totalLikes:         res.likesReceived ?? 0,
+        joinedAt:           res.joinedAt      ?? undefined,
+        verification:       verificationTier,
+        verificationStatus: rawStatus as any,
       };
 
       profileCache.set(safeUserId, { data: mapped, timestamp: Date.now() });

@@ -29,6 +29,8 @@ import jobsRouter              from "./jobs.js";
 import walletRouter            from "./wallet.js";
 import giftLedgerRouter        from "./gift-ledger.js";
 import giftLeaderboardRouter   from "./gift-leaderboard.js";
+import verificationRouter      from "./verification.js";
+import ownerAdminRouter        from "./owner-admin.js";
 
 const router: IRouter = Router();
 
@@ -62,5 +64,7 @@ router.use(jobsRouter);
 router.use(walletRouter);
 router.use(giftLedgerRouter);
 router.use(giftLeaderboardRouter);
+router.use(verificationRouter);
+router.use(ownerAdminRouter);
 
 export default router;

@@ -63,6 +63,24 @@ import Wallet from "@/pages/Wallet";
 // Settings
 import Settings from "@/pages/Settings";
 
+// Admin
+import AdminVerificationPanel from "@/pages/AdminVerificationPanel";
+import OwnerPanel from "@/pages/OwnerPanel";
+
+// Subscription (standalone route — no payment triggered here, just plan selection)
+import SubscriptionPage from "@/pages/SubscriptionPage";
+import { EntryLanguageProvider } from "@/contexts/EntryLanguageContext";
+
+/** Standalone subscription page — accessible by guests who dismissed the entry flow. */
+function SubscriptionRoute() {
+  const [, navigate] = useLocation();
+  return (
+    <EntryLanguageProvider>
+      <SubscriptionPage onBack={() => navigate("/")} />
+    </EntryLanguageProvider>
+  );
+}
+
 // UI
 import BottomNav from "@/components/BottomNav";
 import SocialBottomNav from "@/components/SocialBottomNav";
@@ -219,6 +237,13 @@ function AppShell() {
 
         {/* ================= SETTINGS ================= */}
         <Route path="/settings" component={Settings} />
+
+        {/* ================= ADMIN ================= */}
+        <Route path="/admin/verification" component={AdminVerificationPanel} />
+        <Route path="/owner-panel" component={OwnerPanel} />
+
+        {/* ================= SUBSCRIPTION (standalone) ================= */}
+        <Route path="/subscription" component={SubscriptionRoute} />
 
         {/* ================= FALLBACK ================= */}
         <Route component={NotFound} />

@@ -403,6 +403,58 @@ export const api = {
       get<{ playerId: string; reason: string }[]>("/admin/suspicious"),
   },
 
+  /* ── Owner Panel ── */
+  owner: {
+    overview: () =>
+      get<{
+        total_players: string;
+        active_7d: string;
+        active_24h: string;
+        verified_players: string;
+        pending_verifications: string;
+        suspended_players: string;
+        new_players_24h: string;
+        matches_24h: string;
+        total_gifts: string;
+        total_dn_volume: string;
+        open_flags: string;
+      }>("/owner/overview"),
+
+    users: (page = 1, limit = 20, search = "") =>
+      get<{
+        users: {
+          id: string;
+          username: string;
+          avatar: string;
+          level: number;
+          matchesPlayed: number;
+          verified: boolean;
+          verificationStatus: string;
+          suspended: boolean;
+          createdAt: string;
+          lastActiveAt: string;
+        }[];
+        total: number;
+        page: number;
+        limit: number;
+      }>(`/owner/users?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ""}`),
+
+    forceVerify: (userId: string) =>
+      patch<{ ok: boolean; userId: string; verified: boolean; verificationStatus: string }>(
+        `/owner/users/${userId}/force-verify`, {},
+      ),
+
+    removeVerify: (userId: string) =>
+      patch<{ ok: boolean; userId: string; verified: boolean; verificationStatus: string }>(
+        `/owner/users/${userId}/remove-verify`, {},
+      ),
+
+    suspend: (userId: string) =>
+      patch<{ ok: boolean; userId: string; suspended: boolean }>(
+        `/owner/users/${userId}/suspend`, {},
+      ),
+  },
+
   /* ── Daily Economy ── */
   daily: {
     status: (playerId: string) =>
@@ -604,6 +656,44 @@ export const api = {
     userHistory: (userId: string, dir: "sent" | "received" | "both" = "both", page = 1, limit = 20) =>
       get<{ data: unknown[]; total: number; page: number; limit: number }>(
         `/gifts/user/${userId}/history?dir=${dir}&page=${page}&limit=${limit}`
+      ),
+  },
+
+  /* ── Verification ── */
+  verification: {
+    /** Request verification for the logged-in user */
+    request: () =>
+      post<{ ok: boolean; status: string }>("/verification/request", {}),
+
+    /** Get verification status for any user */
+    status: (userId: string) =>
+      get<{ id: string; username: string; verified: boolean; verificationStatus: string }>(
+        `/verification/status/${userId}`,
+      ),
+
+    /** Admin: list all pending verification requests */
+    pending: () =>
+      get<{
+        id: string;
+        username: string;
+        avatar: string;
+        level: number;
+        matchesPlayed: number;
+        verificationStatus: string;
+        verificationRequestedAt: string | null;
+        createdAt: string;
+      }[]>("/verification/pending"),
+
+    /** Admin: approve a user's verification */
+    approve: (userId: string) =>
+      patch<{ ok: boolean; userId: string; status: string }>(
+        `/verification/${userId}/approve`, {},
+      ),
+
+    /** Admin: reject a user's verification */
+    reject: (userId: string) =>
+      patch<{ ok: boolean; userId: string; status: string }>(
+        `/verification/${userId}/reject`, {},
       ),
   },
 
