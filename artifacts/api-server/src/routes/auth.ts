@@ -155,6 +155,7 @@ router.post("/auth/pi", strictRateLimit, async (req, res) => {
     const piUser = (await piRes.json()) as { uid: string; username: string };
     piUid     = piUser.uid;
     piUsername = piUser.username ?? `Pi_${piUser.uid.slice(0, 6)}`;
+    req.log.info({ piUid }, "[PI AUTH] Authenticated Pi UID: " + piUid);
   } catch (err) {
     req.log.error({ err }, "Pi token validation request failed");
     res.status(502).json({ error: "pi_validation_failed" });
