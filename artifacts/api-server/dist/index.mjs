@@ -28,11 +28,11 @@ var __export = (target, all) => {
   for (var name2 in all)
     __defProp(target, name2, { get: all[name2], enumerable: true });
 };
-var __copyProps = (to, from, except2, desc4) => {
+var __copyProps = (to, from, except2, desc5) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
       if (!__hasOwnProp.call(to, key) && key !== except2)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc4 = __getOwnPropDesc(from, key)) || desc4.enumerable });
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc5 = __getOwnPropDesc(from, key)) || desc5.enumerable });
   }
   return to;
 };
@@ -1354,10 +1354,10 @@ var require_http_errors = __commonJS({
       return ServerError;
     }
     function nameFunc(func, name2) {
-      var desc4 = Object.getOwnPropertyDescriptor(func, "name");
-      if (desc4 && desc4.configurable) {
-        desc4.value = name2;
-        Object.defineProperty(func, "name", desc4);
+      var desc5 = Object.getOwnPropertyDescriptor(func, "name");
+      if (desc5 && desc5.configurable) {
+        desc5.value = name2;
+        Object.defineProperty(func, "name", desc5);
       }
     }
     function populateConstructorExports(exports2, codes, HttpError) {
@@ -16801,14 +16801,14 @@ var require_get = __commonJS({
         throw e;
       }
     }
-    var desc4 = !!hasProtoAccessor && gOPD && gOPD(
+    var desc5 = !!hasProtoAccessor && gOPD && gOPD(
       Object.prototype,
       /** @type {keyof typeof Object.prototype} */
       "__proto__"
     );
     var $Object = Object;
     var $getPrototypeOf = $Object.getPrototypeOf;
-    module.exports = desc4 && typeof desc4.get === "function" ? callBind([desc4.get]) : typeof $getPrototypeOf === "function" ? (
+    module.exports = desc5 && typeof desc5.get === "function" ? callBind([desc5.get]) : typeof $getPrototypeOf === "function" ? (
       /** @type {import('./get')} */
       function getDunder(value) {
         return $getPrototypeOf(value == null ? value : $Object(value));
@@ -17158,10 +17158,10 @@ var require_get_intrinsic = __commonJS({
             return void undefined2;
           }
           if ($gOPD && i + 1 >= parts.length) {
-            var desc4 = $gOPD(value, part);
-            isOwn = !!desc4;
-            if (isOwn && "get" in desc4 && !("originalValue" in desc4.get)) {
-              value = desc4.get;
+            var desc5 = $gOPD(value, part);
+            isOwn = !!desc5;
+            if (isOwn && "get" in desc5 && !("originalValue" in desc5.get)) {
+              value = desc5.get;
             } else {
               value = value[part];
             }
@@ -20501,27 +20501,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router35;
+    module.exports = Router36;
     module.exports.Route = Route;
-    function Router35(options) {
-      if (!(this instanceof Router35)) {
-        return new Router35(options);
+    function Router36(options) {
+      if (!(this instanceof Router36)) {
+        return new Router36(options);
       }
       const opts = options || {};
-      function router35(req, res, next) {
-        router35.handle(req, res, next);
+      function router36(req, res, next) {
+        router36.handle(req, res, next);
       }
-      Object.setPrototypeOf(router35, this);
-      router35.caseSensitive = opts.caseSensitive;
-      router35.mergeParams = opts.mergeParams;
-      router35.params = {};
-      router35.strict = opts.strict;
-      router35.stack = [];
-      return router35;
+      Object.setPrototypeOf(router36, this);
+      router36.caseSensitive = opts.caseSensitive;
+      router36.mergeParams = opts.mergeParams;
+      router36.params = {};
+      router36.strict = opts.strict;
+      router36.stack = [];
+      return router36;
     }
-    Router35.prototype = function() {
+    Router36.prototype = function() {
     };
-    Router35.prototype.param = function param2(name2, fn) {
+    Router36.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20541,7 +20541,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router35.prototype.handle = function handle(req, res, callback) {
+    Router36.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20668,7 +20668,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router35.prototype.use = function use(handler) {
+    Router36.prototype.use = function use(handler) {
       let offset = 0;
       let path = "/";
       if (typeof handler !== "function") {
@@ -20701,7 +20701,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router35.prototype.route = function route(path) {
+    Router36.prototype.route = function route(path) {
       const route2 = new Route(path);
       const layer = new Layer(path, {
         sensitive: this.caseSensitive,
@@ -20716,7 +20716,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router35.prototype[method] = function(path) {
+      Router36.prototype[method] = function(path) {
         const route = this.route(path);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20899,13 +20899,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve6 = __require("node:path").resolve;
     var once = require_once();
-    var Router35 = require_router();
+    var Router36 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router35 = null;
+      var router36 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20914,13 +20914,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router35 === null) {
-            router35 = new Router35({
+          if (router36 === null) {
+            router36 = new Router36({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router35;
+          return router36;
         }
       });
     };
@@ -20991,15 +20991,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router35 = this.router;
+      var router36 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router35.use(path, fn2);
+          return router36.use(path, fn2);
         }
         debug(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router35.use(path, function mounted_app(req, res, next) {
+        router36.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23572,7 +23572,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router35 = require_router();
+    var Router36 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23594,8 +23594,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router35.Route;
-    exports.Router = Router35;
+    exports.Route = Router36.Route;
+    exports.Router = Router36;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -34543,12 +34543,12 @@ var require_result = __commonJS({
         }
         const row = {};
         for (let i = 0; i < fieldDescriptions.length; i++) {
-          const desc4 = fieldDescriptions[i];
-          row[desc4.name] = null;
+          const desc5 = fieldDescriptions[i];
+          row[desc5.name] = null;
           if (this._types) {
-            this._parsers[i] = this._types.getTypeParser(desc4.dataTypeID, desc4.format || "text");
+            this._parsers[i] = this._types.getTypeParser(desc5.dataTypeID, desc5.format || "text");
           } else {
-            this._parsers[i] = types3.getTypeParser(desc4.dataTypeID, desc4.format || "text");
+            this._parsers[i] = types3.getTypeParser(desc5.dataTypeID, desc5.format || "text");
           }
         }
         this._prebuiltEmptyResultObject = { ...row };
@@ -54183,6 +54183,12 @@ var init_matches = __esm({
       coinsWonB: integer("coins_won_b").notNull().default(0),
       xpGainedA: integer("xp_gained_a").notNull().default(0),
       xpGainedB: integer("xp_gained_b").notNull().default(0),
+      // SkillLeague detailed tracking
+      correctCount: integer("correct_count").notNull().default(0),
+      wrongCount: integer("wrong_count").notNull().default(0),
+      totalAnswerTime: real("total_answer_time").notNull().default(0),
+      shapeTime: real("shape_time").notNull().default(0),
+      shapeCorrect: boolean("shape_correct").notNull().default(false),
       createdAt: timestamp("created_at").notNull().defaultNow(),
       finishedAt: timestamp("finished_at")
     });
@@ -56324,8 +56330,8 @@ var require_gte = __commonJS({
   "../../node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/gte.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
-    var gte4 = (a, b, loose) => compare2(a, b, loose) >= 0;
-    module.exports = gte4;
+    var gte5 = (a, b, loose) => compare2(a, b, loose) >= 0;
+    module.exports = gte5;
   }
 });
 
@@ -56346,7 +56352,7 @@ var require_cmp = __commonJS({
     var eq3 = require_eq();
     var neq = require_neq();
     var gt2 = require_gt();
-    var gte4 = require_gte();
+    var gte5 = require_gte();
     var lt2 = require_lt();
     var lte2 = require_lte();
     var cmp = (a, op, b, loose) => {
@@ -56376,7 +56382,7 @@ var require_cmp = __commonJS({
         case ">":
           return gt2(a, b, loose);
         case ">=":
-          return gte4(a, b, loose);
+          return gte5(a, b, loose);
         case "<":
           return lt2(a, b, loose);
         case "<=":
@@ -57179,7 +57185,7 @@ var require_outside = __commonJS({
     var gt2 = require_gt();
     var lt2 = require_lt();
     var lte2 = require_lte();
-    var gte4 = require_gte();
+    var gte5 = require_gte();
     var outside = (version3, range, hilo, options) => {
       version3 = new SemVer(version3, options);
       range = new Range(range, options);
@@ -57194,7 +57200,7 @@ var require_outside = __commonJS({
           break;
         case "<":
           gtfn = lt2;
-          ltefn = gte4;
+          ltefn = gte5;
           ltfn = gt2;
           comp = "<";
           ecomp = "<=";
@@ -57509,7 +57515,7 @@ var require_semver2 = __commonJS({
     var lt2 = require_lt();
     var eq3 = require_eq();
     var neq = require_neq();
-    var gte4 = require_gte();
+    var gte5 = require_gte();
     var lte2 = require_lte();
     var cmp = require_cmp();
     var coerce = require_coerce();
@@ -57548,7 +57554,7 @@ var require_semver2 = __commonJS({
       lt: lt2,
       eq: eq3,
       neq,
-      gte: gte4,
+      gte: gte5,
       lte: lte2,
       cmp,
       coerce,
@@ -68604,14 +68610,14 @@ var require_transport2 = __commonJS({
        * @param {Object} desc - error description
        * @protected
        */
-      onError(msg, desc4) {
+      onError(msg, desc5) {
         if (this.listeners("error").length) {
           const err = new Error(msg);
           err.type = "TransportError";
-          err.description = desc4;
+          err.description = desc5;
           this.emit("error", err);
         } else {
-          debug("ignored transport error %s (%s)", msg, desc4);
+          debug("ignored transport error %s (%s)", msg, desc5);
         }
       }
       /**
@@ -79106,13 +79112,13 @@ var require_dist4 = __commonJS({
     "use strict";
     var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
-      var desc4 = Object.getOwnPropertyDescriptor(m, k);
-      if (!desc4 || ("get" in desc4 ? !m.__esModule : desc4.writable || desc4.configurable)) {
-        desc4 = { enumerable: true, get: function() {
+      var desc5 = Object.getOwnPropertyDescriptor(m, k);
+      if (!desc5 || ("get" in desc5 ? !m.__esModule : desc5.writable || desc5.configurable)) {
+        desc5 = { enumerable: true, get: function() {
           return m[k];
         } };
       }
-      Object.defineProperty(o, k2, desc4);
+      Object.defineProperty(o, k2, desc5);
     }) : (function(o, m, k, k2) {
       if (k2 === void 0) k2 = k;
       o[k2] = m[k];
@@ -80734,12 +80740,12 @@ var init_notificationService = __esm({
 import { createServer } from "http";
 
 // src/app.ts
-var import_express34 = __toESM(require_express2(), 1);
+var import_express35 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 
 // src/routes/index.ts
-var import_express33 = __toESM(require_express2(), 1);
+var import_express34 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -89135,10 +89141,10 @@ router14.post("/pi/payment/complete", requireAuth, async (req, res) => {
         const newCoins = player.coins + productInfo.coins;
         await db.update(playersTable).set({ coins: newCoins, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, pending.playerId));
         const txId = nanoid3();
-        const desc4 = `Pi purchase: ${productInfo.name}`;
+        const desc5 = `Pi purchase: ${productInfo.name}`;
         await db.execute(sql`
           INSERT INTO coin_transactions (id, player_id, amount, type, source, description, balance_after)
-          VALUES (${txId}, ${pending.playerId}, ${productInfo.coins}, 'add', 'pi_purchase', ${desc4}, ${newCoins})
+          VALUES (${txId}, ${pending.playerId}, ${productInfo.coins}, 'add', 'pi_purchase', ${desc5}, ${newCoins})
         `);
       }
     }
@@ -94328,45 +94334,256 @@ router32.patch("/owner/users/:userId/suspend", requireAdmin, async (req, res) =>
 });
 var owner_admin_default = router32;
 
-// src/routes/index.ts
+// src/routes/skill-league-matches.ts
+var import_express33 = __toESM(require_express2(), 1);
+init_drizzle_orm();
+init_src();
+init_nanoid();
 var router33 = (0, import_express33.Router)();
-router33.use(health_default);
-router33.use(auth_default);
-router33.use(pi_auth_default);
-router33.use(arenas_default);
-router33.use(players_default);
-router33.use(matches_default);
-router33.use(community_default);
-router33.use(economy_default);
-router33.use(notifications_default);
-router33.use(messages_default);
-router33.use(analytics_default);
-router33.use(followers_default);
-router33.use(marketplace_default);
-router33.use(security_default);
-router33.use(pi_payments_default);
-router33.use(beta_default);
-router33.use(monitor_default);
-router33.use(release_default);
-router33.use(league_system_default);
-router33.use(game_layer_default);
-router33.use(daily_economy_default);
-router33.use(audit_default);
-router33.use(economy_balance_default);
-router33.use(economy_stabilizer_default);
-router33.use(social_default);
-router33.use(stories_default);
-router33.use(jobs_default);
-router33.use(wallet_default);
-router33.use(gift_ledger_default);
-router33.use(gift_leaderboard_default);
-router33.use(verification_default);
-router33.use(owner_admin_default);
-var routes_default = router33;
+function calculateMatchResult(answers, shapeSection) {
+  const correctAnswers = answers.filter((a) => a.correct).length;
+  const wrongAnswers = answers.filter((a) => !a.correct).length;
+  const totalPoints = correctAnswers;
+  const totalTime = answers.reduce((sum5, a) => sum5 + a.responseTime, 0);
+  const totalQuestions = correctAnswers + wrongAnswers;
+  const accuracy = totalQuestions > 0 ? correctAnswers / totalQuestions * 100 : 0;
+  return {
+    totalPoints,
+    totalTime,
+    accuracy,
+    correctAnswers,
+    wrongAnswers,
+    shapeTime: shapeSection.time,
+    shapeCorrect: shapeSection.correct
+  };
+}
+router33.post("/matches/submit-result", optionalAuth, async (req, res) => {
+  try {
+    const body = req.body;
+    const { playerId, answers, shapeSection, leagueId } = body;
+    if (!playerId) {
+      res.status(400).json({ error: "playerId is required" });
+      return;
+    }
+    if (!Array.isArray(answers) || answers.length === 0) {
+      res.status(400).json({ error: "answers must be a non-empty array" });
+      return;
+    }
+    if (!shapeSection || typeof shapeSection.time !== "number") {
+      res.status(400).json({ error: "shapeSection with valid time is required" });
+      return;
+    }
+    const result = calculateMatchResult(answers, shapeSection);
+    const matchId = body.matchId ?? nanoid3();
+    const [match] = await db.insert(pvpMatchesTable).values({
+      id: matchId,
+      playerAId: playerId,
+      playerBId: playerId,
+      winnerId: playerId,
+      playerAScore: result.totalPoints,
+      playerBScore: 0,
+      leagueId: leagueId ?? "training",
+      matchType: "skill",
+      duration: Math.ceil(result.totalTime + result.shapeTime),
+      rounds: answers,
+      coinsStake: 0,
+      correctCount: result.correctAnswers,
+      wrongCount: result.wrongAnswers,
+      totalAnswerTime: result.totalTime,
+      shapeTime: result.shapeTime,
+      shapeCorrect: result.shapeCorrect,
+      finishedAt: /* @__PURE__ */ new Date()
+    }).returning();
+    const accuracyInt = Math.round(result.accuracy);
+    const speedScore = result.totalTime > 0 ? Math.max(1, Math.min(100, Math.round(100 - result.totalTime / answers.length * 10))) : 50;
+    await db.update(playersTable).set({
+      skillAccuracy: accuracyInt,
+      skillSpeed: speedScore,
+      matchesPlayed: sql`${playersTable.matchesPlayed} + 1`,
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(playersTable.id, playerId));
+    res.status(201).json({
+      matchId: match.id,
+      playerId,
+      result: {
+        totalPoints: result.totalPoints,
+        totalTime: Number(result.totalTime.toFixed(3)),
+        accuracy: Number(result.accuracy.toFixed(2)),
+        correctAnswers: result.correctAnswers,
+        wrongAnswers: result.wrongAnswers,
+        shapeTime: result.shapeTime,
+        shapeCorrect: result.shapeCorrect
+      }
+    });
+  } catch (err) {
+    req.log.error({ err }, "submit-result error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/matches/leaderboard/skill", async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const leagueId = typeof req.query.leagueId === "string" ? req.query.leagueId : null;
+    const playerId = typeof req.query.playerId === "string" ? req.query.playerId : null;
+    const conditions = [
+      eq(pvpMatchesTable.matchType, "skill")
+    ];
+    if (leagueId) {
+      conditions.push(eq(pvpMatchesTable.leagueId, leagueId));
+    }
+    const rows = await db.select({
+      playerId: pvpMatchesTable.playerAId,
+      totalPoints: sql`SUM(${pvpMatchesTable.correctCount})`.mapWith(Number),
+      totalTime: sql`ROUND(SUM(${pvpMatchesTable.totalAnswerTime})::numeric, 3)`.mapWith(Number),
+      accuracy: sql`
+          CASE
+            WHEN SUM(${pvpMatchesTable.correctCount} + ${pvpMatchesTable.wrongCount}) = 0 THEN 0
+            ELSE ROUND(
+              (SUM(${pvpMatchesTable.correctCount})::numeric /
+               SUM(${pvpMatchesTable.correctCount} + ${pvpMatchesTable.wrongCount})::numeric) * 100,
+              2
+            )
+          END
+        `.mapWith(Number),
+      matchesPlayed: sql`COUNT(*)`.mapWith(Number),
+      correctTotal: sql`SUM(${pvpMatchesTable.correctCount})`.mapWith(Number),
+      wrongTotal: sql`SUM(${pvpMatchesTable.wrongCount})`.mapWith(Number)
+    }).from(pvpMatchesTable).where(and(...conditions)).groupBy(pvpMatchesTable.playerAId).orderBy(
+      sql`SUM(${pvpMatchesTable.correctCount}) DESC`,
+      sql`SUM(${pvpMatchesTable.totalAnswerTime}) ASC`,
+      sql`
+          CASE
+            WHEN SUM(${pvpMatchesTable.correctCount} + ${pvpMatchesTable.wrongCount}) = 0 THEN 0
+            ELSE (SUM(${pvpMatchesTable.correctCount})::numeric /
+                  SUM(${pvpMatchesTable.correctCount} + ${pvpMatchesTable.wrongCount})::numeric) * 100
+          END DESC
+        `
+    ).limit(limit);
+    if (rows.length === 0) {
+      res.json({ players: [], playerRank: null, total: 0 });
+      return;
+    }
+    const playerIds = rows.map((r) => r.playerId);
+    const profiles = await db.select({
+      id: playersTable.id,
+      username: playersTable.username,
+      avatar: playersTable.avatar,
+      level: playersTable.level,
+      leagueDivision: playersTable.leagueDivision,
+      verificationStatus: playersTable.verificationStatus
+    }).from(playersTable).where(or(...playerIds.map((id) => eq(playersTable.id, id))));
+    const profileMap = new Map(profiles.map((p) => [p.id, p]));
+    const players = rows.map((row, idx) => ({
+      rank: idx + 1,
+      playerId: row.playerId,
+      username: profileMap.get(row.playerId)?.username ?? "Unknown",
+      avatar: profileMap.get(row.playerId)?.avatar ?? "\u{1F3AE}",
+      level: profileMap.get(row.playerId)?.level ?? 1,
+      leagueDivision: profileMap.get(row.playerId)?.leagueDivision ?? "training",
+      verificationStatus: profileMap.get(row.playerId)?.verificationStatus ?? "none",
+      totalPoints: row.totalPoints,
+      totalTime: row.totalTime,
+      accuracy: row.accuracy,
+      matchesPlayed: row.matchesPlayed,
+      correctTotal: row.correctTotal,
+      wrongTotal: row.wrongTotal
+    }));
+    let playerRank = null;
+    if (playerId) {
+      const idx = players.findIndex((p) => p.playerId === playerId);
+      playerRank = idx >= 0 ? idx + 1 : null;
+    }
+    res.json({ players, playerRank, total: players.length });
+  } catch (err) {
+    req.log.error({ err }, "skill-leaderboard error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/matches/leaderboard/skill/:pid", async (req, res) => {
+  try {
+    const { pid } = req.params;
+    const [row] = await db.select({
+      totalPoints: sql`SUM(${pvpMatchesTable.correctCount})`.mapWith(Number),
+      totalTime: sql`ROUND(SUM(${pvpMatchesTable.totalAnswerTime})::numeric, 3)`.mapWith(Number),
+      accuracy: sql`
+          CASE
+            WHEN SUM(${pvpMatchesTable.correctCount} + ${pvpMatchesTable.wrongCount}) = 0 THEN 0
+            ELSE ROUND(
+              (SUM(${pvpMatchesTable.correctCount})::numeric /
+               SUM(${pvpMatchesTable.correctCount} + ${pvpMatchesTable.wrongCount})::numeric) * 100,
+              2
+            )
+          END
+        `.mapWith(Number),
+      matchesPlayed: sql`COUNT(*)`.mapWith(Number),
+      correctTotal: sql`SUM(${pvpMatchesTable.correctCount})`.mapWith(Number),
+      wrongTotal: sql`SUM(${pvpMatchesTable.wrongCount})`.mapWith(Number),
+      avgShapeTime: sql`ROUND(AVG(${pvpMatchesTable.shapeTime})::numeric, 3)`.mapWith(Number)
+    }).from(pvpMatchesTable).where(and(
+      eq(pvpMatchesTable.playerAId, pid),
+      eq(pvpMatchesTable.matchType, "skill")
+    )).groupBy(pvpMatchesTable.playerAId).limit(1);
+    if (!row) {
+      res.json({
+        playerId: pid,
+        totalPoints: 0,
+        totalTime: 0,
+        accuracy: 0,
+        matchesPlayed: 0,
+        correctTotal: 0,
+        wrongTotal: 0,
+        avgShapeTime: 0
+      });
+      return;
+    }
+    res.json({ playerId: pid, ...row });
+  } catch (err) {
+    req.log.error({ err }, "player-skill-stats error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+var skill_league_matches_default = router33;
+
+// src/routes/index.ts
+var router34 = (0, import_express34.Router)();
+router34.use(health_default);
+router34.use(auth_default);
+router34.use(pi_auth_default);
+router34.use(arenas_default);
+router34.use(players_default);
+router34.use(matches_default);
+router34.use(community_default);
+router34.use(economy_default);
+router34.use(notifications_default);
+router34.use(messages_default);
+router34.use(analytics_default);
+router34.use(followers_default);
+router34.use(marketplace_default);
+router34.use(security_default);
+router34.use(pi_payments_default);
+router34.use(beta_default);
+router34.use(monitor_default);
+router34.use(release_default);
+router34.use(league_system_default);
+router34.use(game_layer_default);
+router34.use(daily_economy_default);
+router34.use(audit_default);
+router34.use(economy_balance_default);
+router34.use(economy_stabilizer_default);
+router34.use(social_default);
+router34.use(stories_default);
+router34.use(jobs_default);
+router34.use(wallet_default);
+router34.use(gift_ledger_default);
+router34.use(gift_leaderboard_default);
+router34.use(verification_default);
+router34.use(owner_admin_default);
+router34.use(skill_league_matches_default);
+var routes_default = router34;
 
 // src/app.ts
 init_logger2();
-var app = (0, import_express34.default)();
+var app = (0, import_express35.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -94387,8 +94604,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express34.default.json({ limit: "10mb" }));
-app.use(import_express34.default.urlencoded({ extended: true, limit: "10mb" }));
+app.use(import_express35.default.json({ limit: "10mb" }));
+app.use(import_express35.default.urlencoded({ extended: true, limit: "10mb" }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();
@@ -94411,8 +94628,8 @@ app.use("/api", routes_default);
 var app_default = app;
 
 // src/routes/profile.ts
-var import_express35 = __toESM(require_express2(), 1);
-var router34 = (0, import_express35.Router)();
+var import_express36 = __toESM(require_express2(), 1);
+var router35 = (0, import_express36.Router)();
 var profile = {
   id: "1",
   username: "user123",
@@ -94422,7 +94639,7 @@ var profile = {
   location: "Tunisia",
   website: "https://example.com"
 };
-router34.get("/", (req, res) => {
+router35.get("/", (req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -94436,7 +94653,7 @@ router34.get("/", (req, res) => {
     });
   }
 });
-router34.put("/", (req, res) => {
+router35.put("/", (req, res) => {
   try {
     const { username, bio, avatar, fullName, location, website } = req.body;
     profile = {
@@ -94461,7 +94678,7 @@ router34.put("/", (req, res) => {
     });
   }
 });
-var profile_default = router34;
+var profile_default = router35;
 
 // src/index.ts
 init_socket_manager();
