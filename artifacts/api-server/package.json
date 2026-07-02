@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "pnpm -w install --frozen-lockfile",
     "dev": "NODE_ENV=development pnpm run build && pnpm run start",
 
     "build": "node ./build.mjs",
