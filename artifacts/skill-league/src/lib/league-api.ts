@@ -4,8 +4,9 @@
  * Typed fetch wrapper for the SkillLeague league-system backend.
  */
 
-const BASE = (import.meta.env.BASE_URL?.replace(/\/$/, '') || '') + '/api/league-system';
-const ECON = (import.meta.env.BASE_URL?.replace(/\/$/, '') || '') + '/api/economy';
+const BASE    = (import.meta.env.BASE_URL?.replace(/\/$/, '') || '') + '/api/league-system';
+const ECON    = (import.meta.env.BASE_URL?.replace(/\/$/, '') || '') + '/api/economy';
+const MATCHES = (import.meta.env.BASE_URL?.replace(/\/$/, '') || '') + '/api';
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -165,4 +166,23 @@ export const leagueApi = {
   /** Get the player's current gem balance. */
   getPlayerGems: (playerId: string) =>
     apiFetch<{ gems: number }>(ECON + `/${playerId}/gems`),
+
+  /** List all tournaments (open, full, upcoming). */
+  getTournaments: () => apiFetch<Tournament[]>(MATCHES + '/tournaments'),
 };
+
+// ── Tournament type ─────────────────────────────────────────────────────────
+
+export interface Tournament {
+  id:           string;
+  name:         string;
+  type:         string;
+  status:       string;
+  size:         number;
+  rewardCoins:  number;
+  rewardXp:     number;
+  participants: string[];
+  startAt:      string | null;
+  endAt:        string | null;
+  createdAt:    string;
+}

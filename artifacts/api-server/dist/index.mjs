@@ -95585,6 +95585,28 @@ var TOURNAMENTS = [
       d.setDate(d.getDate() + 1);
       return d;
     })()
+  },
+  {
+    id: "champions_grand_prix_01",
+    name: "Champions Grand Prix",
+    type: "champion",
+    status: "open",
+    size: 16,
+    rewardCoins: 1e4,
+    rewardXp: 5e3,
+    participants: [],
+    startAt: (() => {
+      const d = /* @__PURE__ */ new Date();
+      d.setDate(d.getDate() + 14);
+      d.setHours(20, 0, 0, 0);
+      return d;
+    })(),
+    endAt: (() => {
+      const d = /* @__PURE__ */ new Date();
+      d.setDate(d.getDate() + 15);
+      d.setHours(20, 0, 0, 0);
+      return d;
+    })()
   }
 ];
 async function runSeed() {
@@ -95608,7 +95630,7 @@ async function runSeed() {
       logger.info({ existing: Number(pCount) }, "Bot players updated (names, avatars, LP)");
     }
     const [{ value: tCount }] = await db.select({ value: count() }).from(tournamentsTable);
-    if (Number(tCount) < 2) {
+    if (Number(tCount) < TOURNAMENTS.length) {
       await db.insert(tournamentsTable).values(TOURNAMENTS).onConflictDoNothing();
       logger.info({ count: TOURNAMENTS.length }, "Seeded tournaments");
     } else {

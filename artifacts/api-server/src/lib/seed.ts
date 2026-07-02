@@ -305,6 +305,18 @@ const TOURNAMENTS = [
     startAt: nextSunday(),
     endAt:   (() => { const d = nextSunday(); d.setDate(d.getDate() + 1); return d; })(),
   },
+  {
+    id: "champions_grand_prix_01",
+    name: "Champions Grand Prix",
+    type: "champion",
+    status: "open",
+    size: 16,
+    rewardCoins: 10000,
+    rewardXp: 5000,
+    participants: [] as string[],
+    startAt: (() => { const d = new Date(); d.setDate(d.getDate() + 14); d.setHours(20, 0, 0, 0); return d; })(),
+    endAt:   (() => { const d = new Date(); d.setDate(d.getDate() + 15); d.setHours(20, 0, 0, 0); return d; })(),
+  },
 ];
 
 // ── Runner ────────────────────────────────────────────────────────────────────
@@ -343,7 +355,7 @@ export async function runSeed(): Promise<void> {
       .select({ value: count() })
       .from(tournamentsTable);
 
-    if (Number(tCount) < 2) {
+    if (Number(tCount) < TOURNAMENTS.length) {
       await db.insert(tournamentsTable).values(TOURNAMENTS).onConflictDoNothing();
       logger.info({ count: TOURNAMENTS.length }, "Seeded tournaments");
     } else {
