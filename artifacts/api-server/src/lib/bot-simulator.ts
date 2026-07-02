@@ -21,8 +21,8 @@
  * Question Engine, Division Rules, Economy — never modified here.
  */
 
-import { db, pvpMatchesTable, playersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, pvpMatchesTable, playersTable, postsTable, postLikesTable } from "@workspace/db";
+import { eq, ne, desc, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -72,21 +72,25 @@ const SKILL_PARAMS: Record<
 const STANDINGS_WIN_PROB:  Record<SkillLevel, number> = { elite: 0.65, advanced: 0.55, intermediate: 0.45, beginner: 0.30 };
 const STANDINGS_DRAW_PROB: Record<SkillLevel, number> = { elite: 0.12, advanced: 0.15, intermediate: 0.18, beginner: 0.20 };
 
-/** Maps league-standings bot names to skill levels (mirrors seed.ts bot data). */
+/** Maps league-standings bot human names to skill levels. */
 const STANDINGS_BOT_SKILL: Record<string, SkillLevel> = {
-  NeonRacer:  "elite",   ByteWolf:    "advanced",     PixelFox:    "advanced",
-  SwiftArrow: "advanced", DataStrike: "intermediate", QuickByte:   "intermediate",
-  CodeSniper: "intermediate", NetRunner: "beginner",  FlashMind:   "beginner",
-  StarKnight: "elite",   CosmicAce:   "elite",        QuantumK:    "elite",
-  IronFox:    "advanced", SkyKing:    "intermediate", BrainWave:   "advanced",
-  GridHawk:   "intermediate", NeonPulse: "advanced",  LightSpeed:  "intermediate",
-  TopTier:    "intermediate", FastHand: "beginner",   DataDash:    "intermediate",
-  KiwiBot:    "beginner", CobraK:     "intermediate", ZetaBot:     "beginner",
-  StarQ:      "intermediate", BlazeFire: "beginner",  NovaX:       "beginner",
-  PiMaster:   "beginner", CodeStrike: "beginner",     WildCard:    "beginner",
-  RedAlert:   "beginner", BlueStar:   "beginner",     DarkMatter:  "beginner",
-  // aliased names used in league-store.ts BOT_NAMES
-  Nova_X:     "beginner", SwiftOne:   "intermediate",
+  "Alex Ahmed":      "elite",        "Omar Silva":      "advanced",
+  "James Carter":    "elite",        "Lucas Martin":    "elite",
+  "Ryan Chen":       "elite",        "Sofia Torres":    "advanced",
+  "Aisha Patel":     "advanced",     "Marco Rossi":     "intermediate",
+  "Elena Petrov":    "advanced",     "Karim Hassan":    "intermediate",
+  "Yuna Kim":        "advanced",     "Diego Fernandez": "intermediate",
+  "Priya Sharma":    "advanced",     "Jake Thompson":   "intermediate",
+  "Nour Rashid":     "intermediate", "Mia Johnson":     "intermediate",
+  "Ethan Williams":  "intermediate", "Amara Osei":      "beginner",
+  "Leo Zhang":       "intermediate", "Sana Malik":      "beginner",
+  "Ivan Petrov":     "intermediate", "Lena Muller":     "beginner",
+  "Tariq Ibrahim":   "intermediate", "Chloe Dubois":    "beginner",
+  "Rami Khalil":     "beginner",     "Sara Novak":      "beginner",
+  "Tom Nakamura":    "beginner",     "Anya Smirnova":   "beginner",
+  "Ben Foster":      "beginner",     "Maya Rivera":     "beginner",
+  "Sam O'Brien":     "beginner",     "Hana Yamamoto":   "beginner",
+  "Kiran Patel":     "beginner",     "Carlos Mendez":   "intermediate",
 };
 
 // ── LP / Coins formulas — mirrors matches.ts exactly (do NOT alter) ───────────
@@ -263,25 +267,25 @@ async function simulateBotMatch(botA: BotSnapshot, botB: BotSnapshot): Promise<v
  */
 const FIXED_ROSTERS: Record<string, string[]> = {
   coins: [
-    "Nova_X","BlazeFire","StarQ","KiwiBot","CobraK",
-    "SkyKing","FastHand","PiMaster","ZetaBot","CodeStrike",
-    "RedAlert","BlueStar","DarkMatter","WildCard","FlashMind","LightSpeed",
+    "Tom Nakamura","Sara Novak","Tariq Ibrahim","Sana Malik","Ivan Petrov",
+    "Karim Hassan","Amara Osei","Anya Smirnova","Lena Muller","Ben Foster",
+    "Sam O'Brien","Hana Yamamoto","Kiran Patel","Maya Rivera","Rami Khalil","Mia Johnson",
   ],                                                                                // 16 bots — LOCKED
   pro: [
-    "NeonRacer","SwiftArrow","DataStrike","QuickByte","CodeSniper",
-    "NetRunner","StarKnight","CosmicAce","IronFox","BrainWave",
-    "GridHawk","NeonPulse","TopTier","DataDash","CobraK","PixelFox",
+    "Alex Ahmed","Aisha Patel","Marco Rossi","Jake Thompson","Nour Rashid",
+    "Chloe Dubois","James Carter","Lucas Martin","Elena Petrov","Yuna Kim",
+    "Diego Fernandez","Priya Sharma","Ethan Williams","Leo Zhang","Ivan Petrov","Sofia Torres",
   ],                                                                                // 16 bots — LOCKED
   elite: [
-    "NeonRacer","ByteWolf","PixelFox","SwiftArrow","DataStrike","StarKnight",
-    "CosmicAce","QuantumK","IronFox","BrainWave","NeonPulse","CodeSniper",
-    "GridHawk","QuickByte","FlashMind","SwiftOne","TopTier","DataDash","StarQ","LightSpeed",
+    "Alex Ahmed","Omar Silva","Sofia Torres","Aisha Patel","Marco Rossi","James Carter",
+    "Lucas Martin","Ryan Chen","Elena Petrov","Yuna Kim","Priya Sharma","Nour Rashid",
+    "Diego Fernandez","Jake Thompson","Rami Khalil","Carlos Mendez","Ethan Williams","Leo Zhang","Tariq Ibrahim","Mia Johnson",
   ],                                                                                // 20 bots — LOCKED
   champion: [
-    "NeonRacer","StarKnight","CosmicAce","QuantumK","ByteWolf","PixelFox",
-    "SwiftArrow","DataStrike","IronFox","BrainWave","NeonPulse","CodeSniper",
-    "QuickByte","FlashMind","GridHawk","LightSpeed","TopTier","DataDash",
-    "CobraK","StarQ","BlazeFire","WildCard","BlueStar","SwiftOne","ZetaBot",
+    "Alex Ahmed","James Carter","Lucas Martin","Ryan Chen","Omar Silva","Sofia Torres",
+    "Aisha Patel","Marco Rossi","Elena Petrov","Yuna Kim","Priya Sharma","Nour Rashid",
+    "Jake Thompson","Rami Khalil","Diego Fernandez","Mia Johnson","Ethan Williams","Leo Zhang",
+    "Ivan Petrov","Tariq Ibrahim","Sara Novak","Maya Rivera","Hana Yamamoto","Carlos Mendez","Lena Muller",
   ],                                                                                // 25 bots — LOCKED
 };
 
@@ -486,6 +490,115 @@ function simulateRoundsForLeague(store: LeagueStore, leagueId: LeagueId): boolea
   return true;
 }
 
+// ── Bot engagement: occasionally like posts from real players ─────────────────
+
+/**
+ * Picks a handful of recent real-player posts and has a random subset of bots
+ * like them. Runs every ~20 minutes. Keeps the feed looking active.
+ * Uses postLikesTable for deduplication (upsert via onConflictDoNothing).
+ */
+async function simulateBotEngagement(): Promise<void> {
+  try {
+    // Fetch up to 15 recent posts from non-bot authors
+    const recentPosts = await db
+      .select({ id: postsTable.id, authorId: postsTable.authorId })
+      .from(postsTable)
+      .where(ne(postsTable.authorId, "sl_bot_00")) // non-zero placeholder; real filter below
+      .orderBy(desc(postsTable.createdAt))
+      .limit(15);
+
+    // Keep only posts from real players (not bots)
+    const realPosts = recentPosts.filter(p => !p.authorId.startsWith("sl_bot_"));
+    if (realPosts.length === 0) return;
+
+    // Pick 1-3 random posts to engage with this tick
+    const shuffledPosts = [...realPosts].sort(() => Math.random() - 0.5);
+    const targetPosts   = shuffledPosts.slice(0, 1 + randInt(0, 2));
+
+    // Pick 1-4 random bots to do the liking
+    const botIds = [
+      "sl_bot_01","sl_bot_02","sl_bot_03","sl_bot_04","sl_bot_05",
+      "sl_bot_06","sl_bot_07","sl_bot_13","sl_bot_14","sl_bot_15",
+    ].sort(() => Math.random() - 0.5).slice(0, 1 + randInt(0, 3));
+
+    for (const post of targetPosts) {
+      for (const botId of botIds) {
+        const likeId = `like_${botId}_${post.id}`;
+        try {
+          // Insert like record — ignore if already liked (idempotent)
+          await db.insert(postLikesTable).values({
+            id:       likeId,
+            postId:   post.id,
+            playerId: botId,
+          }).onConflictDoNothing();
+
+          // Increment the denormalised likes counter on the post
+          await db.update(postsTable)
+            .set({ likes: sql`${postsTable.likes} + 1` })
+            .where(eq(postsTable.id, post.id));
+        } catch {
+          // Non-critical — skip silently
+        }
+      }
+    }
+
+    logger.debug({ posts: targetPosts.length, bots: botIds.length }, "bot-simulator: engagement tick");
+  } catch (err) {
+    logger.error({ err }, "bot-simulator: engagement tick error");
+  }
+}
+
+// ── Migrate existing standings playerNames to human names ─────────────────────
+
+/**
+ * Old gamer-tag → human name mapping used to update existing leagues.json entries.
+ * Safe to run multiple times — already-updated entries are unaffected.
+ */
+const GAMER_TAG_TO_HUMAN: Record<string, string> = {
+  "NeonRacer":  "Alex Ahmed",       "ByteWolf":    "Omar Silva",
+  "StarKnight": "James Carter",     "CosmicAce":   "Lucas Martin",
+  "QuantumK":   "Ryan Chen",        "PixelFox":    "Sofia Torres",
+  "SwiftArrow": "Aisha Patel",      "DataStrike":  "Marco Rossi",
+  "IronFox":    "Elena Petrov",     "SkyKing":     "Karim Hassan",
+  "BrainWave":  "Yuna Kim",         "GridHawk":    "Diego Fernandez",
+  "NeonPulse":  "Priya Sharma",     "QuickByte":   "Jake Thompson",
+  "CodeSniper": "Nour Rashid",      "LightSpeed":  "Mia Johnson",
+  "TopTier":    "Ethan Williams",   "FastHand":    "Amara Osei",
+  "DataDash":   "Leo Zhang",        "KiwiBot":     "Sana Malik",
+  "CobraK":     "Ivan Petrov",      "ZetaBot":     "Lena Muller",
+  "StarQ":      "Tariq Ibrahim",    "NetRunner":   "Chloe Dubois",
+  "FlashMind":  "Rami Khalil",      "BlazeFire":   "Sara Novak",
+  "Nova_X":     "Tom Nakamura",     "NovaX":       "Tom Nakamura",
+  "PiMaster":   "Anya Smirnova",    "CodeStrike":  "Ben Foster",
+  "WildCard":   "Maya Rivera",      "RedAlert":    "Sam O'Brien",
+  "BlueStar":   "Hana Yamamoto",    "DarkMatter":  "Kiran Patel",
+  "SwiftOne":   "Carlos Mendez",
+};
+
+/**
+ * One-time migration: updates playerName in leagues.json for any entries
+ * still using old gamer-tag names. Idempotent — safe to call on every startup.
+ */
+export function migrateStandingsBotNames(): void {
+  const store = readLeagueStore();
+  if (!store) return;
+
+  let changed = false;
+  for (const entry of store.entries) {
+    if (!entry.playerId.startsWith("bot_standings_")) continue;
+    const humanName = GAMER_TAG_TO_HUMAN[entry.playerName];
+    if (humanName && humanName !== entry.playerName) {
+      entry.playerName = humanName;
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    writeLeagueStore(store);
+    logger.info("bot-simulator: migrated standings bot names to human names");
+  }
+}
+
 // ── Main simulation tick ──────────────────────────────────────────────────────
 
 async function simulateTick(): Promise<void> {
@@ -543,16 +656,25 @@ let _interval: ReturnType<typeof setInterval> | null = null;
 export function startBotSimulator(): void {
   if (_interval) return;
 
+  // Migrate existing standings entries from gamer-tags to human names (idempotent)
+  try { migrateStandingsBotNames(); }
+  catch (err) { logger.error({ err }, "bot-simulator: name migration error"); }
+
   // Seed fixed bot standings (idempotent via botsSeeded flag)
   try { seedBotStandings(); }
   catch (err) { logger.error({ err }, "bot-simulator: initial seed error"); }
 
-  // First tick after 45 seconds (give DB time to fully initialise)
-  // This immediately catches up any missed rounds since season start
+  // First match tick after 45 seconds (give DB time to fully initialise)
   setTimeout(() => { simulateTick().catch(() => {}); }, 45_000);
 
-  // Then every 30 minutes
+  // Match simulation every 30 minutes
   _interval = setInterval(() => { simulateTick().catch(() => {}); }, TICK_INTERVAL_MS);
 
-  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick)");
+  // Bot engagement (post likes) — first run after 3 minutes, then every 20 minutes
+  setTimeout(() => {
+    simulateBotEngagement().catch(() => {});
+    setInterval(() => { simulateBotEngagement().catch(() => {}); }, 20 * 60 * 1000);
+  }, 3 * 60 * 1000);
+
+  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick, engagement 20-min)");
 }

@@ -32,10 +32,10 @@ const PROMOTION_PCT  = 0.20;
 const RELEGATION_PCT = 0.20;
 
 const BOT_NAMES = [
-  'Nova_X','BlazeFire','StarQ','KiwiBot','CobraK','ByteWolf',
-  'SkyKing','FastHand','PiMaster','ZetaBot','NeonPulse','QuantumK',
-  'SwiftOne','BrainWave','TopTier','GridHawk','DataDash','IronFox',
-  'CodeStrike','LightSpeed',
+  'Tom Nakamura','Sara Novak','Tariq Ibrahim','Sana Malik','Ivan Petrov','Omar Silva',
+  'Karim Hassan','Amara Osei','Anya Smirnova','Lena Muller','Priya Sharma','Ryan Chen',
+  'Carlos Mendez','Yuna Kim','Ethan Williams','Diego Fernandez','Leo Zhang','Elena Petrov',
+  'Ben Foster','Mia Johnson',
 ];
 
 

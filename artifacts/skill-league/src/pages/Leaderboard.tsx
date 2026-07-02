@@ -409,14 +409,18 @@ export default function Leaderboard() {
                         <div className="w-7 text-center font-black text-sm shrink-0 tabular-nums" style={{ color: rankColor(i) }}>
                           {medal ?? `${i + 1}`}
                         </div>
-                        <Avatar username={entry.playerName} size="sm" shape="rounded-xl" />
+                        <Avatar
+                          username={entry.playerName}
+                          avatar={isBot ? `https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(entry.playerName.replace(/\s+/g, ''))}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf` : undefined}
+                          size="sm"
+                          shape="rounded-xl"
+                        />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap">
                             <span className="font-bold text-sm truncate" style={{ color: isMe ? div.color : "rgba(255,255,255,0.88)" }}>
                               {entry.playerName}
                             </span>
                             {isMe && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md" style={{ background: `rgba(${div.rgb},0.22)`, color: div.color }}>أنت</span>}
-                            {isBot && <span className="text-[8px] font-bold px-1 py-0.5 rounded" style={{ background: "rgba(74,222,128,0.12)", color: "rgba(74,222,128,0.7)", border: "1px solid rgba(74,222,128,0.25)" }}>🤖 Bot</span>}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>

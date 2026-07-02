@@ -86833,6 +86833,7 @@ router2.post("/auth/pi", strictRateLimit, async (req, res) => {
     const piUser = await piRes.json();
     piUid = piUser.uid;
     piUsername = piUser.username ?? `Pi_${piUser.uid.slice(0, 6)}`;
+    req.log.info({ piUid }, "[PI AUTH] Authenticated Pi UID: " + piUid);
   } catch (err) {
     req.log.error({ err }, "Pi token validation request failed");
     res.status(502).json({ error: "pi_validation_failed" });
@@ -89538,26 +89539,26 @@ var DAILY_MATCH_COUNTS = Array.from({ length: 30 }, () => 1);
 var PROMOTION_PCT = 0.2;
 var RELEGATION_PCT = 0.2;
 var BOT_NAMES2 = [
-  "Nova_X",
-  "BlazeFire",
-  "StarQ",
-  "KiwiBot",
-  "CobraK",
-  "ByteWolf",
-  "SkyKing",
-  "FastHand",
-  "PiMaster",
-  "ZetaBot",
-  "NeonPulse",
-  "QuantumK",
-  "SwiftOne",
-  "BrainWave",
-  "TopTier",
-  "GridHawk",
-  "DataDash",
-  "IronFox",
-  "CodeStrike",
-  "LightSpeed"
+  "Tom Nakamura",
+  "Sara Novak",
+  "Tariq Ibrahim",
+  "Sana Malik",
+  "Ivan Petrov",
+  "Omar Silva",
+  "Karim Hassan",
+  "Amara Osei",
+  "Anya Smirnova",
+  "Lena Muller",
+  "Priya Sharma",
+  "Ryan Chen",
+  "Carlos Mendez",
+  "Yuna Kim",
+  "Ethan Williams",
+  "Diego Fernandez",
+  "Leo Zhang",
+  "Elena Petrov",
+  "Ben Foster",
+  "Mia Johnson"
 ];
 var LEAGUE_TO_ECONOMY_TIER = {
   coins: "div3",
@@ -90091,42 +90092,40 @@ var SKILL_PARAMS = {
 var STANDINGS_WIN_PROB = { elite: 0.65, advanced: 0.55, intermediate: 0.45, beginner: 0.3 };
 var STANDINGS_DRAW_PROB = { elite: 0.12, advanced: 0.15, intermediate: 0.18, beginner: 0.2 };
 var STANDINGS_BOT_SKILL = {
-  NeonRacer: "elite",
-  ByteWolf: "advanced",
-  PixelFox: "advanced",
-  SwiftArrow: "advanced",
-  DataStrike: "intermediate",
-  QuickByte: "intermediate",
-  CodeSniper: "intermediate",
-  NetRunner: "beginner",
-  FlashMind: "beginner",
-  StarKnight: "elite",
-  CosmicAce: "elite",
-  QuantumK: "elite",
-  IronFox: "advanced",
-  SkyKing: "intermediate",
-  BrainWave: "advanced",
-  GridHawk: "intermediate",
-  NeonPulse: "advanced",
-  LightSpeed: "intermediate",
-  TopTier: "intermediate",
-  FastHand: "beginner",
-  DataDash: "intermediate",
-  KiwiBot: "beginner",
-  CobraK: "intermediate",
-  ZetaBot: "beginner",
-  StarQ: "intermediate",
-  BlazeFire: "beginner",
-  NovaX: "beginner",
-  PiMaster: "beginner",
-  CodeStrike: "beginner",
-  WildCard: "beginner",
-  RedAlert: "beginner",
-  BlueStar: "beginner",
-  DarkMatter: "beginner",
-  // aliased names used in league-store.ts BOT_NAMES
-  Nova_X: "beginner",
-  SwiftOne: "intermediate"
+  "Alex Ahmed": "elite",
+  "Omar Silva": "advanced",
+  "James Carter": "elite",
+  "Lucas Martin": "elite",
+  "Ryan Chen": "elite",
+  "Sofia Torres": "advanced",
+  "Aisha Patel": "advanced",
+  "Marco Rossi": "intermediate",
+  "Elena Petrov": "advanced",
+  "Karim Hassan": "intermediate",
+  "Yuna Kim": "advanced",
+  "Diego Fernandez": "intermediate",
+  "Priya Sharma": "advanced",
+  "Jake Thompson": "intermediate",
+  "Nour Rashid": "intermediate",
+  "Mia Johnson": "intermediate",
+  "Ethan Williams": "intermediate",
+  "Amara Osei": "beginner",
+  "Leo Zhang": "intermediate",
+  "Sana Malik": "beginner",
+  "Ivan Petrov": "intermediate",
+  "Lena Muller": "beginner",
+  "Tariq Ibrahim": "intermediate",
+  "Chloe Dubois": "beginner",
+  "Rami Khalil": "beginner",
+  "Sara Novak": "beginner",
+  "Tom Nakamura": "beginner",
+  "Anya Smirnova": "beginner",
+  "Ben Foster": "beginner",
+  "Maya Rivera": "beginner",
+  "Sam O'Brien": "beginner",
+  "Hana Yamamoto": "beginner",
+  "Kiran Patel": "beginner",
+  "Carlos Mendez": "intermediate"
 };
 function getTier2(lp) {
   if (lp >= 500) return "champion";
@@ -90258,92 +90257,92 @@ async function simulateBotMatch(botA, botB) {
 }
 var FIXED_ROSTERS = {
   coins: [
-    "Nova_X",
-    "BlazeFire",
-    "StarQ",
-    "KiwiBot",
-    "CobraK",
-    "SkyKing",
-    "FastHand",
-    "PiMaster",
-    "ZetaBot",
-    "CodeStrike",
-    "RedAlert",
-    "BlueStar",
-    "DarkMatter",
-    "WildCard",
-    "FlashMind",
-    "LightSpeed"
+    "Tom Nakamura",
+    "Sara Novak",
+    "Tariq Ibrahim",
+    "Sana Malik",
+    "Ivan Petrov",
+    "Karim Hassan",
+    "Amara Osei",
+    "Anya Smirnova",
+    "Lena Muller",
+    "Ben Foster",
+    "Sam O'Brien",
+    "Hana Yamamoto",
+    "Kiran Patel",
+    "Maya Rivera",
+    "Rami Khalil",
+    "Mia Johnson"
   ],
   // 16 bots — LOCKED
   pro: [
-    "NeonRacer",
-    "SwiftArrow",
-    "DataStrike",
-    "QuickByte",
-    "CodeSniper",
-    "NetRunner",
-    "StarKnight",
-    "CosmicAce",
-    "IronFox",
-    "BrainWave",
-    "GridHawk",
-    "NeonPulse",
-    "TopTier",
-    "DataDash",
-    "CobraK",
-    "PixelFox"
+    "Alex Ahmed",
+    "Aisha Patel",
+    "Marco Rossi",
+    "Jake Thompson",
+    "Nour Rashid",
+    "Chloe Dubois",
+    "James Carter",
+    "Lucas Martin",
+    "Elena Petrov",
+    "Yuna Kim",
+    "Diego Fernandez",
+    "Priya Sharma",
+    "Ethan Williams",
+    "Leo Zhang",
+    "Ivan Petrov",
+    "Sofia Torres"
   ],
   // 16 bots — LOCKED
   elite: [
-    "NeonRacer",
-    "ByteWolf",
-    "PixelFox",
-    "SwiftArrow",
-    "DataStrike",
-    "StarKnight",
-    "CosmicAce",
-    "QuantumK",
-    "IronFox",
-    "BrainWave",
-    "NeonPulse",
-    "CodeSniper",
-    "GridHawk",
-    "QuickByte",
-    "FlashMind",
-    "SwiftOne",
-    "TopTier",
-    "DataDash",
-    "StarQ",
-    "LightSpeed"
+    "Alex Ahmed",
+    "Omar Silva",
+    "Sofia Torres",
+    "Aisha Patel",
+    "Marco Rossi",
+    "James Carter",
+    "Lucas Martin",
+    "Ryan Chen",
+    "Elena Petrov",
+    "Yuna Kim",
+    "Priya Sharma",
+    "Nour Rashid",
+    "Diego Fernandez",
+    "Jake Thompson",
+    "Rami Khalil",
+    "Carlos Mendez",
+    "Ethan Williams",
+    "Leo Zhang",
+    "Tariq Ibrahim",
+    "Mia Johnson"
   ],
   // 20 bots — LOCKED
   champion: [
-    "NeonRacer",
-    "StarKnight",
-    "CosmicAce",
-    "QuantumK",
-    "ByteWolf",
-    "PixelFox",
-    "SwiftArrow",
-    "DataStrike",
-    "IronFox",
-    "BrainWave",
-    "NeonPulse",
-    "CodeSniper",
-    "QuickByte",
-    "FlashMind",
-    "GridHawk",
-    "LightSpeed",
-    "TopTier",
-    "DataDash",
-    "CobraK",
-    "StarQ",
-    "BlazeFire",
-    "WildCard",
-    "BlueStar",
-    "SwiftOne",
-    "ZetaBot"
+    "Alex Ahmed",
+    "James Carter",
+    "Lucas Martin",
+    "Ryan Chen",
+    "Omar Silva",
+    "Sofia Torres",
+    "Aisha Patel",
+    "Marco Rossi",
+    "Elena Petrov",
+    "Yuna Kim",
+    "Priya Sharma",
+    "Nour Rashid",
+    "Jake Thompson",
+    "Rami Khalil",
+    "Diego Fernandez",
+    "Mia Johnson",
+    "Ethan Williams",
+    "Leo Zhang",
+    "Ivan Petrov",
+    "Tariq Ibrahim",
+    "Sara Novak",
+    "Maya Rivera",
+    "Hana Yamamoto",
+    "Carlos Mendez",
+    "Lena Muller"
   ]
   // 25 bots — LOCKED
 };
@@ -90519,6 +90518,98 @@ function simulateRoundsForLeague(store4, leagueId) {
   season.lastSimRound = currentRound;
   return true;
 }
+async function simulateBotEngagement() {
+  try {
+    const recentPosts = await db.select({ id: postsTable.id, authorId: postsTable.authorId }).from(postsTable).where(ne(postsTable.authorId, "sl_bot_00")).orderBy(desc(postsTable.createdAt)).limit(15);
+    const realPosts = recentPosts.filter((p) => !p.authorId.startsWith("sl_bot_"));
+    if (realPosts.length === 0) return;
+    const shuffledPosts = [...realPosts].sort(() => Math.random() - 0.5);
+    const targetPosts = shuffledPosts.slice(0, 1 + randInt(0, 2));
+    const botIds = [
+      "sl_bot_01",
+      "sl_bot_02",
+      "sl_bot_03",
+      "sl_bot_04",
+      "sl_bot_05",
+      "sl_bot_06",
+      "sl_bot_07",
+      "sl_bot_13",
+      "sl_bot_14",
+      "sl_bot_15"
+    ].sort(() => Math.random() - 0.5).slice(0, 1 + randInt(0, 3));
+    for (const post of targetPosts) {
+      for (const botId of botIds) {
+        const likeId = `like_${botId}_${post.id}`;
+        try {
+          await db.insert(postLikesTable).values({
+            id: likeId,
+            postId: post.id,
+            playerId: botId
+          }).onConflictDoNothing();
+          await db.update(postsTable).set({ likes: sql`${postsTable.likes} + 1` }).where(eq(postsTable.id, post.id));
+        } catch {
+        }
+      }
+    }
+    logger.debug({ posts: targetPosts.length, bots: botIds.length }, "bot-simulator: engagement tick");
+  } catch (err) {
+    logger.error({ err }, "bot-simulator: engagement tick error");
+  }
+}
+var GAMER_TAG_TO_HUMAN = {
+  "NeonRacer": "Alex Ahmed",
+  "ByteWolf": "Omar Silva",
+  "StarKnight": "James Carter",
+  "CosmicAce": "Lucas Martin",
+  "QuantumK": "Ryan Chen",
+  "PixelFox": "Sofia Torres",
+  "SwiftArrow": "Aisha Patel",
+  "DataStrike": "Marco Rossi",
+  "IronFox": "Elena Petrov",
+  "SkyKing": "Karim Hassan",
+  "BrainWave": "Yuna Kim",
+  "GridHawk": "Diego Fernandez",
+  "NeonPulse": "Priya Sharma",
+  "QuickByte": "Jake Thompson",
+  "CodeSniper": "Nour Rashid",
+  "LightSpeed": "Mia Johnson",
+  "TopTier": "Ethan Williams",
+  "FastHand": "Amara Osei",
+  "DataDash": "Leo Zhang",
+  "KiwiBot": "Sana Malik",
+  "CobraK": "Ivan Petrov",
+  "ZetaBot": "Lena Muller",
+  "StarQ": "Tariq Ibrahim",
+  "NetRunner": "Chloe Dubois",
+  "FlashMind": "Rami Khalil",
+  "BlazeFire": "Sara Novak",
+  "Nova_X": "Tom Nakamura",
+  "NovaX": "Tom Nakamura",
+  "PiMaster": "Anya Smirnova",
+  "CodeStrike": "Ben Foster",
+  "WildCard": "Maya Rivera",
+  "RedAlert": "Sam O'Brien",
+  "BlueStar": "Hana Yamamoto",
+  "DarkMatter": "Kiran Patel",
+  "SwiftOne": "Carlos Mendez"
+};
+function migrateStandingsBotNames() {
+  const store4 = readLeagueStore();
+  if (!store4) return;
+  let changed = false;
+  for (const entry of store4.entries) {
+    if (!entry.playerId.startsWith("bot_standings_")) continue;
+    const humanName = GAMER_TAG_TO_HUMAN[entry.playerName];
+    if (humanName && humanName !== entry.playerName) {
+      entry.playerName = humanName;
+      changed = true;
+    }
+  }
+  if (changed) {
+    writeLeagueStore(store4);
+    logger.info("bot-simulator: migrated standings bot names to human names");
+  }
+}
 async function simulateTick() {
   try {
     const bots = await db.select({
@@ -90562,6 +90653,11 @@ var _interval = null;
 function startBotSimulator() {
   if (_interval) return;
   try {
+    migrateStandingsBotNames();
+  } catch (err) {
+    logger.error({ err }, "bot-simulator: name migration error");
+  }
+  try {
     seedBotStandings();
   } catch (err) {
     logger.error({ err }, "bot-simulator: initial seed error");
@@ -90574,7 +90670,15 @@ function startBotSimulator() {
     simulateTick().catch(() => {
     });
   }, TICK_INTERVAL_MS);
-  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick)");
+  setTimeout(() => {
+    simulateBotEngagement().catch(() => {
+    });
+    setInterval(() => {
+      simulateBotEngagement().catch(() => {
+      });
+    }, 20 * 60 * 1e3);
+  }, 3 * 60 * 1e3);
+  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick, engagement 20-min)");
 }
 
 // src/lib/player-store.ts
@@ -94367,11 +94471,15 @@ init_logger2();
 init_drizzle_orm();
 init_src();
 init_logger2();
+function botAvatar(seed) {
+  return `https://api.dicebear.com/7.x/personas/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+}
 var FIXED_BOTS = [
+  // ── Champion tier (500+ LP) ──────────────────────────────────────────────
   {
     id: "sl_bot_01",
-    username: "NeonRacer",
-    avatar: "\u26A1",
+    username: "Alex Ahmed",
+    avatar: botAvatar("AlexAhmed"),
     elo: 1920,
     lp: 680,
     coins: 15600,
@@ -94392,8 +94500,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_02",
-    username: "ByteWolf",
-    avatar: "\u{1F43A}",
+    username: "Omar Silva",
+    avatar: botAvatar("OmarSilva"),
     elo: 1780,
     lp: 620,
     coins: 11200,
@@ -94414,8 +94522,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_03",
-    username: "StarKnight",
-    avatar: "\u2B50",
+    username: "James Carter",
+    avatar: botAvatar("JamesCarter"),
     elo: 2100,
     lp: 780,
     coins: 24e3,
@@ -94436,8 +94544,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_04",
-    username: "CosmicAce",
-    avatar: "\u{1F30C}",
+    username: "Lucas Martin",
+    avatar: botAvatar("LucasMartin"),
     elo: 1850,
     lp: 560,
     coins: 18500,
@@ -94458,8 +94566,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_05",
-    username: "QuantumK",
-    avatar: "\u269B\uFE0F",
+    username: "Ryan Chen",
+    avatar: botAvatar("RyanChen"),
     elo: 1760,
     lp: 530,
     coins: 13400,
@@ -94478,77 +94586,11 @@ var FIXED_BOTS = [
     skillMemory: 82,
     verificationStatus: "verified"
   },
-  // ── Pro tier (300-499 LP) ───────────────────────────────────────────────
-  {
-    id: "sl_bot_03",
-    username: "PixelFox",
-    avatar: "\u{1F98A}",
-    elo: 1650,
-    lp: 480,
-    coins: 8900,
-    xp: 8500,
-    level: 18,
-    leagueDivision: "pro",
-    pvpWins: 112,
-    pvpLosses: 71,
-    pvpWinStreak: 2,
-    bestPvpStreak: 10,
-    matchesPlayed: 184,
-    matchesWon: 116,
-    bestStreak: 10,
-    skillSpeed: 75,
-    skillAccuracy: 79,
-    skillMemory: 72,
-    verificationStatus: "unverified"
-  },
-  {
-    id: "sl_bot_04",
-    username: "SwiftArrow",
-    avatar: "\u{1F3F9}",
-    elo: 1540,
-    lp: 420,
-    coins: 7200,
-    xp: 6900,
-    level: 15,
-    leagueDivision: "pro",
-    pvpWins: 98,
-    pvpLosses: 84,
-    pvpWinStreak: 1,
-    bestPvpStreak: 8,
-    matchesPlayed: 184,
-    matchesWon: 101,
-    bestStreak: 8,
-    skillSpeed: 70,
-    skillAccuracy: 73,
-    skillMemory: 67,
-    verificationStatus: "unverified"
-  },
-  {
-    id: "sl_bot_05",
-    username: "DataStrike",
-    avatar: "\u{1F4A5}",
-    elo: 1420,
-    lp: 360,
-    coins: 5800,
-    xp: 5400,
-    level: 12,
-    leagueDivision: "pro",
-    pvpWins: 76,
-    pvpLosses: 89,
-    pvpWinStreak: 0,
-    bestPvpStreak: 7,
-    matchesPlayed: 167,
-    matchesWon: 79,
-    bestStreak: 7,
-    skillSpeed: 63,
-    skillAccuracy: 68,
-    skillMemory: 61,
-    verificationStatus: "unverified"
-  },
+  // ── Pro tier (300-499 LP) ────────────────────────────────────────────────
   {
     id: "sl_bot_13",
-    username: "IronFox",
-    avatar: "\u{1F9BE}",
+    username: "Elena Petrov",
+    avatar: botAvatar("ElenaPetrov"),
     elo: 1490,
     lp: 445,
     coins: 6500,
@@ -94569,8 +94611,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_14",
-    username: "SkyKing",
-    avatar: "\u{1F985}",
+    username: "Karim Hassan",
+    avatar: botAvatar("KarimHassan"),
     elo: 1380,
     lp: 315,
     coins: 4900,
@@ -94591,8 +94633,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_15",
-    username: "BrainWave",
-    avatar: "\u{1F9E0}",
+    username: "Yuna Kim",
+    avatar: botAvatar("YunaKim"),
     elo: 1555,
     lp: 395,
     coins: 7800,
@@ -94613,8 +94655,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_16",
-    username: "GridHawk",
-    avatar: "\u{1F99C}",
+    username: "Diego Fernandez",
+    avatar: botAvatar("DiegoFernandez"),
     elo: 1460,
     lp: 340,
     coins: 5200,
@@ -94635,8 +94677,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_17",
-    username: "NeonPulse",
-    avatar: "\u{1F49C}",
+    username: "Priya Sharma",
+    avatar: botAvatar("PriyaSharma"),
     elo: 1610,
     lp: 465,
     coins: 9200,
@@ -94655,11 +94697,77 @@ var FIXED_BOTS = [
     skillMemory: 75,
     verificationStatus: "unverified"
   },
-  // ── Coin/Div2 tier (100-299 LP) ────────────────────────────────────────
+  {
+    id: "sl_bot_34",
+    username: "Sofia Torres",
+    avatar: botAvatar("SofiaTorres"),
+    elo: 1650,
+    lp: 480,
+    coins: 8900,
+    xp: 8500,
+    level: 18,
+    leagueDivision: "pro",
+    pvpWins: 112,
+    pvpLosses: 71,
+    pvpWinStreak: 2,
+    bestPvpStreak: 10,
+    matchesPlayed: 184,
+    matchesWon: 116,
+    bestStreak: 10,
+    skillSpeed: 75,
+    skillAccuracy: 79,
+    skillMemory: 72,
+    verificationStatus: "unverified"
+  },
+  {
+    id: "sl_bot_35",
+    username: "Aisha Patel",
+    avatar: botAvatar("AishaPatel"),
+    elo: 1540,
+    lp: 420,
+    coins: 7200,
+    xp: 6900,
+    level: 15,
+    leagueDivision: "pro",
+    pvpWins: 98,
+    pvpLosses: 84,
+    pvpWinStreak: 1,
+    bestPvpStreak: 8,
+    matchesPlayed: 184,
+    matchesWon: 101,
+    bestStreak: 8,
+    skillSpeed: 70,
+    skillAccuracy: 73,
+    skillMemory: 67,
+    verificationStatus: "unverified"
+  },
+  {
+    id: "sl_bot_36",
+    username: "Marco Rossi",
+    avatar: botAvatar("MarcoRossi"),
+    elo: 1420,
+    lp: 360,
+    coins: 5800,
+    xp: 5400,
+    level: 12,
+    leagueDivision: "pro",
+    pvpWins: 76,
+    pvpLosses: 89,
+    pvpWinStreak: 0,
+    bestPvpStreak: 7,
+    matchesPlayed: 167,
+    matchesWon: 79,
+    bestStreak: 7,
+    skillSpeed: 63,
+    skillAccuracy: 68,
+    skillMemory: 61,
+    verificationStatus: "unverified"
+  },
+  // ── Coin/Div2 tier (100-299 LP) ──────────────────────────────────────────
   {
     id: "sl_bot_06",
-    username: "QuickByte",
-    avatar: "\u26A1",
+    username: "Jake Thompson",
+    avatar: botAvatar("JakeThompson"),
     elo: 1310,
     lp: 280,
     coins: 4500,
@@ -94680,8 +94788,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_07",
-    username: "CodeSniper",
-    avatar: "\u{1F3AF}",
+    username: "Nour Rashid",
+    avatar: botAvatar("NourRashid"),
     elo: 1200,
     lp: 175,
     coins: 3200,
@@ -94702,8 +94810,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_18",
-    username: "LightSpeed",
-    avatar: "\u{1F4A8}",
+    username: "Mia Johnson",
+    avatar: botAvatar("MiaJohnson"),
     elo: 1260,
     lp: 240,
     coins: 3800,
@@ -94724,8 +94832,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_19",
-    username: "TopTier",
-    avatar: "\u{1F51D}",
+    username: "Ethan Williams",
+    avatar: botAvatar("EthanWilliams"),
     elo: 1350,
     lp: 295,
     coins: 4200,
@@ -94746,8 +94854,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_20",
-    username: "FastHand",
-    avatar: "\u{1F91A}",
+    username: "Amara Osei",
+    avatar: botAvatar("AmaraOsei"),
     elo: 1180,
     lp: 145,
     coins: 2700,
@@ -94768,8 +94876,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_21",
-    username: "DataDash",
-    avatar: "\u{1F4CA}",
+    username: "Leo Zhang",
+    avatar: botAvatar("LeoZhang"),
     elo: 1290,
     lp: 215,
     coins: 3600,
@@ -94790,8 +94898,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_22",
-    username: "KiwiBot",
-    avatar: "\u{1F95D}",
+    username: "Sana Malik",
+    avatar: botAvatar("SanaMalik"),
     elo: 1225,
     lp: 165,
     coins: 2900,
@@ -94812,8 +94920,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_23",
-    username: "CobraK",
-    avatar: "\u{1F40D}",
+    username: "Ivan Petrov",
+    avatar: botAvatar("IvanPetrov"),
     elo: 1320,
     lp: 260,
     coins: 4100,
@@ -94834,8 +94942,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_24",
-    username: "ZetaBot",
-    avatar: "\u{1F916}",
+    username: "Lena Muller",
+    avatar: botAvatar("LenaMuller"),
     elo: 1165,
     lp: 120,
     coins: 2400,
@@ -94856,8 +94964,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_25",
-    username: "StarQ",
-    avatar: "\u{1F320}",
+    username: "Tariq Ibrahim",
+    avatar: botAvatar("TariqIbrahim"),
     elo: 1245,
     lp: 195,
     coins: 3300,
@@ -94876,11 +94984,11 @@ var FIXED_BOTS = [
     skillMemory: 49,
     verificationStatus: "unverified"
   },
-  // ── Training tier (0-99 LP) ────────────────────────────────────────────
+  // ── Training tier (0-99 LP) ──────────────────────────────────────────────
   {
     id: "sl_bot_08",
-    username: "NetRunner",
-    avatar: "\u{1F310}",
+    username: "Chloe Dubois",
+    avatar: botAvatar("ChloeDubois"),
     elo: 1100,
     lp: 85,
     coins: 2100,
@@ -94901,8 +95009,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_09",
-    username: "FlashMind",
-    avatar: "\u{1F9E0}",
+    username: "Rami Khalil",
+    avatar: botAvatar("RamiKhalil"),
     elo: 1020,
     lp: 45,
     coins: 1400,
@@ -94923,8 +95031,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_26",
-    username: "BlazeFire",
-    avatar: "\u{1F525}",
+    username: "Sara Novak",
+    avatar: botAvatar("SaraNovak"),
     elo: 1050,
     lp: 65,
     coins: 1700,
@@ -94945,8 +95053,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_27",
-    username: "NovaX",
-    avatar: "\u{1F31F}",
+    username: "Tom Nakamura",
+    avatar: botAvatar("TomNakamura"),
     elo: 1010,
     lp: 30,
     coins: 1100,
@@ -94967,8 +95075,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_28",
-    username: "PiMaster",
-    avatar: "\u03C0",
+    username: "Anya Smirnova",
+    avatar: botAvatar("AnyaSmirnova"),
     elo: 1080,
     lp: 78,
     coins: 1900,
@@ -94989,8 +95097,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_29",
-    username: "CodeStrike",
-    avatar: "\u{1F3AE}",
+    username: "Ben Foster",
+    avatar: botAvatar("BenFoster"),
     elo: 1035,
     lp: 15,
     coins: 900,
@@ -95011,8 +95119,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_30",
-    username: "WildCard",
-    avatar: "\u{1F0CF}",
+    username: "Maya Rivera",
+    avatar: botAvatar("MayaRivera"),
     elo: 1060,
     lp: 55,
     coins: 1600,
@@ -95033,8 +95141,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_31",
-    username: "RedAlert",
-    avatar: "\u{1F6A8}",
+    username: "Sam O'Brien",
+    avatar: botAvatar("SamOBrien"),
     elo: 1015,
     lp: 8,
     coins: 800,
@@ -95055,8 +95163,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_32",
-    username: "BlueStar",
-    avatar: "\u{1F300}",
+    username: "Hana Yamamoto",
+    avatar: botAvatar("HanaYamamoto"),
     elo: 1045,
     lp: 38,
     coins: 1300,
@@ -95077,8 +95185,8 @@ var FIXED_BOTS = [
   },
   {
     id: "sl_bot_33",
-    username: "DarkMatter",
-    avatar: "\u{1F311}",
+    username: "Kiran Patel",
+    avatar: botAvatar("KiranPatel"),
     elo: 1090,
     lp: 92,
     coins: 2e3,
@@ -95175,12 +95283,18 @@ async function runSeed() {
       await db.insert(playersTable).values(FIXED_BOTS).onConflictDoNothing();
       logger.info({ count: FIXED_BOTS.length }, "Seeded bot players");
     } else {
-      const updatePromises = FIXED_BOTS.slice(0, 10).map(
-        (bot) => db.update(playersTable).set({ lp: bot.lp, leagueDivision: bot.leagueDivision, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, bot.id)).catch(() => {
+      const updatePromises = FIXED_BOTS.map(
+        (bot) => db.update(playersTable).set({
+          username: bot.username,
+          avatar: bot.avatar,
+          lp: bot.lp,
+          leagueDivision: bot.leagueDivision,
+          updatedAt: /* @__PURE__ */ new Date()
+        }).where(eq(playersTable.id, bot.id)).catch(() => {
         })
       );
       await Promise.all(updatePromises);
-      logger.info({ existing: Number(pCount) }, "Players already seeded \u2014 updated LP values");
+      logger.info({ existing: Number(pCount) }, "Bot players updated (names, avatars, LP)");
     }
     const [{ value: tCount }] = await db.select({ value: count() }).from(tournamentsTable);
     if (Number(tCount) < 2) {
