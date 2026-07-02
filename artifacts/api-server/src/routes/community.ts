@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { eq, desc, and, asc, sql, inArray } from "drizzle-orm";
-import { db, postsTable, postLikesTable, postCommentsTable, postSavesTable } from "@workspace/db";
+import { db, postsTable, postLikesTable, postCommentsTable, postSavesTable, playersTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
+import { getOwnerPlayerId } from "../lib/owner.js";
 import { recordPost, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
 import { createNotification } from "../lib/notificationService.js";
 
@@ -29,29 +30,30 @@ function mapPost(
   row: Record<string, unknown>,
   likedPostIds: Set<string> = new Set(),
   savedPostIds: Set<string> = new Set(),
+  ownerPlayerId: string | null = null,
 ) {
   const postId = row.id as string;
   return {
-    id:          postId,
-    authorId:    row.authorId,
-    authorName:  row.username,
-    authorLevel: row.level ?? 1,
-    content:     row.content ?? "",
-    imageUrl:    row.imageUrl ?? undefined,
-    type:        row.type ?? "text",
-    timestamp:   row.createdAt ? new Date(row.createdAt as string).getTime() : Date.now(),
-    likes:       row.likes ?? 0,
-    likedByMe:   likedPostIds.has(postId),
-    savedByMe:   savedPostIds.has(postId),
-    replyCount:  row.replies ?? 0,
-    views:       row.views ?? 0,
-    isPinned:    row.isPinned ?? false,
-    isPublic:    row.isPublic ?? true,
-    // also expose flat fields for legacy consumers
-    username:    row.username,
-    level:       row.level ?? 1,
-    createdAt:   row.createdAt,
-    replies:     row.replies ?? 0,
+    id:            postId,
+    authorId:      row.authorId,
+    authorName:    row.username,
+    authorLevel:   row.level ?? 1,
+    authorIsOwner: ownerPlayerId !== null && row.authorId === ownerPlayerId,
+    content:       row.content ?? "",
+    imageUrl:      row.imageUrl ?? undefined,
+    type:          row.type ?? "text",
+    timestamp:     row.createdAt ? new Date(row.createdAt as string).getTime() : Date.now(),
+    likes:         row.likes ?? 0,
+    likedByMe:     likedPostIds.has(postId),
+    savedByMe:     savedPostIds.has(postId),
+    replyCount:    row.replies ?? 0,
+    views:         row.views ?? 0,
+    isPinned:      row.isPinned ?? false,
+    isPublic:      row.isPublic ?? true,
+    username:      row.username,
+    level:         row.level ?? 1,
+    createdAt:     row.createdAt,
+    replies:       row.replies ?? 0,
   };
 }
 
@@ -136,16 +138,19 @@ router.get("/community/posts", async (req, res) => {
 
     // Fetch per-player interaction state
     const postIds = pageRows.map((r: any) => r.id as string);
-    const { likedPostIds, savedPostIds } = await getPlayerInteractions(playerId, postIds);
+    const [{ likedPostIds, savedPostIds }, ownerPlayerId] = await Promise.all([
+      getPlayerInteractions(playerId, postIds),
+      getOwnerPlayerId(),
+    ]);
 
     // Legacy flat-array mode
     if (flat) {
-      res.json(pageRows.map((r: any) => mapPost(r as Record<string, unknown>, likedPostIds, savedPostIds)));
+      res.json(pageRows.map((r: any) => mapPost(r as Record<string, unknown>, likedPostIds, savedPostIds, ownerPlayerId)));
       return;
     }
 
     res.json({
-      data:     pageRows.map((r: any) => mapPost(r as Record<string, unknown>, likedPostIds, savedPostIds)),
+      data:     pageRows.map((r: any) => mapPost(r as Record<string, unknown>, likedPostIds, savedPostIds, ownerPlayerId)),
       nextPage: hasMore ? page + 1 : null,
       total:    pageRows.length,
     });

@@ -10,6 +10,7 @@ import {
   notificationsTable,
 } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
+import { isOwnerPiUid } from "../lib/owner.js";
 
 const router = Router();
 
@@ -66,7 +67,7 @@ router.get("/social/search", async (req, res) => {
 
     // ── Users ──────────────────────────────────────────────────────────
     if (type === "all" || type === "users") {
-      const users = await db
+      const userRows = await db
         .select({
           id: playersTable.id,
           username: playersTable.username,
@@ -75,12 +76,13 @@ router.get("/social/search", async (req, res) => {
           elo: playersTable.elo,
           verificationStatus: playersTable.verificationStatus,
           lastActiveAt: playersTable.lastActiveAt,
+          piUid: playersTable.piUid,
         })
         .from(playersTable)
         .where(ilike(playersTable.username, `%${q}%`))
         .orderBy(desc(playersTable.elo))
         .limit(10);
-      results.users = users;
+      results.users = userRows.map(({ piUid, ...u }) => ({ ...u, isOwner: isOwnerPiUid(piUid) }));
     }
 
     // ── Posts ──────────────────────────────────────────────────────────
@@ -275,11 +277,12 @@ router.get("/social/trending", async (req, res) => {
     const activeUsers = await Promise.all(
       postCountRows.map(async row => {
         const [player] = await db
-          .select({ level: playersTable.level, elo: playersTable.elo, verificationStatus: playersTable.verificationStatus })
+          .select({ level: playersTable.level, elo: playersTable.elo, verificationStatus: playersTable.verificationStatus, piUid: playersTable.piUid })
           .from(playersTable)
           .where(eq(playersTable.id, row.authorId))
           .limit(1);
-        return { ...row, ...player };
+        const { piUid, ...playerData } = player ?? { level: 1, elo: 1000, verificationStatus: "none", piUid: null };
+        return { ...row, ...playerData, isOwner: isOwnerPiUid(piUid) };
       })
     );
 
@@ -364,6 +367,7 @@ router.get("/social/profile/:id", async (req, res) => {
         lastActiveAt:       playersTable.lastActiveAt,
         verified:           playersTable.verified,
         verificationStatus: playersTable.verificationStatus,
+        piUid:              playersTable.piUid,
       })
       .from(playersTable)
       .where(eq(playersTable.id, id))
@@ -410,6 +414,7 @@ router.get("/social/profile/:id", async (req, res) => {
         cover:              player.cover ?? null,
         verified:           player.verified ?? false,
         verificationStatus: player.verificationStatus ?? "none",
+        isOwner:            isOwnerPiUid(player.piUid),
       },
       followers: followersCount,
       following: followingCount,

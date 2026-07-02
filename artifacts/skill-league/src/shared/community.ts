@@ -20,6 +20,7 @@ export interface CommunityPost {
   authorName: string;
   authorLevel: number;
   authorFame?: number;
+  authorIsOwner?: boolean;
 
   content: string;
   imageUrl?: string;

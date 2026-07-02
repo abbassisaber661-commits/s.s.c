@@ -66,6 +66,7 @@ export function useProfileData(userId: string) {
       const rawStatus: string = p.verificationStatus ?? "none";
       const isVerified: boolean = p.verified === true || p.verified === 1;
       const verificationTier =
+        (p.isOwner === true) ? "owner" as const :
         (isVerified || rawStatus === "approved") ? "verified" as const : undefined;
 
       const mapped: ProfileData = {

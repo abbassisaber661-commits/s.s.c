@@ -2,6 +2,7 @@ import React, { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Reply, MoreHorizontal, Trash2, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VerificationBadge } from "@/components/profile/VerificationBadge";
 
 const formatAge = (ts: number) => {
   const d = Date.now() - ts;
@@ -12,16 +13,17 @@ const formatAge = (ts: number) => {
 };
 
 export interface CommentData {
-  id:          string;
-  postId:      string;
-  authorName:  string;
-  authorLevel: number;
-  content:     string;
-  timestamp:   number;
-  likes?:      number;
-  likedByMe?:  boolean;
-  replies?:    CommentData[];
-  parentId?:   string;
+  id:            string;
+  postId:        string;
+  authorName:    string;
+  authorLevel:   number;
+  authorIsOwner?: boolean;
+  content:       string;
+  timestamp:     number;
+  likes?:        number;
+  likedByMe?:    boolean;
+  replies?:      CommentData[];
+  parentId?:     string;
 }
 
 interface CommentItemProps {
@@ -77,10 +79,13 @@ export const CommentItem = memo(function CommentItem({
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="bg-[#F5F5F7] rounded-2xl px-3 py-2">
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-[#111111]">
               {comment.authorName}
             </span>
+            {comment.authorIsOwner && (
+              <VerificationBadge tier="owner" size="sm" showTooltip={false} />
+            )}
             <span className="text-[10px] text-[#666666]">Lv.{comment.authorLevel}</span>
           </div>
           <p className="text-sm text-[#111111] mt-0.5 leading-relaxed break-words">

@@ -15,6 +15,7 @@ export interface Post {
 
 export type VerificationTier =
   | "none"
+  | "owner"
   | "verified"
   | "official"
   | "premium"

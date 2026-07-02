@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq, desc, or, sql, and, gte, lte } from "drizzle-orm";
 import { db, playersTable, pvpMatchesTable, coinTransactionsTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
+import { isOwnerPiUid } from "../lib/owner.js";
 
 const router = Router();
 
@@ -42,6 +43,7 @@ router.get("/players/leaderboard/division/:division", async (req, res) => {
         skillAccuracy:      playersTable.skillAccuracy,
         verificationStatus: playersTable.verificationStatus,
         lastActiveAt:       playersTable.lastActiveAt,
+        piUid:              playersTable.piUid,
       })
       .from(playersTable)
       .where(condition)
@@ -53,7 +55,8 @@ router.get("/players/leaderboard/division/:division", async (req, res) => {
       playerRank = idx >= 0 ? idx + 1 : null;
     }
 
-    res.json({ players: rows, playerRank, total: rows.length });
+    const players = rows.map(({ piUid, ...row }) => ({ ...row, isOwner: isOwnerPiUid(piUid) }));
+    res.json({ players, playerRank, total: players.length });
   } catch (err) {
     req.log.error({ err }, "division leaderboard error");
     res.status(500).json({ error: "internal" });
@@ -83,11 +86,12 @@ router.get("/players/leaderboard", async (req, res) => {
         pvpWinStreak:       playersTable.pvpWinStreak,
         bestPvpStreak:      playersTable.bestPvpStreak,
         verificationStatus: playersTable.verificationStatus,
+        piUid:              playersTable.piUid,
       })
       .from(playersTable)
       .orderBy(desc(playersTable.elo))
       .limit(limit);
-    res.json(rows);
+    res.json(rows.map(({ piUid, ...row }) => ({ ...row, isOwner: isOwnerPiUid(piUid) })));
   } catch (err) {
     req.log.error({ err }, "leaderboard error");
     res.status(500).json({ error: "internal" });
@@ -104,7 +108,7 @@ router.get("/players/:id", async (req, res) => {
       .where(eq(playersTable.id, req.params.id))
       .limit(1);
     if (!player) { res.status(404).json({ error: "not found" }); return; }
-    res.json(player);
+    res.json({ ...player, isOwner: isOwnerPiUid(player.piUid) });
   } catch (err) {
     req.log.error({ err }, "get player error");
     res.status(500).json({ error: "internal" });

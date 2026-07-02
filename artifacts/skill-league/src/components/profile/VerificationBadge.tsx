@@ -25,6 +25,15 @@ interface BadgeConfig {
 }
 
 const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
+  owner: {
+    icon: Crown,
+    color: "text-white",
+    bg: "bg-blue-600",
+    glowColor: "rgba(37,99,235,0.9)",
+    label: "App Owner",
+    description: "The creator and owner of SkillLeague.",
+    isPrimary: true,
+  },
   verified: {
     icon: BadgeCheck,
     color: "text-white",

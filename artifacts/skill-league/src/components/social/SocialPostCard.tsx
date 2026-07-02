@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import Avatar from "@/components/Avatar";
+import { VerificationBadge } from "@/components/profile/VerificationBadge";
 import { PostOptionsMenu } from "@/components/social/PostOptionsMenu";
 import GiftModal from "@/components/social/GiftModal";
 import type { CommunityPost } from "@/shared/community";
@@ -457,11 +458,14 @@ const SocialPostCard = memo(function SocialPostCard({
           <button
             onClick={() => navigate(`/profile/${post.authorId}`)}
             className={cn(
-              "font-bold text-sm text-[#0D0D0D] truncate leading-tight hover:underline block w-full",
+              "flex items-center gap-1 font-bold text-sm text-[#0D0D0D] leading-tight hover:underline",
               rtl ? "text-right" : "text-left"
             )}
           >
-            {post.authorName}
+            <span className="truncate">{post.authorName}</span>
+            {post.authorIsOwner && (
+              <VerificationBadge tier="owner" size="sm" showTooltip={false} />
+            )}
           </button>
 
           {/* Row 2 — Time · Level   [🎁 Gift DN] */}
