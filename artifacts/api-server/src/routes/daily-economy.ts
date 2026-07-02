@@ -309,4 +309,44 @@ router.get('/economy/player/:playerId/balance', async (req, res) => {
   }
 });
 
+// ── Route aliases for frontend compatibility ─────────────────────────────────
+
+// GET /daily/status/:playerId  →  alias for /economy/daily/:playerId/status
+router.get('/daily/status/:playerId', async (req, res) => {
+  try {
+    const playerId = req.params.playerId?.trim() ?? '';
+    if (!playerId) { res.status(400).json({ error: 'missing playerId' }); return; }
+    const status = await getDailyStatus(playerId);
+    res.json(status);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: 'internal' });
+  }
+});
+
+// POST /daily/claim  →  routes by taskId to /economy/daily/:playerId/claim/:taskId
+router.post('/daily/claim', async (req, res) => {
+  try {
+    const { playerId, taskId } = req.body as { playerId?: string; taskId?: string };
+    if (!playerId || !taskId) {
+      res.status(400).json({ error: 'missing playerId or taskId' });
+      return;
+    }
+    let result: { awarded: boolean; coins?: number; reason?: string };
+    switch (taskId) {
+      case 'login':   result = await claimLoginReward(playerId);   break;
+      case 'social':  result = await claimSocialReward(playerId);  break;
+      case 'content': result = await claimContentReward(playerId); break;
+      case 'match':   result = await claimMatchReward(playerId);   break;
+      default:
+        res.status(400).json({ error: `Unknown taskId: ${taskId}` });
+        return;
+    }
+    res.status(result.awarded ? 200 : 409).json(result);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: 'internal' });
+  }
+});
+
 export default router;

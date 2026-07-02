@@ -489,8 +489,8 @@ export const api = {
       matchId?: string;
       rewards?: {
         lp: { newLp: number; oldLp: number; delta: number; oldTier: string; newTier: string };
-        xp: { gained: number };
-        coins: number;
+        xp: { gained: number; oldXp: number; newXp: number; oldLevel: number; newLevel: number; levelUp: boolean };
+        coins: { earned: number; oldCoins: number; newCoins: number };
       };
       [key: string]: unknown;
     }>("/matches", data),

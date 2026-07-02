@@ -181,7 +181,7 @@ router.post("/economy/match-result", async (req, res) => {
       currentGems,
     );
 
-    // Persist new gems back to player-store
+    // Persist new gems back to player-store (JSON cache)
     if (profile) {
       profile.gems      = result.newGems;
       profile.updatedAt = new Date().toISOString();
@@ -202,22 +202,19 @@ router.post("/economy/match-result", async (req, res) => {
     }
     writePlayerStore(psData);
 
-    // Update coins in DB and record transaction
-    if (dbPlayer && result.coinsEarned > 0) {
+    // Persist gems to DB (authoritative source) — coins are NOT awarded here,
+    // they are handled exclusively by POST /matches to avoid double-counting.
+    if (dbPlayer && result.gemsEarned > 0) {
+      const [currentPlayer] = await db
+        .select({ gems: playersTable.gems })
+        .from(playersTable)
+        .where(eq(playersTable.id, playerIdStr))
+        .limit(1);
+      const newDbGems = (currentPlayer?.gems ?? 0) + result.gemsEarned;
       await db
         .update(playersTable)
-        .set({ coins: result.newCoins, updatedAt: new Date() })
+        .set({ gems: newDbGems, updatedAt: new Date() })
         .where(eq(playersTable.id, playerIdStr));
-
-      await db.insert(coinTransactionsTable).values({
-        id:          nanoid(),
-        playerId:    playerIdStr,
-        amount:      result.coinsEarned,
-        type:        "earn",
-        source:      "match_result",
-        description: `Match reward: rank #${rankNum}, ${Math.round(accuracyNum * 100)}% accuracy (${economyTier.toUpperCase()})`,
-        balanceAfter: result.newCoins,
-      });
     }
 
     res.status(200).json({
@@ -237,8 +234,22 @@ router.post("/economy/match-result", async (req, res) => {
 router.get("/economy/:playerId/gems", async (req, res) => {
   try {
     const playerIdStr = req.params.playerId;
-    const psData   = readPlayerStore();
-    const profile  = psData.profiles.find(
+
+    // Primary: read from DB (authoritative)
+    const [dbPlayer] = await db
+      .select({ gems: playersTable.gems })
+      .from(playersTable)
+      .where(eq(playersTable.id, playerIdStr))
+      .limit(1);
+
+    if (dbPlayer !== undefined) {
+      res.json({ gems: dbPlayer.gems ?? 0 });
+      return;
+    }
+
+    // Fallback: read from JSON file for non-DB players
+    const psData  = readPlayerStore();
+    const profile = psData.profiles.find(
       (p: Record<string, unknown>) => p.playerId === playerIdStr || p.id === playerIdStr,
     ) as Record<string, unknown> | undefined;
     const gems = typeof profile?.gems === "number" ? profile.gems : 0;

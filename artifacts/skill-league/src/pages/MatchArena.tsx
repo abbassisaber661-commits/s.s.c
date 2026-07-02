@@ -1476,7 +1476,7 @@ export default function MatchArena() {
         rounds:       [],
       }).then(serverMatch => {
         if (serverMatch?.rewards) {
-          const { lp: lpR, xp: xpR } = serverMatch.rewards;
+          const { lp: lpR, coins: coinsR } = serverMatch.rewards;
           // Sync authoritative LP from server into localStorage
           const stored = loadLeagueStats();
           stored.lp = lpR.newLp;
@@ -1488,6 +1488,11 @@ export default function MatchArena() {
                 newTier: lpR.newTier as typeof prev.newTier }
             : prev,
           );
+          // Sync server-awarded coins into GameContext / localStorage so that
+          // useDbSync won't overwrite the DB with a stale pre-match balance.
+          if (coinsR?.earned && coinsR.earned > 0) {
+            game.addCoins(coinsR.earned);
+          }
           // Mark daily match used (next UTC midnight)
           const tomorrow = new Date(); tomorrow.setUTCHours(0,0,0,0); tomorrow.setUTCDate(tomorrow.getUTCDate()+1);
           setDailyStatus({ canPlay: false, nextMatchAt: tomorrow.toISOString(), matchesPlayedToday: 1 });
