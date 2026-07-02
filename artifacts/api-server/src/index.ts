@@ -34,7 +34,14 @@ server.listen(port, "0.0.0.0", async () => {
   startSeasonScheduler();
 });
 
-server.on("error", (err) => {
+server.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EADDRINUSE") {
+    logger.warn(
+      { port },
+      "Port already in use — another api-server instance is running (likely via Start application). Exiting cleanly.",
+    );
+    process.exit(0);
+  }
   logger.error({ err }, "Server error");
   process.exit(1);
 });

@@ -95597,6 +95597,13 @@ server.listen(port, "0.0.0.0", async () => {
   startSeasonScheduler();
 });
 server.on("error", (err) => {
+  if (err.code === "EADDRINUSE") {
+    logger.warn(
+      { port },
+      "Port already in use \u2014 another api-server instance is running (likely via Start application). Exiting cleanly."
+    );
+    process.exit(0);
+  }
   logger.error({ err }, "Server error");
   process.exit(1);
 });
