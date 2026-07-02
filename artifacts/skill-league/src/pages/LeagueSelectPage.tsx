@@ -411,6 +411,12 @@ function SubscribeModal({
 }
 
 // ── LeagueCard ─────────────────────────────────────────────────────────────────
+//
+//  Fixed 3-row layout:
+//    Row 1 — [ Emblem ]  League Name           [ badge ]
+//    Row 2 — Requirement · Difficulty · Cost
+//    Row 3 — [ PLAY / SUBSCRIBE ]              [ ℹ️ ]
+//
 function LeagueCard({
   league,
   index,
@@ -427,164 +433,131 @@ function LeagueCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.09, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ delay: 0.08 + index * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="relative w-full rounded-2xl overflow-hidden"
       style={{
         background: isOpen
-          ? `linear-gradient(140deg, rgba(${league.colorRgb},0.18) 0%, rgba(0,0,0,0.78) 100%)`
-          : `linear-gradient(140deg, rgba(${league.colorRgb},0.07) 0%, rgba(0,0,0,0.88) 100%)`,
+          ? `linear-gradient(135deg, rgba(${league.colorRgb},0.14) 0%, rgba(0,0,0,0.82) 100%)`
+          : "rgba(255,255,255,0.025)",
         border: isOpen
-          ? `1.5px solid rgba(${league.colorRgb},0.35)`
-          : `1px solid rgba(${league.colorRgb},0.14)`,
+          ? `1.5px solid rgba(${league.colorRgb},0.32)`
+          : "1px solid rgba(255,255,255,0.08)",
         boxShadow: isOpen
-          ? `0 0 24px rgba(${league.colorRgb},0.12), 0 6px 24px rgba(0,0,0,0.5)`
-          : `0 4px 16px rgba(0,0,0,0.45)`,
+          ? `0 0 20px rgba(${league.colorRgb},0.1), 0 4px 20px rgba(0,0,0,0.5)`
+          : "0 2px 12px rgba(0,0,0,0.4)",
       }}
     >
-      {/* Top color accent bar */}
+      {/* Left accent stripe */}
       <div
-        className="h-[3px] w-full"
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
         style={{
           background: isOpen
-            ? `linear-gradient(90deg, transparent, ${league.color}, rgba(${league.colorRgb},0.3))`
-            : `linear-gradient(90deg, transparent, rgba(${league.colorRgb},0.22), transparent)`,
+            ? `linear-gradient(180deg, ${league.color}, rgba(${league.colorRgb},0.2))`
+            : `rgba(${league.colorRgb},0.2)`,
         }}
       />
 
-      {/* Subtle glow for free entry */}
-      {league.free && (
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(ellipse at 15% 0%, rgba(${league.colorRgb},0.07) 0%, transparent 60%)`,
-          }}
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        />
-      )}
+      <div className="pl-5 pr-4 py-4 flex flex-col gap-3">
 
-      <div className="p-4">
-        {/* ── HEADER: emblem inline with name ── */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            {/* Emblem — smaller, inline */}
-            <motion.span
-              className="text-[2rem] leading-none shrink-0"
-              animate={league.free ? {
-                filter: [
-                  `drop-shadow(0 0 0px ${league.color})`,
-                  `drop-shadow(0 0 8px ${league.color})`,
-                  `drop-shadow(0 0 0px ${league.color})`,
-                ],
-              } : {}}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-              style={{ opacity: isOpen ? 1 : 0.45 }}
+        {/* ── ROW 1: Emblem + Name + Badge ── */}
+        <div className="flex items-center gap-3">
+          {/* Emblem */}
+          <span
+            className="text-[28px] leading-none shrink-0 select-none"
+            style={{ opacity: isOpen ? 1 : 0.38 }}
+          >
+            {league.emblem}
+          </span>
+
+          {/* Name */}
+          <div className="flex-1 min-w-0">
+            <div
+              className="text-[19px] font-black leading-none truncate"
+              style={{ color: isOpen ? "#fff" : "rgba(255,255,255,0.32)" }}
             >
-              {league.emblem}
-            </motion.span>
-
-            {/* Name block */}
-            <div>
-              <div
-                className="text-[8px] font-black uppercase tracking-[0.22em] leading-none mb-0.5"
-                style={{ color: isOpen ? `rgba(${league.colorRgb},0.65)` : "rgba(255,255,255,0.2)" }}
-              >
-                {league.shortLabel}
-              </div>
-              <div
-                className="text-[18px] font-black leading-tight"
-                style={{ color: isOpen ? "#fff" : "rgba(255,255,255,0.38)" }}
-              >
-                {league.name}
-              </div>
+              {league.name}
             </div>
           </div>
 
-          {/* Status badges */}
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            {league.free && (
-              <span
-                className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
-                style={{
-                  background: "rgba(74,222,128,0.12)",
-                  border: "1px solid rgba(74,222,128,0.28)",
-                  color: "#4ade80",
-                }}
-              >
-                FREE
-              </span>
-            )}
-            {subscribed && !league.free && (
-              <span
-                className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
-                style={{
-                  background: `rgba(${league.colorRgb},0.12)`,
-                  border: `1px solid rgba(${league.colorRgb},0.28)`,
-                  color: league.color,
-                }}
-              >
-                ✓ مشترك
-              </span>
-            )}
-            {!isOpen && (
-              <span
-                className="text-[8px] font-black px-2 py-0.5 rounded-full"
-                style={{
-                  background: `rgba(${league.colorRgb},0.1)`,
-                  border: `1px solid rgba(${league.colorRgb},0.2)`,
-                  color: league.color,
-                }}
-              >
-                {league.entryLabel}
-              </span>
-            )}
-          </div>
+          {/* Status badge — one at most */}
+          {league.free ? (
+            <span
+              className="shrink-0 text-[8px] font-black uppercase tracking-wide px-2 py-1 rounded-lg"
+              style={{
+                background: "rgba(74,222,128,0.1)",
+                border: "1px solid rgba(74,222,128,0.28)",
+                color: "#4ade80",
+              }}
+            >
+              FREE
+            </span>
+          ) : subscribed ? (
+            <span
+              className="shrink-0 text-[8px] font-black uppercase tracking-wide px-2 py-1 rounded-lg"
+              style={{
+                background: `rgba(${league.colorRgb},0.1)`,
+                border: `1px solid rgba(${league.colorRgb},0.28)`,
+                color: league.color,
+              }}
+            >
+              ✓ JOINED
+            </span>
+          ) : (
+            <span
+              className="shrink-0 text-[9px] font-black px-2 py-1 rounded-lg"
+              style={{
+                background: `rgba(${league.colorRgb},0.08)`,
+                border: `1px solid rgba(${league.colorRgb},0.2)`,
+                color: league.color,
+              }}
+            >
+              {league.entryLabel}
+            </span>
+          )}
         </div>
 
-        {/* ── MIDDLE: status / level line ── */}
-        <div className="flex items-center gap-2 mb-4">
+        {/* ── ROW 2: Subtitle / Requirement ── */}
+        <div className="flex items-center gap-1.5">
           <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
-            style={{
-              background: isOpen ? `rgba(${league.colorRgb},0.1)` : "rgba(255,255,255,0.04)",
-              border: `1px solid ${isOpen ? `rgba(${league.colorRgb},0.22)` : "rgba(255,255,255,0.06)"}`,
-              color: isOpen ? league.color : "rgba(255,255,255,0.2)",
-            }}
+            className="text-[11px] font-bold"
+            style={{ color: isOpen ? `rgba(${league.colorRgb},0.85)` : "rgba(255,255,255,0.22)" }}
           >
-            ⚡ {league.eloLabel}
+            {league.eloLabel}
           </span>
-          <span
-            className="text-[10px] font-medium"
-            style={{ color: "rgba(255,255,255,0.28)" }}
-          >
+          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>·</span>
+          <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>
             {league.diffLabel}
           </span>
         </div>
 
-        {/* ── BOTTOM: actions row ── */}
+        {/* ── ROW 3: Action buttons ── */}
         <div className="flex items-center gap-2">
 
-          {/* Main CTA: PLAY or SUBSCRIBE */}
+          {/* Primary CTA */}
           {isOpen ? (
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={() => go("/match-arena")}
-              className="relative flex-1 overflow-hidden py-3 rounded-xl flex items-center justify-center"
+              className="relative flex-1 h-10 overflow-hidden rounded-xl flex items-center justify-center"
               style={{
-                background: `linear-gradient(135deg, rgba(${league.colorRgb},0.9), rgba(${league.colorRgb},0.62))`,
-                border: `1.5px solid rgba(${league.colorRgb},0.65)`,
-                boxShadow: `0 0 20px rgba(${league.colorRgb},0.35)`,
+                background: `linear-gradient(135deg, rgba(${league.colorRgb},0.88), rgba(${league.colorRgb},0.55))`,
+                border: `1.5px solid rgba(${league.colorRgb},0.6)`,
+                boxShadow: `0 0 16px rgba(${league.colorRgb},0.28)`,
               }}
             >
+              {/* Shimmer */}
               <motion.div
                 className="absolute inset-0 pointer-events-none"
-                style={{ background: "linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.16) 50%, transparent 75%)" }}
-                animate={{ x: ["-120%", "220%"] }}
-                transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+                style={{
+                  background:
+                    "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.14) 50%, transparent 70%)",
+                }}
+                animate={{ x: ["-130%", "230%"] }}
+                transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 4.5, ease: "easeInOut" }}
               />
-              <span className="relative text-[13px] font-black uppercase tracking-[0.18em] text-white">
+              <span className="relative text-[12px] font-black uppercase tracking-[0.2em] text-white select-none">
                 ▶ PLAY
               </span>
             </motion.button>
@@ -592,32 +565,39 @@ function LeagueCard({
             <motion.button
               whileTap={{ scale: 0.96 }}
               onClick={onSubscribe}
-              className="flex-1 py-3 rounded-xl flex items-center justify-center gap-1.5"
+              className="flex-1 h-10 rounded-xl flex items-center justify-center"
               style={{
-                background: `linear-gradient(135deg, rgba(${league.colorRgb},0.18), rgba(${league.colorRgb},0.07))`,
-                border: `1.5px solid rgba(${league.colorRgb},0.38)`,
+                background: `rgba(${league.colorRgb},0.08)`,
+                border: `1.5px solid rgba(${league.colorRgb},0.32)`,
               }}
             >
-              <span className="text-[12px] font-black" style={{ color: "rgba(255,255,255,0.82)" }}>
-                🔓 اشترك
+              <span
+                className="text-[12px] font-black uppercase tracking-[0.15em] select-none"
+                style={{ color: league.color }}
+              >
+                SUBSCRIBE
               </span>
             </motion.button>
           )}
 
-          {/* ℹ️ Info button — replaces ⋯ */}
+          {/* ℹ️ Info — fixed size, opens modal */}
           <motion.button
-            whileTap={{ scale: 0.93 }}
+            whileTap={{ scale: 0.9 }}
             onClick={onSubscribe}
-            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
             style={{
               background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.09)",
+              border: "1px solid rgba(255,255,255,0.1)",
             }}
             title="تفاصيل الدوري"
           >
-            <Info className="w-[17px] h-[17px]" style={{ color: "rgba(255,255,255,0.38)" }} />
+            <Info
+              className="w-[15px] h-[15px]"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+            />
           </motion.button>
         </div>
+
       </div>
     </motion.div>
   );
