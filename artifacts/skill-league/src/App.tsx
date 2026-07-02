@@ -21,6 +21,7 @@ import NotFound from "@/pages/not-found";
 
 // Game
 import LeagueSelectPage from "@/pages/LeagueSelectPage";
+import CompetePage from "@/pages/CompetePage";
 import MatchArena from "@/pages/MatchArena";
 import Results from "@/pages/Results";
 
@@ -193,6 +194,7 @@ function AppShell() {
         {/* ================= CORE ================= */}
         <Route path="/" component={HomeScreen} />
         <Route path="/league-select" component={LeagueSelectPage} />
+        <Route path="/compete" component={CompetePage} />
 
         {/* ================= GAME ================= */}
         <Route path="/match-arena" component={MatchArena} />
