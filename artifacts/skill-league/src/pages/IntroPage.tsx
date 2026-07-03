@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LANGUAGES, Language } from "@/lib/i18n";
 import { useEntryLanguage } from "@/contexts/EntryLanguageContext";
+import { Logo } from "@/components/Logo";
 
 /* ─── Translations ─────────────────────────────────────────────────────── */
 interface IntroTranslations {
@@ -378,13 +379,10 @@ export default function IntroPage({ onContinue }: Props) {
           className="flex items-center gap-2"
         >
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-lg"
-            style={{
-              background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-              boxShadow: "0 0 20px rgba(124,58,237,0.5)",
-            }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden shadow-lg"
+            style={{ boxShadow: "0 0 20px rgba(124,58,237,0.5)" }}
           >
-            🏆
+            <Logo size={36} rounded="rounded-xl" />
           </div>
           <span className="text-white font-black text-base tracking-tight">
             SkillLeague
@@ -412,14 +410,13 @@ export default function IntroPage({ onContinue }: Props) {
             className="flex justify-center mb-5"
           >
             <div
-              className="relative w-24 h-24 rounded-3xl flex items-center justify-center text-5xl shadow-2xl"
+              className="relative w-24 h-24 rounded-3xl flex items-center justify-center overflow-hidden shadow-2xl"
               style={{
-                background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
                 boxShadow:
                   "0 0 50px rgba(124,58,237,0.6), 0 0 100px rgba(124,58,237,0.2)",
               }}
             >
-              🏆
+              <Logo size={96} rounded="rounded-3xl" />
               <motion.div
                 className="absolute inset-0 rounded-3xl"
                 style={{ border: "1.5px solid rgba(167,139,250,0.5)" }}

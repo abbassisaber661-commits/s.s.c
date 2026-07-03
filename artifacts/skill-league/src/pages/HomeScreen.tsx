@@ -7,6 +7,7 @@ import { getVerificationStatus } from "@/lib/verified";
 import { loadStreakData } from "@/lib/login-streak";
 import { loadLocalGems } from "@/lib/economy";
 import { Bell } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 // ── Particles (seeded, stable across renders) ─────────────────────────────────
 const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
@@ -196,10 +197,9 @@ export default function HomeScreen() {
                 ],
               }}
               transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-              className="w-24 h-24 rounded-[1.8rem] flex items-center justify-center text-5xl"
-              style={{ background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)" }}
+              className="w-24 h-24 rounded-[1.8rem] flex items-center justify-center overflow-hidden"
             >
-              🏆
+              <Logo size={96} rounded="rounded-[1.8rem]" />
             </motion.div>
 
             <div className="text-center">

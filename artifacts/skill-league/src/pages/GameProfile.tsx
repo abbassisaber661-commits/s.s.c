@@ -3,6 +3,7 @@ import { useParams } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
+import { Logo } from "@/components/Logo";
 import { getLevelTitle, xpProgressInLevel } from "@/lib/xp";
 
 function getRank(elo: number) {
@@ -143,7 +144,8 @@ export default function GameProfile() {
 
 function LoadingScreen() {
   return (
-    <div className="h-screen flex items-center justify-center text-purple-400 font-black">
+    <div className="h-screen flex flex-col items-center justify-center gap-4 text-purple-400 font-black">
+      <Logo size={72} rounded="rounded-2xl" />
       LOADING PLAYER DATA...
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
 import { hasPiSDK } from "@/lib/pi-auth";
+import { Logo } from "@/components/Logo";
 
 type Step = 'welcome' | 'google-form' | 'gmail-form' | 'verify-email';
 
@@ -117,11 +118,8 @@ export default function AuthScreen() {
           transition={{ duration: 0.4 }}
           className="flex flex-col items-center gap-5"
         >
-          <div
-            className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl shadow-2xl"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', boxShadow: '0 0 50px rgba(124,58,237,0.6)' }}
-          >
-            🏆
+          <div className="w-24 h-24 rounded-3xl flex items-center justify-center overflow-hidden shadow-2xl">
+            <Logo size={96} rounded="rounded-3xl" />
           </div>
           <motion.div
             animate={{ rotate: 360 }}
@@ -213,11 +211,8 @@ export default function AuthScreen() {
               transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
               className="flex flex-col items-center gap-3"
             >
-              <div
-                className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl shadow-2xl"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', boxShadow: '0 0 40px rgba(124,58,237,0.5)' }}
-              >
-                🏆
+              <div className="w-24 h-24 rounded-3xl flex items-center justify-center overflow-hidden shadow-2xl">
+                <Logo size={96} rounded="rounded-3xl" />
               </div>
               <div className="text-center">
                 <h1 className="text-4xl font-black text-white tracking-tight">SkillLeague</h1>

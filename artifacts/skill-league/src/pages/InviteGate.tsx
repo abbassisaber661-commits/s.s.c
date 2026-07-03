@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Key, Loader2, CheckCircle, XCircle, Users, Zap } from 'lucide-react';
 import { tryBuiltinCode, setBetaAccess, BETA_VERSION } from '@/lib/betaSystem';
 import { api } from '@/lib/apiClient';
+import { Logo } from '@/components/Logo';
 
 interface Props {
   onGranted: () => void;
@@ -54,8 +55,8 @@ export default function InviteGate({ onGranted }: Props) {
         className="w-full max-w-sm space-y-6"
       >
         <div className="text-center space-y-3">
-          <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mx-auto border border-purple-500/30">
-            <span className="text-4xl">🏆</span>
+          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto overflow-hidden border border-purple-500/30">
+            <Logo size={80} rounded="rounded-3xl" />
           </div>
           <div>
             <h1 className="text-2xl font-bold">SkillLeague</h1>
