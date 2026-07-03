@@ -60,7 +60,7 @@ function StatTile({ icon, label, value, sub, accent, loading }: StatTileProps) {
         <p className="text-xl font-black leading-none mt-0.5" style={{ color: accent }}>
           {value}
           <span className="text-xs font-semibold ml-1 opacity-70" style={{ color: accent }}>
-            DN
+            DN$
           </span>
         </p>
       )}
@@ -214,7 +214,7 @@ function DrawerContent({
           ) : (
             <p className="text-emerald-400 font-black text-lg">
               {fmt(balance)}
-              <span className="text-xs font-semibold ml-1 opacity-70">DN</span>
+              <span className="text-xs font-semibold ml-1 opacity-70">DN$</span>
             </p>
           )}
         </div>
@@ -250,7 +250,7 @@ function DrawerContent({
             {rank.topSupporterAmount > 0 && (
               <p className="text-amber-400 font-black text-sm flex-shrink-0">
                 {fmt(rank.topSupporterAmount)}
-                <span className="text-xs ml-0.5 opacity-70">DN</span>
+                <span className="text-xs ml-0.5 opacity-70">DN$</span>
               </p>
             )}
           </div>
@@ -288,7 +288,7 @@ function DrawerContent({
           </div>
           {rank.earnerRank && (
             <div className="text-right flex-shrink-0">
-              <p className="text-white/40 text-xs">DN Earner</p>
+              <p className="text-white/40 text-xs">DN$ Earner</p>
               <p className="text-amber-300 font-bold text-sm">#{rank.earnerRank}</p>
             </div>
           )}

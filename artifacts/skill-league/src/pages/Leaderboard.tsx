@@ -81,7 +81,7 @@ function EarnersTab({ myId }: { myId: string | null }) {
               <div className="text-sm font-black tabular-nums" style={{ color: "#FFD60A" }}>
                 +{fmt(r.totalReceivedDN)}
               </div>
-              <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>DN</div>
+              <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>DN$</div>
             </div>
           </motion.div>
         );
@@ -90,7 +90,7 @@ function EarnersTab({ myId }: { myId: string | null }) {
   );
 }
 
-// ─── DN Supporters Tab ────────────────────────────────────────────────────────
+// ─── DN$ Supporters Tab ────────────────────────────────────────────────────────
 
 function SupportersTab({ myId }: { myId: string | null }) {
   const { data, isLoading } = useQuery({
@@ -133,7 +133,7 @@ function SupportersTab({ myId }: { myId: string | null }) {
               <div className="text-sm font-black tabular-nums" style={{ color: "#FF9500" }}>
                 {fmt(r.totalSentDN)}
               </div>
-              <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>DN مُرسَل</div>
+              <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>DN$ مُرسَل</div>
             </div>
           </motion.div>
         );
@@ -185,7 +185,7 @@ function TopPostsTab() {
               <Gift size={10} />
               <span>{fmt(p.totalGiftAmount)}</span>
             </div>
-            <div className="text-[9px] mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>DN</div>
+            <div className="text-[9px] mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>DN$</div>
           </div>
         </motion.div>
       ))}

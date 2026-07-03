@@ -136,7 +136,7 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                   <button onClick={handleClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
                     <X size={18} className="text-gray-500" />
                   </button>
-                  <h2 className="text-base font-black text-[#111]">أرسل هدية DN</h2>
+                  <h2 className="text-base font-black text-[#111]">أرسل هدية DN$</h2>
                   <div className="w-9" />
                 </div>
 
@@ -158,7 +158,7 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                   {balanceQuery.isLoading ? (
                     <span className="text-[#888] animate-pulse">جار التحميل...</span>
                   ) : (
-                    <span className="font-black text-[#1877F2]">{senderBalance.toLocaleString("ar-SA")} DN</span>
+                    <span className="font-black text-[#1877F2]">{senderBalance.toLocaleString("ar-SA")} DN$</span>
                   )}
                 </div>
 
@@ -177,7 +177,7 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                             : "border-[#EBEBEB] bg-white text-[#333] hover:border-[#FFD60A]"
                         )}
                       >
-                        {p} <span className="text-[10px] font-medium">DN</span>
+                        {p} <span className="text-[10px] font-medium">DN$</span>
                       </button>
                     ))}
                   </div>
@@ -203,7 +203,7 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                         useCustom ? "border-[#FFD60A] bg-[#FFF9E0]" : "border-[#EBEBEB] bg-[#F9F9F9]"
                       )}
                     />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-[#999]">DN</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-[#999]">DN$</span>
                   </div>
                   {useCustom && resolvedAmount > senderBalance && (
                     <p className="text-xs text-red-500 mt-1 font-semibold">المبلغ يتجاوز رصيدك الحالي</p>
@@ -260,7 +260,7 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                   } : {}}
                 >
                   {resolvedAmount > 0
-                    ? `أرسل ${resolvedAmount.toLocaleString("ar-SA")} DN ${emoji}`
+                    ? `أرسل ${resolvedAmount.toLocaleString("ar-SA")} DN$ ${emoji}`
                     : "اختر مبلغ الهدية"}
                 </button>
 
@@ -298,10 +298,10 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                 <div className="text-center space-y-1">
                   <p className="text-xl font-black text-[#111]">تم الإرسال! ✅</p>
                   <p className="text-sm text-[#555]">
-                    أرسلت <span className="font-black text-[#FF9500]">{resolvedAmount.toLocaleString("ar-SA")} DN</span> إلى {receiverName}
+                    أرسلت <span className="font-black text-[#FF9500]">{resolvedAmount.toLocaleString("ar-SA")} DN$</span> إلى {receiverName}
                   </p>
                   {finalBalance !== null && (
-                    <p className="text-xs text-[#888]">رصيدك الجديد: <span className="font-bold text-[#1877F2]">{finalBalance.toLocaleString("ar-SA")} DN</span></p>
+                    <p className="text-xs text-[#888]">رصيدك الجديد: <span className="font-bold text-[#1877F2]">{finalBalance.toLocaleString("ar-SA")} DN$</span></p>
                   )}
                 </div>
                 <button

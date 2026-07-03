@@ -99,7 +99,7 @@ export default function Wallet() {
             ) : (
               <div className="flex items-end gap-3">
                 <span className="text-6xl font-black text-white tabular-nums leading-none">{balance.toLocaleString("ar-SA")}</span>
-                <span className="text-2xl font-black text-white/70 mb-1">DN</span>
+                <span className="text-2xl font-black text-white/70 mb-1">DN$</span>
               </div>
             )}
             <div className="mt-1 text-xs text-white/50 font-medium">Denous · العملة الرسمية</div>
@@ -112,7 +112,7 @@ export default function Wallet() {
               <div>
                 <div className="text-xs text-white/50">إجمالي الدخل</div>
                 <div className="text-sm font-black text-green-300 tabular-nums">
-                  {isLoading ? "---" : `+${income.toLocaleString("ar-SA")} DN`}
+                  {isLoading ? "---" : `+${income.toLocaleString("ar-SA")} DN$`}
                 </div>
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function Wallet() {
               <div>
                 <div className="text-xs text-white/50">إجمالي الإنفاق</div>
                 <div className="text-sm font-black text-red-300 tabular-nums">
-                  {isLoading ? "---" : `-${spending.toLocaleString("ar-SA")} DN`}
+                  {isLoading ? "---" : `-${spending.toLocaleString("ar-SA")} DN$`}
                 </div>
               </div>
             </div>
@@ -144,7 +144,7 @@ export default function Wallet() {
           </div>
           <div className="flex-1 text-right" dir="rtl">
             <div className="text-sm font-bold text-gray-900">أرسل هدية</div>
-            <div className="text-xs text-gray-500">أرسل DN لأي مستخدم فوراً</div>
+            <div className="text-xs text-gray-500">أرسل DN$ لأي مستخدم فوراً</div>
           </div>
           <Gift className="w-4 h-4 text-gray-400" />
         </motion.button>
@@ -194,7 +194,7 @@ export default function Wallet() {
               <div className="flex flex-col items-center py-12 gap-2" dir="rtl">
                 <span className="text-4xl">💰</span>
                 <p className="text-sm font-semibold text-gray-500">لا توجد معاملات بعد</p>
-                <p className="text-xs text-gray-400">أرسل هدية أو العب لكسب DN</p>
+                <p className="text-xs text-gray-400">أرسل هدية أو العب لكسب DN$</p>
               </div>
             ) : (
               <AnimatePresence>
@@ -229,7 +229,7 @@ export default function Wallet() {
                         className="text-sm font-black tabular-nums flex-shrink-0"
                         style={{ color: isPositive ? "#1DB954" : "#E53935" }}
                       >
-                        {isPositive ? "+" : ""}{tx.amount.toLocaleString("ar-SA")} DN
+                        {isPositive ? "+" : ""}{tx.amount.toLocaleString("ar-SA")} DN$
                       </div>
                     </motion.div>
                   );
@@ -248,9 +248,9 @@ export default function Wallet() {
           style={{ background: "#fff", border: "1px solid #E4E6EB" }}
           dir="rtl"
         >
-          <div className="text-xs font-bold text-gray-700">💡 ما هو Denous (DN)؟</div>
+          <div className="text-xs font-bold text-gray-700">💡 ما هو Denous (DN$)؟</div>
           <div className="text-xs text-gray-500 leading-relaxed">
-            DN هي العملة الرسمية الوحيدة في المنصة.
+            DN$ هي العملة الرسمية الوحيدة في المنصة.
             تُستخدم لإرسال الهدايا وشراء الامتيازات.
             كل المعاملات محفوظة في الخادم فقط.
           </div>
