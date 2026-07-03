@@ -20,6 +20,26 @@
       "lastDailyAt": null,
       "createdAt": "2026-06-11T14:51:56.209Z",
       "updatedAt": "2026-06-27T17:19:21.759Z"
+    },
+    {
+      "id": "guest_0xunaw98",
+      "playerId": "guest_0xunaw98",
+      "playerName": "ضيف",
+      "xp": 0,
+      "level": 1,
+      "streak": 0,
+      "bestStreak": 0,
+      "badges": [],
+      "arcadeCoins": 0,
+      "gems": 1,
+      "totalWins": 0,
+      "totalDraws": 0,
+      "totalLosses": 0,
+      "arcadePlays": 0,
+      "dailyClaimCount": 0,
+      "lastDailyAt": null,
+      "createdAt": "2026-07-03T23:11:37.444Z",
+      "updatedAt": "2026-07-03T23:11:37.444Z"
     }
   ]
 }
