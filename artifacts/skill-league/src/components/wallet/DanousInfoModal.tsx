@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { DANOUS_TIERS, DanousCoin } from "./DanousCoin";
+import danousCurrencyLogo from "@/assets/currency/dns-official-currency.png";
 
 export default function DanousInfoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -30,10 +30,12 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
                 className="sticky top-0 z-10 flex items-center gap-3 px-5 py-4"
                 style={{ background: "linear-gradient(135deg,#191D3A,#0F1225)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                  style={{ background: "linear-gradient(135deg,#9B4FE8,#2F86E8)" }}>
-                  💰
-                </div>
+                <img
+                  src={danousCurrencyLogo}
+                  alt="Danous DN$"
+                  className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
+                  draggable={false}
+                />
                 <div className="flex-1 text-right" dir="rtl">
                   <div className="text-base font-black text-white">عملة Danous (DN$)</div>
                   <div className="text-xs text-white/50">العملة الرسمية لمنصة SkillLeague</div>
@@ -54,32 +56,15 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
                 </p>
               </div>
 
-              {/* Coin grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 px-5 py-5">
-                {DANOUS_TIERS.map((tier, i) => (
-                  <motion.div
-                    key={tier.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex flex-col items-center gap-2 rounded-2xl px-3 py-4"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
-                  >
-                    <DanousCoin tier={tier} size={92} />
-                    <div className="text-center">
-                      <div className="text-xs font-black text-white flex items-center justify-center gap-1">
-                        <span>{tier.colorName}</span>
-                        <span>{tier.nameAr}</span>
-                      </div>
-                      <div className="text-[10px] text-white/50 font-semibold mt-0.5">
-                        DN$ Tier {tier.id}{tier.id === 7 ? " ⭐" : ""}
-                      </div>
-                      <div className="text-xs font-bold mt-1" style={{ color: "#C9A6FF" }}>
-                        {tier.piValue}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+              {/* Official currency chart */}
+              <div className="px-5 py-5">
+                <img
+                  src={danousCurrencyLogo}
+                  alt="Danous DN$ Official Currency"
+                  className="w-full rounded-2xl"
+                  style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+                  draggable={false}
+                />
               </div>
 
               <div className="px-5 pb-6 pt-1 text-center">

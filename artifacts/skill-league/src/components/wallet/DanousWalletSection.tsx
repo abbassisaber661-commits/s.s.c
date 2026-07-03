@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 import DanousInfoModal from "./DanousInfoModal";
+import danousCurrencyLogo from "@/assets/currency/dns-official-currency.png";
 
 export default function DanousWalletSection() {
   const [infoOpen, setInfoOpen] = useState(false);
@@ -28,7 +29,12 @@ export default function DanousWalletSection() {
         }}
       >
         <div className="flex items-center gap-3 px-4 pt-3 pb-1" dir="rtl">
-          <span className="text-lg">💰</span>
+          <img
+            src={danousCurrencyLogo}
+            alt="Danous DN$"
+            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+            draggable={false}
+          />
           <span className="text-sm font-black text-white">محفظة Danous</span>
         </div>
 
@@ -50,6 +56,12 @@ export default function DanousWalletSection() {
                 <span className="text-3xl font-black text-white tabular-nums">
                   {balance.toLocaleString("en-US")}
                 </span>
+                <img
+                  src={danousCurrencyLogo}
+                  alt="DN$"
+                  className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                  draggable={false}
+                />
                 <span className="text-base font-black" style={{ color: "#C9A6FF" }}>DN$</span>
               </>
             )}
