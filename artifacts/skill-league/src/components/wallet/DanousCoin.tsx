@@ -44,39 +44,107 @@ export function DanousCoin({ tier, size = 120 }: { tier: DanousTier; size?: numb
 
   return (
     <div
-      style={{ width: size, height: size, filter: `drop-shadow(0 6px 12px ${tier.shadow})` }}
+      style={{ width: size, height: size, filter: `drop-shadow(0 10px 16px ${tier.shadow})` }}
       className="relative flex-shrink-0"
     >
       <svg viewBox="0 0 200 200" width={size} height={size}>
         <defs>
-          <radialGradient id={`${uid}-face`} cx="35%" cy="28%" r="85%">
+          {/* Thick outer metallic rim — brushed, directional light */}
+          <linearGradient id={`${uid}-rim`} x1="15%" y1="8%" x2="85%" y2="95%">
             <stop offset="0%" stopColor={tier.base} />
-            <stop offset="45%" stopColor={tier.mid} />
-            <stop offset="80%" stopColor={tier.dark} />
+            <stop offset="22%" stopColor={tier.mid} />
+            <stop offset="45%" stopColor={tier.rim} />
+            <stop offset="65%" stopColor={tier.dark} />
+            <stop offset="82%" stopColor={tier.rim} />
+            <stop offset="100%" stopColor={tier.dark} />
+          </linearGradient>
+
+          {/* Bevel step between rim and face */}
+          <linearGradient id={`${uid}-bevel`} x1="20%" y1="10%" x2="80%" y2="90%">
+            <stop offset="0%" stopColor={tier.dark} />
+            <stop offset="50%" stopColor={tier.rim} />
+            <stop offset="100%" stopColor={tier.dark} />
+          </linearGradient>
+
+          {/* Coin face — domed metallic gradient */}
+          <radialGradient id={`${uid}-face`} cx="35%" cy="26%" r="85%">
+            <stop offset="0%" stopColor={tier.base} />
+            <stop offset="40%" stopColor={tier.mid} />
+            <stop offset="78%" stopColor={tier.dark} />
             <stop offset="100%" stopColor={tier.rim} />
           </radialGradient>
 
-          <radialGradient id={`${uid}-shine`} cx="32%" cy="24%" r="38%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.85)" />
-            <stop offset="60%" stopColor="rgba(255,255,255,0.15)" />
+          {/* Primary specular shine */}
+          <radialGradient id={`${uid}-shine`} cx="32%" cy="22%" r="40%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
+            <stop offset="55%" stopColor="rgba(255,255,255,0.16)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+
+          {/* Secondary bottom-right rim light */}
+          <radialGradient id={`${uid}-rimlight`} cx="76%" cy="82%" r="32%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+
+          {/* Vignette to push edges into shadow for a domed feel */}
+          <radialGradient id={`${uid}-vignette`} cx="50%" cy="50%" r="52%">
+            <stop offset="60%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.35)" />
           </radialGradient>
 
           <filter id={`${uid}-emboss`} x="-30%" y="-30%" width="160%" height="160%">
             <feDropShadow dx="0" dy="2" stdDeviation="0.6" floodColor={tier.dark} floodOpacity="0.8" />
             <feDropShadow dx="0" dy="-1.2" stdDeviation="0.5" floodColor={tier.base} floodOpacity="0.5" />
           </filter>
+
+          {/* Subtle embossed background dot pattern */}
+          <pattern id={`${uid}-pattern`} width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(20)">
+            <circle cx="8" cy="8" r="0.9" fill={tier.dark} opacity="0.16" />
+            <circle cx="0" cy="0" r="0.9" fill={tier.base} opacity="0.12" />
+          </pattern>
         </defs>
 
-        {/* Outer edge */}
-        <circle cx="100" cy="100" r="97" fill={tier.rim} />
-        {/* Coin face */}
-        <circle cx="100" cy="100" r="90" fill={`url(#${uid}-face)`} stroke={tier.dark} strokeWidth="2" />
-        {/* Inner decorative ring */}
-        <circle cx="100" cy="100" r="78" fill="none" stroke={tier.text} strokeWidth="2" opacity="0.55" />
+        {/* Thick brushed-metal outer rim */}
+        <circle cx="100" cy="100" r="98" fill={`url(#${uid}-rim)`} />
+        {Array.from({ length: 100 }).map((_, i) => {
+          const angle = (i / 100) * Math.PI * 2;
+          const x1 = 100 + Math.cos(angle) * 89;
+          const y1 = 100 + Math.sin(angle) * 89;
+          const x2 = 100 + Math.cos(angle) * 97.5;
+          const y2 = 100 + Math.sin(angle) * 97.5;
+          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={tier.dark} strokeWidth="1.1" opacity="0.4" />;
+        })}
+        <circle cx="100" cy="100" r="98" fill="none" stroke={tier.dark} strokeWidth="1.5" opacity="0.6" />
+        <circle cx="100" cy="100" r="93.5" fill="none" stroke={tier.base} strokeWidth="1" opacity="0.4" />
 
-        {/* Specular shine */}
-        <ellipse cx="72" cy="58" rx="52" ry="36" fill={`url(#${uid}-shine)`} />
+        {/* Bevel step down into the face */}
+        <circle cx="100" cy="100" r="89" fill={`url(#${uid}-bevel)`} />
+
+        {/* Coin face (domed) */}
+        <circle cx="100" cy="100" r="82" fill={`url(#${uid}-face)`} stroke={tier.dark} strokeWidth="1.5" />
+        <circle cx="100" cy="100" r="82" fill={`url(#${uid}-pattern)`} />
+
+        {/* Engraved inner ring with fine ticks */}
+        <circle cx="100" cy="100" r="74" fill="none" stroke={tier.text} strokeWidth="2" opacity="0.55" />
+        <circle cx="100" cy="100" r="70" fill="none" stroke={tier.dark} strokeWidth="1" opacity="0.35" />
+        {Array.from({ length: 48 }).map((_, i) => {
+          const angle = (i / 48) * Math.PI * 2;
+          const x1 = 100 + Math.cos(angle) * 70.5;
+          const y1 = 100 + Math.sin(angle) * 70.5;
+          const x2 = 100 + Math.cos(angle) * 73.5;
+          const y2 = 100 + Math.sin(angle) * 73.5;
+          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={tier.base} strokeWidth="0.9" opacity="0.3" />;
+        })}
+
+        {/* Domed vignette for 3D roundness */}
+        <circle cx="100" cy="100" r="82" fill={`url(#${uid}-vignette)`} />
+
+        {/* Bottom-right rim light reflection */}
+        <circle cx="100" cy="100" r="82" fill={`url(#${uid}-rimlight)`} />
+
+        {/* Primary specular shine */}
+        <ellipse cx="72" cy="56" rx="48" ry="32" fill={`url(#${uid}-shine)`} />
 
         {/* Top three stars — untouched */}
         <Star x={72} y={52} size={13} color={starColor} />
