@@ -1,0 +1,44 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "jgiACDamoBmNQqNkA6vH1"
+uri = "file://attached_assets/generated_images/coin_white.png"
+type = "image"
+title = "dn coin white tier"
+
+[[generated]]
+id = "HeWDONTT3KkbiZF7oksX1"
+uri = "file://attached_assets/generated_images/coin_yellow.png"
+type = "image"
+title = "dn coin yellow tier"
+
+[[generated]]
+id = "hX04iBibrjU31LdHU-P5Q"
+uri = "file://attached_assets/generated_images/coin_orange.png"
+type = "image"
+title = "dn coin orange tier"
+
+[[generated]]
+id = "P1KLee0iU1Je3MPImlcoa"
+uri = "file://attached_assets/generated_images/coin_red.png"
+type = "image"
+title = "dn coin red tier"
+
+[[generated]]
+id = "YCBnPqVgAtSemxM6C0gCI"
+uri = "file://attached_assets/generated_images/coin_green.png"
+type = "image"
+title = "dn coin green tier"
+
+[[generated]]
+id = "N-CCg3S-3AKpqno48N-0U"
+uri = "file://attached_assets/generated_images/coin_blue.png"
+type = "image"
+title = "dn coin blue tier"
+
+[[generated]]
+id = "b7lS491P7Yx0DZIrYANo3"
+uri = "file://attached_assets/generated_images/coin_purple.png"
+type = "image"
+title = "dn coin purple tier retry"

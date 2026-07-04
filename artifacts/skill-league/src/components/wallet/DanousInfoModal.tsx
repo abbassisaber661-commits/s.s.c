@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import danousCurrencyLogo from "@/assets/currency/dns-official-currency.png";
+import { DANOUS_COINS, DANOUS_CURRENCY_DEFINITION_AR } from "@/lib/danousCoins";
 
 export default function DanousInfoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -51,25 +52,33 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
               {/* Intro text */}
               <div className="px-5 pt-4 pb-2 text-right" dir="rtl">
                 <p className="text-sm text-white/70 leading-relaxed">
-                  Danous (DN$) هي العملة الرقمية الرسمية في SkillLeague، تُستخدم في المكافآت والإنجازات والمسابقات
-                  والميزات المميزة. لكل فئة من DN$ قيمة مقابلة بعملة Pi كما هو موضح أدناه.
+                  {DANOUS_CURRENCY_DEFINITION_AR}
                 </p>
               </div>
 
-              {/* Official currency chart */}
+              {/* Tier grid */}
               <div className="px-5 py-5">
-                <img
-                  src={danousCurrencyLogo}
-                  alt="Danous DN$ Official Currency"
-                  className="w-full rounded-2xl"
-                  style={{ border: "1px solid rgba(255,255,255,0.08)" }}
-                  draggable={false}
-                />
+                <div className="grid grid-cols-4 gap-x-2 gap-y-4 place-items-center">
+                  {DANOUS_COINS.map((coin) => (
+                    <div key={coin.id} className="flex flex-col items-center gap-1.5">
+                      <img
+                        src={coin.image}
+                        alt={coin.nameAr}
+                        className="w-14 h-14 rounded-full object-cover"
+                        style={{ boxShadow: `0 0 10px ${coin.glow}55` }}
+                        draggable={false}
+                      />
+                      <span className="text-[10px] font-bold text-white/60 text-center leading-tight">
+                        {coin.tierLabelAr}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="px-5 pb-6 pt-1 text-center">
                 <p className="text-[11px] text-white/35 leading-relaxed" dir="rtl">
-                  الفئة السابعة (البنفسجية) هي الأعلى قيمة في نظام Danous.
+                  الفئة السابعة (البنفسجية) هي أعلى مستوى هدية في نظام Danous.
                 </p>
               </div>
             </div>

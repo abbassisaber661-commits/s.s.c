@@ -273,7 +273,7 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                           </AnimatePresence>
                         </div>
                         <span className="text-[10px] font-bold text-[#666] text-center leading-tight">
-                          {coin.piLabel}
+                          {coin.tierLabelAr}
                         </span>
                       </button>
                     );
