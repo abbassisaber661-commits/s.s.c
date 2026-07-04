@@ -5,6 +5,7 @@ import { nanoid } from "../lib/nanoid.js";
 import { getOwnerPlayerId } from "../lib/owner.js";
 import { recordPost, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
 import { createNotification } from "../lib/notificationService.js";
+import { getSocialSettings } from "../lib/settings-service.js";
 
 const router = Router();
 
@@ -221,6 +222,7 @@ router.post("/community/posts/:id/like", async (req, res) => {
   try {
     const { playerId, playerUsername } = req.body as Record<string, unknown>;
     if (!playerId) { res.status(400).json({ error: "playerId required" }); return; }
+    if (!(await getSocialSettings()).likesEnabled) { res.status(403).json({ error: "likes_disabled" }); return; }
     const existing = await db.select({ id: postLikesTable.id }).from(postLikesTable)
       .where(and(eq(postLikesTable.postId, req.params.id), eq(postLikesTable.playerId, String(playerId)))).limit(1);
     if (existing.length) {
@@ -260,6 +262,7 @@ router.patch("/community/posts/:id/like", async (req, res) => {
   const { playerId, playerUsername } = req.body as Record<string, unknown>;
   const pid = playerId ? String(playerId) : null;
   try {
+    if (!(await getSocialSettings()).likesEnabled) { res.status(403).json({ error: "likes_disabled" }); return; }
     if (pid) {
       const existing = await db.select({ id: postLikesTable.id }).from(postLikesTable)
         .where(and(eq(postLikesTable.postId, req.params.id), eq(postLikesTable.playerId, pid))).limit(1);
@@ -389,6 +392,7 @@ router.post("/community/posts/:id/comments", async (req, res) => {
   try {
     const { authorId, username, content } = req.body as Record<string, unknown>;
     if (!authorId || !content) { res.status(400).json({ error: "missing fields" }); return; }
+    if (!(await getSocialSettings()).commentsEnabled) { res.status(403).json({ error: "comments_disabled" }); return; }
     if (typeof content === "string" && content.length > 300) { res.status(400).json({ error: "too long" }); return; }
     const [comment] = await db.insert(postCommentsTable).values({
       id: nanoid(), postId: req.params.id,

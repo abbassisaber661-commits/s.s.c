@@ -3,6 +3,7 @@ import { eq, desc, or, sql, and, gte, lte } from "drizzle-orm";
 import { db, playersTable, pvpMatchesTable, coinTransactionsTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { isOwnerPiUid } from "../lib/owner.js";
+import { isUsernameReserved } from "../lib/settings-service.js";
 
 const router = Router();
 
@@ -211,7 +212,7 @@ router.post("/players", async (req, res) => {
       res.status(400).json({ error: "username required" }); return;
     }
     const isOfficialPageId = typeof id === "string" && id.startsWith("sl_page_");
-    if (!isOfficialPageId && /skillleague/i.test(username)) {
+    if (!isOfficialPageId && await isUsernameReserved(username)) {
       res.status(400).json({ error: "username_reserved", message: "This name is reserved for official SkillLeague pages" });
       return;
     }

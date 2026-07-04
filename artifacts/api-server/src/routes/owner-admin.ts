@@ -9,8 +9,95 @@ import { db } from "@workspace/db";
 import { playersTable } from "@workspace/db";
 import { eq, ilike, desc, or, count } from "drizzle-orm";
 import { requireAdmin } from "../middleware/auth.js";
+import {
+  getOfficialPagesSettings, updateOfficialPagesSettings, setOfficialPageEnabled,
+  getSocialSettings, updateSocialSettings,
+  getReservedUsernames, addReservedUsername, removeReservedUsername,
+} from "../lib/settings-service.js";
+import { getOfficialPagesRuntimeStats, OFFICIAL_PAGES } from "../lib/official-pages.js";
 
 const router = Router();
+
+/* ─── Official Pages / Bots: settings + control ─────────────────────────── */
+router.get("/owner/official-pages", requireAdmin, async (_req, res) => {
+  const settings = await getOfficialPagesSettings();
+  const stats = getOfficialPagesRuntimeStats();
+  res.json({ settings, stats, pages: OFFICIAL_PAGES.map(p => ({ id: p.id, name: p.name, category: p.category })) });
+});
+
+router.patch("/owner/official-pages/settings", requireAdmin, async (req, res) => {
+  try {
+    const { enabled, postingIntervalMinutes, engagementIntervalMinutes } = req.body as Record<string, unknown>;
+    const patch: Record<string, unknown> = {};
+    if (typeof enabled === "boolean") patch.enabled = enabled;
+    if (typeof postingIntervalMinutes === "number" && postingIntervalMinutes > 0) patch.postingIntervalMinutes = postingIntervalMinutes;
+    if (typeof engagementIntervalMinutes === "number" && engagementIntervalMinutes > 0) patch.engagementIntervalMinutes = engagementIntervalMinutes;
+    const next = await updateOfficialPagesSettings(patch);
+    res.json({ ok: true, settings: next });
+  } catch (err) {
+    req.log.error({ err }, "owner official-pages settings update error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+
+router.patch("/owner/official-pages/:pageId/toggle", requireAdmin, async (req, res) => {
+  try {
+    const { pageId } = req.params;
+    const { enabled } = req.body as Record<string, unknown>;
+    if (typeof enabled !== "boolean") { res.status(400).json({ error: "enabled_required" }); return; }
+    const next = await setOfficialPageEnabled(pageId, enabled);
+    res.json({ ok: true, settings: next });
+  } catch (err) {
+    req.log.error({ err }, "owner official-page toggle error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+
+/* ─── Social system settings ────────────────────────────────────────────── */
+router.get("/owner/social-settings", requireAdmin, async (_req, res) => {
+  res.json(await getSocialSettings());
+});
+
+router.patch("/owner/social-settings", requireAdmin, async (req, res) => {
+  try {
+    const { likesEnabled, commentsEnabled } = req.body as Record<string, unknown>;
+    const patch: Record<string, unknown> = {};
+    if (typeof likesEnabled === "boolean") patch.likesEnabled = likesEnabled;
+    if (typeof commentsEnabled === "boolean") patch.commentsEnabled = commentsEnabled;
+    const next = await updateSocialSettings(patch);
+    res.json({ ok: true, settings: next });
+  } catch (err) {
+    req.log.error({ err }, "owner social-settings update error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+
+/* ─── Reserved usernames ─────────────────────────────────────────────────── */
+router.get("/owner/reserved-usernames", requireAdmin, async (_req, res) => {
+  res.json({ words: await getReservedUsernames() });
+});
+
+router.post("/owner/reserved-usernames", requireAdmin, async (req, res) => {
+  try {
+    const { word } = req.body as Record<string, unknown>;
+    if (typeof word !== "string" || !word.trim()) { res.status(400).json({ error: "word_required" }); return; }
+    const words = await addReservedUsername(word);
+    res.json({ ok: true, words });
+  } catch (err) {
+    req.log.error({ err }, "owner reserved-username add error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+
+router.delete("/owner/reserved-usernames/:word", requireAdmin, async (req, res) => {
+  try {
+    const words = await removeReservedUsername(req.params.word);
+    res.json({ ok: true, words });
+  } catch (err) {
+    req.log.error({ err }, "owner reserved-username remove error");
+    res.status(500).json({ error: "internal" });
+  }
+});
 
 /* ─── Overview Stats ────────────────────────────────────────────────────── */
 router.get("/owner/overview", requireAdmin, async (req, res) => {

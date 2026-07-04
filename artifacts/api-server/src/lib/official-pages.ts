@@ -19,6 +19,7 @@ import { db, playersTable, postsTable, postLikesTable, postCommentsTable } from 
 import { eq, desc, sql, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { logger } from "./logger.js";
+import { getOfficialPagesSettings } from "./settings-service.js";
 
 // ── Page identity ─────────────────────────────────────────────────────────
 
@@ -184,11 +185,43 @@ export async function seedOfficialPages(): Promise<void> {
   }
 }
 
+// ── Live in-memory stats (also drives the Owner Tools panel) ─────────────
+
+interface PageRuntimeStats {
+  lastPostAt: number;
+  postsCount: number;
+  likesGiven: number;
+  commentsGiven: number;
+}
+
+const runtimeStats = new Map<string, PageRuntimeStats>(
+  OFFICIAL_PAGES.map(p => [p.id, { lastPostAt: 0, postsCount: 0, likesGiven: 0, commentsGiven: 0 }]),
+);
+let lastEngagementAt = 0;
+
+export function getOfficialPagesRuntimeStats() {
+  return OFFICIAL_PAGES.map(p => ({
+    id: p.id,
+    category: p.category,
+    name: p.name,
+    ...(runtimeStats.get(p.id) ?? { lastPostAt: 0, postsCount: 0, likesGiven: 0, commentsGiven: 0 }),
+  }));
+}
+
 // ── Posting: each official page occasionally publishes curated content ───
 
 async function simulateOfficialPosting(): Promise<void> {
   try {
+    const settings = await getOfficialPagesSettings();
+    if (!settings.enabled) return;
+    const intervalMs = Math.max(1, settings.postingIntervalMinutes) * 60 * 1000;
+    const now = Date.now();
+
     for (const page of OFFICIAL_PAGES) {
+      if (settings.pages[page.id]?.enabled === false) continue;
+      const stats = runtimeStats.get(page.id)!;
+      if (now - stats.lastPostAt < intervalMs) continue;
+
       // ~65% chance to skip this tick per page — keeps a natural, non-fixed cadence
       if (Math.random() < 0.65) continue;
 
@@ -209,6 +242,9 @@ async function simulateOfficialPosting(): Promise<void> {
         type: hasImage ? "image" : "text",
         meta: { isOfficialPage: true, category: page.category },
       });
+
+      stats.lastPostAt = now;
+      stats.postsCount += 1;
     }
   } catch (err) {
     logger.error({ err }, "official-pages: posting tick error");
@@ -219,6 +255,16 @@ async function simulateOfficialPosting(): Promise<void> {
 
 async function simulateOfficialEngagement(): Promise<void> {
   try {
+    const settings = await getOfficialPagesSettings();
+    if (!settings.enabled) return;
+    const intervalMs = Math.max(1, settings.engagementIntervalMinutes) * 60 * 1000;
+    const now = Date.now();
+    if (now - lastEngagementAt < intervalMs) return;
+    lastEngagementAt = now;
+
+    const enabledPages = OFFICIAL_PAGES.filter(p => settings.pages[p.id]?.enabled !== false);
+    if (enabledPages.length === 0) return;
+
     const recentPosts = await db
       .select({ id: postsTable.id, authorId: postsTable.authorId })
       .from(postsTable)
@@ -236,13 +282,15 @@ async function simulateOfficialEngagement(): Promise<void> {
 
     for (const post of targetPosts) {
       // A random subset of pages notices this post — not all pages react to everything
-      const reactingPages = [...OFFICIAL_PAGES]
+      const reactingPages = [...enabledPages]
         .sort(() => Math.random() - 0.5)
         .slice(0, randInt(0, 2));
 
       for (const page of reactingPages) {
+        const stats = runtimeStats.get(page.id)!;
+
         // ~55% chance to like
-        if (Math.random() < 0.55) {
+        if (settings.likesEnabled !== false && Math.random() < 0.55) {
           const likeId = `like_${page.id}_${post.id}`;
           try {
             await db.insert(postLikesTable).values({
@@ -253,13 +301,14 @@ async function simulateOfficialEngagement(): Promise<void> {
             await db.update(postsTable)
               .set({ likes: sql`${postsTable.likes} + 1` })
               .where(eq(postsTable.id, post.id));
+            stats.likesGiven += 1;
           } catch {
             // Non-critical
           }
         }
 
         // ~30% chance to also leave a short specialty comment
-        if (Math.random() < 0.3) {
+        if (settings.commentsEnabled !== false && Math.random() < 0.3) {
           try {
             await db.insert(postCommentsTable).values({
               id: randomUUID(),
@@ -271,6 +320,7 @@ async function simulateOfficialEngagement(): Promise<void> {
             await db.update(postsTable)
               .set({ replies: sql`${postsTable.replies} + 1` })
               .where(eq(postsTable.id, post.id));
+            stats.commentsGiven += 1;
           } catch {
             // Non-critical
           }
@@ -283,28 +333,38 @@ async function simulateOfficialEngagement(): Promise<void> {
 }
 
 // ── Scheduler ──────────────────────────────────────────────────────────────
+// A single lightweight base tick checks (per-page/global) elapsed time
+// against the configured intervals, so the Owner Tools panel can change
+// posting/engagement speed live without restarting the process.
 
-let _postingInterval: ReturnType<typeof setInterval> | null = null;
-let _engagementInterval: ReturnType<typeof setInterval> | null = null;
+let _baseTick: ReturnType<typeof setInterval> | null = null;
+const BASE_TICK_MS = 2 * 60 * 1000;
 
 export function startOfficialPagesSystem(): void {
-  if (_postingInterval || _engagementInterval) return;
+  if (_baseTick) return;
 
   seedOfficialPages().catch(() => {});
 
-  // First posting tick after 90s, then every ~50 minutes (randomised skip inside)
+  // First base tick after 90s, then every 2 minutes. Each tick independently
+  // decides whether enough time has passed (per the live-configurable
+  // intervals) to run a posting and/or engagement pass.
   setTimeout(() => {
     simulateOfficialPosting().catch(() => {});
-    _postingInterval = setInterval(() => { simulateOfficialPosting().catch(() => {}); }, 50 * 60 * 1000);
+    simulateOfficialEngagement().catch(() => {});
+    _baseTick = setInterval(() => {
+      simulateOfficialPosting().catch(() => {});
+      simulateOfficialEngagement().catch(() => {});
+    }, BASE_TICK_MS);
   }, 90_000);
 
-  // First engagement tick after 4 minutes, then every ~25 minutes
-  setTimeout(() => {
-    simulateOfficialEngagement().catch(() => {});
-    _engagementInterval = setInterval(() => { simulateOfficialEngagement().catch(() => {}); }, 25 * 60 * 1000);
-  }, 4 * 60 * 1000);
-
   logger.info({ pages: OFFICIAL_PAGES.length }, "Official SkillLeague Pages system started");
+}
+
+export function stopOfficialPagesSystem(): void {
+  if (_baseTick) {
+    clearInterval(_baseTick);
+    _baseTick = null;
+  }
 }
 
 export function isOfficialPageId(id: string): boolean {

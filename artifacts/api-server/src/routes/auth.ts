@@ -7,6 +7,7 @@ import { signToken, requireAuth } from "../middleware/auth.js";
 import { getClientIp, getDeviceFingerprint, trackIpFingerprint, detectMultiAccount, logSuspicious, logAudit } from "../middleware/antiCheat.js";
 import { strictRateLimit } from "../middleware/rateLimit.js";
 import { claimLoginReward } from "../lib/daily-rewards.js";
+import { isOwnerPlayer } from "../lib/owner.js";
 
 const router = Router();
 const BCRYPT_ROUNDS = 10;
@@ -15,7 +16,7 @@ function buildToken(player: typeof playersTable.$inferSelect): string {
   return signToken({
     playerId: player.id,
     username: player.username,
-    role:     player.piUid ? "player" : "player",
+    role:     isOwnerPlayer(player) ? "admin" : "player",
   });
 }
 
