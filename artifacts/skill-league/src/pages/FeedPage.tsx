@@ -13,6 +13,8 @@ import { CreatePostModal, type CreatePostData } from "@/components/social/Create
 import StoryBar from "@/components/social/StoryBar";
 import FeaturedPlayers from "@/components/social/FeaturedPlayers";
 import TrendingSection from "@/components/social/TrendingSection";
+import GameReelsRow from "@/components/social/GameReelsRow";
+import SuggestedPlayersRow from "@/components/social/SuggestedPlayersRow";
 import Avatar from "@/components/Avatar";
 import Logo from "@/components/Logo";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
@@ -252,24 +254,36 @@ export default function FeedPage() {
           </div>
         )}
 
-        {!isLoading && (
-          <AnimatePresence>
-            {posts.map((post) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <SocialPostCard
-                  post={post}
-                  commentCount={commentCounts[post.id] ?? post.replyCount ?? 0}
-                  onCommentClick={(postId) => setOpenCommentPostId(postId)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
+        {!isLoading && (() => {
+          const renderPosts = (list: typeof posts) => (
+            <AnimatePresence>
+              {list.map((post) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <SocialPostCard
+                    post={post}
+                    commentCount={commentCounts[post.id] ?? post.replyCount ?? 0}
+                    onCommentClick={(postId) => setOpenCommentPostId(postId)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          );
+
+          return (
+            <>
+              {renderPosts(posts.slice(0, 3))}
+              {posts.length > 3 && <GameReelsRow />}
+              {renderPosts(posts.slice(3, 6))}
+              {posts.length > 6 && <SuggestedPlayersRow />}
+              {renderPosts(posts.slice(6))}
+            </>
+          );
+        })()}
 
         <div ref={ref} className="h-6" />
 
