@@ -14,6 +14,7 @@ import StoryBar from "@/components/social/StoryBar";
 import FeaturedPlayers from "@/components/social/FeaturedPlayers";
 import TrendingSection from "@/components/social/TrendingSection";
 import Avatar from "@/components/Avatar";
+import Logo from "@/components/Logo";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 
 const PostSkeleton = () => (
@@ -132,22 +133,50 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-24">
 
+      {/* ── App Identity Bar ── */}
+      <div className="sticky top-0 z-30 bg-white border-b border-[#E5E5E5]">
+        <div className="max-w-2xl mx-auto flex items-center justify-center px-3 py-2 gap-2">
+          <Logo size={36} rounded="rounded-full" />
+          <span className="text-lg font-black tracking-tight text-[#111827]">Danous</span>
+        </div>
+      </div>
+
       {/* ── Social Top Bar ── */}
-      <div className="sticky top-0 z-30 bg-white border-b border-[#E5E5E5] shadow-sm">
+      <div className="sticky top-[52px] z-30 bg-white border-b border-[#E5E5E5] shadow-sm">
         <div className="max-w-2xl mx-auto flex items-center px-3 py-2.5 gap-1">
 
-          {/* 🔔 Notifications */}
+          {/* ☰ Settings */}
           <button
-            onClick={() => navigate("/notifications")}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Notifications"
+            onClick={() => navigate("/settings")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Settings"
           >
-            <Bell size={19} />
-            {notifCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                {notifCount > 9 ? "9+" : notifCount}
-              </span>
-            )}
+            <Menu size={19} />
+          </button>
+
+          {/* ── "social" label ── */}
+          <span className="text-sm font-black tracking-tight text-[#111111] select-none pointer-events-none">
+            social
+          </span>
+
+          <div className="flex-1" />
+
+          {/* 🔎 Search */}
+          <button
+            onClick={() => navigate("/search")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Search"
+          >
+            <Search size={19} />
+          </button>
+
+          {/* Friend shortcut */}
+          <button
+            onClick={() => navigate("/friends")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Friends"
+          >
+            <Users size={19} />
           </button>
 
           {/* ✉️ Messages */}
@@ -164,46 +193,27 @@ export default function FeedPage() {
             )}
           </button>
 
-          {/* Friend shortcut */}
+          {/* 🔔 Notifications */}
           <button
-            onClick={() => navigate("/friends")}
-            className="px-3 h-8 rounded-xl flex items-center gap-1.5 text-[#444444] text-xs font-semibold hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Friends"
+            onClick={() => navigate("/notifications")}
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            aria-label="Notifications"
           >
-            <Users size={15} />
-            <span>Friend</span>
+            <Bell size={19} />
+            {notifCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                {notifCount > 9 ? "9+" : notifCount}
+              </span>
+            )}
           </button>
-
-          {/* 🔎 Search */}
-          <button
-            onClick={() => navigate("/search")}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Search"
-          >
-            <Search size={19} />
-          </button>
-
-          {/* ── "social" label — centered ── */}
-          <span className="flex-1 text-center text-sm font-black tracking-tight text-[#111111] select-none pointer-events-none">
-            social
-          </span>
 
           {/* 👤 Profile */}
           <button
             onClick={() => navigate("/profile")}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-[#3B82F6] overflow-hidden"
             aria-label="Profile"
           >
-            <User size={19} />
-          </button>
-
-          {/* ☰ Settings */}
-          <button
-            onClick={() => navigate("/settings")}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Settings"
-          >
-            <Menu size={19} />
+            <Avatar username={username || "Player"} avatar={authUser?.photoURL} size="sm" />
           </button>
 
         </div>
