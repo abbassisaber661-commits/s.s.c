@@ -68,7 +68,7 @@ router.get("/gifts/user/:userId/stats", async (req, res) => {
 
     const [sent] = await db
       .select({
-        totalSentDN:    sql<number>`coalesce(sum(${giftLedgerTable.amount}), 0)`,
+        totalSentPi:    sql<number>`coalesce(sum(${giftLedgerTable.amount}), 0)`,
         sentCount:      sql<number>`coalesce(count(*), 0)`,
       })
       .from(giftLedgerTable)
@@ -76,15 +76,15 @@ router.get("/gifts/user/:userId/stats", async (req, res) => {
 
     const [received] = await db
       .select({
-        totalReceivedDN: sql<number>`coalesce(sum(${giftLedgerTable.amount}), 0)`,
+        totalReceivedPi: sql<number>`coalesce(sum(${giftLedgerTable.amount}), 0)`,
         receivedCount:   sql<number>`coalesce(count(*), 0)`,
       })
       .from(giftLedgerTable)
       .where(eq(giftLedgerTable.receiverId, userId));
 
     res.json({
-      totalSentDN:           Number(sent?.totalSentDN       ?? 0),
-      totalReceivedDN:       Number(received?.totalReceivedDN ?? 0),
+      totalSentPi:           Number(sent?.totalSentPi       ?? 0),
+      totalReceivedPi:       Number(received?.totalReceivedPi ?? 0),
       totalGiftTransactions: Number(sent?.sentCount ?? 0) + Number(received?.receivedCount ?? 0),
       totalSent:             Number(sent?.sentCount    ?? 0),
       totalReceived:         Number(received?.receivedCount ?? 0),

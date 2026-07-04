@@ -82,7 +82,12 @@ export const userDailyEconomyTable = pgTable('user_daily_economy', {
 export const walletsTable = pgTable('wallets', {
   id:         text('id').primaryKey(),
   playerId:   text('player_id').notNull().unique(),
+  // DN$ — internal gamification points only. No monetary value, not transferable,
+  // not convertible to/from Pi or any other currency. Earned via XP/level/streaks/achievements.
   dnBalance:  integer('dn_balance').notNull().default(0),
+  // Pi — real payment currency (Pi Testnet now, Mainnet later). Accumulated creator
+  // earnings from gifts received on posts, paid via the Pi payment flow.
+  piEarnings: real('pi_earnings').notNull().default(0),
   createdAt:  timestamp('created_at').notNull().defaultNow(),
   updatedAt:  timestamp('updated_at').notNull().defaultNow(),
 });
@@ -99,14 +104,18 @@ export const walletTransactionsTable = pgTable('wallet_transactions', {
 });
 
 // ─── Gift Ledger — permanent analytics record per gift ────────────────────────
+// Gifts are real payments made in Pi (never DN$ — DN$ is a non-transferable
+// internal points system and cannot be sent between users).
 export const giftLedgerTable = pgTable('gift_ledger', {
   id:         text('id').primaryKey(),
   senderId:   text('sender_id').notNull(),
   receiverId: text('receiver_id').notNull(),
   postId:     text('post_id'),            // null when sent from profile/wallet page
-  amount:     integer('amount').notNull(),
+  amount:     real('amount').notNull(),   // amount in Pi (fractional)
+  currency:   text('currency').notNull().default('pi'),
   emoji:      text('emoji').notNull().default('🎁'),
   message:    text('message').notNull().default(''),
+  piPaymentId: text('pi_payment_id'),
   createdAt:  timestamp('created_at').notNull().defaultNow(),
 });
 

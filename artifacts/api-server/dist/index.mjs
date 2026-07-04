@@ -54358,7 +54358,12 @@ var init_economy = __esm({
     walletsTable = pgTable("wallets", {
       id: text("id").primaryKey(),
       playerId: text("player_id").notNull().unique(),
+      // DN$ — internal gamification points only. No monetary value, not transferable,
+      // not convertible to/from Pi or any other currency. Earned via XP/level/streaks/achievements.
       dnBalance: integer("dn_balance").notNull().default(0),
+      // Pi — real payment currency (Pi Testnet now, Mainnet later). Accumulated creator
+      // earnings from gifts received on posts, paid via the Pi payment flow.
+      piEarnings: real("pi_earnings").notNull().default(0),
       createdAt: timestamp("created_at").notNull().defaultNow(),
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
@@ -54378,9 +54383,12 @@ var init_economy = __esm({
       receiverId: text("receiver_id").notNull(),
       postId: text("post_id"),
       // null when sent from profile/wallet page
-      amount: integer("amount").notNull(),
+      amount: real("amount").notNull(),
+      // amount in Pi (fractional)
+      currency: text("currency").notNull().default("pi"),
       emoji: text("emoji").notNull().default("\u{1F381}"),
       message: text("message").notNull().default(""),
+      piPaymentId: text("pi_payment_id"),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
     insertCoinTxSchema = createInsertSchema(coinTransactionsTable).omit({ createdAt: true });
@@ -87854,11 +87862,11 @@ router6.post("/community/posts", async (req, res) => {
     if (authorId) recordPost(String(authorId)).catch(() => {
     });
     if (mentions.length > 0) {
-      const { playersTable: playersTable3 } = await Promise.resolve().then(() => (init_src(), src_exports));
+      const { playersTable: playersTable4 } = await Promise.resolve().then(() => (init_src(), src_exports));
       const { ilike: ilike3 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
       for (const mention of mentions) {
         try {
-          const [mentionedPlayer] = await db.select({ id: playersTable3.id, username: playersTable3.username }).from(playersTable3).where(ilike3(playersTable3.username, mention)).limit(1);
+          const [mentionedPlayer] = await db.select({ id: playersTable4.id, username: playersTable4.username }).from(playersTable4).where(ilike3(playersTable4.username, mention)).limit(1);
           if (mentionedPlayer && mentionedPlayer.id !== String(authorId)) {
             notify(
               mentionedPlayer.id,
@@ -89237,6 +89245,7 @@ var import_express14 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
 init_nanoid();
+init_notificationService();
 var router14 = (0, import_express14.Router)();
 var PI_PRODUCTS = {
   "vip_silver": { name: "VIP Silver (30 days)", vipTier: "silver", description: "Silver VIP membership" },
@@ -89248,7 +89257,13 @@ var PI_PRODUCTS = {
   "tournament_entry": { name: "Tournament Entry", description: "Entry to paid tournament" }
 };
 var pendingPayments = /* @__PURE__ */ new Map();
-router14.post("/pi/payment/create", requireAuth, strictRateLimit, async (req, res) => {
+async function getOrCreateWallet(playerId) {
+  const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
+  if (existing) return existing;
+  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, piEarnings: 0 }).returning();
+  return created;
+}
+router14.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => {
   const { playerId, amount, memo, metadata } = req.body;
   if (!playerId || !amount || !memo) {
     res.status(400).json({ error: "playerId, amount, memo required" });
@@ -89258,12 +89273,34 @@ router14.post("/pi/payment/create", requireAuth, strictRateLimit, async (req, re
     res.status(403).json({ error: "Forbidden" });
     return;
   }
+  const meta = metadata ?? {};
+  const piAmount = Number(amount);
+  if (!Number.isFinite(piAmount) || piAmount <= 0) {
+    res.status(400).json({ error: "amount must be a positive number" });
+    return;
+  }
+  if (meta.kind === "gift") {
+    const receiverId = meta.receiverId ? String(meta.receiverId) : "";
+    if (!receiverId) {
+      res.status(400).json({ error: "receiverId required for gift payments" });
+      return;
+    }
+    if (receiverId === String(playerId)) {
+      res.status(400).json({ error: "cannot gift yourself" });
+      return;
+    }
+    const [receiver] = await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, receiverId)).limit(1);
+    if (!receiver) {
+      res.status(404).json({ error: "receiver not found" });
+      return;
+    }
+  }
   const paymentId = nanoid3();
   pendingPayments.set(paymentId, {
     playerId: String(playerId),
-    amount: Number(amount),
+    amount: piAmount,
     memo: String(memo),
-    metadata: metadata ?? {},
+    metadata: meta,
     status: "pending",
     createdAt: Date.now()
   });
@@ -89273,16 +89310,17 @@ router14.post("/pi/payment/create", requireAuth, strictRateLimit, async (req, re
     "pi_payment",
     paymentId,
     null,
-    { amount, memo },
+    { amount: piAmount, memo, kind: meta.kind ?? "purchase" },
     getClientIp(req),
     req.headers["user-agent"] ?? ""
   );
   res.status(201).json({ paymentId, status: "pending" });
 });
-router14.post("/pi/payment/approve", requireAuth, async (req, res) => {
-  const { paymentId, piPaymentId } = req.body;
-  if (!paymentId || !piPaymentId) {
-    res.status(400).json({ error: "paymentId and piPaymentId required" });
+router14.post("/pi/payments/:paymentId/approve", requireAuth, async (req, res) => {
+  const { paymentId } = req.params;
+  const { piPaymentId } = req.body;
+  if (!piPaymentId) {
+    res.status(400).json({ error: "piPaymentId required" });
     return;
   }
   const pending = pendingPayments.get(String(paymentId));
@@ -89294,10 +89332,11 @@ router14.post("/pi/payment/approve", requireAuth, async (req, res) => {
   pending.piPaymentId = String(piPaymentId);
   res.json({ ok: true, status: "approved" });
 });
-router14.post("/pi/payment/complete", requireAuth, async (req, res) => {
-  const { paymentId, piTxId } = req.body;
-  if (!paymentId || !piTxId) {
-    res.status(400).json({ error: "paymentId and piTxId required" });
+router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) => {
+  const { paymentId } = req.params;
+  const { txId } = req.body;
+  if (!txId) {
+    res.status(400).json({ error: "txId required" });
     return;
   }
   const pending = pendingPayments.get(String(paymentId));
@@ -89309,6 +89348,7 @@ router14.post("/pi/payment/complete", requireAuth, async (req, res) => {
     res.status(409).json({ error: "payment not approved yet" });
     return;
   }
+  const isGift = pending.metadata.kind === "gift";
   const product = pending.metadata.productId;
   const productInfo = product ? PI_PRODUCTS[product] : void 0;
   const resolvedPiPaymentId = pending.piPaymentId ?? String(paymentId);
@@ -89316,20 +89356,57 @@ router14.post("/pi/payment/complete", requireAuth, async (req, res) => {
     await db.execute(sql`
       INSERT INTO pi_payments (id, player_id, pi_payment_id, pi_tx_id, amount, memo, metadata, status, completed_at)
       VALUES (${String(paymentId)}, ${pending.playerId}, ${resolvedPiPaymentId},
-              ${String(piTxId)}, ${pending.amount}, ${pending.memo},
+              ${String(txId)}, ${pending.amount}, ${pending.memo},
               ${JSON.stringify(pending.metadata)}, 'completed', NOW())
       ON CONFLICT (pi_payment_id) DO NOTHING
     `);
-    if (productInfo?.coins) {
+    if (isGift) {
+      const receiverId = String(pending.metadata.receiverId);
+      const postId = pending.metadata.postId ? String(pending.metadata.postId) : null;
+      const emoji3 = pending.metadata.emoji ? String(pending.metadata.emoji).slice(0, 8) : "\u{1F381}";
+      const message = pending.metadata.message ? String(pending.metadata.message).slice(0, 200) : "";
+      const [senderPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
+      const [receiverPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, receiverId)).limit(1);
+      const receiverWallet = await getOrCreateWallet(receiverId);
+      const newPiEarnings = Number(receiverWallet.piEarnings) + pending.amount;
+      await db.update(walletsTable).set({ piEarnings: newPiEarnings, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
+      await db.insert(giftLedgerTable).values({
+        id: nanoid3(),
+        senderId: pending.playerId,
+        receiverId,
+        postId,
+        amount: pending.amount,
+        currency: "pi",
+        emoji: emoji3,
+        message,
+        piPaymentId: resolvedPiPaymentId
+      });
+      createNotification({
+        playerId: receiverId,
+        type: "gift",
+        title: `${emoji3} \u0647\u062F\u064A\u0629 Pi \u0645\u0646 ${senderPlayer?.username ?? "\u0645\u0633\u062A\u062E\u062F\u0645"}`,
+        body: message ? `${pending.amount} \u03C0 \u2014 "${message}"` : `\u0627\u0633\u062A\u0642\u0628\u0644\u062A ${pending.amount} \u03C0`,
+        data: { senderId: pending.playerId, amount: pending.amount, emoji: emoji3, currency: "pi" }
+      }).catch(() => {
+      });
+      createNotification({
+        playerId: pending.playerId,
+        type: "gift_sent",
+        title: `${emoji3} \u0623\u0631\u0633\u0644\u062A \u0647\u062F\u064A\u0629 Pi \u0625\u0644\u0649 ${receiverPlayer?.username ?? "\u0645\u0633\u062A\u062E\u062F\u0645"}`,
+        body: `${pending.amount} \u03C0`,
+        data: { receiverId, amount: pending.amount, emoji: emoji3, currency: "pi" }
+      }).catch(() => {
+      });
+    } else if (productInfo?.coins) {
       const [player] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
       if (player) {
         const newCoins = player.coins + productInfo.coins;
         await db.update(playersTable).set({ coins: newCoins, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, pending.playerId));
-        const txId = nanoid3();
+        const txRowId = nanoid3();
         const desc5 = `Pi purchase: ${productInfo.name}`;
         await db.execute(sql`
           INSERT INTO coin_transactions (id, player_id, amount, type, source, description, balance_after)
-          VALUES (${txId}, ${pending.playerId}, ${productInfo.coins}, 'add', 'pi_purchase', ${desc5}, ${newCoins})
+          VALUES (${txRowId}, ${pending.playerId}, ${productInfo.coins}, 'add', 'pi_purchase', ${desc5}, ${newCoins})
         `);
       }
     }
@@ -89339,12 +89416,12 @@ router14.post("/pi/payment/complete", requireAuth, async (req, res) => {
       "pi_payment",
       String(paymentId),
       { status: "approved" },
-      { status: "completed", piTxId },
+      { status: "completed", txId, kind: isGift ? "gift" : "purchase" },
       getClientIp(req),
       req.headers["user-agent"] ?? ""
     );
     pendingPayments.delete(String(paymentId));
-    res.json({ ok: true, product: productInfo?.name });
+    res.json({ ok: true, product: productInfo?.name, kind: isGift ? "gift" : "purchase" });
   } catch (err) {
     req.log.error({ err }, "pi complete error");
     res.status(500).json({ error: "internal" });
@@ -94044,20 +94121,21 @@ init_src();
 init_nanoid();
 init_notificationService();
 var router28 = (0, import_express28.Router)();
-async function getOrCreateWallet(playerId) {
+async function getOrCreateWallet2(playerId) {
   const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
   if (existing) return existing;
-  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0 }).returning();
+  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, piEarnings: 0 }).returning();
   return created;
 }
 router28.get("/wallet/:playerId", async (req, res) => {
   try {
     const { playerId } = req.params;
-    const wallet = await getOrCreateWallet(playerId);
+    const wallet = await getOrCreateWallet2(playerId);
     const [incomeRow] = await db.select({ total: sql`coalesce(sum(amount),0)` }).from(walletTransactionsTable).where(and(eq(walletTransactionsTable.playerId, playerId), gt(walletTransactionsTable.amount, 0)));
     const [spendingRow] = await db.select({ total: sql`coalesce(sum(abs(amount)),0)` }).from(walletTransactionsTable).where(and(eq(walletTransactionsTable.playerId, playerId), lt(walletTransactionsTable.amount, 0)));
     res.json({
       dnBalance: wallet.dnBalance,
+      piEarnings: Number(wallet.piEarnings ?? 0),
       totalIncome: Number(incomeRow?.total ?? 0),
       totalSpending: Number(spendingRow?.total ?? 0)
     });
@@ -94088,101 +94166,6 @@ router28.get("/wallet/:playerId/transactions", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
-router28.post("/wallet/gift", async (req, res) => {
-  try {
-    const { senderId, receiverId, amount, message, postId, emoji: emoji3 } = req.body;
-    if (!senderId || !receiverId || !amount) {
-      res.status(400).json({ error: "senderId, receiverId, amount required" });
-      return;
-    }
-    const dn = Math.abs(Number(amount));
-    if (!Number.isInteger(dn) || dn <= 0) {
-      res.status(400).json({ error: "amount must be a positive integer" });
-      return;
-    }
-    if (String(senderId) === String(receiverId)) {
-      res.status(400).json({ error: "cannot gift yourself" });
-      return;
-    }
-    const [senderPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, String(senderId))).limit(1);
-    const [receiverPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, String(receiverId))).limit(1);
-    if (!senderPlayer || !receiverPlayer) {
-      res.status(404).json({ error: "player not found" });
-      return;
-    }
-    const senderWallet = await getOrCreateWallet(String(senderId));
-    const receiverWallet = await getOrCreateWallet(String(receiverId));
-    if (senderWallet.dnBalance < dn) {
-      res.status(400).json({ error: "insufficient DN balance" });
-      return;
-    }
-    const newSenderBalance = senderWallet.dnBalance - dn;
-    const newReceiverBalance = receiverWallet.dnBalance + dn;
-    const note = String(message || "").slice(0, 200) || void 0;
-    await db.update(walletsTable).set({ dnBalance: newSenderBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, String(senderId)));
-    await db.update(walletsTable).set({ dnBalance: newReceiverBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, String(receiverId)));
-    const senderTxId = nanoid3();
-    const receiverTxId = nanoid3();
-    await db.insert(walletTransactionsTable).values([
-      {
-        id: senderTxId,
-        playerId: String(senderId),
-        amount: -dn,
-        type: "gift_sent",
-        description: note ? `\u0647\u062F\u064A\u0629 \u0625\u0644\u0649 ${receiverPlayer.username}: ${note}` : `\u0647\u062F\u064A\u0629 \u0625\u0644\u0649 ${receiverPlayer.username}`,
-        relatedId: String(receiverId),
-        balanceAfter: newSenderBalance
-      },
-      {
-        id: receiverTxId,
-        playerId: String(receiverId),
-        amount: dn,
-        type: "gift_received",
-        description: note ? `\u0647\u062F\u064A\u0629 \u0645\u0646 ${senderPlayer.username}: ${note}` : `\u0647\u062F\u064A\u0629 \u0645\u0646 ${senderPlayer.username}`,
-        relatedId: String(senderId),
-        balanceAfter: newReceiverBalance
-      }
-    ]);
-    db.insert(giftLedgerTable).values({
-      id: nanoid3(),
-      senderId: String(senderId),
-      receiverId: String(receiverId),
-      postId: postId ? String(postId) : null,
-      amount: dn,
-      emoji: emoji3 ? String(emoji3).slice(0, 8) : "\u{1F381}",
-      message: note ?? ""
-    }).catch((e) => {
-      req.log.warn({ err: e }, "gift ledger insert failed (non-fatal)");
-    });
-    const giftEmoji = emoji3 ? String(emoji3).slice(0, 8) : "\u{1F381}";
-    createNotification({
-      playerId: String(receiverId),
-      type: "gift",
-      title: `${giftEmoji} \u0647\u062F\u064A\u0629 \u0645\u0646 ${senderPlayer.username}`,
-      body: note ? `${dn} DN \u2014 "${note}"` : `\u0627\u0633\u062A\u0642\u0628\u0644\u062A ${dn} DN`,
-      data: { senderId: String(senderId), amount: dn, emoji: giftEmoji, newBalance: newReceiverBalance }
-    }).catch(() => {
-    });
-    createNotification({
-      playerId: String(senderId),
-      type: "gift_sent",
-      title: `${giftEmoji} \u0623\u0631\u0633\u0644\u062A \u0647\u062F\u064A\u0629 \u0625\u0644\u0649 ${receiverPlayer.username}`,
-      body: `${dn} DN \u2014 \u0631\u0635\u064A\u062F\u0643 \u0627\u0644\u062C\u062F\u064A\u062F: ${newSenderBalance} DN`,
-      data: { receiverId: String(receiverId), amount: dn, emoji: giftEmoji, newBalance: newSenderBalance }
-    }).catch(() => {
-    });
-    res.status(201).json({
-      ok: true,
-      senderBalance: newSenderBalance,
-      receiverBalance: newReceiverBalance,
-      senderTxId,
-      receiverTxId
-    });
-  } catch (err) {
-    req.log.error({ err });
-    res.status(500).json({ error: "internal" });
-  }
-});
 router28.post("/wallet/credit", async (req, res) => {
   try {
     const { playerId, amount, type, description } = req.body;
@@ -94195,7 +94178,7 @@ router28.post("/wallet/credit", async (req, res) => {
       res.status(400).json({ error: "amount must be a non-zero integer" });
       return;
     }
-    const wallet = await getOrCreateWallet(String(playerId));
+    const wallet = await getOrCreateWallet2(String(playerId));
     const newBalance = wallet.dnBalance + dn;
     if (newBalance < 0) {
       res.status(400).json({ error: "insufficient balance" });
@@ -94272,16 +94255,16 @@ router29.get("/gifts/user/:userId/stats", async (req, res) => {
   try {
     const { userId } = req.params;
     const [sent] = await db.select({
-      totalSentDN: sql`coalesce(sum(${giftLedgerTable.amount}), 0)`,
+      totalSentPi: sql`coalesce(sum(${giftLedgerTable.amount}), 0)`,
       sentCount: sql`coalesce(count(*), 0)`
     }).from(giftLedgerTable).where(eq(giftLedgerTable.senderId, userId));
     const [received] = await db.select({
-      totalReceivedDN: sql`coalesce(sum(${giftLedgerTable.amount}), 0)`,
+      totalReceivedPi: sql`coalesce(sum(${giftLedgerTable.amount}), 0)`,
       receivedCount: sql`coalesce(count(*), 0)`
     }).from(giftLedgerTable).where(eq(giftLedgerTable.receiverId, userId));
     res.json({
-      totalSentDN: Number(sent?.totalSentDN ?? 0),
-      totalReceivedDN: Number(received?.totalReceivedDN ?? 0),
+      totalSentPi: Number(sent?.totalSentPi ?? 0),
+      totalReceivedPi: Number(received?.totalReceivedPi ?? 0),
       totalGiftTransactions: Number(sent?.sentCount ?? 0) + Number(received?.receivedCount ?? 0),
       totalSent: Number(sent?.sentCount ?? 0),
       totalReceived: Number(received?.receivedCount ?? 0)
@@ -94324,13 +94307,13 @@ router30.get("/leaderboard/top-earners", async (req, res) => {
     const rows = await db.select({
       receiverId: giftLedgerTable.receiverId,
       username: playersTable.username,
-      totalReceivedDN: sql`sum(${giftLedgerTable.amount})`,
+      totalReceivedPi: sql`sum(${giftLedgerTable.amount})`,
       totalReceived: sql`count(*)`
     }).from(giftLedgerTable).innerJoin(playersTable, eq(playersTable.id, giftLedgerTable.receiverId)).groupBy(giftLedgerTable.receiverId, playersTable.username).orderBy(desc(sql`sum(${giftLedgerTable.amount})`)).limit(limit);
     res.json(rows.map((r) => ({
       playerId: r.receiverId,
       username: r.username,
-      totalReceivedDN: Number(r.totalReceivedDN),
+      totalReceivedPi: Number(r.totalReceivedPi),
       totalReceived: Number(r.totalReceived)
     })));
   } catch (err) {
@@ -94344,13 +94327,13 @@ router30.get("/leaderboard/top-supporters", async (req, res) => {
     const rows = await db.select({
       senderId: giftLedgerTable.senderId,
       username: playersTable.username,
-      totalSentDN: sql`sum(${giftLedgerTable.amount})`,
+      totalSentPi: sql`sum(${giftLedgerTable.amount})`,
       totalSent: sql`count(*)`
     }).from(giftLedgerTable).innerJoin(playersTable, eq(playersTable.id, giftLedgerTable.senderId)).groupBy(giftLedgerTable.senderId, playersTable.username).orderBy(desc(sql`sum(${giftLedgerTable.amount})`)).limit(limit);
     res.json(rows.map((r) => ({
       playerId: r.senderId,
       username: r.username,
-      totalSentDN: Number(r.totalSentDN),
+      totalSentPi: Number(r.totalSentPi),
       totalSent: Number(r.totalSent)
     })));
   } catch (err) {

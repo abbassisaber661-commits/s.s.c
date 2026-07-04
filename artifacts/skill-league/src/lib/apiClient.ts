@@ -574,10 +574,12 @@ export const api = {
       post<{ ok: boolean }>("/notifications", data),
   },
 
-  /* ── Denous Wallet ── */
+  /* ── Denous Wallet — DN$ points only. Non-transferable, no monetary value,
+   * no conversion to/from Pi. There is intentionally no "send"/"gift" method
+   * here; gifting is real money and goes exclusively through `api.pi`. ── */
   wallet: {
     getBalance: (playerId: string) =>
-      get<{ dnBalance: number; totalIncome: number; totalSpending: number }>(
+      get<{ dnBalance: number; piEarnings: number; totalIncome: number; totalSpending: number }>(
         `/wallet/${playerId}`,
       ),
 
@@ -598,12 +600,6 @@ export const api = {
         limit: number;
       }>(`/wallet/${playerId}/transactions?filter=${filter}&page=${page}&limit=${limit}`),
 
-    sendGift: (senderId: string, receiverId: string, amount: number, message?: string, postId?: string, emoji?: string) =>
-      post<{ ok: boolean; senderBalance: number; receiverBalance: number }>(
-        "/wallet/gift",
-        { senderId, receiverId, amount, message, postId, emoji },
-      ),
-
     credit: (playerId: string, amount: number, type: string, description?: string) =>
       post<{ ok: boolean; newBalance: number }>(
         "/wallet/credit",
@@ -611,14 +607,14 @@ export const api = {
       ),
   },
 
-  /* ── DN Leaderboard & Trending ── */
+  /* ── Pi Gift Leaderboard & Trending (gifts are always paid in Pi) ── */
   leaderboardDN: {
     topEarners: (limit = 20) =>
-      get<{ playerId: string; username: string; totalReceivedDN: number; totalReceived: number }[]>(
+      get<{ playerId: string; username: string; totalReceivedPi: number; totalReceived: number }[]>(
         `/leaderboard/top-earners?limit=${limit}`
       ),
     topSupporters: (limit = 20) =>
-      get<{ playerId: string; username: string; totalSentDN: number; totalSent: number }[]>(
+      get<{ playerId: string; username: string; totalSentPi: number; totalSent: number }[]>(
         `/leaderboard/top-supporters?limit=${limit}`
       ),
     topPosts: (limit = 20) =>
@@ -646,8 +642,8 @@ export const api = {
 
     userStats: (userId: string) =>
       get<{
-        totalSentDN:           number;
-        totalReceivedDN:       number;
+        totalSentPi:           number;
+        totalReceivedPi:       number;
         totalGiftTransactions: number;
         totalSent:             number;
         totalReceived:         number;

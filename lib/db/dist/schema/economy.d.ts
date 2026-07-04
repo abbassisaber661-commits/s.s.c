@@ -968,6 +968,23 @@ export declare const walletsTable: import("drizzle-orm/pg-core").PgTableWithColu
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        piEarnings: import("drizzle-orm/pg-core").PgColumn<{
+            name: "pi_earnings";
+            tableName: "wallets";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "wallets";
@@ -1224,7 +1241,7 @@ export declare const giftLedgerTable: import("drizzle-orm/pg-core").PgTableWithC
             name: "amount";
             tableName: "gift_ledger";
             dataType: "number";
-            columnType: "PgInteger";
+            columnType: "PgReal";
             data: number;
             driverParam: string | number;
             notNull: true;
@@ -1233,6 +1250,23 @@ export declare const giftLedgerTable: import("drizzle-orm/pg-core").PgTableWithC
             isAutoincrement: false;
             hasRuntimeDefault: false;
             enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        currency: import("drizzle-orm/pg-core").PgColumn<{
+            name: "currency";
+            tableName: "gift_ledger";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
             baseColumn: never;
             identity: undefined;
             generated: undefined;
@@ -1263,6 +1297,23 @@ export declare const giftLedgerTable: import("drizzle-orm/pg-core").PgTableWithC
             driverParam: string;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        piPaymentId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "pi_payment_id";
+            tableName: "gift_ledger";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;

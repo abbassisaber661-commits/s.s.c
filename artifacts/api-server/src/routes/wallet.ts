@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, desc, and, gt, lt, sum, sql } from "drizzle-orm";
-import { db, walletsTable, walletTransactionsTable, giftLedgerTable, playersTable } from "@workspace/db";
+import { db, walletsTable, walletTransactionsTable, playersTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { createNotification } from "../lib/notificationService.js";
 
@@ -16,12 +16,15 @@ async function getOrCreateWallet(playerId: string) {
   if (existing) return existing;
   const [created] = await db
     .insert(walletsTable)
-    .values({ id: nanoid(), playerId, dnBalance: 0 })
+    .values({ id: nanoid(), playerId, dnBalance: 0, piEarnings: 0 })
     .returning();
   return created;
 }
 
-/* ─── GET /wallet/:playerId ─── */
+/* ─── GET /wallet/:playerId ───
+ * DN$ here is a pure internal points balance (gameplay/XP driven, non-transferable,
+ * no monetary value). piEarnings is the player's accumulated Pi received from gifts
+ * (real payments, handled entirely through the /pi/payments flow). ─── */
 router.get("/wallet/:playerId", async (req, res) => {
   try {
     const { playerId } = req.params;
@@ -39,6 +42,7 @@ router.get("/wallet/:playerId", async (req, res) => {
 
     res.json({
       dnBalance:    wallet.dnBalance,
+      piEarnings:   Number(wallet.piEarnings ?? 0),
       totalIncome:  Number(incomeRow?.total ?? 0),
       totalSpending:Number(spendingRow?.total ?? 0),
     });
@@ -85,130 +89,12 @@ router.get("/wallet/:playerId/transactions", async (req, res) => {
   }
 });
 
-/* ─── POST /wallet/gift ─── */
-router.post("/wallet/gift", async (req, res) => {
-  try {
-    const { senderId, receiverId, amount, message, postId, emoji } = req.body as Record<string, unknown>;
+// NOTE: DN$ is a non-transferable internal points system — there is intentionally
+// no P2P "send" endpoint for it. Gifting between users is real money and is handled
+// exclusively via Pi payments (see routes/pi-payments.ts, POST /pi/payments with
+// metadata.kind = "gift").
 
-    if (!senderId || !receiverId || !amount) {
-      res.status(400).json({ error: "senderId, receiverId, amount required" });
-      return;
-    }
-    const dn = Math.abs(Number(amount));
-    if (!Number.isInteger(dn) || dn <= 0) {
-      res.status(400).json({ error: "amount must be a positive integer" });
-      return;
-    }
-    if (String(senderId) === String(receiverId)) {
-      res.status(400).json({ error: "cannot gift yourself" });
-      return;
-    }
-
-    const [senderPlayer] = await db
-      .select({ username: playersTable.username })
-      .from(playersTable)
-      .where(eq(playersTable.id, String(senderId)))
-      .limit(1);
-    const [receiverPlayer] = await db
-      .select({ username: playersTable.username })
-      .from(playersTable)
-      .where(eq(playersTable.id, String(receiverId)))
-      .limit(1);
-
-    if (!senderPlayer || !receiverPlayer) {
-      res.status(404).json({ error: "player not found" });
-      return;
-    }
-
-    const senderWallet   = await getOrCreateWallet(String(senderId));
-    const receiverWallet = await getOrCreateWallet(String(receiverId));
-
-    if (senderWallet.dnBalance < dn) {
-      res.status(400).json({ error: "insufficient DN balance" });
-      return;
-    }
-
-    const newSenderBalance   = senderWallet.dnBalance - dn;
-    const newReceiverBalance = receiverWallet.dnBalance + dn;
-    const note = String(message || "").slice(0, 200) || undefined;
-
-    await db.update(walletsTable)
-      .set({ dnBalance: newSenderBalance, updatedAt: new Date() })
-      .where(eq(walletsTable.playerId, String(senderId)));
-
-    await db.update(walletsTable)
-      .set({ dnBalance: newReceiverBalance, updatedAt: new Date() })
-      .where(eq(walletsTable.playerId, String(receiverId)));
-
-    const senderTxId   = nanoid();
-    const receiverTxId = nanoid();
-
-    await db.insert(walletTransactionsTable).values([
-      {
-        id:          senderTxId,
-        playerId:    String(senderId),
-        amount:      -dn,
-        type:        "gift_sent",
-        description: note ? `هدية إلى ${receiverPlayer.username}: ${note}` : `هدية إلى ${receiverPlayer.username}`,
-        relatedId:   String(receiverId),
-        balanceAfter: newSenderBalance,
-      },
-      {
-        id:          receiverTxId,
-        playerId:    String(receiverId),
-        amount:      dn,
-        type:        "gift_received",
-        description: note ? `هدية من ${senderPlayer.username}: ${note}` : `هدية من ${senderPlayer.username}`,
-        relatedId:   String(senderId),
-        balanceAfter: newReceiverBalance,
-      },
-    ]);
-
-    // ── Ledger: permanent analytics record (non-blocking side-effect) ──
-    db.insert(giftLedgerTable).values({
-      id:         nanoid(),
-      senderId:   String(senderId),
-      receiverId: String(receiverId),
-      postId:     postId ? String(postId) : null,
-      amount:     dn,
-      emoji:      emoji ? String(emoji).slice(0, 8) : "🎁",
-      message:    note ?? "",
-    }).catch((e) => {
-      req.log.warn({ err: e }, "gift ledger insert failed (non-fatal)");
-    });
-
-    // ── Notifications: real-time push to both parties ──
-    const giftEmoji = emoji ? String(emoji).slice(0, 8) : "🎁";
-    createNotification({
-      playerId: String(receiverId),
-      type: "gift",
-      title: `${giftEmoji} هدية من ${senderPlayer.username}`,
-      body: note ? `${dn} DN — "${note}"` : `استقبلت ${dn} DN`,
-      data: { senderId: String(senderId), amount: dn, emoji: giftEmoji, newBalance: newReceiverBalance },
-    }).catch(() => {});
-
-    createNotification({
-      playerId: String(senderId),
-      type: "gift_sent",
-      title: `${giftEmoji} أرسلت هدية إلى ${receiverPlayer.username}`,
-      body: `${dn} DN — رصيدك الجديد: ${newSenderBalance} DN`,
-      data: { receiverId: String(receiverId), amount: dn, emoji: giftEmoji, newBalance: newSenderBalance },
-    }).catch(() => {});
-
-    res.status(201).json({
-      ok:                  true,
-      senderBalance:       newSenderBalance,
-      receiverBalance:     newReceiverBalance,
-      senderTxId,
-      receiverTxId,
-    });
-  } catch (err) {
-    req.log.error({ err });
-    res.status(500).json({ error: "internal" });
-  }
-});
-
-/* ─── POST /wallet/credit (internal: award DN to a player) ─── */
+/* ─── POST /wallet/credit (internal: award DN points to a player) ─── */
 router.post("/wallet/credit", async (req, res) => {
   try {
     const { playerId, amount, type, description } = req.body as Record<string, unknown>;

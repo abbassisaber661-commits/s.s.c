@@ -2,14 +2,12 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, TrendingUp, TrendingDown, Wallet2, RefreshCcw, Gift } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Wallet2, RefreshCcw } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 
 type TxFilter = "all" | "income" | "spending";
 
 const TX_META: Record<string, { icon: string; label: string }> = {
-  gift_sent:     { icon: "🎁", label: "هدية أُرسلت" },
-  gift_received: { icon: "🎁", label: "هدية مُستلمة" },
   reward:        { icon: "🏆", label: "مكافأة" },
   game_reward:   { icon: "🎮", label: "مكافأة لعبة" },
   purchase:      { icon: "🛒", label: "شراء" },
@@ -71,7 +69,7 @@ export default function Wallet() {
           <ArrowLeft className="w-5 h-5 text-gray-700" />
         </button>
         <Wallet2 className="w-5 h-5 text-yellow-500" />
-        <h1 className="text-base font-black text-gray-900 flex-1">محفظة Denous</h1>
+        <h1 className="text-base font-black text-gray-900 flex-1">نقاط Danous</h1>
         <button
           onClick={refetchAll}
           className="p-2 rounded-xl hover:bg-gray-100 active:scale-90 transition-all"
@@ -93,7 +91,7 @@ export default function Wallet() {
           }}
         >
           <div className="px-6 pt-6 pb-4">
-            <div className="text-xs font-bold tracking-widest text-white/60 uppercase mb-1">رصيدك الحالي</div>
+            <div className="text-xs font-bold tracking-widest text-white/60 uppercase mb-1">نقاطك الحالية</div>
             {isLoading ? (
               <div className="h-14 w-32 rounded-2xl bg-white/10 animate-pulse" />
             ) : (
@@ -102,7 +100,7 @@ export default function Wallet() {
                 <span className="text-2xl font-black text-white/70 mb-1">DN$</span>
               </div>
             )}
-            <div className="mt-1 text-xs text-white/50 font-medium">Denous · العملة الرسمية</div>
+            <div className="mt-1 text-xs text-white/50 font-medium">Danous · نقاط تقدّم داخلية (غير قابلة للتحويل)</div>
           </div>
 
           {/* Income / Spending sub-row */}
@@ -128,26 +126,6 @@ export default function Wallet() {
             </div>
           </div>
         </motion.div>
-
-        {/* ── Quick Action: Send Gift ── */}
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          onClick={() => navigate("/send-gift")}
-          className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl active:scale-[0.98] transition-all"
-          style={{ background: "#fff", border: "1px solid #E4E6EB", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
-        >
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-            style={{ background: "linear-gradient(135deg,#FFB347,#FF6B35)" }}>
-            🎁
-          </div>
-          <div className="flex-1 text-right" dir="rtl">
-            <div className="text-sm font-bold text-gray-900">أرسل هدية</div>
-            <div className="text-xs text-gray-500">أرسل DN$ لأي مستخدم فوراً</div>
-          </div>
-          <Gift className="w-4 h-4 text-gray-400" />
-        </motion.button>
 
         {/* ── Transaction History ── */}
         <motion.div
@@ -194,7 +172,7 @@ export default function Wallet() {
               <div className="flex flex-col items-center py-12 gap-2" dir="rtl">
                 <span className="text-4xl">💰</span>
                 <p className="text-sm font-semibold text-gray-500">لا توجد معاملات بعد</p>
-                <p className="text-xs text-gray-400">أرسل هدية أو العب لكسب DN$</p>
+                <p className="text-xs text-gray-400">العب وحقق إنجازات لكسب نقاط DN$</p>
               </div>
             ) : (
               <AnimatePresence>
@@ -248,11 +226,11 @@ export default function Wallet() {
           style={{ background: "#fff", border: "1px solid #E4E6EB" }}
           dir="rtl"
         >
-          <div className="text-xs font-bold text-gray-700">💡 ما هو Denous (DN$)؟</div>
+          <div className="text-xs font-bold text-gray-700">💡 ما هي نقاط Danous (DN$)؟</div>
           <div className="text-xs text-gray-500 leading-relaxed">
-            DN$ هي العملة الرسمية الوحيدة في المنصة.
-            تُستخدم لإرسال الهدايا وشراء الامتيازات.
-            كل المعاملات محفوظة في الخادم فقط.
+            DN$ نظام نقاط داخلي للتقدّم فقط — تُكتسب من اللعب والإنجازات.
+            ليس لها أي قيمة نقدية ولا يمكن إرسالها لمستخدمين آخرين أو تحويلها إلى Pi.
+            الهدايا الحقيقية تُرسل بعملة Pi فقط.
           </div>
         </motion.div>
 

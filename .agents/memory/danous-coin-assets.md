@@ -7,4 +7,4 @@ The `DanousCoin` component (`artifacts/skill-league/src/components/wallet/Danous
 
 **Why:** The user explicitly asked to replace the previously-approved hand-coded SVG/gradient coin design with their own real coin artwork, used as-is (same pattern as the app logo: no redesign, just crop/resize/cleanup of the provided image).
 
-**How to apply:** If the user provides a new/updated version of the coin artwork (single coin or full sheet), re-crop and re-run background removal into `src/assets/coins/<color>.png`, keeping the `DANOUS_TIERS` data shape (id/name/piValue/etc.) intact since other components (e.g. `DanousInfoModal`) depend on it — only the `image` field and rendering method change.
+**How to apply:** If the user provides a new/updated version of the coin artwork (single coin or full sheet), re-crop and re-run background removal into `src/assets/coins/<color>.png`. Note: the tier *data* shape these images fed into was later split — see `currency-separation.md`. The same 7 coin images are now reused by `PI_GIFT_TIERS` (real Pi gift amounts) in `piGiftTiers.ts`; DN$ no longer has a tier/send concept at all.

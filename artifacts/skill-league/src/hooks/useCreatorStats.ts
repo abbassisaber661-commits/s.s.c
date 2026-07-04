@@ -3,8 +3,8 @@ import { useRealtime } from "@/contexts/RealtimeContext";
 import { api } from "@/lib/apiClient";
 
 export interface GiftStats {
-  totalReceivedDN: number;
-  totalSentDN: number;
+  totalReceivedPi: number;
+  totalSentPi: number;
   netBalance: number;
   totalReceived: number;
   totalSent: number;
@@ -72,7 +72,7 @@ function computeBadges(
 
   if (
     giftStats &&
-    giftStats.totalReceivedDN > 0 &&
+    giftStats.totalReceivedPi > 0 &&
     giftStats.totalReceived >= 3
   ) {
     badges.push({
@@ -128,9 +128,9 @@ export function useCreatorStats(userId: string, postsCount: number): CreatorStat
       if (gifts.status === "fulfilled") {
         const g = gifts.value;
         setGiftStats({
-          totalReceivedDN: g.totalReceivedDN,
-          totalSentDN: g.totalSentDN,
-          netBalance: g.totalReceivedDN - g.totalSentDN,
+          totalReceivedPi: g.totalReceivedPi,
+          totalSentPi: g.totalSentPi,
+          netBalance: g.totalReceivedPi - g.totalSentPi,
           totalReceived: g.totalReceived,
           totalSent: g.totalSent,
           totalGiftTransactions: g.totalGiftTransactions,
@@ -151,7 +151,7 @@ export function useCreatorStats(userId: string, postsCount: number): CreatorStat
         (s) => s.playerId === userId,
       );
 
-      // Top supporter for this user: person who sent the most DN to this user
+      // Top supporter for this user: person who sent the most Pi to this user
       // We approximate from earners list: the user who sent most to this receiver
       // (gift-ledger /gifts/user/:id/history would need grouping, so we use top-supporters list for now)
       const topSupporter =
@@ -163,7 +163,7 @@ export function useCreatorStats(userId: string, postsCount: number): CreatorStat
         supporterRank: supporterIdx >= 0 ? supporterIdx + 1 : null,
         topSupporterName: topSupporter?.username ?? null,
         topSupporterAmount: topSupporter
-          ? Number((topSupporter as any).totalSentDN ?? 0)
+          ? Number((topSupporter as any).totalSentPi ?? 0)
           : 0,
       }));
     } catch {

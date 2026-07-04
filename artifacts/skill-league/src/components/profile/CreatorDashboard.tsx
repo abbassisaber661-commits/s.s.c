@@ -60,7 +60,7 @@ function StatTile({ icon, label, value, sub, accent, loading }: StatTileProps) {
         <p className="text-xl font-black leading-none mt-0.5" style={{ color: accent }}>
           {value}
           <span className="text-xs font-semibold ml-1 opacity-70" style={{ color: accent }}>
-            DN$
+            π
           </span>
         </p>
       )}
@@ -158,8 +158,8 @@ function DrawerContent({
   giftStats, walletStats, rank, badges,
   isLoading, postsCount, joinLabel, engagementLevel,
 }: DrawerContentProps) {
-  const earned  = giftStats?.totalReceivedDN ?? 0;
-  const sent    = giftStats?.totalSentDN ?? 0;
+  const earned  = giftStats?.totalReceivedPi ?? 0;
+  const sent    = giftStats?.totalSentPi ?? 0;
   const net     = giftStats?.netBalance ?? 0;
   const balance = walletStats?.dnBalance ?? 0;
 
@@ -180,9 +180,9 @@ function DrawerContent({
       className="flex flex-col gap-5"
     >
 
-      {/* ══ 1. DN ECONOMY ══════════════════════════════════════════════ */}
+      {/* ══ 1. PI ECONOMY (gifts) ═══════════════════════════════════════ */}
       <motion.div variants={item}>
-        <SectionLabel>💰 DN Economy</SectionLabel>
+        <SectionLabel>π Pi Economy (Gifts)</SectionLabel>
         <div className="grid grid-cols-3 gap-2.5">
           <StatTile icon="📥" label="Earned" value={fmt(earned)} sub="from gifts"
             accent="#34d399" loading={isLoading} />
@@ -197,7 +197,7 @@ function DrawerContent({
           />
         </div>
 
-        {/* Wallet balance */}
+        {/* DN$ points balance (internal, non-monetary) */}
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3"
           style={{
@@ -207,7 +207,7 @@ function DrawerContent({
         >
           <div className="flex items-center gap-2">
             <span className="text-base">🏦</span>
-            <span className="text-white/60 text-xs font-medium">Wallet Balance</span>
+            <span className="text-white/60 text-xs font-medium">DN$ Points</span>
           </div>
           {isLoading ? (
             <Skeleton className="h-6 w-20" />
@@ -250,7 +250,7 @@ function DrawerContent({
             {rank.topSupporterAmount > 0 && (
               <p className="text-amber-400 font-black text-sm flex-shrink-0">
                 {fmt(rank.topSupporterAmount)}
-                <span className="text-xs ml-0.5 opacity-70">DN$</span>
+                <span className="text-xs ml-0.5 opacity-70">π</span>
               </p>
             )}
           </div>
@@ -288,7 +288,7 @@ function DrawerContent({
           </div>
           {rank.earnerRank && (
             <div className="text-right flex-shrink-0">
-              <p className="text-white/40 text-xs">DN$ Earner</p>
+              <p className="text-white/40 text-xs">Pi Earner</p>
               <p className="text-amber-300 font-bold text-sm">#{rank.earnerRank}</p>
             </div>
           )}

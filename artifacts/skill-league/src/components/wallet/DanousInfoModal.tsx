@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import danousCurrencyLogo from "@/assets/currency/dns-official-currency.png";
-import { DANOUS_COINS, DANOUS_CURRENCY_DEFINITION_AR } from "@/lib/danousCoins";
+import { DANOUS_CURRENCY_DEFINITION_AR, DANOUS_EARN_SOURCES } from "@/lib/danousCoins";
 
 export default function DanousInfoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -38,8 +38,8 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
                   draggable={false}
                 />
                 <div className="flex-1 text-right" dir="rtl">
-                  <div className="text-base font-black text-white">عملة Danous (DN$)</div>
-                  <div className="text-xs text-white/50">العملة الرسمية لمنصة SkillLeague</div>
+                  <div className="text-base font-black text-white">نقاط Danous (DN$)</div>
+                  <div className="text-xs text-white/50">نظام تقدّم داخلي — بدون قيمة نقدية</div>
                 </div>
                 <button
                   onClick={onClose}
@@ -56,21 +56,19 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
                 </p>
               </div>
 
-              {/* Tier grid */}
+              {/* Earn sources list */}
               <div className="px-5 py-5">
-                <div className="grid grid-cols-4 gap-x-2 gap-y-4 place-items-center">
-                  {DANOUS_COINS.map((coin) => (
-                    <div key={coin.id} className="flex flex-col items-center gap-1.5">
-                      <img
-                        src={coin.image}
-                        alt={coin.nameAr}
-                        className="w-14 h-14 rounded-full object-cover"
-                        style={{ boxShadow: `0 0 10px ${coin.glow}55` }}
-                        draggable={false}
-                      />
-                      <span className="text-[10px] font-bold text-white/60 text-center leading-tight">
-                        {coin.tierLabelAr}
-                      </span>
+                <div className="text-xs font-bold text-white/40 mb-3 text-right" dir="rtl">كيف تكسب DN$؟</div>
+                <div className="space-y-2">
+                  {DANOUS_EARN_SOURCES.map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+                      dir="rtl"
+                    >
+                      <span className="text-xl">{s.icon}</span>
+                      <span className="text-sm font-semibold text-white/80">{s.labelAr}</span>
                     </div>
                   ))}
                 </div>
@@ -78,7 +76,7 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
 
               <div className="px-5 pb-6 pt-1 text-center">
                 <p className="text-[11px] text-white/35 leading-relaxed" dir="rtl">
-                  الفئة السابعة (البنفسجية) هي أعلى مستوى هدية في نظام Danous.
+                  DN$ لا يمكن إرسالها لمستخدمين آخرين ولا تحويلها إلى Pi. الهدايا الحقيقية تُرسل بعملة Pi فقط.
                 </p>
               </div>
             </div>

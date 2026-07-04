@@ -35,7 +35,7 @@ export default function DanousWalletSection() {
             className="w-6 h-6 rounded-full object-cover flex-shrink-0"
             draggable={false}
           />
-          <span className="text-sm font-black text-white">محفظة Danous</span>
+          <span className="text-sm font-black text-white">نقاط Danous</span>
         </div>
 
         <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-1">
@@ -45,7 +45,7 @@ export default function DanousWalletSection() {
             style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
             <Info className="w-3.5 h-3.5 text-white/70" />
-            <span className="text-[11px] font-bold text-white/70">DN$ Info</span>
+            <span className="text-[11px] font-bold text-white/70">عن DN$</span>
           </button>
 
           <div className="flex items-baseline gap-1.5" dir="ltr">

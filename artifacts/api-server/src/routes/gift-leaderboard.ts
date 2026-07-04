@@ -1,4 +1,4 @@
-// routes/gift-leaderboard.ts — DN Leaderboards + Trending Posts
+// routes/gift-leaderboard.ts — Pi Gift Leaderboards + Trending Posts
 import { Router } from "express";
 import { eq, desc, sql, and, gte, isNotNull } from "drizzle-orm";
 import { db, giftLedgerTable, playersTable, postsTable } from "@workspace/db";
@@ -14,7 +14,7 @@ router.get("/leaderboard/top-earners", async (req, res) => {
       .select({
         receiverId:      giftLedgerTable.receiverId,
         username:        playersTable.username,
-        totalReceivedDN: sql<number>`sum(${giftLedgerTable.amount})`,
+        totalReceivedPi: sql<number>`sum(${giftLedgerTable.amount})`,
         totalReceived:   sql<number>`count(*)`,
       })
       .from(giftLedgerTable)
@@ -26,7 +26,7 @@ router.get("/leaderboard/top-earners", async (req, res) => {
     res.json(rows.map((r) => ({
       playerId:        r.receiverId,
       username:        r.username,
-      totalReceivedDN: Number(r.totalReceivedDN),
+      totalReceivedPi: Number(r.totalReceivedPi),
       totalReceived:   Number(r.totalReceived),
     })));
   } catch (err) {
@@ -44,7 +44,7 @@ router.get("/leaderboard/top-supporters", async (req, res) => {
       .select({
         senderId:    giftLedgerTable.senderId,
         username:    playersTable.username,
-        totalSentDN: sql<number>`sum(${giftLedgerTable.amount})`,
+        totalSentPi: sql<number>`sum(${giftLedgerTable.amount})`,
         totalSent:   sql<number>`count(*)`,
       })
       .from(giftLedgerTable)
@@ -56,7 +56,7 @@ router.get("/leaderboard/top-supporters", async (req, res) => {
     res.json(rows.map((r) => ({
       playerId:    r.senderId,
       username:    r.username,
-      totalSentDN: Number(r.totalSentDN),
+      totalSentPi: Number(r.totalSentPi),
       totalSent:   Number(r.totalSent),
     })));
   } catch (err) {
