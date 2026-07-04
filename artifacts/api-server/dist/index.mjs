@@ -89492,12 +89492,21 @@ router14.get("/pi/ledger/:playerId", requireAuth, async (req, res) => {
   try {
     const playerId = String(req.params.playerId);
     const rows = await db.select().from(piPaymentsTable).where(or(eq(piPaymentsTable.playerId, playerId), eq(piPaymentsTable.receiverId, playerId))).orderBy(piPaymentsTable.createdAt);
+    const ids = /* @__PURE__ */ new Set();
+    for (const r of rows) {
+      ids.add(r.playerId);
+      if (r.receiverId) ids.add(r.receiverId);
+    }
+    const players = ids.size ? await db.select({ id: playersTable.id, username: playersTable.username }).from(playersTable).where(inArray(playersTable.id, Array.from(ids))) : [];
+    const usernameById = new Map(players.map((p) => [p.id, p.username]));
     res.json({
       data: rows.reverse().map((r) => ({
         id: r.id,
         kind: r.kind,
         senderId: r.playerId,
+        senderName: usernameById.get(r.playerId) ?? r.playerId,
         receiverId: r.receiverId,
+        receiverName: r.receiverId ? usernameById.get(r.receiverId) ?? r.receiverId : null,
         amountPi: r.amount,
         status: r.status,
         txId: r.piTxId,

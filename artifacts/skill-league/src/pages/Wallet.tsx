@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, TrendingUp, TrendingDown, Wallet2, RefreshCcw } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
+import PiLedgerHistory from "@/components/wallet/PiLedgerHistory";
 
 type TxFilter = "all" | "income" | "spending";
 
@@ -216,6 +217,9 @@ export default function Wallet() {
             )}
           </div>
         </motion.div>
+
+        {/* ── Pi Ledger Transaction History ── */}
+        <PiLedgerHistory />
 
         {/* ── Info footer ── */}
         <motion.div

@@ -720,7 +720,9 @@ export const api = {
           id: string;
           kind: "gift" | "purchase";
           senderId: string;
+          senderName: string;
           receiverId: string | null;
+          receiverName: string | null;
           amountPi: number;
           status: "pending" | "confirmed" | "failed";
           txId: string | null;

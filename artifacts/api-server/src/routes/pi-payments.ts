@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, or, sql } from "drizzle-orm";
+import { eq, or, sql, inArray } from "drizzle-orm";
 import { db, playersTable, walletsTable, giftLedgerTable, piPaymentsTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -270,18 +270,31 @@ router.get("/pi/ledger/:playerId", requireAuth, async (req, res) => {
       .where(or(eq(piPaymentsTable.playerId, playerId), eq(piPaymentsTable.receiverId, playerId)))
       .orderBy(piPaymentsTable.createdAt);
 
+    const ids = new Set<string>();
+    for (const r of rows) {
+      ids.add(r.playerId);
+      if (r.receiverId) ids.add(r.receiverId);
+    }
+    const players = ids.size
+      ? await db.select({ id: playersTable.id, username: playersTable.username })
+          .from(playersTable).where(inArray(playersTable.id, Array.from(ids)))
+      : [];
+    const usernameById = new Map(players.map(p => [p.id, p.username]));
+
     res.json({
       data: rows.reverse().map(r => ({
-        id:         r.id,
-        kind:       r.kind,
-        senderId:   r.playerId,
-        receiverId: r.receiverId,
-        amountPi:   r.amount,
-        status:     r.status,
-        txId:       r.piTxId,
-        memo:       r.memo,
-        createdAt:  r.createdAt,
-        completedAt:r.completedAt,
+        id:             r.id,
+        kind:           r.kind,
+        senderId:       r.playerId,
+        senderName:     usernameById.get(r.playerId) ?? r.playerId,
+        receiverId:     r.receiverId,
+        receiverName:   r.receiverId ? (usernameById.get(r.receiverId) ?? r.receiverId) : null,
+        amountPi:       r.amount,
+        status:         r.status,
+        txId:           r.piTxId,
+        memo:           r.memo,
+        createdAt:      r.createdAt,
+        completedAt:    r.completedAt,
       })),
     });
   } catch (err) {
