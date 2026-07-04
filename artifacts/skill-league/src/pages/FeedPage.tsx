@@ -11,7 +11,6 @@ import { SocialPostCard } from "@/components/social/SocialPostCard";
 import { CommentsSheet } from "@/components/social/CommentsSheet";
 import { CreatePostModal, type CreatePostData } from "@/components/social/CreatePostModal";
 import StoryBar from "@/components/social/StoryBar";
-import FeaturedPlayers from "@/components/social/FeaturedPlayers";
 import TrendingSection from "@/components/social/TrendingSection";
 import GameReelsRow from "@/components/social/GameReelsRow";
 import SuggestedPlayersRow from "@/components/social/SuggestedPlayersRow";
@@ -229,9 +228,6 @@ export default function FeedPage() {
 
         {/* Create post trigger */}
         <CreatePostTrigger username={username || "You"} onOpen={() => setIsOpen(true)} />
-
-        {/* Featured Players */}
-        <FeaturedPlayers />
 
         {/* Trending Posts (DN-based, auto-updates) */}
         <TrendingSection onCommentClick={(id) => setOpenCommentPostId(id)} />
