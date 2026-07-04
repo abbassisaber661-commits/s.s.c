@@ -21,6 +21,8 @@ export interface CommunityPost {
   authorLevel: number;
   authorFame?: number;
   authorIsOwner?: boolean;
+  authorVerification?: string;
+  isOfficialPage?: boolean;
 
   content: string;
   imageUrl?: string;

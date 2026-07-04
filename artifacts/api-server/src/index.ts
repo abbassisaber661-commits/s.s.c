@@ -5,6 +5,7 @@ import { setupSocketIO } from "./ws/socket-manager.js";
 import { logger } from "./lib/logger.js";
 import { runSeed, startDailyTournamentScheduler } from "./lib/seed.js";
 import { startBotSimulator } from "./lib/bot-simulator.js";
+import { startOfficialPagesSystem } from "./lib/official-pages.js";
 import { initLeagueStore } from "./lib/league-store.js";
 import { startSeasonScheduler } from "./routes/league-system.js";
 
@@ -31,6 +32,7 @@ server.listen(port, "0.0.0.0", async () => {
   startDailyTournamentScheduler();
   initLeagueStore();
   startBotSimulator();
+  startOfficialPagesSystem();
   startSeasonScheduler();
 });
 

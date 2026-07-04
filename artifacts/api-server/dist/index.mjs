@@ -87114,6 +87114,11 @@ router4.post("/players", async (req, res) => {
       res.status(400).json({ error: "username required" });
       return;
     }
+    const isOfficialPageId = typeof id === "string" && id.startsWith("sl_page_");
+    if (!isOfficialPageId && /skillleague/i.test(username)) {
+      res.status(400).json({ error: "username_reserved", message: "This name is reserved for official SkillLeague pages" });
+      return;
+    }
     const playerId = typeof id === "string" && id ? id : nanoid3();
     const existing = typeof id === "string" && id ? (await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, id)).limit(1))[0] ?? null : null;
     if (existing) {
@@ -87591,12 +87596,16 @@ function extractMentions(text2) {
 }
 function mapPost(row, likedPostIds = /* @__PURE__ */ new Set(), savedPostIds = /* @__PURE__ */ new Set(), ownerPlayerId = null) {
   const postId = row.id;
+  const authorIdStr = typeof row.authorId === "string" ? row.authorId : "";
+  const isOfficialPage = authorIdStr.startsWith("sl_page_");
   return {
     id: postId,
     authorId: row.authorId,
     authorName: row.username,
     authorLevel: row.level ?? 1,
     authorIsOwner: ownerPlayerId !== null && row.authorId === ownerPlayerId,
+    authorVerification: isOfficialPage ? "official" : void 0,
+    isOfficialPage,
     content: row.content ?? "",
     imageUrl: row.imageUrl ?? void 0,
     type: row.type ?? "text",
@@ -95758,6 +95767,229 @@ function startDailyTournamentScheduler() {
   logger.info("Daily tournament scheduler started");
 }
 
+// src/lib/official-pages.ts
+init_src();
+init_drizzle_orm();
+init_logger2();
+import { randomUUID as randomUUID4 } from "node:crypto";
+var OFFICIAL_PAGES = [
+  {
+    id: "sl_page_wisdom",
+    category: "wisdom",
+    name: "\u{1F6E1}\uFE0F SkillLeague Wisdom",
+    avatar: "\u{1F9E0}",
+    bio: "\u062D\u0643\u0645 \u0648\u0623\u0642\u0648\u0627\u0644 \u0627\u0644\u0641\u0644\u0627\u0633\u0641\u0629\u060C \u0627\u0642\u062A\u0628\u0627\u0633\u0627\u062A \u0642\u0635\u064A\u0631\u0629\u060C \u0645\u062D\u062A\u0648\u0649 \u0641\u0644\u0633\u0641\u064A \u0648\u062B\u0642\u0627\u0641\u064A \u2014 \u0635\u0641\u062D\u0629 SkillLeague \u0627\u0644\u0631\u0633\u0645\u064A\u0629"
+  },
+  {
+    id: "sl_page_motivation",
+    category: "motivation",
+    name: "\u{1F6E1}\uFE0F SkillLeague Motivation",
+    avatar: "\u{1F4AA}",
+    bio: "\u062A\u062D\u0641\u064A\u0632 \u0648\u0646\u062C\u0627\u062D \u0648\u062A\u0637\u0648\u064A\u0631 \u0630\u0627\u062A\u060C \u0639\u0628\u0627\u0631\u0627\u062A \u0625\u064A\u062C\u0627\u0628\u064A\u0629\u060C \u0646\u0635\u0627\u0626\u062D \u0644\u0644\u0627\u0646\u0636\u0628\u0627\u0637 \u0648\u0627\u0644\u0639\u0645\u0644 \u2014 \u0635\u0641\u062D\u0629 SkillLeague \u0627\u0644\u0631\u0633\u0645\u064A\u0629"
+  },
+  {
+    id: "sl_page_health",
+    category: "health",
+    name: "\u{1F6E1}\uFE0F SkillLeague Health",
+    avatar: "\u{1F3E5}",
+    bio: "\u0646\u0635\u0627\u0626\u062D \u0635\u062D\u064A\u0629 \u0639\u0627\u0645\u0629\u060C \u062A\u063A\u0630\u064A\u0629 \u0648\u0646\u0648\u0645 \u0648\u0631\u064A\u0627\u0636\u0629\u060C \u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0637\u0628\u064A\u0629 \u0645\u0628\u0633\u0637\u0629 \u2014 \u0635\u0641\u062D\u0629 SkillLeague \u0627\u0644\u0631\u0633\u0645\u064A\u0629"
+  },
+  {
+    id: "sl_page_faith",
+    category: "faith",
+    name: "\u{1F6E1}\uFE0F SkillLeague Faith",
+    avatar: "\u{1F54C}",
+    bio: "\u0622\u064A\u0627\u062A \u0642\u0631\u0622\u0646\u064A\u0629\u060C \u0623\u062D\u0627\u062F\u064A\u062B \u0646\u0628\u0648\u064A\u0629 \u0635\u062D\u064A\u062D\u0629 \u0642\u0635\u064A\u0631\u0629\u060C \u0642\u064A\u0645 \u0648\u0623\u062E\u0644\u0627\u0642 \u0648\u062A\u0630\u0643\u064A\u0631 \u062F\u064A\u0646\u064A \u2014 \u0635\u0641\u062D\u0629 SkillLeague \u0627\u0644\u0631\u0633\u0645\u064A\u0629"
+  },
+  {
+    id: "sl_page_explore",
+    category: "explore",
+    name: "\u{1F6E1}\uFE0F SkillLeague Explore",
+    avatar: "\u{1F30D}",
+    bio: "\u0633\u0641\u0631 \u0648\u0637\u0628\u064A\u0639\u0629 \u0648\u0645\u062F\u0646\u060C \u0635\u0648\u0631 \u0623\u0645\u0627\u0643\u0646 \u062C\u0645\u064A\u0644\u0629\u060C \u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0639\u0646 \u062F\u0648\u0644 \u0648\u062B\u0642\u0627\u0641\u0627\u062A \u2014 \u0635\u0641\u062D\u0629 SkillLeague \u0627\u0644\u0631\u0633\u0645\u064A\u0629"
+  }
+];
+var OFFICIAL_PAGE_IDS = new Set(OFFICIAL_PAGES.map((p) => p.id));
+var WISDOM_CONTENT = [
+  { text: '"\u0645\u0646 \u0639\u0631\u0641 \u0646\u0641\u0633\u0647 \u0639\u0631\u0641 \u0631\u0628\u0647" \u2014 \u062D\u0643\u0645\u0629 \u0642\u062F\u064A\u0645\u0629 \u062A\u062F\u0639\u0648\u0646\u0627 \u0644\u0644\u062A\u0623\u0645\u0644 \u0627\u0644\u062F\u0627\u062E\u0644\u064A \u{1F33F}' },
+  { text: '"\u0627\u0644\u0635\u0628\u0631 \u0645\u0641\u062A\u0627\u062D \u0627\u0644\u0641\u0631\u062C" \u2014 \u0644\u0627 \u062A\u0633\u062A\u0639\u062C\u0644 \u0627\u0644\u062B\u0645\u0627\u0631 \u0642\u0628\u0644 \u0623\u0646 \u062A\u064F\u0643\u0645\u0644 \u0627\u0644\u0632\u0631\u0639 \u{1F331}' },
+  { text: '"\u0627\u0644\u0639\u0642\u0644 \u0627\u0644\u0633\u0644\u064A\u0645 \u0641\u064A \u0627\u0644\u062C\u0633\u0645 \u0627\u0644\u0633\u0644\u064A\u0645" \u2014 \u0627\u0647\u062A\u0645 \u0628\u062C\u0633\u062F\u0643 \u0643\u0645\u0627 \u062A\u0647\u062A\u0645 \u0628\u0639\u0642\u0644\u0643' },
+  { text: '\u0642\u0627\u0644 \u0623\u0631\u0633\u0637\u0648: "\u0646\u062D\u0646 \u0645\u0627 \u0646\u0643\u0631\u0631\u0647 \u0628\u0627\u0633\u062A\u0645\u0631\u0627\u0631\u060C \u0644\u0630\u0627 \u0641\u0625\u0646 \u0627\u0644\u062A\u0645\u064A\u0632 \u0644\u064A\u0633 \u0641\u0639\u0644\u0627\u064B \u0628\u0644 \u0639\u0627\u062F\u0629" \u{1F4D6}' },
+  { text: '"\u0645\u0646 \u062C\u062F\u0651 \u0648\u062C\u062F\u060C \u0648\u0645\u0646 \u0632\u0631\u0639 \u062D\u0635\u062F" \u2014 \u0627\u0644\u0646\u062C\u0627\u062D \u0631\u062D\u0644\u0629 \u0644\u0627 \u0648\u062C\u0647\u0629 \u{1F3AF}' },
+  { text: '"\u0627\u0644\u062D\u0643\u0645\u0629 \u0636\u0627\u0644\u0629 \u0627\u0644\u0645\u0624\u0645\u0646\u060C \u0623\u0646\u0651\u0649 \u0648\u062C\u062F\u0647\u0627 \u0641\u0647\u0648 \u0623\u062D\u0642 \u0628\u0647\u0627" \u{1F54A}\uFE0F' },
+  { text: '"\u0644\u0627 \u062A\u0624\u062C\u0644 \u0639\u0645\u0644 \u0627\u0644\u064A\u0648\u0645 \u0625\u0644\u0649 \u0627\u0644\u063A\u062F" \u2014 \u0643\u0644 \u0644\u062D\u0638\u0629 \u0641\u0631\u0635\u0629 \u0644\u0627 \u062A\u0639\u0648\u0636 \u23F3' },
+  { text: '"\u0623\u0639\u0638\u0645 \u0627\u0644\u062D\u0643\u0645\u0629 \u0645\u0639\u0631\u0641\u0629 \u0627\u0644\u0630\u0627\u062A" \u2014 \u0633\u0642\u0631\u0627\u0637' }
+];
+var MOTIVATION_CONTENT = [
+  { text: "\u0644\u0627 \u062A\u0642\u0627\u0631\u0646 \u0646\u0641\u0633\u0643 \u0628\u0627\u0644\u0622\u062E\u0631\u064A\u0646\u060C \u0642\u0627\u0631\u0646 \u0646\u0641\u0633\u0643 \u0628\u0645\u0646 \u0643\u0646\u062A \u0639\u0644\u064A\u0647 \u0628\u0627\u0644\u0623\u0645\u0633 \u{1F4AA}\u{1F525}" },
+  { text: "\u0643\u0644 \u062E\u0637\u0648\u0629 \u0635\u063A\u064A\u0631\u0629 \u062A\u0642\u0631\u0628\u0643 \u0645\u0646 \u0647\u062F\u0641\u0643 \u0627\u0644\u0643\u0628\u064A\u0631\u060C \u0627\u0633\u062A\u0645\u0631 \u0648\u0644\u0627 \u062A\u062A\u0648\u0642\u0641 \u{1F680}" },
+  { text: "\u0627\u0644\u0641\u0634\u0644 \u0644\u064A\u0633 \u0646\u0647\u0627\u064A\u0629 \u0627\u0644\u0637\u0631\u064A\u0642\u060C \u0628\u0644 \u062C\u0632\u0621 \u0645\u0646 \u0631\u062D\u0644\u0629 \u0627\u0644\u0646\u062C\u0627\u062D \u{1F31F}" },
+  { text: "\u0627\u0646\u0636\u0628\u0627\u0637\u0643 \u0627\u0644\u064A\u0648\u0645 \u0647\u0648 \u062D\u0631\u064A\u062A\u0643 \u063A\u062F\u0627\u064B \u2014 \u0627\u0644\u062A\u0632\u0645 \u0628\u062E\u0637\u062A\u0643 \u{1F4C8}" },
+  { text: "\u0644\u0627 \u0623\u062D\u062F \u064A\u0635\u0644 \u0644\u0644\u0642\u0645\u0629 \u0628\u0631\u0627\u062D\u0629\u060C \u0627\u0628\u062F\u0623 \u0627\u0644\u0622\u0646 \u0648\u0623\u0646\u062A \u0623\u0642\u0648\u0649 \u0645\u0645\u0627 \u062A\u062A\u062E\u064A\u0644 \u{1F3D4}\uFE0F" },
+  { text: "\u0627\u0644\u0646\u062C\u0627\u062D \u064A\u0628\u062F\u0623 \u0628\u0642\u0631\u0627\u0631 \u0648\u0627\u062D\u062F: \u0623\u0644\u0627 \u062A\u0633\u062A\u0633\u0644\u0645 \u{1F525}" },
+  { text: "\u062B\u0642 \u0628\u0627\u0644\u0639\u0645\u0644\u064A\u0629\u060C \u0627\u0644\u0646\u062A\u0627\u0626\u062C \u062A\u0623\u062A\u064A \u0644\u0645\u0646 \u064A\u0635\u0628\u0631 \u0648\u064A\u0639\u0645\u0644 \u0628\u0630\u0643\u0627\u0621 \u2728" },
+  { text: "\u0643\u0644 \u064A\u0648\u0645 \u0641\u0631\u0635\u0629 \u062C\u062F\u064A\u062F\u0629 \u0644\u062A\u0635\u0628\u062D \u0646\u0633\u062E\u0629 \u0623\u0641\u0636\u0644 \u0645\u0646 \u0646\u0641\u0633\u0643 \u{1F4AB}" }
+];
+var HEALTH_CONTENT = [
+  { text: "\u0634\u0631\u0628 8 \u0623\u0643\u0648\u0627\u0628 \u0645\u0627\u0621 \u064A\u0648\u0645\u064A\u0627\u064B \u064A\u062D\u0633\u0651\u0646 \u062A\u0631\u0643\u064A\u0632\u0643 \u0648\u0637\u0627\u0642\u062A\u0643 \u062E\u0644\u0627\u0644 \u0627\u0644\u064A\u0648\u0645 \u{1F4A7}" },
+  { text: "\u0627\u0644\u0646\u0648\u0645 \u0627\u0644\u062C\u064A\u062F \u0644\u0645\u062F\u0629 7-8 \u0633\u0627\u0639\u0627\u062A \u0636\u0631\u0648\u0631\u064A \u0644\u0635\u062D\u0629 \u0627\u0644\u062C\u0633\u0645 \u0648\u0627\u0644\u0639\u0642\u0644 \u{1F634}" },
+  { text: "20 \u062F\u0642\u064A\u0642\u0629 \u0645\u0634\u064A \u064A\u0648\u0645\u064A\u0627\u064B \u062A\u0642\u0644\u0644 \u0627\u0644\u062A\u0648\u062A\u0631 \u0648\u062A\u062D\u0633\u0651\u0646 \u0627\u0644\u062F\u0648\u0631\u0629 \u0627\u0644\u062F\u0645\u0648\u064A\u0629 \u{1F6B6}" },
+  { text: "\u062A\u0646\u0627\u0648\u0644 \u0627\u0644\u062E\u0636\u0627\u0631 \u0648\u0627\u0644\u0641\u0648\u0627\u0643\u0647 \u064A\u0648\u0645\u064A\u0627\u064B \u064A\u0639\u0632\u0632 \u0645\u0646\u0627\u0639\u062A\u0643 \u0627\u0644\u0637\u0628\u064A\u0639\u064A\u0629 \u{1F957}" },
+  { text: "\u062E\u0630 \u0627\u0633\u062A\u0631\u0627\u062D\u0629 \u0642\u0635\u064A\u0631\u0629 \u0643\u0644 \u0633\u0627\u0639\u0629 \u0623\u0645\u0627\u0645 \u0627\u0644\u0634\u0627\u0634\u0629 \u0644\u0631\u0627\u062D\u0629 \u0639\u064A\u0646\u064A\u0643 \u{1F440}" },
+  { text: "\u0627\u0644\u062A\u0646\u0641\u0633 \u0627\u0644\u0639\u0645\u064A\u0642 \u0644\u062F\u0642\u0627\u0626\u0642 \u064A\u0648\u0645\u064A\u0627\u064B \u064A\u0642\u0644\u0644 \u0627\u0644\u062A\u0648\u062A\u0631 \u0648\u064A\u062D\u0633\u0651\u0646 \u0627\u0644\u0645\u0632\u0627\u062C \u{1F32C}\uFE0F" },
+  { text: "\u062A\u0630\u0643\u064A\u0631: \u062A\u0646\u0627\u0648\u0644 \u0627\u0644\u0625\u0641\u0637\u0627\u0631 \u064A\u0645\u0646\u062D\u0643 \u0637\u0627\u0642\u0629 \u0623\u0641\u0636\u0644 \u0644\u0628\u0642\u064A\u0629 \u064A\u0648\u0645\u0643 \u{1F373}" }
+];
+var FAITH_CONTENT = [
+  { text: '"\u0648\u064E\u0628\u064E\u0634\u0650\u0651\u0631\u0650 \u0627\u0644\u0635\u064E\u0651\u0627\u0628\u0650\u0631\u0650\u064A\u0646\u064E" \u2014 \u0627\u0644\u0628\u0642\u0631\u0629: 155 \u{1F54A}\uFE0F' },
+  { text: '"\u0625\u0650\u0646\u064E\u0651 \u0645\u064E\u0639\u064E \u0627\u0644\u0652\u0639\u064F\u0633\u0652\u0631\u0650 \u064A\u064F\u0633\u0652\u0631\u064B\u0627" \u2014 \u0627\u0644\u0634\u0631\u062D: 6 \u{1F33F}' },
+  { text: '\u0642\u0627\u0644 \uFDFA: "\u0645\u0646 \u0633\u0644\u0643 \u0637\u0631\u064A\u0642\u0627\u064B \u064A\u0644\u062A\u0645\u0633 \u0641\u064A\u0647 \u0639\u0644\u0645\u0627\u064B \u0633\u0647\u0651\u0644 \u0627\u0644\u0644\u0647 \u0644\u0647 \u0637\u0631\u064A\u0642\u0627\u064B \u0625\u0644\u0649 \u0627\u0644\u062C\u0646\u0629" \u{1F4FF}' },
+  { text: '"\u0648\u064E\u0645\u064E\u0646 \u064A\u064E\u062A\u064E\u0648\u064E\u0643\u064E\u0651\u0644\u0652 \u0639\u064E\u0644\u064E\u0649 \u0627\u0644\u0644\u064E\u0651\u0647\u0650 \u0641\u064E\u0647\u064F\u0648\u064E \u062D\u064E\u0633\u0652\u0628\u064F\u0647\u064F" \u2014 \u0627\u0644\u0637\u0644\u0627\u0642: 3 \u{1F932}' },
+  { text: '\u0642\u0627\u0644 \uFDFA: "\u0627\u0644\u0643\u0644\u0645\u0629 \u0627\u0644\u0637\u064A\u0628\u0629 \u0635\u062F\u0642\u0629" \u2014 \u0644\u0646\u062D\u0631\u0635 \u0639\u0644\u0649 \u0637\u064A\u0628 \u0627\u0644\u0643\u0644\u0627\u0645 \u062F\u0627\u0626\u0645\u0627\u064B \u{1F4AC}' },
+  { text: '"\u0631\u064E\u0628\u0650\u0651 \u0632\u0650\u062F\u0652\u0646\u0650\u064A \u0639\u0650\u0644\u0652\u0645\u064B\u0627" \u2014 \u062F\u0639\u0627\u0621 \u062C\u0645\u064A\u0644 \u0646\u0628\u062F\u0623 \u0628\u0647 \u064A\u0648\u0645\u0646\u0627 \u{1F319}' },
+  { text: "\u0627\u0644\u0635\u062F\u0642 \u0648\u0627\u0644\u0623\u0645\u0627\u0646\u0629 \u0645\u0646 \u0623\u0639\u0638\u0645 \u0627\u0644\u0642\u064A\u0645 \u0627\u0644\u062A\u064A \u062D\u062B\u0651\u0646\u0627 \u0639\u0644\u064A\u0647\u0627 \u062F\u064A\u0646\u0646\u0627 \u0627\u0644\u062D\u0646\u064A\u0641 \u262A\uFE0F" }
+];
+var EXPLORE_CONTENT = [
+  { text: "\u0647\u0644 \u062A\u0639\u0644\u0645 \u0623\u0646 \u0627\u0644\u064A\u0627\u0628\u0627\u0646 \u0644\u062F\u064A\u0647\u0627 \u0623\u0643\u062B\u0631 \u0645\u0646 6800 \u062C\u0632\u064A\u0631\u0629\u061F \u{1F5FE}\u{1F30A}", imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800" },
+  { text: "\u062C\u0628\u0627\u0644 \u0627\u0644\u0623\u0644\u0628 \u062A\u0645\u062A\u062F \u0639\u0628\u0631 8 \u062F\u0648\u0644 \u0623\u0648\u0631\u0648\u0628\u064A\u0629 \u0628\u0645\u0646\u0627\u0638\u0631 \u062E\u0644\u0627\u0628\u0629 \u26F0\uFE0F", imageUrl: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800" },
+  { text: "\u0627\u0644\u0635\u062D\u0631\u0627\u0621 \u0627\u0644\u0643\u0628\u0631\u0649 \u062A\u063A\u0637\u064A \u0645\u0633\u0627\u062D\u0629 \u062A\u0642\u0627\u0631\u0628 \u0645\u0633\u0627\u062D\u0629 \u0627\u0644\u0635\u064A\u0646 \u0628\u0623\u0643\u0645\u0644\u0647\u0627 \u{1F3DC}\uFE0F", imageUrl: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800" },
+  { text: "\u0645\u062F\u064A\u0646\u0629 \u0627\u0644\u0628\u0646\u062F\u0642\u064A\u0629 \u0645\u0628\u0646\u064A\u0629 \u0639\u0644\u0649 \u0623\u0643\u062B\u0631 \u0645\u0646 100 \u062C\u0632\u064A\u0631\u0629 \u0635\u063A\u064A\u0631\u0629 \u{1F6A4}", imageUrl: "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=800" },
+  { text: "\u0634\u0644\u0627\u0644\u0627\u062A \u0641\u064A\u0643\u062A\u0648\u0631\u064A\u0627 \u0645\u0646 \u0623\u0639\u0638\u0645 \u0639\u062C\u0627\u0626\u0628 \u0627\u0644\u0637\u0628\u064A\u0639\u0629 \u0641\u064A \u0623\u0641\u0631\u064A\u0642\u064A\u0627 \u{1F4A6}", imageUrl: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800" },
+  { text: "\u063A\u0627\u0628\u0627\u062A \u0627\u0644\u0623\u0645\u0627\u0632\u0648\u0646 \u062A\u0646\u062A\u062C 20% \u0645\u0646 \u0623\u0643\u0633\u062C\u064A\u0646 \u0627\u0644\u0623\u0631\u0636 \u{1F333}", imageUrl: "https://images.unsplash.com/photo-1440581572325-0bea30075d9d?w=800" }
+];
+var CATEGORY_CONTENT = {
+  wisdom: WISDOM_CONTENT,
+  motivation: MOTIVATION_CONTENT,
+  health: HEALTH_CONTENT,
+  faith: FAITH_CONTENT,
+  explore: EXPLORE_CONTENT
+};
+var CATEGORY_COMMENTS = {
+  wisdom: ["\u0627\u0642\u062A\u0628\u0627\u0633 \u0631\u0627\u0626\u0639 \u{1F44F}", "\u062D\u0643\u0645\u0629 \u062C\u0645\u064A\u0644\u0629 \u062C\u062F\u064B\u0627", "\u0643\u0644\u0627\u0645 \u0644\u0647 \u0645\u0639\u0646\u0649 \u0639\u0645\u064A\u0642 \u2728"],
+  motivation: ["\u0627\u0633\u062A\u0645\u0631\u060C \u0623\u0646\u062A \u0642\u0627\u062F\u0631 \u{1F4AA}", "\u0643\u0644\u0627\u0645 \u0645\u062D\u0641\u0632 \u062C\u062F\u064B\u0627 \u{1F525}", "\u0623\u062D\u0633\u0646\u062A\u060C \u0648\u0627\u0635\u0644 \u0627\u0644\u062A\u0642\u062F\u0645 \u{1F680}"],
+  health: ["\u0645\u0639\u0644\u0648\u0645\u0629 \u0645\u0641\u064A\u062F\u0629 \u{1F44D}", "\u0646\u0635\u064A\u062D\u0629 \u0645\u0647\u0645\u0629 \u0644\u0644\u0635\u062D\u0629", "\u0634\u0643\u0631\u0627\u064B \u0639\u0644\u0649 \u0627\u0644\u062A\u0630\u0643\u064A\u0631 \u0627\u0644\u0635\u062D\u064A \u{1F33F}"],
+  faith: ["\u0628\u0627\u0631\u0643 \u0627\u0644\u0644\u0647 \u0641\u064A\u0643 \u{1F932}", "\u062A\u0630\u0643\u064A\u0631 \u062C\u0645\u064A\u0644\u060C \u062C\u0632\u0627\u0643 \u0627\u0644\u0644\u0647 \u062E\u064A\u0631\u0627\u064B", "\u0643\u0644\u0627\u0645 \u0637\u064A\u0628 \u0648\u0646\u0627\u0641\u0639 \u{1F54A}\uFE0F"],
+  explore: ["\u0645\u0643\u0627\u0646 \u062C\u0645\u064A\u0644 \u062C\u062F\u064B\u0627 \u{1F60D}", "\u0623\u0631\u064A\u062F \u0632\u064A\u0627\u0631\u0629 \u0647\u0630\u0627 \u0627\u0644\u0645\u0643\u0627\u0646", "\u0645\u0646\u0638\u0631 \u062E\u0644\u0627\u0628 \u062D\u0642\u0627\u064B \u{1F30D}"]
+};
+function randInt2(min2, max2) {
+  return min2 + Math.floor(Math.random() * (max2 - min2 + 1));
+}
+function pick2(arr) {
+  return arr[randInt2(0, arr.length - 1)];
+}
+async function seedOfficialPages() {
+  try {
+    const existing = await db.select({ id: playersTable.id }).from(playersTable).where(inArray(playersTable.id, OFFICIAL_PAGES.map((p) => p.id)));
+    const existingIds = new Set(existing.map((e) => e.id));
+    const toInsert = OFFICIAL_PAGES.filter((p) => !existingIds.has(p.id)).map((p) => ({
+      id: p.id,
+      username: p.name,
+      avatar: p.avatar,
+      bio: p.bio,
+      level: 50,
+      elo: 1e3,
+      coins: 0,
+      xp: 0,
+      verificationStatus: "official",
+      verified: true
+    }));
+    if (toInsert.length > 0) {
+      await db.insert(playersTable).values(toInsert).onConflictDoNothing();
+      logger.info({ count: toInsert.length }, "Official SkillLeague pages seeded");
+    }
+  } catch (err) {
+    logger.error({ err }, "official-pages: seeding error");
+  }
+}
+async function simulateOfficialPosting() {
+  try {
+    for (const page of OFFICIAL_PAGES) {
+      if (Math.random() < 0.65) continue;
+      const pool2 = CATEGORY_CONTENT[page.category];
+      const item = pick2(pool2);
+      const hasImage = !!item.imageUrl && Math.random() < 0.8;
+      await db.insert(postsTable).values({
+        id: randomUUID4(),
+        authorId: page.id,
+        username: page.name,
+        level: 50,
+        content: item.text,
+        imageUrl: hasImage ? item.imageUrl : null,
+        type: hasImage ? "image" : "text",
+        meta: { isOfficialPage: true, category: page.category }
+      });
+    }
+  } catch (err) {
+    logger.error({ err }, "official-pages: posting tick error");
+  }
+}
+async function simulateOfficialEngagement() {
+  try {
+    const recentPosts = await db.select({ id: postsTable.id, authorId: postsTable.authorId }).from(postsTable).orderBy(desc(postsTable.createdAt)).limit(20);
+    const realPosts = recentPosts.filter(
+      (p) => !p.authorId.startsWith("sl_bot_") && !p.authorId.startsWith("sl_page_")
+    );
+    if (realPosts.length === 0) return;
+    const shuffled = [...realPosts].sort(() => Math.random() - 0.5);
+    const targetPosts = shuffled.slice(0, 1 + randInt2(0, 2));
+    for (const post of targetPosts) {
+      const reactingPages = [...OFFICIAL_PAGES].sort(() => Math.random() - 0.5).slice(0, randInt2(0, 2));
+      for (const page of reactingPages) {
+        if (Math.random() < 0.55) {
+          const likeId = `like_${page.id}_${post.id}`;
+          try {
+            await db.insert(postLikesTable).values({
+              id: likeId,
+              postId: post.id,
+              playerId: page.id
+            }).onConflictDoNothing();
+            await db.update(postsTable).set({ likes: sql`${postsTable.likes} + 1` }).where(eq(postsTable.id, post.id));
+          } catch {
+          }
+        }
+        if (Math.random() < 0.3) {
+          try {
+            await db.insert(postCommentsTable).values({
+              id: randomUUID4(),
+              postId: post.id,
+              authorId: page.id,
+              username: page.name,
+              content: pick2(CATEGORY_COMMENTS[page.category])
+            });
+            await db.update(postsTable).set({ replies: sql`${postsTable.replies} + 1` }).where(eq(postsTable.id, post.id));
+          } catch {
+          }
+        }
+      }
+    }
+  } catch (err) {
+    logger.error({ err }, "official-pages: engagement tick error");
+  }
+}
+var _postingInterval = null;
+var _engagementInterval = null;
+function startOfficialPagesSystem() {
+  if (_postingInterval || _engagementInterval) return;
+  seedOfficialPages().catch(() => {
+  });
+  setTimeout(() => {
+    simulateOfficialPosting().catch(() => {
+    });
+    _postingInterval = setInterval(() => {
+      simulateOfficialPosting().catch(() => {
+      });
+    }, 50 * 60 * 1e3);
+  }, 9e4);
+  setTimeout(() => {
+    simulateOfficialEngagement().catch(() => {
+    });
+    _engagementInterval = setInterval(() => {
+      simulateOfficialEngagement().catch(() => {
+      });
+    }, 25 * 60 * 1e3);
+  }, 4 * 60 * 1e3);
+  logger.info({ pages: OFFICIAL_PAGES.length }, "Official SkillLeague Pages system started");
+}
+
 // src/index.ts
 var rawPort = process.env["PORT"];
 var port = rawPort ? Number(rawPort) : 8080;
@@ -95773,6 +96005,7 @@ server.listen(port, "0.0.0.0", async () => {
   startDailyTournamentScheduler();
   initLeagueStore();
   startBotSimulator();
+  startOfficialPagesSystem();
   startSeasonScheduler();
 });
 server.on("error", (err) => {

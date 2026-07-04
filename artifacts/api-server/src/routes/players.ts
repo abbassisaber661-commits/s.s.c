@@ -210,6 +210,11 @@ router.post("/players", async (req, res) => {
     if (typeof username !== "string" || !username.trim()) {
       res.status(400).json({ error: "username required" }); return;
     }
+    const isOfficialPageId = typeof id === "string" && id.startsWith("sl_page_");
+    if (!isOfficialPageId && /skillleague/i.test(username)) {
+      res.status(400).json({ error: "username_reserved", message: "This name is reserved for official SkillLeague pages" });
+      return;
+    }
     const playerId = (typeof id === "string" && id) ? id : nanoid();
     const existing = (typeof id === "string" && id)
       ? (await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, id)).limit(1))[0] ?? null

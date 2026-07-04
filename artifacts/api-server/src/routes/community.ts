@@ -33,12 +33,16 @@ function mapPost(
   ownerPlayerId: string | null = null,
 ) {
   const postId = row.id as string;
+  const authorIdStr = typeof row.authorId === "string" ? row.authorId : "";
+  const isOfficialPage = authorIdStr.startsWith("sl_page_");
   return {
     id:            postId,
     authorId:      row.authorId,
     authorName:    row.username,
     authorLevel:   row.level ?? 1,
     authorIsOwner: ownerPlayerId !== null && row.authorId === ownerPlayerId,
+    authorVerification: isOfficialPage ? "official" : undefined,
+    isOfficialPage,
     content:       row.content ?? "",
     imageUrl:      row.imageUrl ?? undefined,
     type:          row.type ?? "text",
