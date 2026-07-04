@@ -90593,6 +90593,77 @@ async function simulateBotEngagement() {
     logger.error({ err }, "bot-simulator: engagement tick error");
   }
 }
+var BOT_POST_TEMPLATES = [
+  (s) => `\u0648\u0635\u0644\u062A \u0644\u0644\u0645\u0633\u062A\u0648\u0649 ${s.level} \u0623\u062E\u064A\u0631\u0627\u064B! \u{1F525} \u0634\u0643\u0631\u0627\u064B \u0644\u0643\u0644 \u0645\u0646 \u062F\u0639\u0645\u0646\u064A`,
+  (s) => `\u0633\u0644\u0633\u0644\u0629 \u0627\u0646\u062A\u0635\u0627\u0631\u0627\u062A \u062C\u062F\u064A\u062F\u0629: ${s.streak} \u0641\u0648\u0632 \u0645\u062A\u062A\u0627\u0644\u064A \u{1F4AA} \u0645\u0627 \u062D\u062F \u064A\u0648\u0642\u0641\u0646\u064A \u0627\u0644\u064A\u0648\u0645`,
+  (s) => `${s.wins} \u0641\u0648\u0632 \u062D\u062A\u0649 \u0627\u0644\u0622\u0646 \u0647\u0627\u0644\u0645\u0648\u0633\u0645\u060C \u0627\u0644\u0647\u062F\u0641 \u0645\u0627 \u0632\u0627\u0644 \u0628\u0639\u064A\u062F \u0628\u0633 \u0645\u0627\u0634\u064A \u0628\u062E\u0637\u0649 \u062B\u0627\u0628\u062A\u0629 \u{1F3AF}`,
+  (s) => `\u062A\u0642\u064A\u064A\u0645\u064A \u0648\u0635\u0644 ${s.elo} \u0646\u0642\u0637\u0629! \u0634\u0643\u0631\u0627\u064B \u0644\u0643\u0644 \u0627\u0644\u0623\u0635\u062F\u0642\u0627\u0621 \u0627\u0644\u0644\u064A \u0644\u0639\u0628\u0648\u0627 \u0645\u0639\u064A \u{1F3C6}`,
+  () => `\u064A\u0627 \u062C\u0645\u0627\u0639\u0629 \u0623\u064A \u0646\u0635\u064A\u062D\u0629 \u0644\u062A\u062D\u0633\u064A\u0646 \u0633\u0631\u0639\u0629 \u0627\u0644\u0625\u062C\u0627\u0628\u0629 \u0628\u0627\u0644\u0623\u0633\u0626\u0644\u0629\u061F \u062D\u0627\u0633\u0633 \u0625\u0646\u064A \u0628\u0637\u064A\u0621 \u0634\u0648\u064A \u{1F914}`,
+  () => `\u0645\u0628\u0627\u0631\u0627\u0629 \u0627\u0644\u064A\u0648\u0645 \u0643\u0627\u0646\u062A \u0645\u0646 \u0623\u0635\u0639\u0628 \u0627\u0644\u0645\u0628\u0627\u0631\u064A\u0627\u062A \u0627\u0644\u0644\u064A \u062E\u0636\u062A\u0647\u0627\u060C \u0628\u0633 \u0627\u0633\u062A\u0645\u062A\u0639\u062A \u0641\u064A\u0647\u0627 \u0643\u062B\u064A\u0631 \u{1F605}`,
+  () => `\u0645\u0646\u0648 \u062C\u0627\u0647\u0632 \u0644\u062A\u062D\u062F\u064A \u0627\u0644\u0644\u064A\u0644\u0629\u061F \u062E\u0644\u0648\u0646\u0627 \u0646\u0634\u0648\u0641 \u0645\u064A\u0646 \u0627\u0644\u0623\u0642\u0648\u0649 \u{1F440}`,
+  (s) => `\u0627\u062D\u062A\u0641\u0627\u0644 \u0635\u063A\u064A\u0631: ${s.wins} \u0627\u0646\u062A\u0635\u0627\u0631 \u0648 \u0645\u0627 \u0632\u0644\u062A \u0641\u064A \u0627\u0644\u0642\u0645\u0629 \u{1F947}`,
+  () => `\u0623\u0641\u0636\u0644 \u0637\u0631\u064A\u0642\u0629 \u0623\u062A\u0639\u0644\u0645 \u0641\u064A\u0647\u0627 \u0647\u064A \u0625\u0646\u064A \u0623\u0644\u0639\u0628 \u0645\u0639 \u0644\u0627\u0639\u0628\u064A\u0646 \u0623\u0642\u0648\u0649 \u0645\u0646\u064A\u060C \u0641\u0639\u0644\u0627\u064B \u0628\u062A\u0631\u0641\u0639 \u0645\u0633\u062A\u0648\u0627\u0643`,
+  (s) => `\u0645\u0633\u062A\u0648\u0649 ${s.level} \u0648\u0645\u0633\u062A\u0645\u0631\u060C \u0631\u062D\u0644\u0629 \u0637\u0648\u064A\u0644\u0629 \u0628\u0633 \u0643\u0644 \u064A\u0648\u0645 \u0623\u062D\u0633 \u0628\u062A\u062D\u0633\u0646 \u{1F4C8}`,
+  () => `\u062D\u0645\u0627\u0633 \u0627\u0644\u064A\u0648\u0645 \u0645\u062E\u062A\u0644\u0641 \u{1F525} \u0645\u064A\u0646 \u0645\u0639\u064A \u0628\u062C\u0648\u0644\u0629 \u0633\u0631\u064A\u0639\u0629\u061F`,
+  (s) => `\u0633\u0644\u0633\u0644\u0629 ${s.streak} \u0641\u0648\u0632 \u0648\u0645\u0627 \u0628\u062F\u064A\u062A \u0623\u062A\u0639\u0628 \u0628\u0639\u062F \u{1F60E}`
+];
+var POSTING_BOT_IDS = [
+  "sl_bot_01",
+  "sl_bot_02",
+  "sl_bot_03",
+  "sl_bot_04",
+  "sl_bot_05",
+  "sl_bot_06",
+  "sl_bot_07",
+  "sl_bot_13",
+  "sl_bot_14",
+  "sl_bot_15",
+  "sl_bot_16",
+  "sl_bot_17",
+  "sl_bot_34",
+  "sl_bot_35",
+  "sl_bot_36"
+];
+async function simulateBotPosting() {
+  try {
+    if (Math.random() < 0.45) return;
+    const candidateIds = [...POSTING_BOT_IDS].sort(() => Math.random() - 0.5).slice(0, 1 + randInt(0, 1));
+    const bots = await db.select({
+      id: playersTable.id,
+      username: playersTable.username,
+      level: playersTable.level,
+      elo: playersTable.elo,
+      pvpWinStreak: playersTable.pvpWinStreak,
+      pvpWins: playersTable.pvpWins
+    }).from(playersTable).where(sql`${playersTable.id} = ANY(${candidateIds})`);
+    for (const bot of bots) {
+      const template = BOT_POST_TEMPLATES[randInt(0, BOT_POST_TEMPLATES.length - 1)];
+      const content = template({
+        level: bot.level ?? 1,
+        streak: bot.pvpWinStreak ?? randInt(2, 6),
+        wins: bot.pvpWins ?? randInt(10, 80),
+        elo: bot.elo ?? randInt(1200, 1900)
+      });
+      try {
+        await db.insert(postsTable).values({
+          id: randomUUID2(),
+          authorId: bot.id,
+          username: bot.username ?? "Player",
+          level: bot.level ?? 1,
+          content,
+          type: "text",
+          meta: {}
+        });
+      } catch {
+      }
+    }
+    if (bots.length > 0) {
+      logger.debug({ count: bots.length }, "bot-simulator: posting tick complete");
+    }
+  } catch (err) {
+    logger.error({ err }, "bot-simulator: posting tick error");
+  }
+}
 var GAMER_TAG_TO_HUMAN = {
   "NeonRacer": "Alex Ahmed",
   "ByteWolf": "Omar Silva",
@@ -90715,7 +90786,15 @@ function startBotSimulator() {
       });
     }, 20 * 60 * 1e3);
   }, 3 * 60 * 1e3);
-  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick, engagement 20-min)");
+  setTimeout(() => {
+    simulateBotPosting().catch(() => {
+    });
+    setInterval(() => {
+      simulateBotPosting().catch(() => {
+      });
+    }, 40 * 60 * 1e3);
+  }, 2 * 60 * 1e3);
+  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick, engagement 20-min, posting ~40-min)");
 }
 
 // src/lib/player-store.ts

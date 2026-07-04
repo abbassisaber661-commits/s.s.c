@@ -548,6 +548,98 @@ async function simulateBotEngagement(): Promise<void> {
   }
 }
 
+// ── Bot posting: bots publish posts to the social feed like real players ──────
+
+/**
+ * Content templates for auto-generated bot posts. Written in Arabic to match
+ * the app's UI language. Placeholders {level}, {streak}, {wins}, {elo} are
+ * substituted with the bot's real (simulated) stats so posts feel authentic.
+ * No mention of "bot" anywhere — indistinguishable from a real player's post
+ * to end users. Internally, only IDs starting with "sl_bot_" mark it as a bot,
+ * which is never exposed via the API response (see mapPost in community.ts).
+ */
+const BOT_POST_TEMPLATES: Array<(s: { level: number; streak: number; wins: number; elo: number }) => string> = [
+  (s) => `وصلت للمستوى ${s.level} أخيراً! 🔥 شكراً لكل من دعمني`,
+  (s) => `سلسلة انتصارات جديدة: ${s.streak} فوز متتالي 💪 ما حد يوقفني اليوم`,
+  (s) => `${s.wins} فوز حتى الآن هالموسم، الهدف ما زال بعيد بس ماشي بخطى ثابتة 🎯`,
+  (s) => `تقييمي وصل ${s.elo} نقطة! شكراً لكل الأصدقاء اللي لعبوا معي 🏆`,
+  () => `يا جماعة أي نصيحة لتحسين سرعة الإجابة بالأسئلة؟ حاسس إني بطيء شوي 🤔`,
+  () => `مباراة اليوم كانت من أصعب المباريات اللي خضتها، بس استمتعت فيها كثير 😅`,
+  () => `منو جاهز لتحدي الليلة؟ خلونا نشوف مين الأقوى 👀`,
+  (s) => `احتفال صغير: ${s.wins} انتصار و ما زلت في القمة 🥇`,
+  () => `أفضل طريقة أتعلم فيها هي إني ألعب مع لاعبين أقوى مني، فعلاً بترفع مستواك`,
+  (s) => `مستوى ${s.level} ومستمر، رحلة طويلة بس كل يوم أحس بتحسن 📈`,
+  () => `حماس اليوم مختلف 🔥 مين معي بجولة سريعة؟`,
+  (s) => `سلسلة ${s.streak} فوز وما بديت أتعب بعد 😎`,
+];
+
+/**
+ * Weighted pool of bot IDs eligible to author feed posts — same roster used
+ * for engagement likes, kept intentionally small so posting stays natural.
+ */
+const POSTING_BOT_IDS = [
+  "sl_bot_01","sl_bot_02","sl_bot_03","sl_bot_04","sl_bot_05",
+  "sl_bot_06","sl_bot_07","sl_bot_13","sl_bot_14","sl_bot_15",
+  "sl_bot_16","sl_bot_17","sl_bot_34","sl_bot_35","sl_bot_36",
+];
+
+/**
+ * Publishes 0-2 bot-authored posts per tick so the feed always has fresh,
+ * human-looking activity. Runs every ~35-55 minutes (randomised) — never a
+ * fixed cadence, to avoid looking automated. Posts use the bot's real stored
+ * stats (level, elo, streak, wins) pulled live from the DB.
+ */
+async function simulateBotPosting(): Promise<void> {
+  try {
+    // ~55% chance to post nothing this tick — keeps frequency organic
+    if (Math.random() < 0.45) return;
+
+    const candidateIds = [...POSTING_BOT_IDS].sort(() => Math.random() - 0.5).slice(0, 1 + randInt(0, 1));
+
+    const bots = await db
+      .select({
+        id:            playersTable.id,
+        username:      playersTable.username,
+        level:         playersTable.level,
+        elo:           playersTable.elo,
+        pvpWinStreak:  playersTable.pvpWinStreak,
+        pvpWins:       playersTable.pvpWins,
+      })
+      .from(playersTable)
+      .where(sql`${playersTable.id} = ANY(${candidateIds})`);
+
+    for (const bot of bots) {
+      const template = BOT_POST_TEMPLATES[randInt(0, BOT_POST_TEMPLATES.length - 1)];
+      const content = template({
+        level:  bot.level ?? 1,
+        streak: bot.pvpWinStreak ?? randInt(2, 6),
+        wins:   bot.pvpWins ?? randInt(10, 80),
+        elo:    bot.elo ?? randInt(1200, 1900),
+      });
+
+      try {
+        await db.insert(postsTable).values({
+          id:        randomUUID(),
+          authorId:  bot.id,
+          username:  bot.username ?? "Player",
+          level:     bot.level ?? 1,
+          content,
+          type:      "text",
+          meta:      {},
+        });
+      } catch {
+        // Non-critical — skip silently
+      }
+    }
+
+    if (bots.length > 0) {
+      logger.debug({ count: bots.length }, "bot-simulator: posting tick complete");
+    }
+  } catch (err) {
+    logger.error({ err }, "bot-simulator: posting tick error");
+  }
+}
+
 // ── Migrate existing standings playerNames to human names ─────────────────────
 
 /**
@@ -676,5 +768,12 @@ export function startBotSimulator(): void {
     setInterval(() => { simulateBotEngagement().catch(() => {}); }, 20 * 60 * 1000);
   }, 3 * 60 * 1000);
 
-  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick, engagement 20-min)");
+  // Bot posting (feed activity) — first run after 2 minutes, then every ~40 minutes
+  // (randomised jitter is applied inside simulateBotPosting's own skip-chance)
+  setTimeout(() => {
+    simulateBotPosting().catch(() => {});
+    setInterval(() => { simulateBotPosting().catch(() => {}); }, 40 * 60 * 1000);
+  }, 2 * 60 * 1000);
+
+  logger.info({ intervalMs: TICK_INTERVAL_MS }, "Bot simulator started (round-based, 30-min tick, engagement 20-min, posting ~40-min)");
 }
