@@ -579,9 +579,14 @@ export const api = {
    * here; gifting is real money and goes exclusively through `api.pi`. ── */
   wallet: {
     getBalance: (playerId: string) =>
-      get<{ dnBalance: number; piEarnings: number; totalIncome: number; totalSpending: number }>(
-        `/wallet/${playerId}`,
-      ),
+      get<{
+        dnBalance: number;
+        totalEarnedPi: number;
+        pendingPi: number;
+        availablePi: number;
+        totalIncome: number;
+        totalSpending: number;
+      }>(`/wallet/${playerId}`),
 
     getTransactions: (playerId: string, filter: "all" | "income" | "spending" = "all", page = 1, limit = 20) =>
       get<{
@@ -703,6 +708,27 @@ export const api = {
 
     complete: (paymentId: string, txId: string) =>
       post<{ ok: boolean }>(`/pi/payments/${paymentId}/complete`, { txId }),
+
+    /** Call when the Pi SDK payment is cancelled or errors out before completion,
+     * so the pending ledger entry doesn't stay stuck forever. */
+    fail: (paymentId: string, reason?: string) =>
+      post<{ ok: boolean; status: string }>(`/pi/payments/${paymentId}/fail`, { reason }),
+
+    ledger: (playerId: string) =>
+      get<{
+        data: {
+          id: string;
+          kind: "gift" | "purchase";
+          senderId: string;
+          receiverId: string | null;
+          amountPi: number;
+          status: "pending" | "confirmed" | "failed";
+          txId: string | null;
+          memo: string;
+          createdAt: string;
+          completedAt: string | null;
+        }[];
+      }>(`/pi/ledger/${playerId}`),
   },
 };
 

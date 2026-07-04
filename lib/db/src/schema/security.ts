@@ -48,16 +48,29 @@ export const ipFingerprintsTable = pgTable('ip_fingerprints', {
   lastSeenAt:        timestamp('last_seen_at').notNull().defaultNow(),
 });
 
+// ─── Pi Internal Ledger ────────────────────────────────────────────────────
+// One row per Pi Testnet (→ Mainnet later) payment attempt: purchases (VIP,
+// coins, tournament entry) and gifts. This is the source of truth for the
+// payment state machine — NOT a real internal Pi wallet, purely a ledger that
+// tracks/mirrors what happens on the Pi Network side.
+// status: 'pending' (created, awaiting Pi SDK approval/completion)
+//       → 'confirmed' (Pi SDK completed the transaction, txId recorded)
+//       → 'failed' (cancelled, errored, or rejected before completion)
 export const piPaymentsTable = pgTable('pi_payments', {
   id:           text('id').primaryKey(),
+  // sender / payer — always set (the player initiating the Pi payment)
   playerId:     text('player_id').notNull(),
-  piPaymentId:  text('pi_payment_id').notNull().unique(),
+  // receiver — only set for gift-kind payments; null for purchases (system is the receiver)
+  receiverId:   text('receiver_id'),
+  kind:         text('kind').notNull().default('purchase'), // 'purchase' | 'gift'
+  piPaymentId:  text('pi_payment_id').unique(),
   piTxId:       text('pi_tx_id'),
   amount:       real('amount').notNull(),
   memo:         text('memo').notNull(),
   metadata:     jsonb('metadata').default({}),
   status:       text('status').notNull().default('pending'),
   createdAt:    timestamp('created_at').notNull().defaultNow(),
+  updatedAt:    timestamp('updated_at').notNull().defaultNow(),
   completedAt:  timestamp('completed_at'),
 });
 

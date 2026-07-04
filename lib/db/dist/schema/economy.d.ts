@@ -968,8 +968,42 @@ export declare const walletsTable: import("drizzle-orm/pg-core").PgTableWithColu
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        piEarnings: import("drizzle-orm/pg-core").PgColumn<{
-            name: "pi_earnings";
+        totalEarnedPi: import("drizzle-orm/pg-core").PgColumn<{
+            name: "total_earned_pi";
+            tableName: "wallets";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        pendingPi: import("drizzle-orm/pg-core").PgColumn<{
+            name: "pending_pi";
+            tableName: "wallets";
+            dataType: "number";
+            columnType: "PgReal";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        availablePi: import("drizzle-orm/pg-core").PgColumn<{
+            name: "available_pi";
             tableName: "wallets";
             dataType: "number";
             columnType: "PgReal";

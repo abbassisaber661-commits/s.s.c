@@ -97,12 +97,23 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                   finishSend(tier);
                 } catch {
                   toast.error("فشل إتمام الهدية");
+                  if (backendPaymentId.current) {
+                    api.pi.fail(backendPaymentId.current, "complete_error").catch(() => {});
+                  }
                   setSendingTierId(null);
                 }
               },
-              onCancel: () => setSendingTierId(null),
+              onCancel: () => {
+                if (backendPaymentId.current) {
+                  api.pi.fail(backendPaymentId.current, "cancelled").catch(() => {});
+                }
+                setSendingTierId(null);
+              },
               onError: () => {
                 toast.error("حدث خطأ أثناء الدفع");
+                if (backendPaymentId.current) {
+                  api.pi.fail(backendPaymentId.current, "sdk_error").catch(() => {});
+                }
                 setSendingTierId(null);
               },
             },

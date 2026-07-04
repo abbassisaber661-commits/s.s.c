@@ -676,6 +676,40 @@ export declare const piPaymentsTable: import("drizzle-orm/pg-core").PgTableWithC
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        receiverId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "receiver_id";
+            tableName: "pi_payments";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        kind: import("drizzle-orm/pg-core").PgColumn<{
+            name: "kind";
+            tableName: "pi_payments";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         piPaymentId: import("drizzle-orm/pg-core").PgColumn<{
             name: "pi_payment_id";
             tableName: "pi_payments";
@@ -683,7 +717,7 @@ export declare const piPaymentsTable: import("drizzle-orm/pg-core").PgTableWithC
             columnType: "PgText";
             data: string;
             driverParam: string;
-            notNull: true;
+            notNull: false;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
@@ -780,6 +814,23 @@ export declare const piPaymentsTable: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
+            tableName: "pi_payments";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        updatedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "updated_at";
             tableName: "pi_payments";
             dataType: "date";
             columnType: "PgTimestamp";

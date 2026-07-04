@@ -54361,9 +54361,20 @@ var init_economy = __esm({
       // DN$ — internal gamification points only. No monetary value, not transferable,
       // not convertible to/from Pi or any other currency. Earned via XP/level/streaks/achievements.
       dnBalance: integer("dn_balance").notNull().default(0),
-      // Pi — real payment currency (Pi Testnet now, Mainnet later). Accumulated creator
-      // earnings from gifts received on posts, paid via the Pi payment flow.
-      piEarnings: real("pi_earnings").notNull().default(0),
+      // ── Pi Internal Ledger (Pi is the only real payment currency — Testnet now,
+      // Mainnet later). This is a LEDGER, not a real internal Pi wallet: Pi Network
+      // itself holds the real funds, we only track/display them. ──
+      // Lifetime confirmed Pi received from gifts (moves here once a payment's
+      // Pi SDK transaction is confirmed).
+      totalEarnedPi: real("total_earned_pi").notNull().default(0),
+      // Sum of Pi from gift payments that have been created but not yet confirmed
+      // by the Pi Network (i.e. still "pending" in pi_payments).
+      pendingPi: real("pending_pi").notNull().default(0),
+      // Confirmed Pi currently reflected as available in-app (mirrors totalEarnedPi
+      // today since there is no withdrawal/lock-up mechanism yet; kept separate so a
+      // future withdrawal or Mainnet reserve feature can diverge from it without a
+      // schema change).
+      availablePi: real("available_pi").notNull().default(0),
       createdAt: timestamp("created_at").notNull().defaultNow(),
       updatedAt: timestamp("updated_at").notNull().defaultNow()
     });
@@ -54586,14 +54597,20 @@ var init_security = __esm({
     });
     piPaymentsTable = pgTable("pi_payments", {
       id: text("id").primaryKey(),
+      // sender / payer — always set (the player initiating the Pi payment)
       playerId: text("player_id").notNull(),
-      piPaymentId: text("pi_payment_id").notNull().unique(),
+      // receiver — only set for gift-kind payments; null for purchases (system is the receiver)
+      receiverId: text("receiver_id"),
+      kind: text("kind").notNull().default("purchase"),
+      // 'purchase' | 'gift'
+      piPaymentId: text("pi_payment_id").unique(),
       piTxId: text("pi_tx_id"),
       amount: real("amount").notNull(),
       memo: text("memo").notNull(),
       metadata: jsonb("metadata").default({}),
       status: text("status").notNull().default("pending"),
       createdAt: timestamp("created_at").notNull().defaultNow(),
+      updatedAt: timestamp("updated_at").notNull().defaultNow(),
       completedAt: timestamp("completed_at")
     });
   }
@@ -89256,11 +89273,10 @@ var PI_PRODUCTS = {
   "coins_1000": { name: "1000 Coins Bundle", coins: 1e3, description: "1000 in-game coins" },
   "tournament_entry": { name: "Tournament Entry", description: "Entry to paid tournament" }
 };
-var pendingPayments = /* @__PURE__ */ new Map();
 async function getOrCreateWallet(playerId) {
   const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
   if (existing) return existing;
-  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, piEarnings: 0 }).returning();
+  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 }).returning();
   return created;
 }
 router14.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => {
@@ -89279,8 +89295,10 @@ router14.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => 
     res.status(400).json({ error: "amount must be a positive number" });
     return;
   }
-  if (meta.kind === "gift") {
-    const receiverId = meta.receiverId ? String(meta.receiverId) : "";
+  const isGift = meta.kind === "gift";
+  let receiverId = null;
+  if (isGift) {
+    receiverId = meta.receiverId ? String(meta.receiverId) : "";
     if (!receiverId) {
       res.status(400).json({ error: "receiverId required for gift payments" });
       return;
@@ -89296,21 +89314,27 @@ router14.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => 
     }
   }
   const paymentId = nanoid3();
-  pendingPayments.set(paymentId, {
+  await db.insert(piPaymentsTable).values({
+    id: paymentId,
     playerId: String(playerId),
+    receiverId,
+    kind: isGift ? "gift" : "purchase",
     amount: piAmount,
     memo: String(memo),
     metadata: meta,
-    status: "pending",
-    createdAt: Date.now()
+    status: "pending"
   });
+  if (isGift && receiverId) {
+    const receiverWallet = await getOrCreateWallet(receiverId);
+    await db.update(walletsTable).set({ pendingPi: Number(receiverWallet.pendingPi) + piAmount, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
+  }
   await logAudit(
     String(playerId),
     "pi_payment_create",
     "pi_payment",
     paymentId,
     null,
-    { amount: piAmount, memo, kind: meta.kind ?? "purchase" },
+    { amount: piAmount, memo, kind: isGift ? "gift" : "purchase" },
     getClientIp(req),
     req.headers["user-agent"] ?? ""
   );
@@ -89323,14 +89347,17 @@ router14.post("/pi/payments/:paymentId/approve", requireAuth, async (req, res) =
     res.status(400).json({ error: "piPaymentId required" });
     return;
   }
-  const pending = pendingPayments.get(String(paymentId));
+  const [pending] = await db.select().from(piPaymentsTable).where(eq(piPaymentsTable.id, String(paymentId))).limit(1);
   if (!pending) {
     res.status(404).json({ error: "payment not found" });
     return;
   }
-  pending.status = "approved";
-  pending.piPaymentId = String(piPaymentId);
-  res.json({ ok: true, status: "approved" });
+  if (pending.status !== "pending") {
+    res.status(409).json({ error: `payment already ${pending.status}` });
+    return;
+  }
+  await db.update(piPaymentsTable).set({ piPaymentId: String(piPaymentId), updatedAt: /* @__PURE__ */ new Date() }).where(eq(piPaymentsTable.id, String(paymentId)));
+  res.json({ ok: true, status: "pending" });
 });
 router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) => {
   const { paymentId } = req.params;
@@ -89339,37 +89366,34 @@ router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) 
     res.status(400).json({ error: "txId required" });
     return;
   }
-  const pending = pendingPayments.get(String(paymentId));
+  const [pending] = await db.select().from(piPaymentsTable).where(eq(piPaymentsTable.id, String(paymentId))).limit(1);
   if (!pending) {
     res.status(404).json({ error: "payment not found" });
     return;
   }
-  if (pending.status !== "approved") {
-    res.status(409).json({ error: "payment not approved yet" });
+  if (pending.status !== "pending") {
+    res.status(409).json({ error: `payment already ${pending.status}` });
     return;
   }
-  const isGift = pending.metadata.kind === "gift";
-  const product = pending.metadata.productId;
+  const meta = pending.metadata ?? {};
+  const isGift = pending.kind === "gift";
+  const product = meta.productId;
   const productInfo = product ? PI_PRODUCTS[product] : void 0;
   const resolvedPiPaymentId = pending.piPaymentId ?? String(paymentId);
   try {
-    await db.execute(sql`
-      INSERT INTO pi_payments (id, player_id, pi_payment_id, pi_tx_id, amount, memo, metadata, status, completed_at)
-      VALUES (${String(paymentId)}, ${pending.playerId}, ${resolvedPiPaymentId},
-              ${String(txId)}, ${pending.amount}, ${pending.memo},
-              ${JSON.stringify(pending.metadata)}, 'completed', NOW())
-      ON CONFLICT (pi_payment_id) DO NOTHING
-    `);
+    await db.update(piPaymentsTable).set({ status: "confirmed", piTxId: String(txId), piPaymentId: resolvedPiPaymentId, completedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq(piPaymentsTable.id, String(paymentId)));
     if (isGift) {
-      const receiverId = String(pending.metadata.receiverId);
-      const postId = pending.metadata.postId ? String(pending.metadata.postId) : null;
-      const emoji3 = pending.metadata.emoji ? String(pending.metadata.emoji).slice(0, 8) : "\u{1F381}";
-      const message = pending.metadata.message ? String(pending.metadata.message).slice(0, 200) : "";
+      const receiverId = pending.receiverId ?? String(meta.receiverId);
+      const postId = meta.postId ? String(meta.postId) : null;
+      const emoji3 = meta.emoji ? String(meta.emoji).slice(0, 8) : "\u{1F381}";
+      const message = meta.message ? String(meta.message).slice(0, 200) : "";
       const [senderPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
       const [receiverPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, receiverId)).limit(1);
       const receiverWallet = await getOrCreateWallet(receiverId);
-      const newPiEarnings = Number(receiverWallet.piEarnings) + pending.amount;
-      await db.update(walletsTable).set({ piEarnings: newPiEarnings, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
+      const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
+      const newTotalEarned = Number(receiverWallet.totalEarnedPi) + pending.amount;
+      const newAvailable = Number(receiverWallet.availablePi) + pending.amount;
+      await db.update(walletsTable).set({ pendingPi: newPending, totalEarnedPi: newTotalEarned, availablePi: newAvailable, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
       await db.insert(giftLedgerTable).values({
         id: nanoid3(),
         senderId: pending.playerId,
@@ -89415,15 +89439,75 @@ router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) 
       "pi_payment_complete",
       "pi_payment",
       String(paymentId),
-      { status: "approved" },
-      { status: "completed", txId, kind: isGift ? "gift" : "purchase" },
+      { status: "pending" },
+      { status: "confirmed", txId, kind: isGift ? "gift" : "purchase" },
       getClientIp(req),
       req.headers["user-agent"] ?? ""
     );
-    pendingPayments.delete(String(paymentId));
     res.json({ ok: true, product: productInfo?.name, kind: isGift ? "gift" : "purchase" });
   } catch (err) {
     req.log.error({ err }, "pi complete error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router14.post("/pi/payments/:paymentId/fail", requireAuth, async (req, res) => {
+  const { paymentId } = req.params;
+  const { reason } = req.body;
+  const [pending] = await db.select().from(piPaymentsTable).where(eq(piPaymentsTable.id, String(paymentId))).limit(1);
+  if (!pending) {
+    res.status(404).json({ error: "payment not found" });
+    return;
+  }
+  if (req.auth.playerId !== pending.playerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  if (pending.status !== "pending") {
+    res.json({ ok: true, status: pending.status });
+    return;
+  }
+  await db.update(piPaymentsTable).set({ status: "failed", updatedAt: /* @__PURE__ */ new Date() }).where(eq(piPaymentsTable.id, String(paymentId)));
+  const meta = pending.metadata ?? {};
+  if (pending.kind === "gift") {
+    const receiverId = pending.receiverId ?? (meta.receiverId ? String(meta.receiverId) : null);
+    if (receiverId) {
+      const receiverWallet = await getOrCreateWallet(receiverId);
+      const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
+      await db.update(walletsTable).set({ pendingPi: newPending, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
+    }
+  }
+  await logAudit(
+    pending.playerId,
+    "pi_payment_fail",
+    "pi_payment",
+    String(paymentId),
+    { status: "pending" },
+    { status: "failed", reason: reason ?? "cancelled" },
+    getClientIp(req),
+    req.headers["user-agent"] ?? ""
+  );
+  res.json({ ok: true, status: "failed" });
+});
+router14.get("/pi/ledger/:playerId", requireAuth, async (req, res) => {
+  try {
+    const playerId = String(req.params.playerId);
+    const rows = await db.select().from(piPaymentsTable).where(or(eq(piPaymentsTable.playerId, playerId), eq(piPaymentsTable.receiverId, playerId))).orderBy(piPaymentsTable.createdAt);
+    res.json({
+      data: rows.reverse().map((r) => ({
+        id: r.id,
+        kind: r.kind,
+        senderId: r.playerId,
+        receiverId: r.receiverId,
+        amountPi: r.amount,
+        status: r.status,
+        txId: r.piTxId,
+        memo: r.memo,
+        createdAt: r.createdAt,
+        completedAt: r.completedAt
+      }))
+    });
+  } catch (err) {
+    req.log.error({ err }, "pi ledger error");
     res.status(500).json({ error: "internal" });
   }
 });
@@ -89483,7 +89567,7 @@ router15.get("/beta/stats", requireAdmin, async (req, res) => {
     const newToday = await db.execute(`SELECT COUNT(*) as cnt FROM players WHERE created_at > NOW() - INTERVAL '24 hours'`);
     const activeToday = await db.execute(`SELECT COUNT(*) as cnt FROM players WHERE last_active_at > NOW() - INTERVAL '24 hours'`);
     const suspCount = await db.execute(`SELECT COUNT(*) as cnt FROM suspicious_activity WHERE resolved = FALSE`);
-    const piPayments = await db.execute(`SELECT COUNT(*) as cnt, COALESCE(SUM(amount), 0) as total FROM pi_payments WHERE status = 'completed'`);
+    const piPayments = await db.execute(`SELECT COUNT(*) as cnt, COALESCE(SUM(amount), 0) as total FROM pi_payments WHERE status = 'confirmed'`);
     const auditLast24h = await db.execute(`SELECT COUNT(*) as cnt FROM audit_logs WHERE created_at > NOW() - INTERVAL '24 hours'`);
     const feedback = await db.execute(`SELECT COUNT(*) as cnt FROM beta_feedback WHERE created_at > NOW() - INTERVAL '7 days'`).catch(() => ({ rows: [{ cnt: "0" }] }));
     res.json({
@@ -94124,7 +94208,7 @@ var router28 = (0, import_express28.Router)();
 async function getOrCreateWallet2(playerId) {
   const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
   if (existing) return existing;
-  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, piEarnings: 0 }).returning();
+  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 }).returning();
   return created;
 }
 router28.get("/wallet/:playerId", async (req, res) => {
@@ -94135,7 +94219,9 @@ router28.get("/wallet/:playerId", async (req, res) => {
     const [spendingRow] = await db.select({ total: sql`coalesce(sum(abs(amount)),0)` }).from(walletTransactionsTable).where(and(eq(walletTransactionsTable.playerId, playerId), lt(walletTransactionsTable.amount, 0)));
     res.json({
       dnBalance: wallet.dnBalance,
-      piEarnings: Number(wallet.piEarnings ?? 0),
+      totalEarnedPi: Number(wallet.totalEarnedPi ?? 0),
+      pendingPi: Number(wallet.pendingPi ?? 0),
+      availablePi: Number(wallet.availablePi ?? 0),
       totalIncome: Number(incomeRow?.total ?? 0),
       totalSpending: Number(spendingRow?.total ?? 0)
     });

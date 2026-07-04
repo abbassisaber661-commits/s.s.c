@@ -16,15 +16,16 @@ async function getOrCreateWallet(playerId: string) {
   if (existing) return existing;
   const [created] = await db
     .insert(walletsTable)
-    .values({ id: nanoid(), playerId, dnBalance: 0, piEarnings: 0 })
+    .values({ id: nanoid(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 })
     .returning();
   return created;
 }
 
 /* ─── GET /wallet/:playerId ───
  * DN$ here is a pure internal points balance (gameplay/XP driven, non-transferable,
- * no monetary value). piEarnings is the player's accumulated Pi received from gifts
- * (real payments, handled entirely through the /pi/payments flow). ─── */
+ * no monetary value). totalEarnedPi/pendingPi/availablePi are the player's Pi
+ * Internal Ledger fields — Pi is real payment currency, handled entirely through
+ * the /pi/payments flow; this is a ledger view, never a real internal wallet. ─── */
 router.get("/wallet/:playerId", async (req, res) => {
   try {
     const { playerId } = req.params;
@@ -41,8 +42,10 @@ router.get("/wallet/:playerId", async (req, res) => {
       .where(and(eq(walletTransactionsTable.playerId, playerId), lt(walletTransactionsTable.amount, 0)));
 
     res.json({
-      dnBalance:    wallet.dnBalance,
-      piEarnings:   Number(wallet.piEarnings ?? 0),
+      dnBalance:     wallet.dnBalance,
+      totalEarnedPi: Number(wallet.totalEarnedPi ?? 0),
+      pendingPi:     Number(wallet.pendingPi ?? 0),
+      availablePi:   Number(wallet.availablePi ?? 0),
       totalIncome:  Number(incomeRow?.total ?? 0),
       totalSpending:Number(spendingRow?.total ?? 0),
     });

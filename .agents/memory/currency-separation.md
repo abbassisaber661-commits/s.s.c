@@ -12,6 +12,6 @@ Two currencies exist in SkillLeague and must never be linked:
 
 **How to apply:**
 - Never add a DN$→Pi conversion rate, a "send DN$ to another user" feature, or a DN$ withdrawal path.
-- Gift-related backend fields/leaderboards are named with `Pi` (e.g. `totalReceivedPi`, `totalSentPi`, `giftLedgerTable.amount` is now `real` Pi, `currency`/`piPaymentId` columns) — not `DN`. `walletsTable.piEarnings` tracks Pi received via gifts; `walletsTable.dnBalance` tracks DN$ points only.
+- Gift-related backend fields/leaderboards are named with `Pi` (e.g. `totalReceivedPi`, `totalSentPi`, `giftLedgerTable.amount` is now `real` Pi, `currency`/`piPaymentId` columns) — not `DN`. `walletsTable.totalEarnedPi`/`pendingPi`/`availablePi` track Pi received via gifts (see `pi-internal-ledger.md`); `walletsTable.dnBalance` tracks DN$ points only.
 - If you see any component/hook still importing `DANOUS_COINS`, `dnAmount`, `wallet.sendGift`, or `totalReceivedDN`/`totalSentDN`, it is stale pre-separation code — rename to the Pi equivalents rather than reintroducing DN$ transfer.
 - The 7-tier coin *images* (white/yellow/orange/.../purple, see `danous-coin-assets.md`) are shared/reused as the visual style for `PI_GIFT_TIERS` — only the DN$ tier *concept* (amounts, sending) was removed, not the artwork.

@@ -56,7 +56,7 @@ router.get("/beta/stats", requireAdmin, async (req, res) => {
     const newToday     = await db.execute(`SELECT COUNT(*) as cnt FROM players WHERE created_at > NOW() - INTERVAL '24 hours'` as never) as unknown as { rows: Array<{ cnt: string }> };
     const activeToday  = await db.execute(`SELECT COUNT(*) as cnt FROM players WHERE last_active_at > NOW() - INTERVAL '24 hours'` as never) as unknown as { rows: Array<{ cnt: string }> };
     const suspCount    = await db.execute(`SELECT COUNT(*) as cnt FROM suspicious_activity WHERE resolved = FALSE` as never) as unknown as { rows: Array<{ cnt: string }> };
-    const piPayments   = await db.execute(`SELECT COUNT(*) as cnt, COALESCE(SUM(amount), 0) as total FROM pi_payments WHERE status = 'completed'` as never) as unknown as { rows: Array<{ cnt: string; total: string }> };
+    const piPayments   = await db.execute(`SELECT COUNT(*) as cnt, COALESCE(SUM(amount), 0) as total FROM pi_payments WHERE status = 'confirmed'` as never) as unknown as { rows: Array<{ cnt: string; total: string }> };
     const auditLast24h = await db.execute(`SELECT COUNT(*) as cnt FROM audit_logs WHERE created_at > NOW() - INTERVAL '24 hours'` as never) as unknown as { rows: Array<{ cnt: string }> };
     const feedback     = await db.execute(`SELECT COUNT(*) as cnt FROM beta_feedback WHERE created_at > NOW() - INTERVAL '7 days'` as never).catch(() => ({ rows: [{ cnt: '0' }] })) as unknown as { rows: Array<{ cnt: string }> };
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { eq, sql } from "drizzle-orm";
-import { db, playersTable, walletsTable, giftLedgerTable } from "@workspace/db";
+import { eq, or, sql } from "drizzle-orm";
+import { db, playersTable, walletsTable, giftLedgerTable, piPaymentsTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { requireAuth } from "../middleware/auth.js";
 import { getClientIp, logAudit } from "../middleware/antiCheat.js";
@@ -12,6 +12,13 @@ const router = Router();
 // Pi is the ONLY real payment/gifting currency in the app (Pi Network Testnet
 // now, Mainnet later). DN$ is a separate, non-transferable internal points
 // system and never appears in this flow.
+//
+// This file owns the "Pi Internal Ledger" — every payment attempt is persisted
+// to `pi_payments` immediately (pending → confirmed → failed). It never holds
+// or moves real Pi itself; Pi Network settles the actual funds. The ledger
+// only tracks/displays state so the UI can show pending vs. confirmed vs.
+// failed earnings, and keeps wallets.totalEarnedPi / pendingPi / availablePi
+// in sync for gift receivers.
 const PI_PRODUCTS: Record<string, { name: string; coins?: number; vipTier?: string; description: string }> = {
   "vip_silver":    { name: "VIP Silver (30 days)",   vipTier: "silver",   description: "Silver VIP membership" },
   "vip_gold":      { name: "VIP Gold (30 days)",     vipTier: "gold",     description: "Gold VIP membership" },
@@ -22,14 +29,6 @@ const PI_PRODUCTS: Record<string, { name: string; coins?: number; vipTier?: stri
   "tournament_entry": { name: "Tournament Entry",                         description: "Entry to paid tournament" },
 };
 
-interface PendingPayment {
-  playerId: string; amount: number; memo: string;
-  metadata: Record<string, unknown>; status: string; createdAt: number;
-  piPaymentId?: string;
-}
-
-const pendingPayments = new Map<string, PendingPayment>();
-
 async function getOrCreateWallet(playerId: string) {
   const [existing] = await db
     .select()
@@ -39,7 +38,7 @@ async function getOrCreateWallet(playerId: string) {
   if (existing) return existing;
   const [created] = await db
     .insert(walletsTable)
-    .values({ id: nanoid(), playerId, dnBalance: 0, piEarnings: 0 })
+    .values({ id: nanoid(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 })
     .returning();
   return created;
 }
@@ -60,9 +59,12 @@ router.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => {
     res.status(400).json({ error: "amount must be a positive number" }); return;
   }
 
+  const isGift = meta.kind === "gift";
+  let receiverId: string | null = null;
+
   // ── Gift-type payments: validate receiver up front ──
-  if (meta.kind === "gift") {
-    const receiverId = meta.receiverId ? String(meta.receiverId) : "";
+  if (isGift) {
+    receiverId = meta.receiverId ? String(meta.receiverId) : "";
     if (!receiverId) {
       res.status(400).json({ error: "receiverId required for gift payments" }); return;
     }
@@ -77,13 +79,29 @@ router.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => {
   }
 
   const paymentId = nanoid();
-  pendingPayments.set(paymentId, {
-    playerId: String(playerId), amount: piAmount,
-    memo: String(memo), metadata: meta,
-    status: "pending", createdAt: Date.now(),
+
+  await db.insert(piPaymentsTable).values({
+    id:          paymentId,
+    playerId:    String(playerId),
+    receiverId,
+    kind:        isGift ? "gift" : "purchase",
+    amount:      piAmount,
+    memo:        String(memo),
+    metadata:    meta,
+    status:      "pending",
   });
+
+  // Reflect the incoming (unconfirmed) amount on the receiver's ledger right away
+  // so the UI can show "pending" Pi while waiting for the Pi Network to confirm.
+  if (isGift && receiverId) {
+    const receiverWallet = await getOrCreateWallet(receiverId);
+    await db.update(walletsTable)
+      .set({ pendingPi: Number(receiverWallet.pendingPi) + piAmount, updatedAt: new Date() })
+      .where(eq(walletsTable.playerId, receiverId));
+  }
+
   await logAudit(String(playerId), "pi_payment_create", "pi_payment", paymentId, null,
-    { amount: piAmount, memo, kind: meta.kind ?? "purchase" }, getClientIp(req), req.headers["user-agent"] ?? "");
+    { amount: piAmount, memo, kind: isGift ? "gift" : "purchase" }, getClientIp(req), req.headers["user-agent"] ?? "");
   res.status(201).json({ paymentId, status: "pending" });
 });
 
@@ -94,55 +112,61 @@ router.post("/pi/payments/:paymentId/approve", requireAuth, async (req, res) => 
   if (!piPaymentId) {
     res.status(400).json({ error: "piPaymentId required" }); return;
   }
-  const pending = pendingPayments.get(String(paymentId));
+  const [pending] = await db.select().from(piPaymentsTable)
+    .where(eq(piPaymentsTable.id, String(paymentId))).limit(1);
   if (!pending) { res.status(404).json({ error: "payment not found" }); return; }
-  pending.status = "approved";
-  pending.piPaymentId = String(piPaymentId);
-  res.json({ ok: true, status: "approved" });
+  if (pending.status !== "pending") {
+    res.status(409).json({ error: `payment already ${pending.status}` }); return;
+  }
+  await db.update(piPaymentsTable)
+    .set({ piPaymentId: String(piPaymentId), updatedAt: new Date() })
+    .where(eq(piPaymentsTable.id, String(paymentId)));
+  res.json({ ok: true, status: "pending" });
 });
 
-/* ─── POST /pi/payments/:paymentId/complete ─── */
+/* ─── POST /pi/payments/:paymentId/complete — Pi SDK confirmed the tx ─── */
 router.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) => {
   const { paymentId } = req.params;
   const { txId } = req.body as Record<string, unknown>;
   if (!txId) {
     res.status(400).json({ error: "txId required" }); return;
   }
-  const pending = pendingPayments.get(String(paymentId));
+  const [pending] = await db.select().from(piPaymentsTable)
+    .where(eq(piPaymentsTable.id, String(paymentId))).limit(1);
   if (!pending) { res.status(404).json({ error: "payment not found" }); return; }
-  if (pending.status !== "approved") {
-    res.status(409).json({ error: "payment not approved yet" }); return;
+  if (pending.status !== "pending") {
+    res.status(409).json({ error: `payment already ${pending.status}` }); return;
   }
 
-  const isGift = pending.metadata.kind === "gift";
-  const product = pending.metadata.productId as string | undefined;
+  const meta = (pending.metadata as Record<string, unknown>) ?? {};
+  const isGift = pending.kind === "gift";
+  const product = meta.productId as string | undefined;
   const productInfo = product ? PI_PRODUCTS[product] : undefined;
   const resolvedPiPaymentId = pending.piPaymentId ?? String(paymentId);
 
   try {
-    await db.execute(sql`
-      INSERT INTO pi_payments (id, player_id, pi_payment_id, pi_tx_id, amount, memo, metadata, status, completed_at)
-      VALUES (${String(paymentId)}, ${pending.playerId}, ${resolvedPiPaymentId},
-              ${String(txId)}, ${pending.amount}, ${pending.memo},
-              ${JSON.stringify(pending.metadata)}, 'completed', NOW())
-      ON CONFLICT (pi_payment_id) DO NOTHING
-    `);
+    await db.update(piPaymentsTable)
+      .set({ status: "confirmed", piTxId: String(txId), piPaymentId: resolvedPiPaymentId, completedAt: new Date(), updatedAt: new Date() })
+      .where(eq(piPaymentsTable.id, String(paymentId)));
 
     if (isGift) {
-      const receiverId = String(pending.metadata.receiverId);
-      const postId = pending.metadata.postId ? String(pending.metadata.postId) : null;
-      const emoji = pending.metadata.emoji ? String(pending.metadata.emoji).slice(0, 8) : "🎁";
-      const message = pending.metadata.message ? String(pending.metadata.message).slice(0, 200) : "";
+      const receiverId = pending.receiverId ?? String(meta.receiverId);
+      const postId = meta.postId ? String(meta.postId) : null;
+      const emoji = meta.emoji ? String(meta.emoji).slice(0, 8) : "🎁";
+      const message = meta.message ? String(meta.message).slice(0, 200) : "";
 
       const [senderPlayer] = await db.select({ username: playersTable.username })
         .from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
       const [receiverPlayer] = await db.select({ username: playersTable.username })
         .from(playersTable).where(eq(playersTable.id, receiverId)).limit(1);
 
+      // Move the amount off pendingPi and onto confirmed totalEarnedPi/availablePi.
       const receiverWallet = await getOrCreateWallet(receiverId);
-      const newPiEarnings = Number(receiverWallet.piEarnings) + pending.amount;
+      const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
+      const newTotalEarned = Number(receiverWallet.totalEarnedPi) + pending.amount;
+      const newAvailable = Number(receiverWallet.availablePi) + pending.amount;
       await db.update(walletsTable)
-        .set({ piEarnings: newPiEarnings, updatedAt: new Date() })
+        .set({ pendingPi: newPending, totalEarnedPi: newTotalEarned, availablePi: newAvailable, updatedAt: new Date() })
         .where(eq(walletsTable.playerId, receiverId));
 
       await db.insert(giftLedgerTable).values({
@@ -189,13 +213,79 @@ router.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) =>
     }
 
     await logAudit(pending.playerId, "pi_payment_complete", "pi_payment", String(paymentId),
-      { status: "approved" }, { status: "completed", txId, kind: isGift ? "gift" : "purchase" },
+      { status: "pending" }, { status: "confirmed", txId, kind: isGift ? "gift" : "purchase" },
       getClientIp(req), req.headers["user-agent"] ?? "");
 
-    pendingPayments.delete(String(paymentId));
     res.json({ ok: true, product: productInfo?.name, kind: isGift ? "gift" : "purchase" });
   } catch (err) {
     req.log.error({ err }, "pi complete error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+
+/* ─── POST /pi/payments/:paymentId/fail — Pi SDK cancelled/errored before completion ─── */
+router.post("/pi/payments/:paymentId/fail", requireAuth, async (req, res) => {
+  const { paymentId } = req.params;
+  const { reason } = req.body as Record<string, unknown>;
+
+  const [pending] = await db.select().from(piPaymentsTable)
+    .where(eq(piPaymentsTable.id, String(paymentId))).limit(1);
+  if (!pending) { res.status(404).json({ error: "payment not found" }); return; }
+  if (req.auth!.playerId !== pending.playerId) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+  if (pending.status !== "pending") {
+    // Already resolved (confirmed/failed) — idempotent no-op.
+    res.json({ ok: true, status: pending.status }); return;
+  }
+
+  await db.update(piPaymentsTable)
+    .set({ status: "failed", updatedAt: new Date() })
+    .where(eq(piPaymentsTable.id, String(paymentId)));
+
+  const meta = (pending.metadata as Record<string, unknown>) ?? {};
+  if (pending.kind === "gift") {
+    const receiverId = pending.receiverId ?? (meta.receiverId ? String(meta.receiverId) : null);
+    if (receiverId) {
+      const receiverWallet = await getOrCreateWallet(receiverId);
+      const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
+      await db.update(walletsTable)
+        .set({ pendingPi: newPending, updatedAt: new Date() })
+        .where(eq(walletsTable.playerId, receiverId));
+    }
+  }
+
+  await logAudit(pending.playerId, "pi_payment_fail", "pi_payment", String(paymentId),
+    { status: "pending" }, { status: "failed", reason: reason ?? "cancelled" },
+    getClientIp(req), req.headers["user-agent"] ?? "");
+
+  res.json({ ok: true, status: "failed" });
+});
+
+/* ─── GET /pi/ledger/:playerId — transaction history (sent + received) ─── */
+router.get("/pi/ledger/:playerId", requireAuth, async (req, res) => {
+  try {
+    const playerId = String(req.params.playerId);
+    const rows = await db.select().from(piPaymentsTable)
+      .where(or(eq(piPaymentsTable.playerId, playerId), eq(piPaymentsTable.receiverId, playerId)))
+      .orderBy(piPaymentsTable.createdAt);
+
+    res.json({
+      data: rows.reverse().map(r => ({
+        id:         r.id,
+        kind:       r.kind,
+        senderId:   r.playerId,
+        receiverId: r.receiverId,
+        amountPi:   r.amount,
+        status:     r.status,
+        txId:       r.piTxId,
+        memo:       r.memo,
+        createdAt:  r.createdAt,
+        completedAt:r.completedAt,
+      })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "pi ledger error");
     res.status(500).json({ error: "internal" });
   }
 });

@@ -85,9 +85,22 @@ export const walletsTable = pgTable('wallets', {
   // DN$ — internal gamification points only. No monetary value, not transferable,
   // not convertible to/from Pi or any other currency. Earned via XP/level/streaks/achievements.
   dnBalance:  integer('dn_balance').notNull().default(0),
-  // Pi — real payment currency (Pi Testnet now, Mainnet later). Accumulated creator
-  // earnings from gifts received on posts, paid via the Pi payment flow.
-  piEarnings: real('pi_earnings').notNull().default(0),
+
+  // ── Pi Internal Ledger (Pi is the only real payment currency — Testnet now,
+  // Mainnet later). This is a LEDGER, not a real internal Pi wallet: Pi Network
+  // itself holds the real funds, we only track/display them. ──
+  // Lifetime confirmed Pi received from gifts (moves here once a payment's
+  // Pi SDK transaction is confirmed).
+  totalEarnedPi: real('total_earned_pi').notNull().default(0),
+  // Sum of Pi from gift payments that have been created but not yet confirmed
+  // by the Pi Network (i.e. still "pending" in pi_payments).
+  pendingPi:     real('pending_pi').notNull().default(0),
+  // Confirmed Pi currently reflected as available in-app (mirrors totalEarnedPi
+  // today since there is no withdrawal/lock-up mechanism yet; kept separate so a
+  // future withdrawal or Mainnet reserve feature can diverge from it without a
+  // schema change).
+  availablePi:   real('available_pi').notNull().default(0),
+
   createdAt:  timestamp('created_at').notNull().defaultNow(),
   updatedAt:  timestamp('updated_at').notNull().defaultNow(),
 });
