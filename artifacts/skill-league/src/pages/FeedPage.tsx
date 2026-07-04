@@ -277,9 +277,9 @@ export default function FeedPage() {
           return (
             <>
               {renderPosts(posts.slice(0, 3))}
-              {posts.length > 3 && <GameReelsRow />}
+              <GameReelsRow />
               {renderPosts(posts.slice(3, 6))}
-              {posts.length > 6 && <SuggestedPlayersRow />}
+              <SuggestedPlayersRow />
               {renderPosts(posts.slice(6))}
             </>
           );
