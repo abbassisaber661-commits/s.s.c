@@ -17,8 +17,8 @@ export const dailyStatsTable = pgTable('daily_stats', {
   matchesPlayed:  integer('matches_played').notNull().default(0),
   pvpMatches:     integer('pvp_matches').notNull().default(0),
   avgSessionMins: real('avg_session_mins').notNull().default(0),
-  coinsEarned:    integer('coins_earned').notNull().default(0),
-  coinsSpent:     integer('coins_spent').notNull().default(0),
+  dnEarned:       integer('dn_earned').notNull().default(0),
+  dnSpent:        integer('dn_spent').notNull().default(0),
   topLeague:      text('top_league').notNull().default('training'),
   createdAt:      timestamp('created_at').notNull().defaultNow(),
 });
