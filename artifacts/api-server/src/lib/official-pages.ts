@@ -19,7 +19,7 @@ import { db, playersTable, postsTable, postLikesTable, postCommentsTable } from 
 import { eq, desc, sql, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { logger } from "./logger.js";
-import { getOfficialPagesSettings } from "./settings-service.js";
+import { getOfficialPagesSettings, getSocialSettings } from "./settings-service.js";
 
 // ── Page identity ─────────────────────────────────────────────────────────
 
@@ -256,6 +256,7 @@ async function simulateOfficialPosting(): Promise<void> {
 async function simulateOfficialEngagement(): Promise<void> {
   try {
     const settings = await getOfficialPagesSettings();
+    const socialSettings = await getSocialSettings();
     if (!settings.enabled) return;
     const intervalMs = Math.max(1, settings.engagementIntervalMinutes) * 60 * 1000;
     const now = Date.now();
@@ -290,7 +291,7 @@ async function simulateOfficialEngagement(): Promise<void> {
         const stats = runtimeStats.get(page.id)!;
 
         // ~55% chance to like
-        if (settings.likesEnabled !== false && Math.random() < 0.55) {
+        if (socialSettings.likesEnabled !== false && Math.random() < 0.55) {
           const likeId = `like_${page.id}_${post.id}`;
           try {
             await db.insert(postLikesTable).values({
@@ -308,7 +309,7 @@ async function simulateOfficialEngagement(): Promise<void> {
         }
 
         // ~30% chance to also leave a short specialty comment
-        if (settings.commentsEnabled !== false && Math.random() < 0.3) {
+        if (socialSettings.commentsEnabled !== false && Math.random() < 0.3) {
           try {
             await db.insert(postCommentsTable).values({
               id: randomUUID(),

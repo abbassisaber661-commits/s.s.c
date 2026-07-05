@@ -31,6 +31,15 @@ build a transaction history or reconcile stuck pending gifts.
   history (senderId/receiverId/amountPi/status/txId) sourced directly from
   `pi_payments` — this is the "transactions" ledger, not `gift_ledger` (which
   stays as the confirmed-gifts-only analytics table for leaderboards/feed).
+  It also resolves `senderName`/`receiverName` server-side via a single
+  batched `inArray` lookup against `playersTable` (falls back to the raw ID
+  if a username isn't found) — do this resolution in the endpoint, not N+1
+  lookups from the frontend.
+- Frontend "Transaction History" UI lives in `PiLedgerHistory.tsx`
+  (components/wallet), rendered inside `Wallet.tsx` alongside (not replacing)
+  the existing DN$ transaction list — it has its own All/Pending/Confirmed/
+  Failed filter tabs, skeleton loading, and empty state, and reads
+  `api.pi.ledger(playerId)` directly (no props/callbacks needed from Wallet).
 - Any frontend flow that creates a Pi payment (Pi SDK `createPayment`) MUST
   call `api.pi.fail(paymentId)` on cancel/error, or the ledger leaves stale
   `pendingPi` amounts forever.

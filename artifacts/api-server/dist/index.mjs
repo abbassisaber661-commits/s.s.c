@@ -94808,6 +94808,7 @@ async function simulateOfficialPosting() {
 async function simulateOfficialEngagement() {
   try {
     const settings = await getOfficialPagesSettings();
+    const socialSettings = await getSocialSettings();
     if (!settings.enabled) return;
     const intervalMs = Math.max(1, settings.engagementIntervalMinutes) * 60 * 1e3;
     const now = Date.now();
@@ -94826,7 +94827,7 @@ async function simulateOfficialEngagement() {
       const reactingPages = [...enabledPages].sort(() => Math.random() - 0.5).slice(0, randInt2(0, 2));
       for (const page of reactingPages) {
         const stats = runtimeStats.get(page.id);
-        if (settings.likesEnabled !== false && Math.random() < 0.55) {
+        if (socialSettings.likesEnabled !== false && Math.random() < 0.55) {
           const likeId = `like_${page.id}_${post.id}`;
           try {
             await db.insert(postLikesTable).values({
@@ -94839,7 +94840,7 @@ async function simulateOfficialEngagement() {
           } catch {
           }
         }
-        if (settings.commentsEnabled !== false && Math.random() < 0.3) {
+        if (socialSettings.commentsEnabled !== false && Math.random() < 0.3) {
           try {
             await db.insert(postCommentsTable).values({
               id: randomUUID4(),
@@ -94903,7 +94904,7 @@ router32.patch("/owner/official-pages/settings", requireAdmin, async (req, res) 
 });
 router32.patch("/owner/official-pages/:pageId/toggle", requireAdmin, async (req, res) => {
   try {
-    const { pageId } = req.params;
+    const pageId = String(req.params.pageId);
     const { enabled } = req.body;
     if (typeof enabled !== "boolean") {
       res.status(400).json({ error: "enabled_required" });
@@ -94951,7 +94952,7 @@ router32.post("/owner/reserved-usernames", requireAdmin, async (req, res) => {
 });
 router32.delete("/owner/reserved-usernames/:word", requireAdmin, async (req, res) => {
   try {
-    const words = await removeReservedUsername(req.params.word);
+    const words = await removeReservedUsername(String(req.params.word));
     res.json({ ok: true, words });
   } catch (err) {
     req.log.error({ err }, "owner reserved-username remove error");

@@ -42,7 +42,7 @@ router.patch("/owner/official-pages/settings", requireAdmin, async (req, res) =>
 
 router.patch("/owner/official-pages/:pageId/toggle", requireAdmin, async (req, res) => {
   try {
-    const { pageId } = req.params;
+    const pageId = String(req.params.pageId);
     const { enabled } = req.body as Record<string, unknown>;
     if (typeof enabled !== "boolean") { res.status(400).json({ error: "enabled_required" }); return; }
     const next = await setOfficialPageEnabled(pageId, enabled);
@@ -91,7 +91,7 @@ router.post("/owner/reserved-usernames", requireAdmin, async (req, res) => {
 
 router.delete("/owner/reserved-usernames/:word", requireAdmin, async (req, res) => {
   try {
-    const words = await removeReservedUsername(req.params.word);
+    const words = await removeReservedUsername(String(req.params.word));
     res.json({ ok: true, words });
   } catch (err) {
     req.log.error({ err }, "owner reserved-username remove error");
