@@ -181,7 +181,7 @@ router.get("/monitor/economy", requireAdmin, async (req, res) => {
       GROUP BY 1, 2 ORDER BY 1 DESC, total_amount DESC LIMIT 50
     `);
     const topBalances = await db.execute(sql`
-      SELECT username, coins, level, elo FROM players
+      SELECT username, coins AS dn, level, elo FROM players
       ORDER BY coins DESC LIMIT 10
     `);
     res.json({

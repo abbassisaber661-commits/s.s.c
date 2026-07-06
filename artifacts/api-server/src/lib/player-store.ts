@@ -1,7 +1,7 @@
 /**
  * player-store.ts
  * ───────────────
- * Game Layer — player progression data (XP, level, streak, badges, coins, daily reward).
+ * Game Layer — player progression data (XP, level, streak, badges, DN$, daily reward).
  * Completely separate JSON store from league-store.ts.
  * Persists to /tmp/sl-player-data.json.
  *
@@ -35,10 +35,10 @@ export const STREAK_BONUSES: Record<number, number> = {
   10: 100,
 };
 
-export const ARCADE_REWARDS: Record<string, { xp: number; coins: number; name: string; icon: string; desc: string }> = {
-  memory_speed: { xp: 10, coins: 15, name: 'Memory Speed',  icon: '🧠', desc: 'Match tiles before the clock runs out.' },
-  logic_puzzle: { xp: 15, coins: 20, name: 'Logic Puzzle',  icon: '🔮', desc: 'Crack the sequence and win big XP.' },
-  word_sprint:  { xp: 10, coins: 15, name: 'Word Sprint',   icon: '💬', desc: 'Spell as many words as you can in 60s.' },
+export const ARCADE_REWARDS: Record<string, { xp: number; dn: number; name: string; icon: string; desc: string }> = {
+  memory_speed: { xp: 10, dn: 15, name: 'Memory Speed',  icon: '🧠', desc: 'Match tiles before the clock runs out.' },
+  logic_puzzle: { xp: 15, dn: 20, name: 'Logic Puzzle',  icon: '🔮', desc: 'Crack the sequence and win big XP.' },
+  word_sprint:  { xp: 10, dn: 15, name: 'Word Sprint',   icon: '💬', desc: 'Spell as many words as you can in 60s.' },
 };
 
 const DAILY_COINS = 20;
@@ -235,7 +235,7 @@ export function applyMatchResult(
 }
 
 /**
- * Play an arcade game — rewards XP and coins.
+ * Play an arcade game — rewards XP and DN$.
  * Returns null if gameId is unknown.
  */
 export function playArcadeGame(
@@ -282,13 +282,13 @@ export function playArcadeGame(
 
 /**
  * Claim daily reward — once per calendar day.
- * Returns { coins, xp, profile } or { error: 'already claimed' }.
+ * Returns { dn, xp, profile } or { error: 'already claimed' }.
  */
 export function claimDailyReward(
   playerId:   string,
   playerName: string,
 ): {
-  coins:      number;
+  dn:          number;
   xp:         number;
   profile:    PlayerProfile;
   newBadges:  string[];
@@ -313,7 +313,7 @@ export function claimDailyReward(
 
   save();
 
-  return { coins: DAILY_COINS, xp: DAILY_XP, profile, newBadges };
+  return { dn: DAILY_COINS, xp: DAILY_XP, profile, newBadges };
 }
 
 /** XP leaderboard — top players by XP. */

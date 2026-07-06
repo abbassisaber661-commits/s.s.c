@@ -23,18 +23,18 @@ import { gte, lte, and, count, sum, avg, eq } from 'drizzle-orm';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type InflationLevel = 'HIGH' | 'NORMAL' | 'LOW';
-export type GemsFlow       = 'STABLE' | 'GROWING' | 'DECLINING' | 'INSUFFICIENT_DATA';
+export type PiFlow         = 'STABLE' | 'GROWING' | 'DECLINING' | 'INSUFFICIENT_DATA';
 export type RiskLevel      = 'HIGH' | 'MEDIUM' | 'LOW';
 export type EconomyTrend   = 'Growing' | 'Stable' | 'Over-inflated' | 'Under-powered';
 
 export interface EconomyMetrics {
-  coinsEarnedPerDay:    number;
-  coinsSpentPerDay:     number;
+  dnEarnedPerDay:      number;
+  dnSpentPerDay:       number;
   netFlow:              number;
-  averageCoinsPerUser:  number;
+  averageDNPerUser:    number;
   totalActiveUsers:     number;
-  gemsDistributedTotal: number;
-  gemsPerLeague: {
+  piDistributedTotal:  number;
+  piPerLeague: {
     div3:      number;
     div2:      number;
     pro:       number;
@@ -53,11 +53,11 @@ export interface EconomyMetrics {
 export interface WeeklySnapshot {
   weekStart:           string;
   weekEnd:             string;
-  coinsEarned:         number;
-  coinsSpent:          number;
+  dnEarned:            number;
+  dnSpent:             number;
   netFlow:             number;
   activeUsers:         number;
-  coinsPerUserPerDay:  number;
+  dnPerUserPerDay:     number;
 }
 
 export interface WeeklyAnalysis {
@@ -76,8 +76,8 @@ export interface Recommendation {
 
 export interface BalanceReport {
   inflation:          InflationLevel;
-  coinsPerUserPerDay: number;
-  gemsFlow:           GemsFlow;
+  dnPerUserPerDay: number;
+  piFlow:             PiFlow;
   riskLevel:          RiskLevel;
   recommendation:     string;
   metrics:            EconomyMetrics;
@@ -148,7 +148,7 @@ export async function getEconomyMetrics(periodDays = 7): Promise<EconomyMetrics>
 
   // ── DN$ distribution (gems removed — DN$ now tracked in walletsTable) ─────
   const totalGems = 0;
-  const gemsPerLeague = { div3: 0, div2: 0, pro: 0, champions: 0 };
+  const piPerLeague = { div3: 0, div2: 0, pro: 0, champions: 0 };
   const rarityDistribution = {
     common:    Math.floor(totalUsers * 0.5),
     uncommon:  Math.floor(totalUsers * 0.3),
@@ -156,18 +156,18 @@ export async function getEconomyMetrics(periodDays = 7): Promise<EconomyMetrics>
     legendary: Math.ceil(totalUsers * 0.05),
   };
 
-  const coinsEarnedPerDay   = totalEarned / periodDays;
-  const coinsSpentPerDay    = totalSpent  / periodDays;
-  const averageCoinsPerUser = totalUsers > 0 ? totalEarned / totalUsers : 0;
+  const dnEarnedPerDay   = totalEarned / periodDays;
+  const dnSpentPerDay    = totalSpent  / periodDays;
+  const averageDNPerUser = totalUsers > 0 ? totalEarned / totalUsers : 0;
 
   return {
-    coinsEarnedPerDay:    round2(coinsEarnedPerDay),
-    coinsSpentPerDay:     round2(coinsSpentPerDay),
-    netFlow:              round2(coinsEarnedPerDay - coinsSpentPerDay),
-    averageCoinsPerUser:  round2(averageCoinsPerUser),
+    dnEarnedPerDay:      round2(dnEarnedPerDay),
+    dnSpentPerDay:       round2(dnSpentPerDay),
+    netFlow:              round2(dnEarnedPerDay - dnSpentPerDay),
+    averageDNPerUser:    round2(averageDNPerUser),
     totalActiveUsers:     totalUsers,
-    gemsDistributedTotal: totalGems,
-    gemsPerLeague,
+    piDistributedTotal:  totalGems,
+    piPerLeague,
     rarityDistribution,
     periodDays,
     calculatedAt: new Date().toISOString(),
@@ -177,10 +177,10 @@ export async function getEconomyMetrics(periodDays = 7): Promise<EconomyMetrics>
 // ── Inflation Detection ───────────────────────────────────────────────────────
 
 /**
- * Classify the economy inflation state based on coins-per-user-per-day.
+ * Classify the economy inflation state based on DN$-per-user-per-day.
  */
 export function detectInflation(metrics: EconomyMetrics): InflationLevel {
-  const cpd = metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
+  const cpd = metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
   if (cpd > INFLATION_HIGH_THRESHOLD) return 'HIGH';
   if (cpd >= INFLATION_NORMAL_MIN)    return 'NORMAL';
   return 'LOW';
@@ -229,13 +229,13 @@ export function getSmartRecommendations(
   metrics: EconomyMetrics,
 ): Recommendation[] {
   const recs: Recommendation[] = [];
-  const cpd = metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
+  const cpd = metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
 
   if (level === 'HIGH') {
     recs.push({
       type:     'reduce_rewards',
       priority: 'HIGH',
-      message:  `Reduce post reward scaling by 25% due to inflation (${round2(cpd)} coins/user/day > ${INFLATION_HIGH_THRESHOLD})`,
+      message:  `Reduce post reward scaling by 25% due to inflation (${round2(cpd)} DN$/user/day > ${INFLATION_HIGH_THRESHOLD})`,
     });
     recs.push({
       type:     'reduce_rewards',
@@ -245,7 +245,7 @@ export function getSmartRecommendations(
     recs.push({
       type:     'adjust_shop',
       priority: 'MEDIUM',
-      message:  'Consider increasing shop item prices by 15–20% to absorb excess coins',
+      message:  'Consider increasing shop item prices by 15–20% to absorb excess DN$',
     });
     recs.push({
       type:     'adjust_caps',
@@ -256,7 +256,7 @@ export function getSmartRecommendations(
     recs.push({
       type:     'increase_rewards',
       priority: 'MEDIUM',
-      message:  `Boost match and post rewards by 10–15% — economy is under-powered (${round2(cpd)} coins/user/day < ${INFLATION_NORMAL_MIN})`,
+      message:  `Boost match and post rewards by 10–15% — economy is under-powered (${round2(cpd)} DN$/user/day < ${INFLATION_NORMAL_MIN})`,
     });
     recs.push({
       type:     'adjust_shop',
@@ -267,7 +267,7 @@ export function getSmartRecommendations(
     recs.push({
       type:     'no_action',
       priority: 'LOW',
-      message:  `Economy is balanced (${round2(cpd)} coins/user/day) — no scaling changes needed`,
+      message:  `Economy is balanced (${round2(cpd)} DN$/user/day) — no scaling changes needed`,
     });
   }
 
@@ -276,20 +276,20 @@ export function getSmartRecommendations(
 
 // ── Gems Flow ─────────────────────────────────────────────────────────────────
 
-function detectGemsFlow(metrics: EconomyMetrics): GemsFlow {
+function detectPiFlow(metrics: EconomyMetrics): PiFlow {
   if (metrics.totalActiveUsers < 5) return 'INSUFFICIENT_DATA';
-  const avgGems = metrics.gemsDistributedTotal / metrics.totalActiveUsers;
-  if (avgGems > 3)   return 'GROWING';
-  if (avgGems < 0.5) return 'DECLINING';
+  const avgPi = metrics.piDistributedTotal / metrics.totalActiveUsers;
+  if (avgPi > 3)   return 'GROWING';
+  if (avgPi < 0.5) return 'DECLINING';
   return 'STABLE';
 }
 
 // ── Risk Level ────────────────────────────────────────────────────────────────
 
-function computeRisk(level: InflationLevel, gemsFlow: GemsFlow): RiskLevel {
-  if (level === 'HIGH' && gemsFlow === 'GROWING') return 'HIGH';
-  if (level === 'HIGH' || gemsFlow === 'GROWING') return 'MEDIUM';
-  if (level === 'LOW'  && gemsFlow === 'DECLINING') return 'MEDIUM';
+function computeRisk(level: InflationLevel, piFlow: PiFlow): RiskLevel {
+  if (level === 'HIGH' && piFlow === 'GROWING') return 'HIGH';
+  if (level === 'HIGH' || piFlow === 'GROWING') return 'MEDIUM';
+  if (level === 'LOW'  && piFlow === 'DECLINING') return 'MEDIUM';
   return 'LOW';
 }
 
@@ -302,10 +302,10 @@ function computeRisk(level: InflationLevel, gemsFlow: GemsFlow): RiskLevel {
 export async function buildBalanceReport(): Promise<BalanceReport> {
   const metrics      = await getEconomyMetrics(7);
   const inflation    = detectInflation(metrics);
-  const gemsFlow     = detectGemsFlow(metrics);
-  const riskLevel    = computeRisk(inflation, gemsFlow);
+  const piFlow     = detectPiFlow(metrics);
+  const riskLevel    = computeRisk(inflation, piFlow);
   const recs         = getSmartRecommendations(inflation, metrics);
-  const cpd          = round2(metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1));
+  const cpd          = round2(metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1));
 
   const primaryRec = recs[0];
   let recommendation: string;
@@ -317,8 +317,8 @@ export async function buildBalanceReport(): Promise<BalanceReport> {
 
   return {
     inflation,
-    coinsPerUserPerDay: cpd,
-    gemsFlow,
+    dnPerUserPerDay: cpd,
+    piFlow,
     riskLevel,
     recommendation,
     metrics,
@@ -365,11 +365,11 @@ async function computeWeekSnapshot(startDate: Date, endDate: Date): Promise<Week
   return {
     weekStart:          dateStr(startDate),
     weekEnd:            dateStr(endDate),
-    coinsEarned:        earned,
-    coinsSpent:         spent,
+    dnEarned:           earned,
+    dnSpent:            spent,
     netFlow:            earned - spent,
     activeUsers,
-    coinsPerUserPerDay: round2(earned / activeUsers / 7),
+    dnPerUserPerDay: round2(earned / activeUsers / 7),
   };
 }
 
@@ -379,11 +379,11 @@ async function computeWeekSnapshot(startDate: Date, endDate: Date): Promise<Week
 function classifyTrend(current: WeeklySnapshot, previous: WeeklySnapshot | null): EconomyTrend {
   if (!previous) return 'Stable';
 
-  const change = previous.coinsPerUserPerDay > 0
-    ? (current.coinsPerUserPerDay - previous.coinsPerUserPerDay) / previous.coinsPerUserPerDay
+  const change = previous.dnPerUserPerDay > 0
+    ? (current.dnPerUserPerDay - previous.dnPerUserPerDay) / previous.dnPerUserPerDay
     : 0;
 
-  const cpd = current.coinsPerUserPerDay;
+  const cpd = current.dnPerUserPerDay;
 
   if (cpd > INFLATION_HIGH_THRESHOLD)  return 'Over-inflated';
   if (cpd < INFLATION_NORMAL_MIN / 2)  return 'Under-powered';
@@ -409,10 +409,10 @@ export async function getWeeklyAnalysis(): Promise<WeeklyAnalysis> {
   const trend = classifyTrend(currentWeek, previousWeek);
 
   let changePercent: number | null = null;
-  if (previousWeek.coinsPerUserPerDay > 0) {
+  if (previousWeek.dnPerUserPerDay > 0) {
     changePercent = round2(
-      ((currentWeek.coinsPerUserPerDay - previousWeek.coinsPerUserPerDay) /
-        previousWeek.coinsPerUserPerDay) * 100,
+      ((currentWeek.dnPerUserPerDay - previousWeek.dnPerUserPerDay) /
+        previousWeek.dnPerUserPerDay) * 100,
     );
   }
 

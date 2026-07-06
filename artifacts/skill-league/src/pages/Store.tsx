@@ -200,11 +200,11 @@ export default function Store() {
           <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
             <div className="text-sm font-bold text-muted-foreground">🆓 {t('store_free_ways_title')}</div>
             {[
-              { icon: '🎮', text: t('play'),             reward: `+${t('coins')}` },
-              { icon: '⚔️', text: t('pvp_quick'),        reward: `+${t('coins')} x2` },
-              { icon: '📅', text: t('daily_challenges'), reward: '+25–40 🪙' },
-              { icon: '📋', text: t('completed'),        reward: '+75–200 🪙' },
-              { icon: '🏆', text: t('leaderboard'),      reward: '+500–1000 🪙' },
+              { icon: '🎮', text: t('play'),             reward: '+DN$' },
+              { icon: '⚔️', text: t('pvp_quick'),        reward: '+DN$ x2' },
+              { icon: '📅', text: t('daily_challenges'), reward: '+25–40 DN$' },
+              { icon: '📋', text: t('completed'),        reward: '+75–200 DN$' },
+              { icon: '🏆', text: t('leaderboard'),      reward: '+500–1000 DN$' },
               { icon: '🔥', text: t('streak'),           reward: `+${t('reward_label')}` },
             ].map(row => (
               <div key={row.text} className="flex items-center gap-3">

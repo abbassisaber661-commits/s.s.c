@@ -27,9 +27,9 @@ export const ARENAS = [
     maxElo:         1099,
     description:    "Free entry. Low stakes — perfect for learning the game.",
     rewards: {
-      win:  { coinMultiplier: 1.5, xp: 60  },
-      draw: { coinMultiplier: 0.5, xp: 20  },
-      loss: { coinMultiplier: 0,   xp: 8   },
+      win:  { dnMultiplier: 1.5, xp: 60  },
+      draw: { dnMultiplier: 0.5, xp: 20  },
+      loss: { dnMultiplier: 0,   xp: 8   },
     },
   },
   {
@@ -45,9 +45,9 @@ export const ARENAS = [
     maxElo:         1399,
     description:    "50 coin entry. 2.5× win reward. Real stakes, real competition.",
     rewards: {
-      win:  { coinMultiplier: 2.5, xp: 136 },
-      draw: { coinMultiplier: 0.8, xp: 50  },
-      loss: { coinMultiplier: 0,   xp: 25  },
+      win:  { dnMultiplier: 2.5, xp: 136 },
+      draw: { dnMultiplier: 0.8, xp: 50  },
+      loss: { dnMultiplier: 0,   xp: 25  },
     },
   },
   {
@@ -63,9 +63,9 @@ export const ARENAS = [
     maxElo:         1699,
     description:    "200 coin entry. 3× win reward. High-skill competitive play.",
     rewards: {
-      win:  { coinMultiplier: 3.0, xp: 152 },
-      draw: { coinMultiplier: 1.0, xp: 50  },
-      loss: { coinMultiplier: 0,   xp: 25  },
+      win:  { dnMultiplier: 3.0, xp: 152 },
+      draw: { dnMultiplier: 1.0, xp: 50  },
+      loss: { dnMultiplier: 0,   xp: 25  },
     },
   },
   {
@@ -81,9 +81,9 @@ export const ARENAS = [
     maxElo:         9999,
     description:    "500 coin entry. 4× win reward. Top-tier elite competition.",
     rewards: {
-      win:  { coinMultiplier: 4.0, xp: 184 },
-      draw: { coinMultiplier: 1.2, xp: 50  },
-      loss: { coinMultiplier: 0,   xp: 25  },
+      win:  { dnMultiplier: 4.0, xp: 184 },
+      draw: { dnMultiplier: 1.2, xp: 50  },
+      loss: { dnMultiplier: 0,   xp: 25  },
     },
   },
 ];

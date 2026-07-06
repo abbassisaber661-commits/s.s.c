@@ -31,7 +31,7 @@ const router = Router();
 //  GET /system/economy/balance-report
 //
 //  Returns a complete snapshot:
-//    { inflation, coinsPerUserPerDay, gemsFlow, riskLevel, recommendation, ... }
+//    { inflation, dnPerUserPerDay, piFlow, riskLevel, recommendation, ... }
 
 router.get('/system/economy/balance-report', async (req, res) => {
   try {
@@ -92,8 +92,8 @@ router.get('/system/economy/scaling-preview', async (req, res) => {
     res.json({
       inflation,
       scalingFactor: factor,
-      coinsPerUserPerDay: Math.round(
-        (metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1)) * 100,
+      dnPerUserPerDay: Math.round(
+        (metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1)) * 100,
       ) / 100,
       preview,
       calculatedAt: new Date().toISOString(),

@@ -13,7 +13,7 @@ export interface SeasonRecord {
   finalElo: number;
   rank: string;
   rankColor: string;
-  coinsEarned: number;
+  dnEarned: number;
   xpEarned: number;
 }
 
@@ -24,18 +24,18 @@ export interface SeasonTier {
   minElo: number;
   color: string;
   icon: string;
-  endRewardCoins: number;
+  endRewardDN: number;
   endRewardXp: number;
   description: string;
 }
 
 export const SEASON_TIERS: SeasonTier[] = [
-  { rank: 'Bronze',   minElo: 0,    color: '#CD7F32', icon: '🥉', endRewardCoins: 50,   endRewardXp: 100,  description: 'Keep climbing!' },
-  { rank: 'Silver',   minElo: 1050, color: '#A8A9AD', icon: '🥈', endRewardCoins: 150,  endRewardXp: 250,  description: 'Solid player' },
-  { rank: 'Gold',     minElo: 1150, color: '#FFD700', icon: '🥇', endRewardCoins: 300,  endRewardXp: 500,  description: 'Above average' },
-  { rank: 'Platinum', minElo: 1300, color: '#3AB4FF', icon: '💎', endRewardCoins: 600,  endRewardXp: 800,  description: 'Elite tier' },
-  { rank: 'Diamond',  minElo: 1500, color: '#B44FFF', icon: '💠', endRewardCoins: 1000, endRewardXp: 1200, description: 'Top 5%' },
-  { rank: 'Legend',   minElo: 1800, color: '#FF3A5E', icon: '👑', endRewardCoins: 2000, endRewardXp: 2000, description: 'Best of the best' },
+  { rank: 'Bronze',   minElo: 0,    color: '#CD7F32', icon: '🥉', endRewardDN: 50,   endRewardXp: 100,  description: 'Keep climbing!' },
+  { rank: 'Silver',   minElo: 1050, color: '#A8A9AD', icon: '🥈', endRewardDN: 150,  endRewardXp: 250,  description: 'Solid player' },
+  { rank: 'Gold',     minElo: 1150, color: '#FFD700', icon: '🥇', endRewardDN: 300,  endRewardXp: 500,  description: 'Above average' },
+  { rank: 'Platinum', minElo: 1300, color: '#3AB4FF', icon: '💎', endRewardDN: 600,  endRewardXp: 800,  description: 'Elite tier' },
+  { rank: 'Diamond',  minElo: 1500, color: '#B44FFF', icon: '💠', endRewardDN: 1000, endRewardXp: 1200, description: 'Top 5%' },
+  { rank: 'Legend',   minElo: 1800, color: '#FF3A5E', icon: '👑', endRewardDN: 2000, endRewardXp: 2000, description: 'Best of the best' },
 ];
 
 export function getSeasonTier(elo: number): SeasonTier {

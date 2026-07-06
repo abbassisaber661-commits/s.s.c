@@ -1476,7 +1476,7 @@ export default function MatchArena() {
         rounds:       [],
       }).then(serverMatch => {
         if (serverMatch?.rewards) {
-          const { lp: lpR, coins: coinsR } = serverMatch.rewards; // coinsR = server DN$ reward shape
+          const { lp: lpR, dn: coinsR } = serverMatch.rewards; // coinsR = server DN$ reward shape
           // Sync authoritative LP from server into localStorage
           const stored = loadLeagueStats();
           stored.lp = lpR.newLp;

@@ -172,7 +172,7 @@ export interface Tournament {
   type:         string;
   status:       string;
   size:         number;
-  rewardCoins:  number;
+  rewardDN:     number;
   rewardXp:     number;
   participants: string[];
   startAt:      string | null;

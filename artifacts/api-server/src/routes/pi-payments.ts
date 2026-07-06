@@ -19,13 +19,13 @@ const router = Router();
 // only tracks/displays state so the UI can show pending vs. confirmed vs.
 // failed earnings, and keeps wallets.totalEarnedPi / pendingPi / availablePi
 // in sync for gift receivers.
-const PI_PRODUCTS: Record<string, { name: string; coins?: number; vipTier?: string; description: string }> = {
+const PI_PRODUCTS: Record<string, { name: string; dn?: number; vipTier?: string; description: string }> = {
   "vip_silver":    { name: "VIP Silver (30 days)",   vipTier: "silver",   description: "Silver VIP membership" },
   "vip_gold":      { name: "VIP Gold (30 days)",     vipTier: "gold",     description: "Gold VIP membership" },
   "vip_diamond":   { name: "VIP Diamond (30 days)",  vipTier: "diamond",  description: "Diamond VIP membership" },
-  "coins_250":     { name: "250 DN$ Bundle",         coins: 250,          description: "250 DN$ in-game points" },
-  "coins_500":     { name: "500 DN$ Bundle",         coins: 500,          description: "500 DN$ in-game points" },
-  "coins_1000":    { name: "1000 DN$ Bundle",        coins: 1000,         description: "1000 DN$ in-game points" },
+  "coins_250":     { name: "250 DN$ Bundle",         dn: 250,          description: "250 DN$ in-game points" },
+  "coins_500":     { name: "500 DN$ Bundle",         dn: 500,          description: "500 DN$ in-game points" },
+  "coins_1000":    { name: "1000 DN$ Bundle",        dn: 1000,         description: "1000 DN$ in-game points" },
   "tournament_entry": { name: "Tournament Entry",                         description: "Entry to paid tournament" },
 };
 
@@ -196,12 +196,12 @@ router.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) =>
         body: `${pending.amount} π`,
         data: { receiverId, amount: pending.amount, emoji, currency: "pi" },
       }).catch(() => {});
-    } else if (productInfo?.coins) {
-      // Award DN$ for Pi product purchases (coins → DN$ migration)
+    } else if (productInfo?.dn) {
+      // Award DN$ for Pi product purchases
       const { awardDN } = await import('../lib/dn-service.js');
       await awardDN(
         pending.playerId,
-        productInfo.coins,
+        productInfo.dn,
         'pi_purchase',
         `Pi purchase: ${productInfo.name}`,
       ).catch(() => {});

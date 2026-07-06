@@ -56,7 +56,7 @@ export const LEAGUE_TO_ECONOMY_TIER: Record<LeagueId, string> = {
 };
 
 // Pi entry costs: training=0, div2=0.2, pro=0.5, champions=1.0
-// Gems removed — see economy-engine.ts for Pi costs.
+// Pi costs tracked in pi_payments — see economy-engine.ts.
 
 export interface League {
   id:             LeagueId;
@@ -68,7 +68,7 @@ export interface League {
   description:    string;
   nextLeague:     LeagueId | null;
   prevLeague:     LeagueId | null;
-  slotCount:      number;    // lobby size (20 for coins/pro, 8 for elite/champion)
+  slotCount:      number;    // lobby size (20 for div3/pro, 8 for elite/champion)
 }
 
 /** Snapshot entry saved for each participant when a season ends. */
@@ -90,7 +90,7 @@ export interface FinalRanking {
 
 export interface Season {
   id:               string;
-  name:             string;   // e.g. "Season 1 — Coins League"
+  name:             string;   // e.g. "Season 1 — Training League"
   number:           number;
   leagueId:         LeagueId;
   startAt:          string;   // ISO

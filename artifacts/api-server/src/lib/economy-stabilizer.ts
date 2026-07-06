@@ -20,17 +20,17 @@ import { eq, and, gte, lte, count, sum, desc } from 'drizzle-orm';
 // ── 1. Hard Caps ──────────────────────────────────────────────────────────────
 
 export const HARD_CAPS = {
-  /** Maximum coins a single user may earn in one calendar day (all sources combined). */
-  maxCoinsPerUserPerDay: 50,
+  /** Maximum DN$ a single user may earn in one calendar day (all sources combined). */
+  maxDNPerUserPerDay: 50,
 
-  /** Maximum coins awarded per single reward event (one match, one post, etc.). */
-  maxCoinsPerEvent: 10,
+  /** Maximum DN$ awarded per single reward event (one match, one post, etc.). */
+  maxDNPerEvent: 10,
 
-  /** Maximum gems a single user may accumulate in one season. */
-  maxGemsPerSeason: 20,
+  /** Maximum Pi a single user may accumulate in one season. */
+  maxPiPerSeason: 20,
 
-  /** Maximum login-reward coins per day (always 1, immune to inflation scaling). */
-  maxLoginCoinsPerDay: 1,
+  /** Maximum login-reward DN$ per day (always 1, immune to inflation scaling). */
+  maxLoginDNPerDay: 1,
 
   /** Maximum interactions (likes+comments) counted toward rewards per day. */
   maxInteractionsPerDay: 10,
@@ -71,7 +71,7 @@ export interface NormalizeResult {
 
 /**
  * Normalize a reward through all caps.
- * Call this BEFORE crediting any coins to a user.
+ * Call this BEFORE crediting any DN$ to a user.
  *
  * Example:
  *   const { allowed, finalAmount } = await normalizeReward({ playerId, amount: 6, source: 'match_result' });
@@ -82,12 +82,12 @@ export async function normalizeReward(input: NormalizeInput): Promise<NormalizeR
 
   // Login reward: always fixed, skip further caps
   if (source === 'daily_login') {
-    const final = Math.min(amount, HARD_CAPS.maxLoginCoinsPerDay);
+    const final = Math.min(amount, HARD_CAPS.maxLoginDNPerDay);
     return { allowed: true, finalAmount: final, cappedBy: null, reason: 'Login reward — fixed' };
   }
 
   // Per-event cap
-  const perEventCapped = Math.min(amount, HARD_CAPS.maxCoinsPerEvent);
+  const perEventCapped = Math.min(amount, HARD_CAPS.maxDNPerEvent);
   if (perEventCapped !== amount) {
     // Soft cap applied — still allowed but reduced
   }
@@ -117,14 +117,14 @@ export async function normalizeReward(input: NormalizeInput): Promise<NormalizeR
     }
   }
 
-  const remaining = Math.max(0, HARD_CAPS.maxCoinsPerUserPerDay - dailyEarned);
+  const remaining = Math.max(0, HARD_CAPS.maxDNPerUserPerDay - dailyEarned);
 
   if (remaining === 0) {
     return {
       allowed:     false,
       finalAmount: 0,
-      cappedBy:    'maxCoinsPerUserPerDay',
-      reason:      `Daily cap reached (${HARD_CAPS.maxCoinsPerUserPerDay} coins/day)`,
+      cappedBy:    'maxDNPerUserPerDay',
+      reason:      `Daily DN$ cap reached (${HARD_CAPS.maxDNPerUserPerDay}/day)`,
     };
   }
 
@@ -133,7 +133,7 @@ export async function normalizeReward(input: NormalizeInput): Promise<NormalizeR
   return {
     allowed:     true,
     finalAmount,
-    cappedBy:    finalAmount < amount ? (perEventCapped < amount ? 'maxCoinsPerEvent' : 'maxCoinsPerUserPerDay') : null,
+    cappedBy:    finalAmount < amount ? (perEventCapped < amount ? 'maxDNPerEvent' : 'maxDNPerUserPerDay') : null,
     reason:      finalAmount < amount
       ? `Capped from ${amount} → ${finalAmount}`
       : 'Within all limits',
@@ -216,7 +216,7 @@ export async function checkExploit(
 // ── 4. Economy Stability Score (0–100) ───────────────────────────────────────
 
 export interface StabilityComponents {
-  inflationScore:  number;   // 0–30: penalises high coins/user/day
+  inflationScore:  number;   // 0–30: penalises high DN$/user/day
   spendScore:      number;   // 0–25: rewards healthy coin velocity (spend / earn)
   gemScore:        number;   // 0–20: rewards balanced gem distribution
   exploitScore:    number;   // 0–15: penalises recent suspicious events
@@ -229,9 +229,9 @@ export interface StabilityReport {
   grade:          'A' | 'B' | 'C' | 'D' | 'F';
   label:          string;
   components:     StabilityComponents;
-  coinsPerUserPerDay: number;
+  dnPerUserPerDay: number;
   totalPlayers:   number;
-  spendRatio:     number;     // coinsSpent / coinsEarned (0–1+)
+  spendRatio:     number;     // dnSpent / dnEarned (0–1+)
   recentExploitFlags: number;
   recommendation: string;
   calculatedAt:   string;
@@ -283,7 +283,7 @@ export async function getStabilityReport(): Promise<StabilityReport> {
     db.select({ cnt: count() })
       .from(walletTransactionsTable)
       .where(and(
-        gte(walletTransactionsTable.amount, HARD_CAPS.maxCoinsPerEvent * 3),
+        gte(walletTransactionsTable.amount, HARD_CAPS.maxDNPerEvent * 3),
         gte(walletTransactionsTable.createdAt, since7d),
       )),
   ]);
@@ -293,17 +293,17 @@ export async function getStabilityReport(): Promise<StabilityReport> {
   const totalPlayers = Math.max(playerRows.length, 1);
   const exploitFlags = Number(exploitRows[0]?.cnt ?? 0);
 
-  const coinsPerUserPerDay = (totalEarned / totalPlayers) / 7;
+  const dnPerUserPerDay = (totalEarned / totalPlayers) / 7;
   const spendRatio = totalEarned > 0 ? totalSpent / totalEarned : 0;
 
   // ── Inflation score (0–30) ─────────────────────────────────────────────────
-  // Perfect: 2–7 coins/user/day → 30 pts
+  // Perfect: 2–7 DN$/user/day → 30 pts
   // HIGH inflation (>10) or ZERO → penalised
   let inflationScore: number;
-  if (coinsPerUserPerDay === 0)                inflationScore = 10; // no activity
-  else if (coinsPerUserPerDay <= 7)            inflationScore = 30;
-  else if (coinsPerUserPerDay <= 10)           inflationScore = 22;
-  else if (coinsPerUserPerDay <= 15)           inflationScore = 12;
+  if (dnPerUserPerDay === 0)                inflationScore = 10; // no activity
+  else if (dnPerUserPerDay <= 7)            inflationScore = 30;
+  else if (dnPerUserPerDay <= 10)           inflationScore = 22;
+  else if (dnPerUserPerDay <= 15)           inflationScore = 12;
   else                                         inflationScore = 5;
 
   // ── Spend score (0–25) ────────────────────────────────────────────────────
@@ -316,7 +316,7 @@ export async function getStabilityReport(): Promise<StabilityReport> {
   else                                             spendScore = 5;  // no spending
 
   // ── DN$ velocity score (0–20) — replaces legacy gem score ───────────────
-  // Gems are removed; award neutral mid-range points since we no longer track per-player gem balance.
+  // Pi tracked in pi_payments table; award neutral mid-range points.
   const gemScore = 10; // neutral — kept in StabilityComponents for API compat
 
   // ── Exploit score (0–15) ─────────────────────────────────────────────────
@@ -340,7 +340,7 @@ export async function getStabilityReport(): Promise<StabilityReport> {
 
   // Recommendation
   let recommendation = gradeLabel(g);
-  if (coinsPerUserPerDay > 10)
+  if (dnPerUserPerDay > 10)
     recommendation += ' — خفّض مكافآت المباريات والمنشورات';
   else if (spendRatio < 0.2)
     recommendation += ' — خفّض أسعار المتجر لتحفيز الإنفاق';
@@ -359,7 +359,7 @@ export async function getStabilityReport(): Promise<StabilityReport> {
       activityScore,
       total,
     },
-    coinsPerUserPerDay: Math.round(coinsPerUserPerDay * 100) / 100,
+    dnPerUserPerDay: Math.round(dnPerUserPerDay * 100) / 100,
     totalPlayers,
     spendRatio:         Math.round(spendRatio * 1000) / 1000,
     recentExploitFlags: exploitFlags,
@@ -379,7 +379,7 @@ export interface SafeRewardResult {
 
 /**
  * Full safety gate: run exploit check then normalize.
- * Use this as the single entry point before awarding any coins.
+ * Use this as the single entry point before awarding any DN$.
  *
  * Example:
  *   const result = await safeReward({ playerId, amount: 6, source: 'match_result' });

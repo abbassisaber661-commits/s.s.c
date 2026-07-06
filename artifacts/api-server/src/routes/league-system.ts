@@ -8,7 +8,7 @@
  *   GET  /league-system/leagues/:id/season          → active season
  *   GET  /league-system/leagues/:id/standings       → season standings
  *   GET  /league-system/leagues/:id/prize-pool      → prize breakdown
- *   POST /league-system/leagues/:id/join            → join league (checks gems)
+ *   POST /league-system/leagues/:id/join            → join league (checks Pi balance)
  *   GET  /league-system/players/:pid/status         → player's league memberships
  *   GET  /league-system/players/:pid/active-league  → currently active league (1-per-season)
  *   GET  /league-system/players/:pid/matches        → player's match schedule

@@ -9,7 +9,7 @@ import { getStoredPlayerId } from '@/lib/apiClient';
 import {
   MatchType, BotDifficulty,
   getDailyBotCount, DAILY_BOT_LIMIT,
-  getPvpRewardCoins, getPvpRewardXp, getEloChange,
+  getPvpRewardDN, getPvpRewardXp, getEloChange,
 } from '@/lib/matchmaking';
 import { LEAGUES, LeagueId } from '@/lib/game-engine';
 import { getLevelTitle } from '@/lib/xp';
@@ -69,7 +69,7 @@ export default function PvP() {
     if (!matchEnd) return;
     const stake = ARENAS.find(a => a.id === matchEnd.leagueId)?.stake ?? 30;
     const mt: MatchType = matchEnd.isBot ? 'bot' : 'pvp';
-    const dn     = getPvpRewardCoins(stake, matchEnd.won, matchEnd.draw, mt);
+    const dn     = getPvpRewardDN(stake, matchEnd.won, matchEnd.draw, mt);
     const xp     = getPvpRewardXp(matchEnd.won, matchEnd.draw, mt);
     const eloChg = getEloChange(matchEnd.won, matchEnd.draw, elo, matchInfo?.playerB.elo ?? elo, mt);
     setDnEarned(dn);
@@ -157,12 +157,12 @@ export default function PvP() {
                   <div>
                     <div className="font-bold text-lg" style={{ color: a.color }}>{a.icon} حلبة {a.label}</div>
                     <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
-                      <span>رهان: <span className="text-yellow-400 font-bold">{a.stake} 🪙</span></span>
+                      <span>رهان: <span className="text-yellow-400 font-bold">{a.stake} DN$</span></span>
                       <span>·</span>
-                      <span className="text-green-400 font-bold">فوز PvP: +{getPvpRewardCoins(a.stake, true, false, 'pvp')} 🪙</span>
+                      <span className="text-green-400 font-bold">فوز PvP: +{getPvpRewardDN(a.stake, true, false, 'pvp')} DN$</span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
-                      فوز بوت: +{getPvpRewardCoins(a.stake, true, false, 'bot')} 🪙
+                      فوز بوت: +{getPvpRewardDN(a.stake, true, false, 'bot')} DN$
                     </div>
                   </div>
                   <Swords className="w-6 h-6 opacity-70" style={{ color: a.color }} />

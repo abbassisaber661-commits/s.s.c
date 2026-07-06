@@ -55,8 +55,8 @@ export interface AuditReport {
     details:  AuditCheck[];
   };
   economy: {
-    coins: LinkStatus;
-    gems:  LinkStatus;
+    dn:    LinkStatus;
+    pi:    LinkStatus;
     shop:  LinkStatus;
     details: AuditCheck[];
   };
@@ -91,7 +91,7 @@ interface IntegrationPoint {
   description: string;
   hookFile:    string;
   hookFn:      string;
-  probeType:   'coin_tx_source' | 'daily_field' | 'store_purchase' | 'gems_tx' | 'table_rows';
+  probeType:   'dn_tx_source' | 'daily_field' | 'store_purchase' | 'pi_tx' | 'table_rows';
   probeKey:    string;
   severity:    'critical' | 'warning' | 'info';
 }
@@ -105,7 +105,7 @@ const INTEGRATION_MANIFEST: IntegrationPoint[] = [
     description: 'Post creation triggers daily post-coin reward (1 Coin on 2nd post/day)',
     hookFile:    'routes/community.ts',
     hookFn:      'recordPost(authorId)',
-    probeType:   'coin_tx_source',
+    probeType:   'dn_tx_source',
     probeKey:    'daily_posts',
     severity:    'warning',
   },
@@ -137,8 +137,8 @@ const INTEGRATION_MANIFEST: IntegrationPoint[] = [
     subcategory: 'interactions',
     description: '1 Coin awarded when author receives 5 likes + 5 comments in a day',
     hookFile:    'routes/community.ts',
-    hookFn:      'recordInteraction → awardCoins(daily_interactions)',
-    probeType:   'coin_tx_source',
+    hookFn:      'recordInteraction → awardDN(daily_interactions)',
+    probeType:   'dn_tx_source',
     probeKey:    'daily_interactions',
     severity:    'info',
   },
@@ -151,7 +151,7 @@ const INTEGRATION_MANIFEST: IntegrationPoint[] = [
     description: '1 Coin awarded once per day when a full match is completed',
     hookFile:    'routes/matches.ts',
     hookFn:      'claimMatchReward(pAId)',
-    probeType:   'coin_tx_source',
+    probeType:   'dn_tx_source',
     probeKey:    'daily_match',
     severity:    'critical',
   },
@@ -162,50 +162,50 @@ const INTEGRATION_MANIFEST: IntegrationPoint[] = [
     description: '1 Coin awarded once per day on first login (password, guest, or Pi)',
     hookFile:    'routes/auth.ts',
     hookFn:      'claimLoginReward(player.id)',
-    probeType:   'coin_tx_source',
+    probeType:   'dn_tx_source',
     probeKey:    'daily_login',
     severity:    'critical',
   },
   {
-    id:          'season_end_gems',
+    id:          'season_end_pi',
     category:    'game',
     subcategory: 'seasons',
-    description: 'Gems distributed to top-ranked real players when a season ends',
+    description: 'Pi distributed to top-ranked real players when a season ends',
     hookFile:    'routes/league-system.ts',
-    hookFn:      'awardSeasonEndGems(leagueId)',
-    probeType:   'gems_tx',
+    hookFn:      'awardSeasonEndPi(leagueId)',
+    probeType:   'pi_tx',
     probeKey:    'season_end',
     severity:    'warning',
   },
 
   // ── Economy ───────────────────────────────────────────────────────────────
   {
-    id:          'coins_earn_pipeline',
+    id:          'dn_earn_pipeline',
     category:    'economy',
-    subcategory: 'coins',
+    subcategory: 'dn',
     description: 'coin_transactions table records all earn events correctly',
     hookFile:    'lib/daily-rewards.ts',
-    hookFn:      'awardCoins()',
-    probeType:   'coin_tx_source',
+    hookFn:      'awardDN()',
+    probeType:   'dn_tx_source',
     probeKey:    'daily_login',
     severity:    'critical',
   },
   {
-    id:          'gems_earn_pipeline',
+    id:          'pi_earn_pipeline',
     category:    'economy',
-    subcategory: 'gems',
-    description: 'Gems are stored in playersTable.gems (DB column, not JSON file)',
+    subcategory: 'pi',
+    description: 'Pi rewards are tracked in pi_payments table',
     hookFile:    'lib/audit-engine.ts (DB probe)',
-    hookFn:      'playersTable.gems column',
+    hookFn:      'pi_payments table',
     probeType:   'table_rows',
-    probeKey:    'gems_column',
+    probeKey:    'pi_payments',
     severity:    'critical',
   },
   {
     id:          'shop_coin_deduction',
     category:    'economy',
     subcategory: 'shop',
-    description: 'Shop purchases deduct coins and are recorded in store_purchases + coin_transactions',
+    description: 'Shop purchases deduct DN$ and are recorded in store_purchases + coin_transactions',
     hookFile:    'lib/shop-service.ts',
     hookFn:      'purchaseShopItem()',
     probeType:   'store_purchase',
@@ -215,7 +215,7 @@ const INTEGRATION_MANIFEST: IntegrationPoint[] = [
   {
     id:          'daily_economy_table',
     category:    'economy',
-    subcategory: 'coins',
+    subcategory: 'dn',
     description: 'user_daily_economy table exists and enforces per-day limits',
     hookFile:    'lib/daily-rewards.ts',
     hookFn:      'getOrCreateDailyRecord()',
@@ -245,7 +245,7 @@ async function probeCoinTxSource(source: string): Promise<{ count: number; lastA
   }
 }
 
-async function probeGemsTx(source: string): Promise<{ count: number }> {
+async function probePiTx(source: string): Promise<{ count: number }> {
   try {
     const rows = await db
       .select({ n: count() })
@@ -278,7 +278,7 @@ async function probeDailyField(field: 'likes_received' | 'comments_received'): P
 
 async function probeTableRows(key: string): Promise<{ rowCount: number; ok: boolean }> {
   try {
-    if (key === 'gems_column') {
+    if (key === 'pi_payments') {
       // gems removed — check DN$ wallet table instead
       const [r] = await db.select({ n: count() }).from(walletTransactionsTable);
       return { rowCount: r?.n ?? 0, ok: (r?.n ?? 0) >= 0 };
@@ -312,7 +312,7 @@ interface ProbeResult {
 
 async function runProbe(point: IntegrationPoint): Promise<ProbeResult> {
   switch (point.probeType) {
-    case 'coin_tx_source': {
+    case 'dn_tx_source': {
       const r = await probeCoinTxSource(point.probeKey);
       if (r.count > 0) {
         return {
@@ -328,8 +328,8 @@ async function runProbe(point: IntegrationPoint): Promise<ProbeResult> {
       };
     }
 
-    case 'gems_tx': {
-      const r = await probeGemsTx(point.probeKey);
+    case 'pi_tx': {
+      const r = await probePiTx(point.probeKey);
       if (r.count > 0) {
         return {
           status:  'linked',
@@ -541,8 +541,8 @@ export async function runFullAudit(): Promise<AuditReport> {
     },
 
     economy: {
-      coins: aggregateStatus(coinChecks),
-      gems:  aggregateStatus(gemChecks),
+      dn:    aggregateStatus(coinChecks),
+      pi:    aggregateStatus(gemChecks),
       shop:  aggregateStatus(shopChecks),
       details: economyChecks,
     },

@@ -10,7 +10,7 @@ export type TxType =
   | 'spend_tournament'
   | 'spend_boost'
   | 'spend_store'
-  | 'purchase_coins';
+  | 'purchase_dn';
 
 export interface Transaction {
   id: string;
@@ -55,7 +55,7 @@ export function getTxIcon(type: TxType): string {
     spend_tournament: '🏆',
     spend_boost:      '🔥',
     spend_store:      '🛒',
-    purchase_coins:   'π',
+    purchase_dn:     'π',
   };
   return icons[type] ?? '💰';
 }

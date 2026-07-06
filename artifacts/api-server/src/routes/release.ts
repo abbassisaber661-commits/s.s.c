@@ -10,7 +10,7 @@ const RC_DATE = "2026-05-29";
 const CHECKLIST = [
   { id: "auth",       label: "نظام تسجيل الدخول",        status: "done",    note: "Google + Pi + Guest" },
   { id: "matchmaking",label: "نظام المباريات",            status: "done",    note: "PvP + Bots + Tournaments" },
-  { id: "economy",    label: "نظام العملات",              status: "done",    note: "Coins + Transactions" },
+  { id: "economy",    label: "نظام DN$",                  status: "done",    note: "DN$ + Transactions" },
   { id: "vip",        label: "اشتراك VIP عبر Pi",        status: "done",    note: "3 مستويات مفعّلة" },
   { id: "store",      label: "المتجر + Pi",               status: "done",    note: "عناصر مدفوعة بـ Pi" },
   { id: "anticheat",  label: "Anti-Cheat",                status: "done",    note: "Score + Bot + Multi-account" },

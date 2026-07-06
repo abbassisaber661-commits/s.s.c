@@ -21,7 +21,7 @@ export default function WeeklyMissions() {
   const daysLeft = daysUntilNextWeek();
   const completedCount = wc.completedIds.length;
 
-  const totalCoins = missions.reduce((s, m) => s + m.rewardDN, 0);
+  const totalDN = missions.reduce((s, m) => s + m.rewardDN, 0);
   const totalXp    = missions.reduce((s, m) => s + m.rewardXp, 0);
 
   return (
@@ -54,7 +54,7 @@ export default function WeeklyMissions() {
             <div className="text-sm font-bold">Weekly Missions</div>
             <div className="text-xs text-muted-foreground">{thisWeek.replace('-W', ' · Week ')}</div>
             <div className="flex items-center gap-3 mt-1">
-              <span className="text-xs text-yellow-400 font-semibold">Up to {totalCoins} 🪙</span>
+              <span className="text-xs text-yellow-400 font-semibold">Up to {totalDN} DN$</span>
               <span className="text-xs text-purple-400 font-semibold">Up to {totalXp} XP</span>
             </div>
           </div>

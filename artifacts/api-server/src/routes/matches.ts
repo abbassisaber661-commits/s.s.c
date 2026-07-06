@@ -79,18 +79,18 @@ function levelFromXp(xp: number): number {
 
 // Mirrors league-progression.ts coin calc
 function calcCoinsForMatch(score: number, rank: number, accuracyFraction: number, tier: string): number {
-  let coins = 1;
-  if      (rank === 1) coins += 3;
-  else if (rank === 2) coins += 2;
-  else if (rank === 3) coins += 1;
-  if      (accuracyFraction >= 1.0) coins += 2;
-  else if (accuracyFraction >= 0.8) coins += 1;
+  let dn = 1;
+  if      (rank === 1) dn += 3;
+  else if (rank === 2) dn += 2;
+  else if (rank === 3) dn += 1;
+  if      (accuracyFraction >= 1.0) dn += 2;
+  else if (accuracyFraction >= 0.8) dn += 1;
   if (tier !== 'training') {
     const base     = Math.floor(score / 12);
     const winBonus = rank === 1 ? 60 : rank === 2 ? 30 : rank === 3 ? 10 : 0;
-    coins += base + winBonus;
+    dn += base + winBonus;
   }
-  return coins;
+  return dn;
 }
 
 // ── UTC date helpers ─────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ router.get("/matches", async (req, res) => {
 //  bestStreak — longest answer streak during the match
 //
 //  1. Enforces 1 match per calendar day (UTC) per playerAId → 429 if exceeded
-//  2. Calculates LP / XP / Coins server-side
+//  2. Calculates LP / XP / DN$ server-side
 //  3. Persists updates to players table
 //  4. Returns full rewards breakdown
 
@@ -332,12 +332,12 @@ router.get("/tournaments", async (req, res) => {
 
 router.post("/tournaments", async (req, res) => {
   try {
-    const { name, type, size, rewardDn, rewardCoins, rewardXp, startAt, endAt } = req.body as Record<string, unknown>;
+    const { name, type, size, rewardDn, rewardCoins: rewardCoins_legacy, rewardXp, startAt, endAt } = req.body as Record<string, unknown>;
     if (!name || !startAt) { res.status(400).json({ error: "missing fields" }); return; }
     const [t] = await db.insert(tournamentsTable).values({
       id: nanoid(), name: String(name), type: String(type || 'daily'),
       status: 'open', size: Number(size) || 8,
-      rewardDn: Number(rewardDn ?? rewardCoins) || 500, rewardXp: Number(rewardXp) || 300,
+      rewardDn: Number(rewardDn ?? rewardCoins_legacy) || 500, rewardXp: Number(rewardXp) || 300,
       startAt: new Date(String(startAt)),
       endAt: endAt ? new Date(String(endAt)) : undefined,
     }).returning();

@@ -271,7 +271,7 @@ export default function Seasons() {
                       مكافأة نهاية الموسم
                     </div>
                     <div className="flex items-center gap-3 text-sm font-black">
-                      <span className="text-yellow-400">+{tier.endRewardCoins} 🪙</span>
+                      <span className="text-yellow-400">+{tier.endRewardDN} DN$</span>
                       <span className="text-purple-400">+{tier.endRewardXp} XP</span>
                     </div>
                   </div>
@@ -308,7 +308,7 @@ export default function Seasons() {
                           <div className="text-xs text-white/30">{t.minElo}+ ELO</div>
                         </div>
                         <div className="text-right text-xs">
-                          <div className="text-yellow-400 font-bold">{t.endRewardCoins} 🪙</div>
+                          <div className="text-yellow-400 font-bold">{t.endRewardDN} DN$</div>
                           <div className="text-purple-400">{t.endRewardXp} XP</div>
                         </div>
                         {t.rank === tier.rank && (

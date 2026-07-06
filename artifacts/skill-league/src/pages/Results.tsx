@@ -208,7 +208,7 @@ function ZoneIndicator({ rank, total, lc }: { rank: number; total: number; lc: s
 
 export default function Results() {
   const [, go] = useLocation();
-  const { addCoins } = useGame();
+  const { addDN } = useGame();
 
   const [result, setResult] = useState<MatchResult | null>(null);
   const [showBoard, setShowBoard] = useState(false);
@@ -226,7 +226,7 @@ export default function Results() {
           .sort((a, b) => b.score - a.score);
         const rank = ranked.findIndex((p) => p.name === r.playerName) + 1;
         const prize = getPrize(rank, ranked.length, r.league);
-        if (prize > 0) addCoins(prize);
+        if (prize > 0) addDN(prize);
       } catch (_) { /* ignore */ }
     }
     setTimeout(() => setShowBoard(true), 900);
@@ -388,7 +388,7 @@ export default function Results() {
 
             {prize > 0 && (
               <RewardRow
-                icon="🪙"
+                icon="💰"
                 label="DN$ مكتسبة"
                 amount={`+${prize} DN$`}
                 color="#fbbf24"
@@ -509,7 +509,7 @@ export default function Results() {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           {rankPrize > 0 && (
-                            <span className="text-[10px] font-bold text-yellow-400">+{rankPrize}🪙</span>
+                            <span className="text-[10px] font-bold text-yellow-400">+{rankPrize} DN$</span>
                           )}
                           <span className="text-[10px] text-white/25">+{rankXp} XP</span>
                         </div>

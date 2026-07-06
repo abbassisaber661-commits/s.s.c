@@ -459,12 +459,12 @@ export const api = {
   daily: {
     status: (playerId: string) =>
       get<{
-        coins: number;
+        dn: number;
         tasks: { id: string; completed: boolean; reward: number }[];
       }>(`/daily/status/${playerId}`),
 
     claim: (playerId: string, taskId: string) =>
-      post<{ reward: number; total: number; awarded: boolean; coins: number }>(
+      post<{ reward: number; total: number; awarded: boolean; dn: number }>(
         `/daily/claim`,
         { playerId, taskId },
       ),
@@ -490,13 +490,13 @@ export const api = {
       rewards?: {
         lp: { newLp: number; oldLp: number; delta: number; oldTier: string; newTier: string };
         xp: { gained: number; oldXp: number; newXp: number; oldLevel: number; newLevel: number; levelUp: boolean };
-        coins: { earned: number; oldCoins: number; newCoins: number };
+        dn: { earned: number; oldDN: number; newDN: number };
       };
       [key: string]: unknown;
     }>("/matches", data),
 
     list: (playerId: string) =>
-      get<{ matchId: string; result: string; coins: number; xp: number; createdAt: string }[]>(
+      get<{ matchId: string; result: string; dn: number; xp: number; createdAt: string }[]>(
         `/matches?playerId=${playerId}`,
       ),
   },

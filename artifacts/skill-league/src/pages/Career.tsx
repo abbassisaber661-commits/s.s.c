@@ -13,7 +13,7 @@ import {
 } from "@/lib/career";
 
 export default function Career() {
-  const { language, level, elo, matchesPlayed, pvpWins, tournamentWins, achievements, dnBalance, bestStreak, fame, addCoins } = useGame();
+  const { language, level, elo, matchesPlayed, pvpWins, tournamentWins, achievements, dnBalance, bestStreak, fame, addDN } = useGame();
   const rtl = isRTL(language);
 
   const stats: CareerStats = {
@@ -36,7 +36,7 @@ export default function Career() {
   function handleClaim(milestoneId: string, reward: { dn: number; xp: number }) {
     claimMilestone(milestoneId);
     setClaimed(getClaimedMilestones());
-    addCoins(reward.dn);
+    addDN(reward.dn);
     setClaimAnim(milestoneId);
     setTimeout(() => setClaimAnim(null), 1000);
     playCoin();

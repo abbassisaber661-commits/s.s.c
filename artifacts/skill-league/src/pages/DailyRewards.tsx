@@ -2,12 +2,12 @@
  * DailyRewards.tsx  →  Unified Daily Tasks Page
  * ─────────────────────────────────────────────
  * Shows 4 daily tasks with real-time progress and explicit Claim buttons.
- * Tasks reset every UTC day. No random rewards — Coins only.
+ * Tasks reset every UTC day. No random rewards — DN$ only.
  *
- *  1. Daily Login         →  5 🪙
- *  2. Social Activity     → 10 🪙  (5 likes given + 5 comments given)
- *  3. Create Content      → 10 🪙  (1 post + 1 story)
- *  4. Play Match          → 10 🪙  (1 completed match)
+ *  1. Daily Login         →  5 DN$
+ *  2. Social Activity     → 10 DN$  (5 likes given + 5 comments given)
+ *  3. Create Content      → 10 DN$  (1 post + 1 story)
+ *  4. Play Match          → 10 DN$  (1 completed match)
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -77,7 +77,7 @@ function TaskCard({
   const txt = {
     claim:    ar ? `استلم ${dn} DN$` : `Claim ${dn} DN$`,
     claimed:  ar ? '✓ تم الاستلام'  : '✓ Claimed',
-    coins_label: ar ? 'كوينز' : 'Coins',
+    coins_label: 'DN$',
   };
 
   return (
@@ -188,7 +188,7 @@ export default function DailyRewards() {
       const result = await api.daily.claim(playerId, task);
       if (result.awarded) {
         playCorrect();
-        setToast({ msg: ar ? `+${result.coins ?? 0} DN$!` : `+${result.coins ?? 0} DN$!`, dn: result.coins ?? 0 });
+        setToast({ msg: ar ? `+${result.dn ?? 0} DN$!` : `+${result.dn ?? 0} DN$!`, dn: result.dn ?? 0 });
         setTimeout(() => setToast(null), 3000);
       }
       await fetchStatus();

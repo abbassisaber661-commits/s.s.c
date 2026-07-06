@@ -58,7 +58,7 @@ function buildStandings(bracket: TournamentBracket): Array<{ player: TournamentP
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Tournament() {
-  const { username, dnBalance, level, recordTournamentWin, spendCoins, isGuest } = useGame();
+  const { username, dnBalance, level, recordTournamentWin, spendDN, isGuest } = useGame();
   const [phase, setPhase]             = useState<Phase>('select');
   const [bracket, setBracket]         = useState<TournamentBracket | null>(null);
   const [selectedSize, setSelectedSize] = useState<8 | 16>(8);
@@ -97,7 +97,7 @@ export default function Tournament() {
 
   const startTournament = (size: 8 | 16) => {
     const cfg = TOURNAMENT_SIZES.find(s => s.size === size)!;
-    if (!spendCoins(cfg.entry)) return;
+    if (!spendDN(cfg.entry)) return;
     const b = createTournamentBracket(username, level, size);
     setBracket(b);
     setPhase('bracket');
@@ -120,9 +120,9 @@ export default function Tournament() {
           setPhase('finished');
           if (isWinner) setShowWin(true);
           const cfg        = TOURNAMENT_SIZES.find(s => s.size === selectedSize)!;
-          const coinsReward = isWinner ? cfg.dn : Math.floor(cfg.dn * 0.3);
+          const dnReward = isWinner ? cfg.dn : Math.floor(cfg.dn * 0.3);
           const xpReward   = isWinner ? cfg.xp   : Math.floor(cfg.xp   * 0.4);
-          recordTournamentWin(isWinner ? 1 : 2, coinsReward, xpReward);
+          recordTournamentWin(isWinner ? 1 : 2, dnReward, xpReward);
         } else {
           setTimeout(() => startNextBattle(advanced), 500);
         }
@@ -313,7 +313,7 @@ export default function Tournament() {
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-muted-foreground mb-1">Entry</div>
-                    <div className="font-bold text-yellow-400">{t.entry} 🪙</div>
+                    <div className="font-bold text-yellow-400">{t.entry} DN$</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -548,7 +548,7 @@ export default function Tournament() {
     const won       = playerPlace === 1;
     const place     = playerPlace ?? 4;
     const placeLabel = PLACE_LABELS[place] ?? `Top ${place}`;
-    const coinsWon  = won ? cfg.dn : place === 2 ? Math.floor(cfg.dn * 0.3) : 0;
+    const dnWon  = won ? cfg.dn : place === 2 ? Math.floor(cfg.dn * 0.3) : 0;
     const standings = bracket ? buildStandings(bracket) : [];
 
     return (
@@ -559,9 +559,9 @@ export default function Tournament() {
           <div className="text-3xl font-black">{placeLabel}</div>
           <div className="text-muted-foreground text-sm">Tournament Complete!</div>
 
-          {coinsWon > 0 && (
+          {dnWon > 0 && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4">
-              <div className="text-2xl font-black text-yellow-400">+{coinsWon} 🪙</div>
+              <div className="text-2xl font-black text-yellow-400">+{dnWon} DN$</div>
               <div className="text-sm text-muted-foreground">Prize DN$</div>
             </div>
           )}

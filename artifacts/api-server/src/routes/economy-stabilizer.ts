@@ -48,10 +48,10 @@ router.get('/system/economy/hard-caps', (_req, res) => {
   res.json({
     caps: HARD_CAPS,
     description: {
-      maxCoinsPerUserPerDay:        'Max coins any user may earn in one calendar day (all sources)',
-      maxCoinsPerEvent:             'Max coins from a single reward event',
-      maxGemsPerSeason:             'Max gems a user may hold per season',
-      maxLoginCoinsPerDay:          'Login reward — always fixed, immune to inflation scaling',
+      maxDNPerUserPerDay:        'Max DN$ any user may earn in one calendar day (all sources)',
+      maxDNPerEvent:             'Max DN$ from a single reward event',
+      maxPiPerSeason:             'Max Pi a user may hold per season',
+      maxLoginDNPerDay:          'Login reward — always fixed, immune to inflation scaling',
       maxInteractionsPerDay:        'Max interactions (likes+comments) counted for rewards per day',
       minSecondsBetweenSameEvents:  'Cooldown between two identical reward events for one user',
       maxMatchesPerHour:            'Max reward-earning match events per user per hour',

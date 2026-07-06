@@ -38,13 +38,13 @@ export function applyReferralJoin(referralData: ReferralData): ReferralData {
   return updated;
 }
 
-export function claimReferralReward(referralData: ReferralData): { data: ReferralData; coinsReward: number } {
+export function claimReferralReward(referralData: ReferralData): { data: ReferralData; dnReward: number } {
   const unclaimed = referralData.joinedCount - referralData.rewardedCount;
-  if (unclaimed <= 0) return { data: referralData, coinsReward: 0 };
-  const coinsReward = unclaimed * 100;
+  if (unclaimed <= 0) return { data: referralData, dnReward: 0 };
+  const dnReward = unclaimed * 100;
   const updated = { ...referralData, rewardedCount: referralData.joinedCount };
   localStorage.setItem(REFERRAL_KEY, JSON.stringify(updated));
-  return { data: updated, coinsReward };
+  return { data: updated, dnReward };
 }
 
 export function buildShareText(username: string, code: string, score?: number, league?: string): string {

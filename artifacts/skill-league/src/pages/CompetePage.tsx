@@ -47,7 +47,7 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("ar-EG", { day: "numeric", month: "long" });
 }
 
-function fmtCoins(n: number): string {
+function fmtDN(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}K` : String(n);
 }
 
@@ -115,7 +115,7 @@ function TournamentCard({ t, index }: { t: Tournament; index: number }) {
 
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-[11px] font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>
-              🪙 {fmtCoins(t.rewardCoins)} جائزة
+              DN$ {fmtDN(t.rewardDN)} جائزة
             </span>
             <span className="text-[11px] font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>
               👥 {(t.participants ?? []).length}/{t.size}
@@ -156,7 +156,7 @@ function UpcomingRow({ t, index, total }: { t: Tournament; index: number; total:
       <div className="flex-1 min-w-0">
         <div className="text-sm font-black text-white">{t.name}</div>
         <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.38)" }}>
-          🪙 {fmtCoins(t.rewardCoins)} · 👥 {t.size} لاعب
+          DN$ {fmtDN(t.rewardDN)} · 👥 {t.size} لاعب
         </div>
       </div>
       <div

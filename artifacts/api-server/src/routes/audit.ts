@@ -65,7 +65,7 @@ router.get('/system/audit/economy', async (_req, res) => {
       generatedAt: report.generatedAt,
       economy: report.economy,
       suggestions: report.suggestions.filter(s =>
-        ['coins_earn_pipeline', 'gems_earn_pipeline', 'shop_coin_deduction', 'daily_economy_table'].includes(s.event),
+        ['dn_earn_pipeline', 'pi_earn_pipeline', 'shop_coin_deduction', 'daily_economy_table'].includes(s.event),
       ),
     });
   } catch (err) {
@@ -82,7 +82,7 @@ router.get('/system/audit/game', async (_req, res) => {
       generatedAt: report.generatedAt,
       game: report.game,
       suggestions: report.suggestions.filter(s =>
-        ['match_completion_reward', 'daily_login_reward', 'season_end_gems'].includes(s.event),
+        ['match_completion_reward', 'daily_login_reward', 'season_end_pi'].includes(s.event),
       ),
     });
   } catch (err) {

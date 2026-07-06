@@ -126,7 +126,7 @@ export function getEloChange(
   return Math.round(K * (score - expected));
 }
 
-export function getPvpRewardCoins(stake: number, won: boolean, draw: boolean, matchType: MatchType): number {
+export function getPvpRewardDN(stake: number, won: boolean, draw: boolean, matchType: MatchType): number {
   if (!won && !draw) return 0;
   const multiplier = matchType === 'pvp' ? 2.5 : 1.6;
   if (draw) return Math.round(stake * 0.8);

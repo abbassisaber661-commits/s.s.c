@@ -51,7 +51,7 @@ const router = Router();
 
 const LP_RANGES: Record<string, { min: number; max: number | null }> = {
   training: { min: 0,   max: 99   },
-  coins:    { min: 0,   max: 99   },
+  dn:       { min: 0,   max: 99   },
   coin:     { min: 100, max: 299  },
   pro:      { min: 300, max: 499  },
   champion: { min: 500, max: null },
