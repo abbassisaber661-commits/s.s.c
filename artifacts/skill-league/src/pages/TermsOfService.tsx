@@ -51,13 +51,13 @@ export default function TermsOfService() {
 
           <Section title="4. In-App Currency and Rewards">
             <p className="mb-3">
-              SkillLeague uses a virtual coin system for gameplay. Please note:
+              SkillLeague uses DN$ (virtual points) and Pi for gameplay. Please note:
             </p>
             <ul className="list-disc list-inside space-y-1.5">
-              <li>Virtual coins have no real-world monetary value unless explicitly stated</li>
-              <li>Coins and rewards are non-transferable between accounts</li>
-              <li>We reserve the right to modify coin balances if obtained through exploits</li>
-              <li>Virtual items and coins may be forfeited upon account termination</li>
+              <li>DN$ (virtual points) have no real-world monetary value unless explicitly stated</li>
+              <li>DN$ and rewards are non-transferable between accounts</li>
+              <li>We reserve the right to modify DN$ balances if obtained through exploits</li>
+              <li>Virtual items and DN$ may be forfeited upon account termination</li>
             </ul>
           </Section>
 

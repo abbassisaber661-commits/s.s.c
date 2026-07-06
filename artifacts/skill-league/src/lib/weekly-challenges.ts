@@ -1,7 +1,7 @@
 export type WeeklyMissionType =
   | 'play_matches'
   | 'win_pvp'
-  | 'earn_coins'
+  | 'earn_dn'
   | 'reach_streak'
   | 'win_tournament'
   | 'achieve_accuracy';
@@ -82,11 +82,11 @@ export function getWeeklyMissions(weekStr: string): WeeklyMission[] {
       rewardXp: 300,
     },
     {
-      id: `${weekStr}_coins`,
+      id: `${weekStr}_dn`,
       icon: '💰',
-      title: 'Coin Hunter',
-      description: `Earn ${coinsTarget} coins`,
-      type: 'earn_coins',
+      title: 'DN$ Hunter',
+      description: `Earn ${coinsTarget} DN$`,
+      type: 'earn_dn',
       target: coinsTarget,
       rewardDN: 150,
       rewardXp: 200,

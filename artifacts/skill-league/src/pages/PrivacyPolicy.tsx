@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
             <p className="mb-3">We collect the following types of information:</p>
             <ul className="list-disc list-inside space-y-1.5 text-muted-foreground">
               <li><span className="text-foreground font-medium">Account Data:</span> Username, authentication provider (Pi Network or Google), and user ID.</li>
-              <li><span className="text-foreground font-medium">Gameplay Data:</span> Match history, scores, level progress, coins, achievements, and league standings.</li>
+              <li><span className="text-foreground font-medium">Gameplay Data:</span> Match history, scores, level progress, DN$ balance, achievements, and league standings.</li>
               <li><span className="text-foreground font-medium">Usage Data:</span> Session times, features used, and in-app interactions.</li>
               <li><span className="text-foreground font-medium">Device Data:</span> Browser type, operating system, and approximate timezone — used for session management only.</li>
             </ul>

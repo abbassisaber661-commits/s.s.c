@@ -1,4 +1,4 @@
-export type StoreItemType = 'coins' | 'xp_boost' | 'cosmetic' | 'entry_pass';
+export type StoreItemType = 'dn_bundle' | 'xp_boost' | 'cosmetic' | 'entry_pass';
 
 export interface StoreItem {
   id: string;
@@ -7,7 +7,7 @@ export interface StoreItem {
   icon: string;
   type: StoreItemType;
   piPrice: number;
-  coinValue?: number;
+  dnValue?: number;
   xpBoostHours?: number;
   oneTimePurchase: boolean;
   badge?: string;
@@ -15,34 +15,34 @@ export interface StoreItem {
 
 export const STORE_ITEMS: StoreItem[] = [
   {
-    id: 'coins_100',
-    name: '100 Coins',
+    id: 'dn_100',
+    name: '100 DN$',
     description: 'A quick top-up to keep playing',
     icon: '💰',
-    type: 'coins',
+    type: 'dn_bundle',
     piPrice: 0.1,
-    coinValue: 100,
+    dnValue: 100,
     oneTimePurchase: false,
   },
   {
-    id: 'coins_500',
-    name: '500 Coins',
+    id: 'dn_500',
+    name: '500 DN$',
     description: 'Best value for casual players',
     icon: '💎',
-    type: 'coins',
+    type: 'dn_bundle',
     piPrice: 0.4,
-    coinValue: 500,
+    dnValue: 500,
     oneTimePurchase: false,
     badge: 'Popular',
   },
   {
-    id: 'coins_1500',
-    name: '1500 Coins',
+    id: 'dn_1500',
+    name: '1500 DN$',
     description: 'Power player pack — maximum value',
     icon: '🏆',
-    type: 'coins',
+    type: 'dn_bundle',
     piPrice: 1.0,
-    coinValue: 1500,
+    dnValue: 1500,
     oneTimePurchase: false,
     badge: 'Best Value',
   },
@@ -78,7 +78,7 @@ export const STORE_ITEMS: StoreItem[] = [
   {
     id: 'elite_pass',
     name: 'Elite Season Pass',
-    description: 'Unlock Elite league access forever + 10% coin bonus',
+    description: 'Unlock Elite league access forever + 10% DN$ bonus',
     icon: '🌟',
     type: 'entry_pass',
     piPrice: 1.5,

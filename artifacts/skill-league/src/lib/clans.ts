@@ -5,7 +5,7 @@ export interface ClanMember {
   elo: number;
   role: 'owner' | 'officer' | 'member';
   joinedAt: string;
-  weeklyCoins: number;
+  weeklyDN: number;
 }
 
 export interface Clan {
@@ -16,7 +16,7 @@ export interface Clan {
   description: string;
   level: number;
   xp: number;
-  coins: number;
+  dn: number;
   members: ClanMember[];
   createdAt: string;
   wins: number;
@@ -29,7 +29,7 @@ export interface ClanPlayerData {
   clanName: string | null;
   clanTag: string | null;
   clanRole: 'owner' | 'officer' | 'member' | null;
-  clanCoinsContributed: number;
+  clanDNContributed: number;
 }
 
 const STORAGE_KEY = 'skill_league_clans';
@@ -45,11 +45,11 @@ export const CLAN_LOGOS = [
 ];
 
 export const CLAN_LEVELS = [
-  { level: 1, name: 'Rookie',   xpRequired: 0,     maxMembers: 10, coinBonus: 0  },
-  { level: 2, name: 'Rising',   xpRequired: 500,   maxMembers: 15, coinBonus: 5  },
-  { level: 3, name: 'Strong',   xpRequired: 1500,  maxMembers: 20, coinBonus: 10 },
-  { level: 4, name: 'Elite',    xpRequired: 3500,  maxMembers: 30, coinBonus: 15 },
-  { level: 5, name: 'Legend',   xpRequired: 7500,  maxMembers: 50, coinBonus: 20 },
+  { level: 1, name: 'Rookie',   xpRequired: 0,     maxMembers: 10, dnBonus: 0  },
+  { level: 2, name: 'Rising',   xpRequired: 500,   maxMembers: 15, dnBonus: 5  },
+  { level: 3, name: 'Strong',   xpRequired: 1500,  maxMembers: 20, dnBonus: 10 },
+  { level: 4, name: 'Elite',    xpRequired: 3500,  maxMembers: 30, dnBonus: 15 },
+  { level: 5, name: 'Legend',   xpRequired: 7500,  maxMembers: 50, dnBonus: 20 },
 ];
 
 function getClanLevel(xp: number) {
@@ -66,10 +66,22 @@ function getNextClanLevel(xp: number) {
   return CLAN_LEVELS.find(t => t.level === currentLevel + 1) ?? null;
 }
 
+/** Normalize a clan object that may have been persisted under the old field names (coins/weeklyCoins). */
+function normalizeClan(c: any): Clan {
+  return {
+    ...c,
+    dn:      c.dn      ?? c.coins      ?? 0,
+    members: (c.members ?? []).map((m: any) => ({
+      ...m,
+      weeklyDN: m.weeklyDN ?? m.weeklyCoins ?? 0,
+    })),
+  };
+}
+
 export function loadClans(): Clan[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) return (JSON.parse(raw) as any[]).map(normalizeClan);
   } catch { /* */ }
   return generateSampleClans();
 }
@@ -81,9 +93,16 @@ export function saveClans(clans: Clan[]) {
 export function loadMyClanData(): ClanPlayerData {
   try {
     const raw = localStorage.getItem(MY_CLAN_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const d = JSON.parse(raw) as any;
+      // Migrate legacy clanCoinsContributed → clanDNContributed
+      return {
+        ...d,
+        clanDNContributed: d.clanDNContributed ?? d.clanCoinsContributed ?? 0,
+      };
+    }
   } catch { /* */ }
-  return { clanId: null, clanName: null, clanTag: null, clanRole: null, clanCoinsContributed: 0 };
+  return { clanId: null, clanName: null, clanTag: null, clanRole: null, clanDNContributed: 0 };
 }
 
 export function saveMyClanData(data: ClanPlayerData) {
@@ -99,7 +118,7 @@ export function createClan(name: string, tag: string, logo: string, description:
     description: description.trim().slice(0, 80),
     level: 1,
     xp: 0,
-    coins: 0,
+    dn: 0,
     members: [{
       id: generateId(),
       username: ownerUsername,
@@ -107,7 +126,7 @@ export function createClan(name: string, tag: string, logo: string, description:
       elo: ownerElo,
       role: 'owner',
       joinedAt: new Date().toISOString(),
-      weeklyCoins: 0,
+      weeklyDN: 0,
     }],
     createdAt: new Date().toISOString(),
     wins: 0,
@@ -129,7 +148,7 @@ export function joinClan(clanId: string, username: string, level: number, elo: n
   if (elo < clan.minElo) return false;
   clan.members.push({
     id: generateId(), username, level, elo,
-    role: 'member', joinedAt: new Date().toISOString(), weeklyCoins: 0,
+    role: 'member', joinedAt: new Date().toISOString(), weeklyDN: 0,
   });
   saveClans(clans);
   return true;
@@ -147,20 +166,20 @@ export function leaveClan(clanId: string, username: string): void {
   saveClans(clans);
 }
 
-export function contributeClanCoins(clanId: string, username: string, coins: number): void {
+export function contributeClanDN(clanId: string, username: string, amount: number): void {
   const clans = loadClans();
   const clan = clans.find(c => c.id === clanId);
   if (!clan) return;
-  clan.coins += coins;
-  clan.xp += Math.floor(coins / 10);
+  clan.dn += amount;
+  clan.xp += Math.floor(amount / 10);
   clan.level = getClanLevel(clan.xp).level;
   const member = clan.members.find(m => m.username === username);
-  if (member) member.weeklyCoins += coins;
+  if (member) member.weeklyDN += amount;
   saveClans(clans);
 }
 
 export function getClanRankings(): Clan[] {
-  return loadClans().sort((a, b) => b.coins - a.coins || b.wins - a.wins);
+  return loadClans().sort((a, b) => b.dn - a.dn || b.wins - a.wins);
 }
 
 export function getClanLevelInfo(clan: Clan) {
@@ -175,40 +194,40 @@ function generateSampleClans(): Clan[] {
     {
       id: 'clan1', name: 'Dragon Squad', tag: 'DRGN', logo: '🐉',
       description: 'Elite players only. We dominate every season.',
-      level: 5, xp: 8200, coins: 12400, wins: 87, isPublic: true, minElo: 1400,
+      level: 5, xp: 8200, dn: 12400, wins: 87, isPublic: true, minElo: 1400,
       createdAt: '2025-01-15T00:00:00Z',
       members: [
-        { id: 'm1', username: 'DragonKing', level: 45, elo: 1850, role: 'owner', joinedAt: '2025-01-15T00:00:00Z', weeklyCoins: 520 },
-        { id: 'm2', username: 'SwiftEagle', level: 38, elo: 1720, role: 'officer', joinedAt: '2025-02-01T00:00:00Z', weeklyCoins: 380 },
-        { id: 'm3', username: 'NightWolf', level: 31, elo: 1580, role: 'member', joinedAt: '2025-03-10T00:00:00Z', weeklyCoins: 290 },
+        { id: 'm1', username: 'DragonKing', level: 45, elo: 1850, role: 'owner', joinedAt: '2025-01-15T00:00:00Z', weeklyDN: 520 },
+        { id: 'm2', username: 'SwiftEagle', level: 38, elo: 1720, role: 'officer', joinedAt: '2025-02-01T00:00:00Z', weeklyDN: 380 },
+        { id: 'm3', username: 'NightWolf', level: 31, elo: 1580, role: 'member', joinedAt: '2025-03-10T00:00:00Z', weeklyDN: 290 },
       ],
     },
     {
       id: 'clan2', name: 'Lion Pride', tag: 'LION', logo: '🦁',
       description: 'Strength in unity. All skill levels welcome.',
-      level: 4, xp: 4100, coins: 8600, wins: 54, isPublic: true, minElo: 1100,
+      level: 4, xp: 4100, dn: 8600, wins: 54, isPublic: true, minElo: 1100,
       createdAt: '2025-02-20T00:00:00Z',
       members: [
-        { id: 'm4', username: 'LionHeart', level: 40, elo: 1680, role: 'owner', joinedAt: '2025-02-20T00:00:00Z', weeklyCoins: 610 },
-        { id: 'm5', username: 'BoldFox', level: 29, elo: 1410, role: 'officer', joinedAt: '2025-03-05T00:00:00Z', weeklyCoins: 240 },
+        { id: 'm4', username: 'LionHeart', level: 40, elo: 1680, role: 'owner', joinedAt: '2025-02-20T00:00:00Z', weeklyDN: 610 },
+        { id: 'm5', username: 'BoldFox', level: 29, elo: 1410, role: 'officer', joinedAt: '2025-03-05T00:00:00Z', weeklyDN: 240 },
       ],
     },
     {
       id: 'clan3', name: 'Storm Hawks', tag: 'STRM', logo: '🦅',
       description: 'Fast. Precise. Unstoppable.',
-      level: 3, xp: 2200, coins: 5100, wins: 32, isPublic: true, minElo: 1000,
+      level: 3, xp: 2200, dn: 5100, wins: 32, isPublic: true, minElo: 1000,
       createdAt: '2025-04-01T00:00:00Z',
       members: [
-        { id: 'm6', username: 'StormRider', level: 25, elo: 1320, role: 'owner', joinedAt: '2025-04-01T00:00:00Z', weeklyCoins: 190 },
+        { id: 'm6', username: 'StormRider', level: 25, elo: 1320, role: 'owner', joinedAt: '2025-04-01T00:00:00Z', weeklyDN: 190 },
       ],
     },
     {
       id: 'clan4', name: 'Phoenix Rise', tag: 'PHNX', logo: '🔥',
       description: 'From ashes we rise. Welcoming all players.',
-      level: 2, xp: 800, coins: 2200, wins: 15, isPublic: true, minElo: 800,
+      level: 2, xp: 800, dn: 2200, wins: 15, isPublic: true, minElo: 800,
       createdAt: '2025-05-01T00:00:00Z',
       members: [
-        { id: 'm7', username: 'PhoenixFire', level: 18, elo: 1150, role: 'owner', joinedAt: '2025-05-01T00:00:00Z', weeklyCoins: 130 },
+        { id: 'm7', username: 'PhoenixFire', level: 18, elo: 1150, role: 'owner', joinedAt: '2025-05-01T00:00:00Z', weeklyDN: 130 },
       ],
     },
   ];

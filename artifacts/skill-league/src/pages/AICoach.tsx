@@ -42,10 +42,10 @@ function getCoachResponse(msg: string, stats: any, language: string): string {
       : `📊 Your ELO: ${stats.elo}\n\n${advice}\n\n• PvP wins give the biggest ELO gains\n• Avoid playing when tired\n• Stay focused in every match`;
   }
 
-  if (m.includes('coin') || m.includes('عملة') || m.includes('money') || m.includes('مال')) {
+  if (m.includes('coin') || m.includes('dn$') || m.includes('عملة') || m.includes('money') || m.includes('مال')) {
     return isAr
-      ? `💰 أفضل طرق كسب العملات:\n\n1. انشر في المجتمع واحصل على إعجابات\n2. سجل دخول يومياً (+1 🪙)\n3. العب مباريات الدوري\n4. اكمل التحديات اليومية\n5. اكمل المهمات الأسبوعية`
-      : `💰 Best ways to earn coins:\n\n1. Post in the community and get likes\n2. Log in daily (+1 🪙)\n3. Play league matches\n4. Complete daily challenges\n5. Finish weekly missions`;
+      ? `💰 أفضل طرق كسب DN$:\n\n1. انشر في المجتمع واحصل على إعجابات\n2. سجل دخول يومياً (+1 DN$)\n3. العب مباريات الدوري\n4. اكمل التحديات اليومية\n5. اكمل المهمات الأسبوعية`
+      : `💰 Best ways to earn DN$:\n\n1. Post in the community and get likes\n2. Log in daily (+1 DN$)\n3. Play league matches\n4. Complete daily challenges\n5. Finish weekly missions`;
   }
 
   if (m.includes('pvp') || m.includes('مباراة')) {
@@ -62,16 +62,16 @@ function getCoachResponse(msg: string, stats: any, language: string): string {
 
   if (m.includes('hello') || m.includes('hi') || m.includes('مرحبا') || m.includes('هلا') || m.includes('أهلا')) {
     return isAr
-      ? `مرحباً بك في مساعد SkillLeague الذكي! 🤖\n\nأنا هنا لمساعدتك على تحسين أدائك. يمكنني مساعدتك في:\n• تحسين السرعة والدقة\n• استراتيجيات PvP والبطولات\n• رفع ELO\n• كسب المزيد من العملات\n\nعن ماذا تريد التحدث؟`
-      : `Hello! Welcome to SkillLeague AI Coach! 🤖\n\nI'm here to help you improve your performance. I can help with:\n• Speed and accuracy improvement\n• PvP and tournament strategies\n• Climbing ELO\n• Earning more coins\n\nWhat would you like to discuss?`;
+      ? `مرحباً بك في مساعد SkillLeague الذكي! 🤖\n\nأنا هنا لمساعدتك على تحسين أدائك. يمكنني مساعدتك في:\n• تحسين السرعة والدقة\n• استراتيجيات PvP والبطولات\n• رفع ELO\n• كسب المزيد من DN$\n\nعن ماذا تريد التحدث؟`
+      : `Hello! Welcome to SkillLeague AI Coach! 🤖\n\nI'm here to help you improve your performance. I can help with:\n• Speed and accuracy improvement\n• PvP and tournament strategies\n• Climbing ELO\n• Earning more DN$\n\nWhat would you like to discuss?`;
   }
 
   // Default response with personalized analysis
   const weakest = stats.skillSpeed < stats.skillMemory && stats.skillSpeed < stats.skillAccuracy ? 'speed' :
                   stats.skillMemory < stats.skillAccuracy ? 'memory' : 'accuracy';
   return isAr
-    ? `📊 تحليل أدائك الآن:\n\nالمستوى: ${stats.level} | ELO: ${stats.elo}\nسرعة: ${stats.skillSpeed} | دقة: ${stats.skillAccuracy} | ذاكرة: ${stats.skillMemory}\n\nنقطة ضعفك الرئيسية: ${weakest === 'speed' ? 'السرعة' : weakest === 'memory' ? 'الذاكرة' : 'الدقة'}\n\nأسألني عن: سرعة، ذاكرة، ELO، PvP، بطولة، أو عملات`
-    : `📊 Your performance analysis:\n\nLevel: ${stats.level} | ELO: ${stats.elo}\nSpeed: ${stats.skillSpeed} | Accuracy: ${stats.skillAccuracy} | Memory: ${stats.skillMemory}\n\nMain weakness: ${weakest}\n\nAsk me about: speed, memory, ELO, PvP, tournament, or coins`;
+    ? `📊 تحليل أدائك الآن:\n\nالمستوى: ${stats.level} | ELO: ${stats.elo}\nسرعة: ${stats.skillSpeed} | دقة: ${stats.skillAccuracy} | ذاكرة: ${stats.skillMemory}\n\nنقطة ضعفك الرئيسية: ${weakest === 'speed' ? 'السرعة' : weakest === 'memory' ? 'الذاكرة' : 'الدقة'}\n\nأسألني عن: سرعة، ذاكرة، ELO، PvP، بطولة، أو DN$`
+    : `📊 Your performance analysis:\n\nLevel: ${stats.level} | ELO: ${stats.elo}\nSpeed: ${stats.skillSpeed} | Accuracy: ${stats.skillAccuracy} | Memory: ${stats.skillMemory}\n\nMain weakness: ${weakest}\n\nAsk me about: speed, memory, ELO, PvP, tournament, or DN$`;
 }
 
 const QUICK_PROMPTS = [
@@ -79,7 +79,7 @@ const QUICK_PROMPTS = [
   { en: '🧠 Better memory',     ar: '🧠 تحسين الذاكرة'  },
   { en: '📊 Boost my ELO',      ar: '📊 رفع ELO'        },
   { en: '⚔️ PvP strategy',     ar: '⚔️ استراتيجية PvP' },
-  { en: '💰 Earn more coins',   ar: '💰 المزيد من العملات' },
+  { en: '💰 Earn more DN$',     ar: '💰 المزيد من DN$' },
   { en: '🏆 Win tournaments',   ar: '🏆 الفوز بالبطولات' },
 ];
 

@@ -60,7 +60,7 @@ function ProgressBar({ value, max, color = '#3b82f6' }: { value: number; max: nu
 interface TaskCardProps {
   icon: string;
   title: string;
-  coins: number;
+  dn: number;
   complete: boolean;
   claimed: boolean;
   rows: { label: string; value: number; max: number; done: boolean }[];
@@ -72,10 +72,10 @@ interface TaskCardProps {
 }
 
 function TaskCard({
-  icon, title, coins, complete, claimed, rows, onClaim, claiming, rtl, ar, delay = 0
+  icon, title, dn, complete, claimed, rows, onClaim, claiming, rtl, ar, delay = 0
 }: TaskCardProps) {
   const txt = {
-    claim:    ar ? `استلم ${coins} 🪙` : `Claim ${coins} 🪙`,
+    claim:    ar ? `استلم ${dn} DN$` : `Claim ${dn} DN$`,
     claimed:  ar ? '✓ تم الاستلام'  : '✓ Claimed',
     coins_label: ar ? 'كوينز' : 'Coins',
   };
@@ -99,7 +99,7 @@ function TaskCard({
           <span className="text-xl">{icon}</span>
           <div>
             <p className="text-sm font-bold leading-tight">{title}</p>
-            <p className="text-xs text-yellow-400 font-black">+{coins} 🪙</p>
+            <p className="text-xs text-yellow-400 font-black">+{dn} DN$</p>
           </div>
         </div>
         {claimed && <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />}
@@ -161,7 +161,7 @@ export default function DailyRewards() {
   const [status, setStatus]       = useState<DailyStatus | null>(null);
   const [loading, setLoading]     = useState(true);
   const [claiming, setClaiming]   = useState<ClaimTask | null>(null);
-  const [toast, setToast]         = useState<{ msg: string; coins?: number } | null>(null);
+  const [toast, setToast]         = useState<{ msg: string; dn?: number } | null>(null);
 
   const fetchStatus = useCallback(async () => {
     if (!playerId) { setLoading(false); return; }
@@ -188,7 +188,7 @@ export default function DailyRewards() {
       const result = await api.daily.claim(playerId, task);
       if (result.awarded) {
         playCorrect();
-        setToast({ msg: ar ? `+${result.coins ?? 0} DN$!` : `+${result.coins ?? 0} DN$!`, coins: result.coins ?? 0 });
+        setToast({ msg: ar ? `+${result.coins ?? 0} DN$!` : `+${result.coins ?? 0} DN$!`, dn: result.coins ?? 0 });
         setTimeout(() => setToast(null), 3000);
       }
       await fetchStatus();
@@ -223,7 +223,7 @@ export default function DailyRewards() {
     {
       icon: '🔑',
       title: ar ? 'تسجيل الدخول اليومي' : 'Daily Login',
-      coins: 5,
+      dn: 5,
       complete: true,
       claimed: s.loginClaimed,
       rows: [{ label: ar ? 'افتح التطبيق مرة واحدة' : 'Open the app once', value: 1, max: 1, done: true }],
@@ -235,7 +235,7 @@ export default function DailyRewards() {
     {
       icon: '❤️',
       title: ar ? 'النشاط الاجتماعي' : 'Social Activity',
-      coins: 10,
+      dn: 10,
       complete: s.socialComplete,
       claimed: s.socialRewardClaimed,
       rows: [
@@ -250,7 +250,7 @@ export default function DailyRewards() {
     {
       icon: '✍️',
       title: ar ? 'إنشاء محتوى' : 'Create Content',
-      coins: 10,
+      dn: 10,
       complete: s.contentComplete,
       claimed: s.contentRewardClaimed,
       rows: [
@@ -265,7 +265,7 @@ export default function DailyRewards() {
     {
       icon: '⚽',
       title: ar ? 'العب مباراة' : 'Play a Match',
-      coins: 10,
+      dn: 10,
       complete: s.matchPlayed,
       claimed: s.matchPlayedClaimed,
       rows: [{ label: ar ? 'أكمل مباراة كاملة' : 'Complete one full match', value: s.matchPlayed ? 1 : 0, max: 1, done: s.matchPlayed }],
@@ -276,8 +276,8 @@ export default function DailyRewards() {
     },
   ] : [];
 
-  const totalCoins  = 5 + 10 + 10 + 10;
-  const earnedCoins = s
+  const totalDN     = 5 + 10 + 10 + 10;
+  const earnedDN    = s
     ? (s.loginClaimed ? 5 : 0) + (s.socialRewardClaimed ? 10 : 0) +
       (s.contentRewardClaimed ? 10 : 0) + (s.matchPlayedClaimed ? 10 : 0)
     : 0;
@@ -301,7 +301,7 @@ export default function DailyRewards() {
           </h1>
           {s && (
             <p className="text-xs text-muted-foreground">
-              {completedCount}/4 {ar ? 'مهام مكتملة' : 'completed'} · {earnedCoins}/{totalCoins} 🪙
+              {completedCount}/4 {ar ? 'مهام مكتملة' : 'completed'} · {earnedDN}/{totalDN} DN$
             </p>
           )}
         </div>
@@ -326,7 +326,7 @@ export default function DailyRewards() {
                 {ar ? 'التقدم اليومي' : 'Daily Progress'}
               </span>
               <span className="text-sm font-black text-yellow-400">
-                {earnedCoins}/{totalCoins} 🪙
+                {earnedDN}/{totalDN} DN$
               </span>
             </div>
             <ProgressBar value={completedCount} max={4} color="#f59e0b" />
@@ -350,25 +350,25 @@ export default function DailyRewards() {
           <TaskCard key={i} {...task} />
         ))}
 
-        {/* Gems info */}
+        {/* Pi info */}
         {!loading && (
           <motion.div
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             className="rounded-2xl border border-purple-500/30 bg-purple-500/5 p-4 space-y-2"
           >
             <p className="text-sm font-bold">
-              💎 {ar ? 'أين تكسب الجواهر؟' : 'How to Earn Gems?'}
+              💎 {ar ? 'أين تكسب Pi؟' : 'How to Earn Pi?'}
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {ar
-                ? 'الجواهر تأتي فقط من نتائج الدوريات. كلما ارتقيت، كبرت مكافآتك.'
-                : 'Gems come exclusively from league results. The higher your league, the bigger the rewards.'}
+                ? 'مكافآت Pi تأتي فقط من نتائج الدوريات. كلما ارتقيت، كبرت مكافآتك.'
+                : 'Pi rewards come exclusively from league results. The higher your league, the bigger the rewards.'}
             </p>
             {[
-              { league: ar ? 'الدوري 3' : 'League 3',       reward: ar ? 'البطل = 1 💎'                         : 'Champion = 1 💎' },
-              { league: ar ? 'الدوري 2' : 'League 2',       reward: '1st = 2 💎  ·  2nd = 1 💎' },
-              { league: ar ? 'الاحترافي' : 'Pro',           reward: '1st = 3  ·  2nd = 2  ·  3rd = 1 💎' },
-              { league: ar ? 'الأبطال' : 'Champions',       reward: '1st=4  ·  2nd=3  ·  3rd=2  ·  4th=1 💎' },
+              { league: ar ? 'الدوري 3' : 'League 3',       reward: ar ? 'البطل = 1 Pi'                         : 'Champion = 1 Pi' },
+              { league: ar ? 'الدوري 2' : 'League 2',       reward: '1st = 2 Pi  ·  2nd = 1 Pi' },
+              { league: ar ? 'الاحترافي' : 'Pro',           reward: '1st = 3  ·  2nd = 2  ·  3rd = 1 Pi' },
+              { league: ar ? 'الأبطال' : 'Champions',       reward: '1st=4  ·  2nd=3  ·  3rd=2  ·  4th=1 Pi' },
             ].map(item => (
               <div key={item.league} className="flex flex-col gap-0.5">
                 <span className="text-xs font-bold text-purple-400">{item.league}</span>

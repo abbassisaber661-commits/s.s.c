@@ -9,7 +9,7 @@ import { playTap, playCoin } from "@/lib/sounds";
 import { useT, isRTL } from "@/lib/i18n";
 
 const TYPE_COLOR: Record<string, string> = {
-  coins: '#fbbf24', xp_boost: '#a78bfa', cosmetic: '#f472b6', entry_pass: '#34d399',
+  dn_bundle: '#fbbf24', xp_boost: '#a78bfa', cosmetic: '#f472b6', entry_pass: '#34d399',
 };
 
 function SectionHeader({ icon, label, sublabel }: { icon: string; label: string; sublabel?: string }) {
@@ -77,8 +77,8 @@ export default function Store() {
             )}
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{item.description}</p>
-          {item.coinValue && (
-            <p className="text-xs text-yellow-400 font-bold mt-1">+{item.coinValue} {t('coin_label')}</p>
+          {item.dnValue && (
+            <p className="text-xs text-yellow-400 font-bold mt-1">+{item.dnValue} {t('coin_label')}</p>
           )}
           {item.xpBoostHours && (
             <p className="text-xs font-bold mt-1" style={{ color: typeColor }}>
@@ -103,7 +103,7 @@ export default function Store() {
     );
   }
 
-  const dnItems      = STORE_ITEMS.filter(i => i.type === 'coins'); // legacy: 'coins' type = DN$ bundles
+  const dnItems      = STORE_ITEMS.filter(i => i.type === 'dn_bundle'); // legacy: 'coins' type = DN$ bundles
   const boostItems   = STORE_ITEMS.filter(i => i.type === 'xp_boost');
   const cosmeticItems = STORE_ITEMS.filter(i => i.type === 'cosmetic');
   const passItems    = STORE_ITEMS.filter(i => i.type === 'entry_pass');

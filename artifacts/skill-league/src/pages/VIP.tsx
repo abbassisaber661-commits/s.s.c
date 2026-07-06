@@ -263,7 +263,7 @@ export default function VIP() {
             <div className="grid grid-cols-2 gap-2">
               <div className="p-3 rounded-xl text-center" style={{ background: selected.color + '10' }}>
                 <div className="text-lg font-black" style={{ color: selected.color }}>+{selected.coinBonus}%</div>
-                <div className="text-[10px] text-muted-foreground">{language === 'ar' ? 'مكافأة عملات' : 'Coin Bonus'}</div>
+                <div className="text-[10px] text-muted-foreground">{language === 'ar' ? 'مكافأة DN$' : 'DN$ Bonus'}</div>
               </div>
               <div className="p-3 rounded-xl text-center" style={{ background: selected.color + '10' }}>
                 <div className="text-lg font-black" style={{ color: selected.color }}>+{selected.xpBonus}%</div>

@@ -121,7 +121,7 @@ export interface TournamentBracket {
   rounds: number;
   currentRound: number;
   champion: TournamentPlayer | null;
-  rewards: { coins: number; xp: number; trophy: boolean };
+  rewards: { dn: number; xp: number; trophy: boolean };
 }
 
 const TOURNAMENT_BOT_NAMES = [
@@ -161,9 +161,9 @@ export function createTournamentBracket(
     });
   }
 
-  const rewardMap: Record<number, { coins: number; xp: number; trophy: boolean }> = {
-    8:  { coins: 500,  xp: 300,  trophy: true  },
-    16: { coins: 1000, xp: 600,  trophy: true  },
+  const rewardMap: Record<number, { dn: number; xp: number; trophy: boolean }> = {
+    8:  { dn: 500,  xp: 300,  trophy: true  },
+    16: { dn: 1000, xp: 600,  trophy: true  },
   };
 
   return {

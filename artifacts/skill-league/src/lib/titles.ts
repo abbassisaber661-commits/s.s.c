@@ -129,7 +129,7 @@ export const TITLES: Title[] = [
     name: 'Millionaire',
     nameAr: 'مليونير',
     icon: '💰',
-    description: '10,000+ coins earned',
+    description: '10,000+ DN$ earned',
     color: '#fbbf24',
     rarity: 'rare',
     requirement: (s) => s.dnBalance >= 10000,

@@ -86,8 +86,8 @@ export const CAREER_TIERS: CareerTier[] = [
     minElo: 1400,
     description: 'Battle-hardened with experience',
     descriptionAr: 'مُصلَّب بالتجارب والمعارك',
-    perks: ['Elite league access', 'Veteran badge', 'Bonus clan coins', 'Priority in events'],
-    perksAr: ['الوصول للدوري النخبوي', 'شارة المحارب القديم', 'عملات فريق إضافية', 'أولوية في الأحداث'],
+    perks: ['Elite league access', 'Veteran badge', 'Bonus clan DN$', 'Priority in events'],
+    perksAr: ['الوصول للدوري النخبوي', 'شارة المحارب القديم', 'DN$ فريق إضافية', 'أولوية في الأحداث'],
   },
   {
     id: 'elite',

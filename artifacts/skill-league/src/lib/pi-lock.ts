@@ -20,7 +20,7 @@ export const PI_LOCK_TIERS: PiLockTier[] = [
     color: '#3AB4FF',
     benefits: [
       '✓ Pi Verified badge',
-      '✓ +10% coin rewards for 7 days',
+      '✓ +10% DN$ rewards for 7 days',
       '✓ Free tournament entry ×1',
       '✓ Community post priority',
     ],
@@ -36,7 +36,7 @@ export const PI_LOCK_TIERS: PiLockTier[] = [
     color: '#FFD700',
     benefits: [
       '✓ Pro Verified badge ⭐',
-      '✓ +20% coin rewards for 30 days',
+      '✓ +20% DN$ rewards for 30 days',
       '✓ +10% XP boost for 30 days',
       '✓ VIP tournament access',
       '✓ Boosted community visibility',
@@ -54,7 +54,7 @@ export const PI_LOCK_TIERS: PiLockTier[] = [
     color: '#B44FFF',
     benefits: [
       '✓ Pro Verified badge ⭐',
-      '✓ +35% coin rewards for 90 days',
+      '✓ +35% DN$ rewards for 90 days',
       '✓ +25% XP boost for 90 days',
       '✓ Unlimited VIP tournament access',
       '✓ Champion player frame',

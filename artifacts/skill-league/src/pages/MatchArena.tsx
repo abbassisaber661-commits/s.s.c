@@ -21,7 +21,7 @@ import { getLang } from '@/lib/question-pool';
 import type { Language } from '@/lib/i18n';
 import {
   calcMatchEconomy, leagueTierToEconomyTier,
-  loadLocalGems, saveLocalGems, economyApi,
+  loadLocalPi, saveLocalPi, economyApi,
   type EconomyResult,
 } from '@/lib/economy';
 import { api, type DailyStatus } from '@/lib/apiClient';
@@ -1440,14 +1440,14 @@ export default function MatchArena() {
     // Calculate rewards immediately (local) for instant display
     const currentTier = matchTierRef.current;
     const economyTier = leagueTierToEconomyTier(currentTier);
-    const localGems   = loadLocalGems();
+    const localPi     = loadLocalPi();
     const econResult  = calcMatchEconomy(
       { rank, accuracyPct: correctPct, tier: economyTier },
-      0,       // coins: server handles persisting actual balance
-      localGems,
+      0,       // DN$: server handles persisting actual balance
+      localPi,
     );
-    // Persist gems locally for instant UI
-    saveLocalGems(econResult.newGems);
+    // Persist Pi locally for instant UI
+    saveLocalPi(econResult.newPi);
     setEconomyResult(econResult);
 
     // Persist server-side (non-blocking — UI already shows local result)
@@ -1458,10 +1458,10 @@ export default function MatchArena() {
       accuracyPct: correctPct,
       tier:        currentTier,
     }).then(serverResult => {
-      saveLocalGems(serverResult.newGems);
+      saveLocalPi(serverResult.newPi);
     }).catch(() => { /* non-critical */ });
 
-    // ── Save match to server → persists LP / XP / Coins in DB ─────────────
+    // ── Save match to server → persists LP / XP / DN$ in DB ──────────────
     if (playerId !== 'guest_local') {
       const botId = matchBotsRef.current[0]?.id ?? 'bot_1';
       api.matches.create({
@@ -1476,7 +1476,7 @@ export default function MatchArena() {
         rounds:       [],
       }).then(serverMatch => {
         if (serverMatch?.rewards) {
-          const { lp: lpR, coins: coinsR } = serverMatch.rewards;
+          const { lp: lpR, coins: coinsR } = serverMatch.rewards; // coinsR = server DN$ reward shape
           // Sync authoritative LP from server into localStorage
           const stored = loadLeagueStats();
           stored.lp = lpR.newLp;
@@ -1488,10 +1488,10 @@ export default function MatchArena() {
                 newTier: lpR.newTier as typeof prev.newTier }
             : prev,
           );
-          // Sync server-awarded coins into GameContext / localStorage so that
+          // Sync server-awarded DN$ into GameContext / localStorage so that
           // useDbSync won't overwrite the DB with a stale pre-match balance.
           if (coinsR?.earned && coinsR.earned > 0) {
-            game.addCoins(coinsR.earned);
+            game.addDN(coinsR.earned);
           }
           // Mark daily match used (next UTC midnight)
           const tomorrow = new Date(); tomorrow.setUTCHours(0,0,0,0); tomorrow.setUTCDate(tomorrow.getUTCDate()+1);
@@ -2445,55 +2445,55 @@ export default function MatchArena() {
                 Match Rewards
               </p>
               <div className="flex gap-3">
-                {/* Coins */}
+                {/* DN$ */}
                 <div className="flex-1 flex flex-col items-center gap-1.5 rounded-xl py-3"
                   style={{ background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.2)' }}>
                   <span className="text-2xl">🪙</span>
-                  <span className="text-xl font-black text-yellow-400">+{economyResult.coinsEarned}</span>
-                  <span className="text-[10px] font-bold text-white/40">Coins</span>
+                  <span className="text-xl font-black text-yellow-400">+{economyResult.dnEarned}</span>
+                  <span className="text-[10px] font-bold text-white/40">DN$</span>
                 </div>
-                {/* Gems */}
+                {/* Pi */}
                 <div className="flex-1 flex flex-col items-center gap-1.5 rounded-xl py-3"
                   style={{ background: 'rgba(147,51,234,0.1)', border: '1px solid rgba(147,51,234,0.2)' }}>
-                  <span className="text-2xl">💎</span>
+                  <span className="text-2xl">π</span>
                   <span className="text-xl font-black"
-                    style={{ color: economyResult.gemsEarned > 0 ? '#a855f7' : 'rgba(255,255,255,0.3)' }}>
-                    {economyResult.gemsEarned > 0 ? `+${economyResult.gemsEarned}` : '—'}
+                    style={{ color: economyResult.piEarned > 0 ? '#a855f7' : 'rgba(255,255,255,0.3)' }}>
+                    {economyResult.piEarned > 0 ? `+${economyResult.piEarned}` : '—'}
                   </span>
-                  <span className="text-[10px] font-bold text-white/40">Gems</span>
+                  <span className="text-[10px] font-bold text-white/40">Pi</span>
                 </div>
               </div>
-              {/* Coin breakdown */}
+              {/* DN$ breakdown */}
               <div className="mt-3 space-y-1">
-                {economyResult.coinBreakdown.base > 0 && (
+                {economyResult.dnBreakdown.base > 0 && (
                   <div className="flex justify-between text-xs text-white/45">
                     <span>Participation</span>
-                    <span className="text-yellow-400/70">+{economyResult.coinBreakdown.base} 🪙</span>
+                    <span className="text-yellow-400/70">+{economyResult.dnBreakdown.base} 🪙</span>
                   </div>
                 )}
-                {economyResult.coinBreakdown.rankBonus > 0 && (
+                {economyResult.dnBreakdown.rankBonus > 0 && (
                   <div className="flex justify-between text-xs text-white/45">
                     <span>{rank === 1 ? '1st place' : rank === 2 ? '2nd place' : '3rd place'} bonus</span>
-                    <span className="text-yellow-400/70">+{economyResult.coinBreakdown.rankBonus} 🪙</span>
+                    <span className="text-yellow-400/70">+{economyResult.dnBreakdown.rankBonus} 🪙</span>
                   </div>
                 )}
-                {economyResult.coinBreakdown.accuracyBonus > 0 && (
+                {economyResult.dnBreakdown.accuracyBonus > 0 && (
                   <div className="flex justify-between text-xs text-white/45">
                     <span>Accuracy bonus ({accuracy}%)</span>
-                    <span className="text-yellow-400/70">+{economyResult.coinBreakdown.accuracyBonus} 🪙</span>
+                    <span className="text-yellow-400/70">+{economyResult.dnBreakdown.accuracyBonus} 🪙</span>
                   </div>
                 )}
-                {economyResult.gemsEarned > 0 && (
+                {economyResult.piEarned > 0 && (
                   <div className="flex justify-between text-xs text-white/45">
-                    <span>{economyResult.gemBreakdown.reason}</span>
-                    <span className="text-purple-400/80">+{economyResult.gemsEarned} 💎</span>
+                    <span>{economyResult.piBreakdown.reason}</span>
+                    <span className="text-purple-400/80">+{economyResult.piEarned} π</span>
                   </div>
                 )}
               </div>
-              {/* Total gems balance */}
+              {/* Total Pi balance */}
               <div className="mt-3 pt-2.5 border-t border-white/8 flex justify-between items-center">
-                <span className="text-xs text-white/40">Total Gems</span>
-                <span className="text-sm font-black text-purple-400">{economyResult.newGems} 💎</span>
+                <span className="text-xs text-white/40">Total Pi</span>
+                <span className="text-sm font-black text-purple-400">{economyResult.newPi} π</span>
               </div>
             </div>
           </motion.div>

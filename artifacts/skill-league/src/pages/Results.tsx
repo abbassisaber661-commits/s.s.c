@@ -389,8 +389,8 @@ export default function Results() {
             {prize > 0 && (
               <RewardRow
                 icon="🪙"
-                label="عملات مكسوبة"
-                amount={`+${prize} عملة`}
+                label="DN$ مكتسبة"
+                amount={`+${prize} DN$`}
                 color="#fbbf24"
                 delay={0.1}
               />
@@ -421,7 +421,7 @@ export default function Results() {
                 transition={{ delay: 0.25 }}
                 className="text-center text-xs text-white/25 py-1"
               >
-                تحتاج المركز الأول لكسب عملات أكثر — تدرّب وعُد أقوى!
+                تحتاج المركز الأول لكسب DN$ أكثر — تدرّب وعُد أقوى!
               </motion.div>
             )}
           </motion.div>

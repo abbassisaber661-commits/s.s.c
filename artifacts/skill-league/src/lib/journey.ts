@@ -143,7 +143,7 @@ export function getSmartMissions(data: PlayerData): SmartMission[] {
     missions.push({
       icon: '🎮', title: `العب ${gap} مباراة`,
       desc: `المباريات الحالية: ${data.matchesPlayed} | المطلوب: ${next.minMatches}`,
-      priority: gap <= 5 ? 'high' : 'low', reward: 'XP + عملات',
+      priority: gap <= 5 ? 'high' : 'low', reward: 'XP + DN$',
     });
   }
 
@@ -160,8 +160,8 @@ export function getSmartMissions(data: PlayerData): SmartMission[] {
   if (data.pvpWins < 5 && data.level >= 3) {
     missions.push({
       icon: '⚔️', title: 'خُض معارك PvP',
-      desc: 'الانتصارات في PvP تُضاعف مكافآت ELO والعملات',
-      priority: 'medium', reward: 'ELO كامل + عملات مضاعفة',
+      desc: 'الانتصارات في PvP تُضاعف مكافآت ELO و DN$',
+      priority: 'medium', reward: 'ELO كامل + DN$ مضاعفة',
     });
   }
 
@@ -195,8 +195,8 @@ export const PI_VIP_MISSIONS: PiVipMission[] = [
     minTier: 'elite',
   },
   {
-    id: 'vip_coin_boost', icon: '🪙', title: 'مضاعف العملات لـ 48 ساعة',
-    desc: 'كل العملات المكتسبة تُضاعَف لمدة يومين',
+    id: 'vip_coin_boost', icon: '🪙', title: 'مضاعف DN$ لـ 48 ساعة',
+    desc: 'كل DN$ المكتسبة تُضاعَف لمدة يومين',
     piCost: 3, rewardDN: 0, rewardXp: 0, rewardBadge: '💰',
     minTier: 'pro',
   },

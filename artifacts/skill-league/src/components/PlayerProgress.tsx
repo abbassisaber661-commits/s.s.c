@@ -245,12 +245,12 @@ export default function PlayerProgress({ playerId, playerName, compact = false }
         <XpBar progress={progress} level={profile.level} />
       </div>
 
-      {/* Coins & arcade */}
+      {/* DN$ & arcade */}
       <div className="border-t border-white/5 px-4 py-3 flex gap-4 text-sm">
         <div className="flex items-center gap-1.5">
           <span>🪙</span>
           <span className="text-white font-bold">{profile.arcadeCoins.toLocaleString()}</span>
-          <span className="text-white/40 text-xs">game coins</span>
+          <span className="text-white/40 text-xs">arcade DN$</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span>🎮</span>

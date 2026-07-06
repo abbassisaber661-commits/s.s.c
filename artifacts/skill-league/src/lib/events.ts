@@ -30,7 +30,7 @@ export interface EventMission {
   title: string;
   titleAr: string;
   goal: number;
-  type: 'wins' | 'matches' | 'pvp_wins' | 'score' | 'coins';
+  type: 'wins' | 'matches' | 'pvp_wins' | 'score' | 'dn';
   reward: { dn: number; xp: number };
 }
 
@@ -79,11 +79,11 @@ export const ACTIVE_EVENTS: GameEvent[] = [
     ],
   },
   {
-    id: 'coin_rush',
-    title: '💰 Coin Rush',
-    titleAr: '💰 سباق العملات',
-    description: 'Earn coins to unlock exclusive seasonal rewards!',
-    descriptionAr: 'اكسب عملات للحصول على مكافآت موسمية حصرية!',
+    id: 'dn_rush',
+    title: '💰 DN$ Rush',
+    titleAr: '💰 سباق DN$',
+    description: 'Earn DN$ to unlock exclusive seasonal rewards!',
+    descriptionAr: 'اكسب DN$ للحصول على مكافآت موسمية حصرية!',
     icon: '💰',
     type: 'seasonal',
     startDate: new Date().toISOString(),
@@ -97,9 +97,9 @@ export const ACTIVE_EVENTS: GameEvent[] = [
       { rank: 'Top 50', rankAr: 'أفضل 50',       icon: '🏅', dn: 500,  xp: 200  },
     ],
     missions: [
-      { id: 'earn500',   title: 'Earn 500 coins',   titleAr: 'اكسب 500 عملة',   goal: 500,  type: 'coins', reward: { dn: 75,  xp: 40  } },
-      { id: 'earn2000',  title: 'Earn 2000 coins',  titleAr: 'اكسب 2000 عملة',  goal: 2000, type: 'coins', reward: { dn: 200, xp: 100 } },
-      { id: 'earn5000',  title: 'Earn 5000 coins',  titleAr: 'اكسب 5000 عملة',  goal: 5000, type: 'coins', reward: { dn: 500, xp: 250 } },
+      { id: 'earn500',   title: 'Earn 500 DN$',   titleAr: 'اكسب 500 DN$',   goal: 500,  type: 'dn', reward: { dn: 75,  xp: 40  } },
+      { id: 'earn2000',  title: 'Earn 2000 DN$',  titleAr: 'اكسب 2000 DN$',  goal: 2000, type: 'dn', reward: { dn: 200, xp: 100 } },
+      { id: 'earn5000',  title: 'Earn 5000 DN$',  titleAr: 'اكسب 5000 DN$',  goal: 5000, type: 'dn', reward: { dn: 500, xp: 250 } },
     ],
   },
   {

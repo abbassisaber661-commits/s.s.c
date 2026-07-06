@@ -251,7 +251,7 @@ export default function Marketplace() {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-[#666666] mb-2 block">السعر بالعملات</label>
+                <label className="text-xs text-[#666666] mb-2 block">السعر بـ DN$</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="range"

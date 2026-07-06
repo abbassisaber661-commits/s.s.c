@@ -200,7 +200,7 @@ export default function MonitorDashboard() {
                       { label: 'لاعبون جدد', value: live.stats.newPlayers1h, color: '#22c55e' },
                       { label: 'نشطون (24h)', value: live.stats.activePlayers24h, color: '#3b82f6' },
                       { label: 'مباريات', value: live.stats.matches1h, color: '#ef4444' },
-                      { label: 'معاملات عملات', value: live.stats.coinTxns1h, color: '#f59e0b' },
+                      { label: 'معاملات DN$', value: live.stats.coinTxns1h, color: '#f59e0b' },
                     ].map(s => (
                       <div key={s.label} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
                         <span className="text-xs text-muted-foreground">{s.label}</span>
@@ -322,7 +322,7 @@ export default function MonitorDashboard() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-muted-foreground">عملات</div>
+                      <div className="text-xs text-muted-foreground">DN$</div>
                       <div className="font-bold text-sm text-yellow-400">{(b as any).elo}</div>
                     </div>
                   </div>

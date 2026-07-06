@@ -51,7 +51,7 @@ const T: Record<Language, IntroTranslations> = {
     jobs_title: "الوظائف والسوق",
     jobs_items: ["فرص العمل", "البيع والشراء", "السوق العالمي"],
     economy_title: "الاقتصاد الرقمي",
-    economy_items: ["عملة دينوس (DN)", "المحفظة والأرباح", "مكافآت المبدعين"],
+    economy_items: ["DN$ دينوس", "المحفظة والأرباح", "مكافآت المبدعين"],
     continue_btn: "متابعة",
     select_lang: "اللغة",
     stat_players: "لاعب",

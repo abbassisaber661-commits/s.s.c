@@ -263,7 +263,7 @@ export default function BetaDashboard() {
             <h3 className="font-semibold text-sm text-muted-foreground px-1">أدوات المطور — Phase 20</h3>
             {[
               { href: '/monitor', icon: Monitor, label: 'مراقبة مباشرة', desc: 'أداء السيرفر، الأخطاء، والجلسات النشطة', color: '#22c55e' },
-              { href: '/admin/economy-dashboard', icon: BarChart3, label: 'لوحة تحكم الاقتصاد', desc: 'مراقبة التضخم، العملات، الجواهر، والتوصيات الذكية', color: '#f59e0b' },
+              { href: '/admin/economy-dashboard', icon: BarChart3, label: 'لوحة تحكم الاقتصاد', desc: 'مراقبة التضخم، DN$، Pi، والتوصيات الذكية', color: '#f59e0b' },
               { href: '/release', icon: Rocket,  label: 'نسخة RC الإصدار',desc: 'قائمة جاهزية الإطلاق ومنصات النشر',   color: '#3b82f6' },
               { href: '/analytics', icon: BarChart3, label: 'تحليلات اللاعبين', desc: 'سلوك المستخدمين والميزات الأكثر استخدامًا', color: '#a855f7' },
             ].map(tool => (
@@ -286,7 +286,7 @@ export default function BetaDashboard() {
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li>✅ مراقبة مباشرة للخادم</li>
                 <li>✅ كشف البوتات والحسابات الوهمية</li>
-                <li>✅ تحليل اقتصاد العملات</li>
+                <li>✅ تحليل اقتصاد DN$</li>
                 <li>✅ نسخة RC جاهزة للإطلاق</li>
                 <li>✅ تفعيل Pi بشكل شبه كامل</li>
                 <li>✅ توازن الصناديق ومكافحة التضخم</li>

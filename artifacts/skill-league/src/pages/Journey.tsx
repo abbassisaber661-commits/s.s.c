@@ -227,7 +227,7 @@ export default function Journey() {
               </div>
 
               <div className="rounded-xl bg-card border border-border p-4 text-center text-sm text-muted-foreground">
-                💡 سجّل دخولك يومياً لتكسب عملات ومكافآت متزايدة
+                💡 سجّل دخولك يومياً لتكسب DN$ ومكافآت متزايدة
               </div>
             </motion.div>
           )}

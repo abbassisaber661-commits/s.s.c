@@ -18,39 +18,39 @@ export interface MatchEconomyInput {
   tier:        EconomyTier;
 }
 
-export interface CoinBreakdown {
+export interface DNBreakdown {
   base:          number;
   rankBonus:     number;
   accuracyBonus: number;
   total:         number;
 }
 
-export interface GemBreakdown {
-  gemsEarned: number;
-  reason:     string;
+export interface PiBreakdown {
+  piEarned: number;
+  reason:   string;
 }
 
 export interface EconomyResult {
-  coinsEarned:   number;
-  gemsEarned:    number;
-  coinBreakdown: CoinBreakdown;
-  gemBreakdown:  GemBreakdown;
-  newCoins:      number;
-  newGems:       number;
+  dnEarned:    number;
+  piEarned:    number;
+  dnBreakdown: DNBreakdown;
+  piBreakdown: PiBreakdown;
+  newDN:       number;
+  newPi:       number;
 }
 
-// ── Gem reward table ──────────────────────────────────────────────────────────
+// ── Pi reward table (formerly gem table) ─────────────────────────────────────
 
-const GEM_TABLE: Record<EconomyTier, Partial<Record<number, number>>> = {
+const PI_REWARD_TABLE: Record<EconomyTier, Partial<Record<number, number>>> = {
   div3:      { 1: 1 },
   div2:      { 1: 2, 2: 1 },
   pro:       { 1: 3, 2: 2, 3: 1 },
   champions: { 1: 3, 2: 2, 3: 1 },
 };
 
-// ── Entry gem requirements ────────────────────────────────────────────────────
+// ── Entry Pi requirements ─────────────────────────────────────────────────────
 
-export const ENTRY_GEM_COST: Record<EconomyTier, number> = {
+export const ENTRY_PI_COST: Record<EconomyTier, number> = {
   div3:      0,
   div2:      1,
   pro:       2,
@@ -73,11 +73,11 @@ export function leagueTierToEconomyTier(tier: string): EconomyTier {
 // ── Core calculation (pure — no side effects) ─────────────────────────────────
 
 export function calcMatchEconomy(
-  input:       MatchEconomyInput,
-  playerCoins  = 0,
-  playerGems   = 0,
+  input:      MatchEconomyInput,
+  playerDN  = 0,
+  playerPi  = 0,
 ): EconomyResult {
-  // Coins
+  // DN$ earned
   const base = 1;
 
   let rankBonus = 0;
@@ -89,49 +89,49 @@ export function calcMatchEconomy(
   if (input.accuracyPct >= 1.0)       accuracyBonus = 2;
   else if (input.accuracyPct >= 0.8)  accuracyBonus = 1;
 
-  const coinsEarned = base + rankBonus + accuracyBonus;
+  const dnEarned = base + rankBonus + accuracyBonus;
 
-  // Gems
-  const gemsEarned = GEM_TABLE[input.tier]?.[input.rank] ?? 0;
+  // Pi earned
+  const piEarned = PI_REWARD_TABLE[input.tier]?.[input.rank] ?? 0;
 
-  let gemReason = 'No gem reward for this rank/tier';
-  if (gemsEarned > 0) {
+  let piReason = 'No Pi reward for this rank/tier';
+  if (piEarned > 0) {
     const place =
       input.rank === 1 ? '1st place' :
       input.rank === 2 ? '2nd place' : '3rd place';
-    gemReason = `${place} in ${input.tier.toUpperCase()}`;
+    piReason = `${place} in ${input.tier.toUpperCase()}`;
   }
 
   return {
-    coinsEarned,
-    gemsEarned,
-    coinBreakdown: { base, rankBonus, accuracyBonus, total: coinsEarned },
-    gemBreakdown:  { gemsEarned, reason: gemReason },
-    newCoins: playerCoins + coinsEarned,
-    newGems:  Math.max(0, playerGems + gemsEarned),
+    dnEarned,
+    piEarned,
+    dnBreakdown: { base, rankBonus, accuracyBonus, total: dnEarned },
+    piBreakdown: { piEarned, reason: piReason },
+    newDN: playerDN + dnEarned,
+    newPi: Math.max(0, playerPi + piEarned),
   };
 }
 
 /** Check whether a player can enter a league tier. */
-export function canEnterLeague(tier: EconomyTier, playerGems: number): boolean {
-  return playerGems >= ENTRY_GEM_COST[tier];
+export function canEnterLeague(tier: EconomyTier, playerPi: number): boolean {
+  return playerPi >= ENTRY_PI_COST[tier];
 }
 
-// ── Persistent gem storage (localStorage) ────────────────────────────────────
+// ── Persistent Pi storage (localStorage) ─────────────────────────────────────
 
-const GEMS_KEY = 'sl_economy_gems_v1';
+const PI_LOCAL_KEY = 'sl_economy_pi_v1';
 
-export function loadLocalGems(): number {
+export function loadLocalPi(): number {
   try {
-    const raw = localStorage.getItem(GEMS_KEY);
+    const raw = localStorage.getItem(PI_LOCAL_KEY);
     if (raw !== null) return Math.max(0, parseInt(raw, 10) || 0);
   } catch { /* ignore */ }
   return 0;
 }
 
-export function saveLocalGems(gems: number): void {
+export function saveLocalPi(pi: number): void {
   try {
-    localStorage.setItem(GEMS_KEY, String(Math.max(0, gems)));
+    localStorage.setItem(PI_LOCAL_KEY, String(Math.max(0, pi)));
   } catch { /* ignore */ }
 }
 
@@ -171,8 +171,8 @@ export const economyApi = {
     return res.json() as Promise<ServerEconomyResult>;
   },
 
-  /** Get current gem count for a player. */
-  getGems: async (playerId: string): Promise<number> => {
+  /** Get current Pi count for a player. */
+  getPi: async (playerId: string): Promise<number> => {
     const res = await fetch(`${BASE}/economy/${playerId}/gems`);
     if (!res.ok) return 0;
     const body = await res.json() as { gems: number };

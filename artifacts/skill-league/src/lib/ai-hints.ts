@@ -62,7 +62,7 @@ export function generateAiHints(stats: PlayerStats): AiHint[] {
       hints.push({
         id: 'pvp_ranked', icon: '🏆',
         title: "You're dominating PvP!",
-        body: `${pvpRate}% win rate — impressive. Your ELO should push you to Silver or Gold tier soon. Try tournaments for bigger coin rewards.`,
+        body: `${pvpRate}% win rate — impressive. Your ELO should push you to Silver or Gold tier soon. Try tournaments for bigger DN$ rewards.`,
         priority: 'low', actionLabel: 'Join Tournament', actionUrl: '/tournament',
       });
     }
@@ -78,7 +78,7 @@ export function generateAiHints(stats: PlayerStats): AiHint[] {
     });
   }
 
-  // Coins advice
+  // DN$ advice
   if (stats.dnBalance < 50) {
     hints.push({
       id: 'earn_dn', icon: '💰',
@@ -103,7 +103,7 @@ export function generateAiHints(stats: PlayerStats): AiHint[] {
     hints.push({
       id: 'first_match', icon: '🎮',
       title: 'Play your first match!',
-      body: 'Start with Training League to earn your first coins and XP. It only takes 60 seconds per match.',
+      body: 'Start with Training League to earn your first DN$ and XP. It only takes 60 seconds per match.',
       priority: 'high', actionLabel: 'Play Now', actionUrl: '/leagues',
     });
   }
@@ -113,7 +113,7 @@ export function generateAiHints(stats: PlayerStats): AiHint[] {
     hints.push({
       id: 'try_tournament', icon: '🏆',
       title: 'Ready for tournaments',
-      body: `With ${stats.pvpWins} PvP wins, you're tournament-ready. 1st place pays 1000 coins — that's 3× the best PvP reward.`,
+      body: `With ${stats.pvpWins} PvP wins, you're tournament-ready. 1st place pays 1000 DN$ — that's 3× the best PvP reward.`,
       priority: 'medium', actionLabel: 'Enter Tournament', actionUrl: '/tournament',
     });
   }

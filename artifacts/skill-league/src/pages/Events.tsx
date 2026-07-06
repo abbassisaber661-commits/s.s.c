@@ -24,7 +24,7 @@ export default function Events() {
     const stored = progress[event.id]?.[missionId] ?? 0;
     if (type === 'pvp_wins') return Math.max(stored, pvpWins);
     if (type === 'matches')  return Math.max(stored, matchesPlayed);
-    if (type === 'coins')    return Math.max(stored, dnBalance);
+    if (type === 'dn')       return Math.max(stored, dnBalance);
     return stored;
   };
 
@@ -76,85 +76,7 @@ export default function Events() {
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
                     <span>
-                      🎁 {(m.reward.dn ?? 0) > 0 ? `+${m.reward.dn} DNimport { useState } from "react";
-import { useGame } from "@/contexts/GameContext";
-import { ChevronLeft, Clock, Trophy } from "lucide-react";
-import { motion } from "framer-motion";
-import { playTap } from "@/lib/sounds";
-import { isRTL } from "@/lib/i18n";
-import { ACTIVE_EVENTS, getTimeRemaining, getTimeRemainingAr, getEventProgress, type GameEvent } from "@/lib/events";
-
-export default function Events() {
-  const { language, pvpWins, matchesPlayed, dnBalance } = useGame();
-  const rtl = isRTL(language);
-
-  const [selectedEvent, setSelectedEvent] = useState<GameEvent | null>(null);
-  const progress = getEventProgress();
-
-  const TYPE_LABELS: Record<string, string> = {
-    weekly:   language === 'ar' ? 'أسبوعي' : 'Weekly',
-    seasonal: language === 'ar' ? 'موسمي'  : 'Seasonal',
-    global:   language === 'ar' ? 'عالمي'  : 'Global',
-    special:  language === 'ar' ? 'خاص'    : 'Special',
-  };
-
-  const getUserProgress = (event: GameEvent, missionId: string, type: string): number => {
-    const stored = progress[event.id]?.[missionId] ?? 0;
-    if (type === 'pvp_wins') return Math.max(stored, pvpWins);
-    if (type === 'matches')  return Math.max(stored, matchesPlayed);
-    if (type === 'coins')    return Math.max(stored, dnBalance);
-    return stored;
-  };
-
-  if (selectedEvent) {
-    const timeLeft = language === 'ar' ? getTimeRemainingAr(selectedEvent.endDate) : getTimeRemaining(selectedEvent.endDate);
-    return (
-      <div dir={rtl ? 'rtl' : 'ltr'} className="min-h-screen bg-background text-foreground pb-24">
-        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/60 px-4 py-3 flex items-center gap-3">
-          <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={() => { setSelectedEvent(null); playTap(); }}>
-            <ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} />
-          </button>
-          <h1 className="text-lg font-black flex-1">{language === 'ar' ? selectedEvent.titleAr : selectedEvent.title}</h1>
-        </div>
-
-        <div className="max-w-md mx-auto px-4 pt-4 space-y-4">
-          {/* Event banner */}
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border p-5 text-center"
-            style={{ borderColor: selectedEvent.color + '50', background: `linear-gradient(135deg, ${selectedEvent.color}15, ${selectedEvent.color}05)` }}>
-            <div className="text-5xl mb-2">{selectedEvent.icon}</div>
-            <h2 className="text-xl font-black">{language === 'ar' ? selectedEvent.titleAr : selectedEvent.title}</h2>
-            <p className="text-xs text-muted-foreground mt-2">{language === 'ar' ? selectedEvent.descriptionAr : selectedEvent.description}</p>
-            <div className="flex items-center justify-center gap-2 mt-3 text-sm font-bold" style={{ color: selectedEvent.color }}>
-              <Clock className="w-4 h-4" />
-              <span>{language === 'ar' ? `ينتهي خلال: ${timeLeft}` : `Ends in: ${timeLeft}`}</span>
-            </div>
-          </motion.div>
-
-          {/* Missions */}
-          <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-            <p className="text-sm font-bold">{language === 'ar' ? '🎯 المهمات' : '🎯 Missions'}</p>
-            {selectedEvent.missions.map((m, i) => {
-              const userVal = getUserProgress(selectedEvent, m.id, m.type);
-              const pct = Math.min(100, (userVal / m.goal) * 100);
-              const done = userVal >= m.goal;
-              return (
-                <motion.div key={m.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
-                  className={`p-3 rounded-xl border ${done ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold">{language === 'ar' ? m.titleAr : m.title}</span>
-                    {done
-                      ? <span className="text-xs text-green-400 font-bold">✅ {language === 'ar' ? 'مكتملة' : 'Done'}</span>
-                      : <span className="text-xs text-muted-foreground">{userVal}/{m.goal}</span>
-                    }
-                  </div>
-                  <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                    <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                      style={{ background: done ? '#22c55e' : selectedEvent.color }} />
-                  </div>
-                  <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
-                    <span>
- : ''}
+                      🎁 {(m.reward.dn ?? 0) > 0 ? `+${m.reward.dn} DN$` : ''}
                       {m.reward.xp > 0 ? ` +${m.reward.xp} XP` : ''}
                     </span>
                   </div>

@@ -54,12 +54,12 @@ export interface BadgeDef {
 }
 
 export interface ArcadeGame {
-  id:    string;
-  name:  string;
-  icon:  string;
-  desc:  string;
-  xp:    number;
-  coins: number;
+  id:   string;
+  name: string;
+  icon: string;
+  desc: string;
+  xp:   number;
+  dn:   number;
 }
 
 export interface ArcadeResult {
@@ -73,7 +73,7 @@ export interface ArcadeResult {
 }
 
 export interface DailyResult {
-  coins:     number;
+  dn:        number;
   xp:        number;
   profile:   PlayerProfile;
   newBadges: string[];

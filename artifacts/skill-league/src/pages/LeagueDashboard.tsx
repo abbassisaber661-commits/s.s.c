@@ -115,7 +115,7 @@ function SubscribeModal({
                 { icon: <Trophy className="w-4 h-4" />, label: 'موسم تنافسي كامل', sub: '30 مباراة على مدار 30 يوم' },
                 { icon: <Users className="w-4 h-4" />, label: 'منافسة حقيقية', sub: `${league.difficulty} — ضد لاعبين حقيقيين` },
                 { icon: <Star className="w-4 h-4" />, label: 'فرصة للترقي', sub: 'أفضل 30٪ يرتقون للدوري التالي' },
-                { icon: <Zap className="w-4 h-4" />, label: 'مكافآت الموسم', sub: 'عملات + XP + تقدم في الترتيب' },
+                { icon: <Zap className="w-4 h-4" />, label: 'مكافآت الموسم', sub: 'DN$ + XP + تقدم في الترتيب' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
@@ -821,7 +821,7 @@ export default function LeagueDashboard() {
       await gameLayerApi.claimDaily(playerId, playerName);
       setDailyDone(true);
       setProgressKey(k => k + 1);
-      showToast('📅 مكافأة يومية! +20 عملة +10 XP');
+      showToast('📅 مكافأة يومية! +20 DN$ +10 XP');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Claim failed';
       if (msg.includes('already claimed')) {
@@ -969,7 +969,7 @@ export default function LeagueDashboard() {
             <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
               <div className="font-bold text-white mb-1">🎮 منطقة الأركيد</div>
               <div className="text-xs text-white/40 mb-4">
-                العب ألعاباً صغيرة لكسب XP وعملات — بدون تأثير على الترتيب.
+                العب ألعاباً صغيرة لكسب XP و DN$ — بدون تأثير على الترتيب.
               </div>
               <ArcadeZone
                 playerId={playerId}
@@ -987,7 +987,7 @@ export default function LeagueDashboard() {
             <div className="rounded-2xl bg-white/5 border border-white/10 p-4 flex items-center justify-between">
               <div>
                 <div className="font-bold text-white text-sm">📅 المكافأة اليومية</div>
-                <div className="text-xs text-white/40 mt-0.5">+20 عملة · +10 XP · مرة يومياً</div>
+                <div className="text-xs text-white/40 mt-0.5">+20 DN$ · +10 XP · مرة يومياً</div>
               </div>
               <motion.button
                 whileHover={{ scale: 1.05 }}

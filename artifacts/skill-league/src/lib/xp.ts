@@ -75,43 +75,29 @@ export function getLevelTitle(level: number): { title: string; color: string } {
   return match ?? LEVEL_TITLES[0];
 }
 
+export interface TrophyStats {
+  pvpWins: number;
+  pvpWinStreak: number;
+  level: number;
+  tournamentWins: number;
+  dnBalance: number;
+}
+
 export const TROPHIES: {
   id: string; name: string; icon: string; desc: string;
   condition: (stats: TrophyStats) => boolean;
 }[] = [
-  { id: 'first_pvp_win',    name: 'First Blood',     icon: '⚔️',  desc: 'Win your first PvP match', condition: s => s.pvpWins >= 1 },
-  { id: 'pvp_5_wins',       name: 'Battle-Tested',   icon: '🛡️',  desc: 'Win 5 PvP matches',        condition: s => s.pvpWins >= 5 },
-  { id: 'pvp_25_wins',      name: 'Warlord',         icon: '⚡',  desc: 'Win 25 PvP matches',       condition: s => s.pvpWins >= 25 },
-  { id: 'level_10',         name: 'Rising Star',     icon: '🌟',  desc: 'Reach Level 10',            condition: s => s.level >= 10 },
-  { id: 'level_50',         name: 'Halfway Hero',    icon: '💎',  desc: 'Reach Level 50',            condition: s => s.level >= 50 },
-  { id: 'level_100',        name: 'Immortal',        icon: '👑',  desc: 'Reach Level 100',           condition: s => s.level >= 100 },
-  { id: 'tournament_win',   name: 'Champion',        icon: '🏆',  desc: 'Win a tournament',         condition: s => s.tournamentWins >= 1 },
-  { id: 'win_streak_5',     name: 'On Fire',         icon: '🔥',  desc: '5 wins in a row',           condition: s => s.pvpWinStreak >= 5 },
-  { id: 'win_streak_10',    name: 'Unstoppable',     icon: '💥',  desc: '10 wins in a row',          condition: s => s.pvpWinStreak >= 10 },
-  { id: 'coins_1000',       name: 'Moneybags',       icon: '💰',  desc: 'Hold 1000+ DN
+  { id: 'first_pvp_win',    name: 'First Blood',     icon: '⚔️',  desc: 'Win your first PvP match',    condition: s => s.pvpWins >= 1 },
+  { id: 'pvp_5_wins',       name: 'Battle-Tested',   icon: '🛡️',  desc: 'Win 5 PvP matches',           condition: s => s.pvpWins >= 5 },
+  { id: 'pvp_25_wins',      name: 'Warlord',         icon: '⚡',  desc: 'Win 25 PvP matches',          condition: s => s.pvpWins >= 25 },
+  { id: 'level_10',         name: 'Rising Star',     icon: '🌟',  desc: 'Reach Level 10',              condition: s => s.level >= 10 },
+  { id: 'level_50',         name: 'Halfway Hero',    icon: '💎',  desc: 'Reach Level 50',              condition: s => s.level >= 50 },
+  { id: 'level_100',        name: 'Immortal',        icon: '👑',  desc: 'Reach Level 100',             condition: s => s.level >= 100 },
+  { id: 'tournament_win',   name: 'Champion',        icon: '🏆',  desc: 'Win a tournament',            condition: s => s.tournamentWins >= 1 },
+  { id: 'win_streak_5',     name: 'On Fire',         icon: '🔥',  desc: '5 wins in a row',             condition: s => s.pvpWinStreak >= 5 },
+  { id: 'win_streak_10',    name: 'Unstoppable',     icon: '💥',  desc: '10 wins in a row',            condition: s => s.pvpWinStreak >= 10 },
+  { id: 'dn_1000',          name: 'Moneybags',       icon: '💰',  desc: 'Hold 1000+ DN$ in balance',   condition: s => s.dnBalance >= 1000 },
 ];
-
-export interface TrophyStats {
-  pvpWins: number;
-  pvpWinStreak: number;
-  level: number;
-  tournamentWins: number;
-  dnBalance: number;
-}
-
-export function checkNewTrophies(stats: TrophyStats, earnedIds: string[]): typeof TROPHIES {
-  return TROPHIES.filter(t => !earnedIds.includes(t.id) && t.condition(stats));
-}
-,            condition: s => s.dnBalance >= 1000 },
-];
-
-export interface TrophyStats {
-  pvpWins: number;
-  pvpWinStreak: number;
-  level: number;
-  tournamentWins: number;
-  dnBalance: number;
-}
 
 export function checkNewTrophies(stats: TrophyStats, earnedIds: string[]): typeof TROPHIES {
   return TROPHIES.filter(t => !earnedIds.includes(t.id) && t.condition(stats));

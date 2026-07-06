@@ -562,7 +562,7 @@ export default function Tournament() {
           {coinsWon > 0 && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4">
               <div className="text-2xl font-black text-yellow-400">+{coinsWon} 🪙</div>
-              <div className="text-sm text-muted-foreground">Prize Coins</div>
+              <div className="text-sm text-muted-foreground">Prize DN$</div>
             </div>
           )}
 

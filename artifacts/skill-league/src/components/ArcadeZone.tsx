@@ -2,7 +2,7 @@
  * ArcadeZone.tsx
  * ──────────────
  * Arcade games panel — lists available games, handles play flow,
- * shows XP/coin rewards. Does NOT affect league rankings.
+ * shows XP/DN$ rewards. Does NOT affect league rankings.
  */
 
 import { useState, useEffect } from 'react';
@@ -218,7 +218,7 @@ export default function ArcadeZone({ playerId, playerName, onProgressUpdate }: P
       ))}
 
       <div className="text-xs text-white/30 text-center pt-1">
-        Arcade games give XP + coins but don't affect league standings.
+        Arcade games give XP + DN$ but don't affect league standings.
       </div>
     </div>
   );

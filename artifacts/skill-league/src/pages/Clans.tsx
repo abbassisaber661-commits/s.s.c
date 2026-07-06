@@ -8,7 +8,7 @@ import { playTap, playCoin } from "@/lib/sounds";
 import { isRTL } from "@/lib/i18n";
 import {
   loadClans, createClan, joinClan, leaveClan, loadMyClanData, saveMyClanData,
-  getClanRankings, contributeClanCoins, getClanLevelInfo, CLAN_LOGOS,
+  getClanRankings, contributeClanDN, getClanLevelInfo, CLAN_LOGOS,
   type Clan, type ClanPlayerData,
 } from "@/lib/clans";
 
@@ -42,7 +42,7 @@ export default function Clans() {
     if (!newName.trim() || !newTag.trim()) { showToast('❌ Enter name and tag', false); return; }
     if (myClan.clanId) { showToast('❌ Already in a clan', false); return; }
     const clan = createClan(newName, newTag, newLogo, newDesc, username, level, elo);
-    saveMyClanData({ clanId: clan.id, clanName: clan.name, clanTag: clan.tag, clanRole: 'owner', clanCoinsContributed: 0 });
+    saveMyClanData({ clanId: clan.id, clanName: clan.name, clanTag: clan.tag, clanRole: 'owner', clanDNContributed: 0 });
     setMyClan(loadMyClanData());
     setClans(getClanRankings());
     showToast(`✅ Clan "${clan.name}" created!`, true);
@@ -55,7 +55,7 @@ export default function Clans() {
     if (elo < clan.minElo) { showToast(`❌ Need ${clan.minElo} ELO`, false); return; }
     const ok = joinClan(clan.id, username, level, elo);
     if (ok) {
-      saveMyClanData({ clanId: clan.id, clanName: clan.name, clanTag: clan.tag, clanRole: 'member', clanCoinsContributed: 0 });
+      saveMyClanData({ clanId: clan.id, clanName: clan.name, clanTag: clan.tag, clanRole: 'member', clanDNContributed: 0 });
       setMyClan(loadMyClanData());
       setClans(getClanRankings());
       showToast(`✅ Joined ${clan.name}!`, true);
@@ -69,7 +69,7 @@ export default function Clans() {
   function handleLeave() {
     if (!myClan.clanId) return;
     leaveClan(myClan.clanId, username);
-    saveMyClanData({ clanId: null, clanName: null, clanTag: null, clanRole: null, clanCoinsContributed: 0 });
+    saveMyClanData({ clanId: null, clanName: null, clanTag: null, clanRole: null, clanDNContributed: 0 });
     setMyClan(loadMyClanData());
     setClans(getClanRankings());
     showToast('✅ Left the clan', true);
@@ -78,13 +78,13 @@ export default function Clans() {
 
   function handleContribute() {
     if (!myClan.clanId) return;
-    if (!spendCoins(contributeAmount)) { showToast('❌ Not enough coins', false); return; }
-    contributeClanCoins(myClan.clanId, username, contributeAmount);
-    const updated = { ...myClan, clanCoinsContributed: myClan.clanCoinsContributed + contributeAmount };
+    if (!spendCoins(contributeAmount)) { showToast('❌ Not enough DN$', false); return; }
+    contributeClanDN(myClan.clanId, username, contributeAmount);
+    const updated = { ...myClan, clanDNContributed: myClan.clanDNContributed + contributeAmount };
     saveMyClanData(updated);
     setMyClan(updated);
     setClans(getClanRankings());
-    showToast(`✅ Contributed ${contributeAmount} coins!`, true);
+    showToast(`✅ Contributed ${contributeAmount} DN$!`, true);
     playCoin();
   }
 
@@ -160,8 +160,8 @@ export default function Clans() {
                       <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{clan.description}</p>
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      <div className="text-sm font-black text-yellow-400">{clan.coins.toLocaleString()}</div>
-                      <div className="text-[10px] text-muted-foreground">coins</div>
+                      <div className="text-sm font-black text-yellow-400">{(clan.dn ?? 0).toLocaleString()}</div>
+                      <div className="text-[10px] text-muted-foreground">DN$</div>
                       {!isMyC && !myClan.clanId && (
                         <Button size="sm" onClick={() => handleJoin(clan)} className="mt-1 text-[10px] h-6 px-2 font-bold">
                           {language === 'ar' ? 'انضم' : 'Join'}
@@ -213,7 +213,7 @@ export default function Clans() {
                     {myMember?.role === 'owner' && <Crown className="w-3 h-3 text-yellow-400" />}
                   </div>
                   <div className="flex justify-center gap-6 mt-4 text-center">
-                    <div><div className="text-lg font-black text-yellow-400">{myClanObj.coins.toLocaleString()}</div><div className="text-[10px] text-muted-foreground">Coins</div></div>
+                    <div><div className="text-lg font-black text-yellow-400">{(myClanObj.dn ?? 0).toLocaleString()}</div><div className="text-[10px] text-muted-foreground">DN$</div></div>
                     <div><div className="text-lg font-black">{myClanObj.members.length}</div><div className="text-[10px] text-muted-foreground">Members</div></div>
                     <div><div className="text-lg font-black">{myClanObj.wins}</div><div className="text-[10px] text-muted-foreground">Wins</div></div>
                   </div>
@@ -221,7 +221,7 @@ export default function Clans() {
 
                 {/* Contribute */}
                 <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-                  <p className="text-sm font-bold">{language === 'ar' ? '💰 ساهم بالعملات' : '💰 Contribute Coins'}</p>
+                  <p className="text-sm font-bold">{language === 'ar' ? '💰 ساهم بـ DN$' : '💰 Contribute DN$'}</p>
                   <div className="flex gap-2 flex-wrap">
                     {[25, 50, 100, 250].map(amt => (
                       <button key={amt} onClick={() => setContributeAmount(amt)}
@@ -231,17 +231,17 @@ export default function Clans() {
                     ))}
                   </div>
                   <Button onClick={handleContribute} className="w-full text-sm font-bold" disabled={dnBalance < contributeAmount}>
-                    {language === 'ar' ? `ساهم بـ ${contributeAmount} عملة` : `Contribute ${contributeAmount} Coins`}
+                    {language === 'ar' ? `ساهم بـ ${contributeAmount} DN$` : `Contribute ${contributeAmount} DN$`}
                   </Button>
                   <p className="text-[10px] text-muted-foreground text-center">
-                    {language === 'ar' ? `ساهمت بإجمالي: ${myClan.clanCoinsContributed} عملة` : `Your total contribution: ${myClan.clanCoinsContributed} coins`}
+                    {language === 'ar' ? `ساهمت بإجمالي: ${myClan.clanDNContributed} DN$` : `Your total contribution: ${myClan.clanDNContributed} DN$`}
                   </p>
                 </div>
 
                 {/* Members */}
                 <div className="rounded-2xl border border-border bg-card p-4 space-y-2">
                   <p className="text-sm font-bold mb-3">{language === 'ar' ? '👥 الأعضاء' : '👥 Members'}</p>
-                  {myClanObj.members.sort((a, b) => b.weeklyCoins - a.weeklyCoins).map((m, i) => (
+                  {myClanObj.members.sort((a, b) => (b.weeklyDN ?? 0) - (a.weeklyDN ?? 0)).map((m, i) => (
                     <div key={m.id} className="flex items-center gap-3 py-2 border-b border-border/40 last:border-0">
                       <span className="text-xs text-muted-foreground w-5 text-center">{i + 1}</span>
                       <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-sm font-black">
@@ -257,7 +257,7 @@ export default function Clans() {
                         <div className="text-[10px] text-muted-foreground">Lv.{m.level} · {m.elo} ELO</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs font-bold text-yellow-400">{m.weeklyCoins} 🪙</div>
+                        <div className="text-xs font-bold text-yellow-400">{m.weeklyDN ?? 0} DN$</div>
                         <div className="text-[9px] text-muted-foreground">{language === 'ar' ? 'هذا الأسبوع' : 'this week'}</div>
                       </div>
                     </div>

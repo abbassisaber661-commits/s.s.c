@@ -170,12 +170,12 @@ function LoadingSpinner() {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 
-type Tab = 'overview' | 'coins' | 'gems' | 'weekly' | 'scaling';
+type Tab = 'overview' | 'dn' | 'pi' | 'weekly' | 'scaling';
 
 const TABS: { id: Tab; label: string; icon: any }[] = [
   { id: 'overview', label: 'نظرة عامة',  icon: BarChart3  },
-  { id: 'coins',    label: 'العملات',    icon: Coins      },
-  { id: 'gems',     label: 'الجواهر',    icon: Gem        },
+  { id: 'dn',       label: 'DN$',        icon: Coins      },
+  { id: 'pi',       label: 'Pi',         icon: Gem        },
   { id: 'weekly',   label: 'أسبوعي',     icon: Calendar   },
   { id: 'scaling',  label: 'التعديل',    icon: Zap        },
 ];
@@ -271,7 +271,7 @@ export default function EconomyDashboard() {
             <div>
               <div className="font-black text-base" style={{ color: inf.color }}>{inf.label}</div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                {fmt(report.coinsPerUserPerDay)} عملة/مستخدم/يوم
+                {fmt(report.coinsPerUserPerDay)} DN$/مستخدم/يوم
               </div>
             </div>
             <div className="text-right shrink-0">
@@ -279,7 +279,7 @@ export default function EconomyDashboard() {
                 {RISK_CONFIG[report.riskLevel].label}
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5">
-                {GEMS_FLOW_CONFIG[report.gemsFlow].label} — جواهر
+                {GEMS_FLOW_CONFIG[report.gemsFlow].label} — Pi
               </div>
             </div>
           </motion.div>
@@ -333,9 +333,9 @@ export default function EconomyDashboard() {
               <StatCard label="صافي التدفق اليومي" value={report.metrics.netFlow}
                 color={report.metrics.netFlow >= 0 ? '#22c55e' : '#ef4444'} icon={TrendingUp}
                 trend={report.metrics.netFlow > 0 ? 'up' : report.metrics.netFlow < 0 ? 'down' : 'flat'} />
-              <StatCard label="متوسط عملات/مستخدم" value={fmt(report.metrics.averageCoinsPerUser)}
+              <StatCard label="متوسط DN$/مستخدم" value={fmt(report.metrics.averageCoinsPerUser)}
                 color="#f59e0b" icon={Coins} />
-              <StatCard label="إجمالي الجواهر الموزعة" value={report.metrics.gemsDistributedTotal}
+              <StatCard label="إجمالي Pi الموزعة" value={report.metrics.gemsDistributedTotal}
                 color="#a855f7" icon={Gem} />
             </div>
 
@@ -345,7 +345,7 @@ export default function EconomyDashboard() {
               <div className="space-y-2.5">
                 {[
                   { label: 'حالة التضخم', value: inf?.label ?? '—', color: inf?.color ?? '#6b7280' },
-                  { label: 'تدفق الجواهر', value: GEMS_FLOW_CONFIG[report.gemsFlow].label, color: GEMS_FLOW_CONFIG[report.gemsFlow].color },
+                  { label: 'تدفق Pi', value: GEMS_FLOW_CONFIG[report.gemsFlow].label, color: GEMS_FLOW_CONFIG[report.gemsFlow].color },
                   { label: 'مستوى الخطر',  value: RISK_CONFIG[report.riskLevel].label,  color: RISK_CONFIG[report.riskLevel].color  },
                   { label: 'فترة التحليل', value: `${report.metrics.periodDays} أيام`,  color: '#6b7280' },
                 ].map(row => (
@@ -386,15 +386,15 @@ export default function EconomyDashboard() {
           </motion.div>
         )}
 
-        {/* ══════════════════════ COINS TAB ════════════════════════════ */}
-        {tab === 'coins' && report && (
-          <motion.div key="coins" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+        {/* ══════════════════════ DN$ TAB ══════════════════════════════ */}
+        {tab === 'dn' && report && (
+          <motion.div key="dn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
 
             <div className="grid grid-cols-2 gap-2.5">
               <StatCard label="مكتسبة/يوم" value={fmt(report.metrics.coinsEarnedPerDay)}
-                color="#f59e0b" icon={Coins} trend="up" sub="عملات" />
+                color="#f59e0b" icon={Coins} trend="up" sub="DN$" />
               <StatCard label="منفقة/يوم" value={fmt(report.metrics.coinsSpentPerDay)}
-                color="#ef4444" icon={Coins} trend="down" sub="عملات" />
+                color="#ef4444" icon={Coins} trend="down" sub="DN$" />
               <StatCard label="صافي التدفق/يوم" value={fmt(report.metrics.netFlow)}
                 color={report.metrics.netFlow >= 0 ? '#22c55e' : '#ef4444'} icon={TrendingUp}
                 trend={report.metrics.netFlow > 0 ? 'up' : 'down'} />
@@ -402,12 +402,12 @@ export default function EconomyDashboard() {
                 color="#3b82f6" icon={Users} />
             </div>
 
-            {/* Coins per user per day — inflation gauge */}
+            {/* DN$ per user per day — inflation gauge */}
             <div className="bg-card border border-border rounded-xl p-4">
               <SectionTitle icon={TrendingUp} label="مقياس التضخم" color="#f59e0b" />
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>عملات/مستخدم/يوم</span>
+                  <span>DN$/مستخدم/يوم</span>
                   <span className="font-black text-lg" style={{ color: inf?.color }}>
                     {fmt(report.coinsPerUserPerDay)}
                   </span>
@@ -473,11 +473,11 @@ export default function EconomyDashboard() {
           </motion.div>
         )}
 
-        {/* ══════════════════════ GEMS TAB ═════════════════════════════ */}
-        {tab === 'gems' && report && (
-          <motion.div key="gems" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+        {/* ══════════════════════ Pi TAB ═══════════════════════════════ */}
+        {tab === 'pi' && report && (
+          <motion.div key="pi" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
 
-            {/* Gems flow status */}
+            {/* Pi flow status */}
             <div
               className="rounded-xl border p-4 flex items-center justify-between"
               style={{
@@ -487,9 +487,9 @@ export default function EconomyDashboard() {
             >
               <div>
                 <div className="font-black text-base" style={{ color: GEMS_FLOW_CONFIG[report.gemsFlow].color }}>
-                  💎 {GEMS_FLOW_CONFIG[report.gemsFlow].label}
+                  π {GEMS_FLOW_CONFIG[report.gemsFlow].label}
                 </div>
-                <div className="text-xs text-muted-foreground mt-0.5">تدفق الجواهر الحالي</div>
+                <div className="text-xs text-muted-foreground mt-0.5">تدفق Pi الحالي</div>
               </div>
               <div className="text-3xl font-black tabular-nums" style={{ color: GEMS_FLOW_CONFIG[report.gemsFlow].color }}>
                 {report.metrics.gemsDistributedTotal}
@@ -498,7 +498,7 @@ export default function EconomyDashboard() {
 
             {/* Per-league gem distribution */}
             <div className="bg-card border border-border rounded-xl p-4">
-              <SectionTitle icon={Gem} label="الجواهر حسب الدوري" color="#a855f7" />
+              <SectionTitle icon={Gem} label="Pi حسب الدوري" color="#a855f7" />
               {(() => {
                 const g = report.metrics.gemsPerLeague;
                 const total = Math.max(g.div3 + g.div2 + g.pro + g.champions, 1);
@@ -543,7 +543,7 @@ export default function EconomyDashboard() {
 
             {/* Season gem table info */}
             <div className="bg-card border border-border rounded-xl p-4">
-              <SectionTitle icon={Info} label="جدول جواهر الموسم" color="#6b7280" />
+              <SectionTitle icon={Info} label="جدول Pi الموسم" color="#6b7280" />
               {[
                 { league: '⚙️ Division III',  rewards: '1st → +1 💎' },
                 { league: '🥈 Division II',   rewards: '1st → +2, 2nd → +1 💎' },
@@ -609,11 +609,11 @@ export default function EconomyDashboard() {
               </div>
 
               {[
-                { label: 'عملات مكتسبة', cur: weekly.currentWeek.coinsEarned,       prev: weekly.previousWeek?.coinsEarned       ?? null, color: '#f59e0b' },
-                { label: 'عملات منفقة',  cur: weekly.currentWeek.coinsSpent,        prev: weekly.previousWeek?.coinsSpent        ?? null, color: '#ef4444' },
+                { label: 'DN$ مكتسبة', cur: weekly.currentWeek.coinsEarned,       prev: weekly.previousWeek?.coinsEarned       ?? null, color: '#f59e0b' },
+                { label: 'DN$ منفقة',  cur: weekly.currentWeek.coinsSpent,        prev: weekly.previousWeek?.coinsSpent        ?? null, color: '#ef4444' },
                 { label: 'صافي التدفق',  cur: weekly.currentWeek.netFlow,           prev: weekly.previousWeek?.netFlow           ?? null, color: '#22c55e' },
                 { label: 'مستخدمون',    cur: weekly.currentWeek.activeUsers,        prev: weekly.previousWeek?.activeUsers       ?? null, color: '#3b82f6' },
-                { label: 'عملة/مستخدم/يوم', cur: weekly.currentWeek.coinsPerUserPerDay, prev: weekly.previousWeek?.coinsPerUserPerDay ?? null, color: '#a855f7' },
+                { label: 'DN$/مستخدم/يوم', cur: weekly.currentWeek.coinsPerUserPerDay, prev: weekly.previousWeek?.coinsPerUserPerDay ?? null, color: '#a855f7' },
               ].map(row => (
                 <div key={row.label} className="grid grid-cols-2 divide-x divide-border border-b border-border/50 last:border-0">
                   <div className="px-4 py-3 flex items-center justify-between gap-2">

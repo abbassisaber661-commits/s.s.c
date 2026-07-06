@@ -88,7 +88,7 @@ export function createTrophyNotif(trophyName: string): Omit<Notification, 'id' |
   return {
     type: 'trophy',
     title: `Trophy Unlocked: ${trophyName}`,
-    body: '+50 coins added to your wallet',
+    body: '+50 DN$ added to your wallet',
     icon: '🏅',
     actionUrl: '/profile',
   };

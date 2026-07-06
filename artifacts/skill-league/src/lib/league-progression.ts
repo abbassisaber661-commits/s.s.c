@@ -30,8 +30,8 @@ export const LEAGUE_DEFS: Record<LeagueTier, LeagueDef> = {
     color: '#FFD93D', glowColor: 'rgba(255,217,61,0.18)',
     bgGradient: 'linear-gradient(135deg,#FFD93D12,#FF8C4204)',
     minLp: 100, maxLp: 299, penaltyOnLoss: true,
-    description: 'Main competitive league. Earn coins every win.',
-    perks: ['Coin rewards per match', 'Weekly leaderboard prize', 'LP ranking badge'],
+    description: 'Main competitive league. Earn DN$ every win.',
+    perks: ['DN$ rewards per match', 'Weekly leaderboard prize', 'LP ranking badge'],
   },
   pro: {
     id: 'pro', name: 'Pro League', emoji: '🏆',
@@ -39,7 +39,7 @@ export const LEAGUE_DEFS: Record<LeagueTier, LeagueDef> = {
     bgGradient: 'linear-gradient(135deg,#2EE87A12,#2EE87A04)',
     minLp: 300, maxLp: 499, penaltyOnLoss: true,
     description: 'Top ranked players only. Higher stakes, bigger rewards.',
-    perks: ['Premium coin rewards', 'Exclusive Pro badge', 'Tournament access'],
+    perks: ['Premium DN$ rewards', 'Exclusive Pro badge', 'Tournament access'],
   },
   champion: {
     id: 'champion', name: 'Champion', emoji: '👑',
@@ -151,7 +151,7 @@ export interface LpChange {
   newTier:     LeagueTier;
   oldLp:       number;
   newLp:       number;
-  coinsEarned: number;
+  dnEarned: number;
 }
 
 export function calcLpChange(stats: LeagueStats, result: MatchResultInput): LpChange {
@@ -201,15 +201,15 @@ export function calcLpChange(stats: LeagueStats, result: MatchResultInput): LpCh
   const promoted  = newRank > oldRank;
   const demoted   = newRank < oldRank;
 
-  // Coin rewards (Coin League and above only)
-  let coinsEarned = 0;
+  // DN$ rewards (Coin League and above only)
+  let dnEarned = 0;
   if (oldTier !== 'training') {
     const base   = Math.floor(result.score / 12);
     const winBonus = result.rank === 1 ? 60 : result.rank === 2 ? 30 : result.rank === 3 ? 10 : 0;
-    coinsEarned  = base + winBonus;
+    dnEarned  = base + winBonus;
   }
 
-  return { delta, breakdown, promoted, demoted, oldTier, newTier, oldLp, newLp, coinsEarned };
+  return { delta, breakdown, promoted, demoted, oldTier, newTier, oldLp, newLp, dnEarned };
 }
 
 export function applyLpChange(stats: LeagueStats, change: LpChange, result: MatchResultInput): LeagueStats {
@@ -222,7 +222,7 @@ export function applyLpChange(stats: LeagueStats, change: LpChange, result: Matc
     topThree:         stats.topThree + (result.rank <= 3 ? 1 : 0),
     bestScore:        Math.max(stats.bestScore, result.score),
     bestStreak:       Math.max(stats.bestStreak, result.bestStreak),
-    totalCoinsEarned: stats.totalCoinsEarned + change.coinsEarned,
+    totalCoinsEarned: stats.totalCoinsEarned + change.dnEarned,
     lastMatchDate:    new Date().toISOString(),
   };
 }

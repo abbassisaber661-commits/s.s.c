@@ -23,9 +23,9 @@ const PI_PRODUCTS: Record<string, { name: string; coins?: number; vipTier?: stri
   "vip_silver":    { name: "VIP Silver (30 days)",   vipTier: "silver",   description: "Silver VIP membership" },
   "vip_gold":      { name: "VIP Gold (30 days)",     vipTier: "gold",     description: "Gold VIP membership" },
   "vip_diamond":   { name: "VIP Diamond (30 days)",  vipTier: "diamond",  description: "Diamond VIP membership" },
-  "coins_250":     { name: "250 Coins Bundle",       coins: 250,          description: "250 in-game coins" },
-  "coins_500":     { name: "500 Coins Bundle",       coins: 500,          description: "500 in-game coins" },
-  "coins_1000":    { name: "1000 Coins Bundle",      coins: 1000,         description: "1000 in-game coins" },
+  "coins_250":     { name: "250 DN$ Bundle",         coins: 250,          description: "250 DN$ in-game points" },
+  "coins_500":     { name: "500 DN$ Bundle",         coins: 500,          description: "500 DN$ in-game points" },
+  "coins_1000":    { name: "1000 DN$ Bundle",        coins: 1000,         description: "1000 DN$ in-game points" },
   "tournament_entry": { name: "Tournament Entry",                         description: "Entry to paid tournament" },
 };
 
