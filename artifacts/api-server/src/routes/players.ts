@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, desc, or, sql, and, gte, lte } from "drizzle-orm";
-import { db, playersTable, pvpMatchesTable, coinTransactionsTable } from "@workspace/db";
+import { db, playersTable, pvpMatchesTable, walletTransactionsTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { isOwnerPiUid } from "../lib/owner.js";
 import { isUsernameReserved } from "../lib/settings-service.js";
@@ -36,7 +36,7 @@ router.get("/players/leaderboard/division/:division", async (req, res) => {
         avatar:             playersTable.avatar,
         level:              playersTable.level,
         lp:                 playersTable.lp,
-        coins:              playersTable.coins,
+
         matchesPlayed:      playersTable.matchesPlayed,
         matchesWon:         playersTable.matchesWon,
         pvpWins:            playersTable.pvpWins,
@@ -78,7 +78,7 @@ router.get("/players/leaderboard", async (req, res) => {
         elo:                playersTable.elo,
         lp:                 playersTable.lp,
         fame:               playersTable.fame,
-        coins:              playersTable.coins,
+
         leagueDivision:     playersTable.leagueDivision,
         matchesPlayed:      playersTable.matchesPlayed,
         matchesWon:         playersTable.matchesWon,
@@ -156,7 +156,6 @@ router.get("/players/:id/stats", async (req, res) => {
         pvpLosses:     playersTable.pvpLosses,
         pvpWinStreak:  playersTable.pvpWinStreak,
         bestPvpStreak: playersTable.bestPvpStreak,
-        coins:         playersTable.coins,
         xp:            playersTable.xp,
         fame:          playersTable.fame,
       })
@@ -192,9 +191,9 @@ router.get("/players/:id/transactions", async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 30, 100);
     const rows = await db
       .select()
-      .from(coinTransactionsTable)
-      .where(eq(coinTransactionsTable.playerId, req.params.id))
-      .orderBy(desc(coinTransactionsTable.createdAt))
+      .from(walletTransactionsTable)
+      .where(eq(walletTransactionsTable.playerId, req.params.id))
+      .orderBy(desc(walletTransactionsTable.createdAt))
       .limit(limit);
     res.json(rows);
   } catch (err) {
@@ -249,7 +248,7 @@ router.post("/players", async (req, res) => {
 
 router.patch("/players/:id", async (req, res) => {
   try {
-    const allowed = ["username","avatar","bio","cover","language","coins","xp","level","elo","lp","fame",
+    const allowed = ["username","avatar","bio","cover","language","xp","level","elo","lp","fame",
       "leagueDivision","unlockedLeagues","ownedItems","xpBoostUntil","highScores",
       "achievements","trophies","dailyChallenges","matchesPlayed","matchesWon",
       "pvpWins","pvpLosses","pvpWinStreak","bestPvpStreak","tournamentWins","bestStreak",
@@ -294,7 +293,7 @@ router.post("/players/:id/sync", async (req, res) => {
   try {
     const body = req.body as Record<string, unknown>;
     const updates: Record<string, unknown> = { updatedAt: new Date(), lastActiveAt: new Date() };
-    const fields = ["coins","xp","level","elo","lp","fame","leagueDivision","unlockedLeagues",
+    const fields = ["xp","level","elo","lp","fame","leagueDivision","unlockedLeagues",
       "ownedItems","xpBoostUntil","highScores","achievements","trophies","dailyChallenges",
       "matchesPlayed","matchesWon","pvpWins","pvpLosses","pvpWinStreak","bestPvpStreak",
       "tournamentWins","bestStreak","skillSpeed","skillAccuracy","skillMemory","language","avatar"];

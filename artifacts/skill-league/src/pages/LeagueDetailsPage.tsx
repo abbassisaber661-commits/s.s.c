@@ -182,19 +182,19 @@ function TopPlayers({
   );
 }
 
-// Season-end gem rewards per league (mirrors backend SEASON_END_GEM_TABLE)
-const GEM_TABLE: Record<string, Array<{ rank: number; gems: number }>> = {
-  "division-iii": [{ rank: 1, gems: 1 }],
-  "division-ii":  [{ rank: 1, gems: 2 }, { rank: 2, gems: 1 }],
-  "professional": [{ rank: 1, gems: 3 }, { rank: 2, gems: 2 }, { rank: 3, gems: 1 }],
-  "champions":    [{ rank: 1, gems: 4 }, { rank: 2, gems: 3 }, { rank: 3, gems: 2 }, { rank: 4, gems: 1 }],
+// Season-end DN$ rewards per league (mirrors backend SEASON_END_DN_TABLE)
+const DN_TABLE: Record<string, Array<{ rank: number; dn: number }>> = {
+  "division-iii": [{ rank: 1, dn: 5  }, { rank: 2, dn: 4  }, { rank: 3, dn: 3  }],
+  "division-ii":  [{ rank: 1, dn: 10 }, { rank: 2, dn: 8  }, { rank: 3, dn: 5  }],
+  "professional": [{ rank: 1, dn: 15 }, { rank: 2, dn: 12 }, { rank: 3, dn: 8  }],
+  "champions":    [{ rank: 1, dn: 20 }, { rank: 2, dn: 15 }, { rank: 3, dn: 10 }, { rank: 4, dn: 8 }],
 };
 
-function GemRewards({ urlId, color }: { urlId: string; color: string }) {
-  const rewards = GEM_TABLE[urlId];
+function DnRewards({ urlId, color }: { urlId: string; color: string }) {
+  const rewards = DN_TABLE[urlId];
   if (!rewards || rewards.length === 0) return null;
 
-  const maxGems = rewards[0]?.gems ?? 1;
+  const maxDn = rewards[0]?.dn ?? 1;
 
   return (
     <motion.div
@@ -204,8 +204,8 @@ function GemRewards({ urlId, color }: { urlId: string; color: string }) {
       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-base">💎</span>
-        <span className="text-[11px] font-black uppercase tracking-widest" style={{ color }}>جوائز الجواهر — نهاية الموسم</span>
+        <span className="text-base">🪙</span>
+        <span className="text-[11px] font-black uppercase tracking-widest" style={{ color }}>مكافآت DN$ — نهاية الموسم</span>
       </div>
       <div className="space-y-2">
         {rewards.map((r) => (
@@ -216,11 +216,11 @@ function GemRewards({ urlId, color }: { urlId: string; color: string }) {
             <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
               <div
                 className="h-full rounded-full"
-                style={{ width: `${(r.gems / maxGems) * 100}%`, background: "#a78bfa" }}
+                style={{ width: `${(r.dn / maxDn) * 100}%`, background: "#f59e0b" }}
               />
             </div>
-            <div className="text-[11px] font-black shrink-0" style={{ color: "#a78bfa" }}>
-              +{r.gems} 💎
+            <div className="text-[11px] font-black shrink-0" style={{ color: "#f59e0b" }}>
+              +{r.dn} DN$
             </div>
           </div>
         ))}
@@ -375,7 +375,7 @@ export default function LeagueDetailsPage() {
         )}
 
         {/* Gem rewards — season-end table (mirrors backend) */}
-        <GemRewards urlId={urlId} color={info.color} />
+        <DnRewards urlId={urlId} color={info.color} />
 
         {/* Static info sections */}
         <InfoSection icon="📋" title="وصف الدوري"  body={info.description} color={info.color} />

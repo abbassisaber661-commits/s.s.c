@@ -1,189 +1,110 @@
 /**
  * economy-engine.ts
  * ─────────────────
- * Economy Engine — calculates coins and gems earned after each match.
- * Pure calculation module, no side-effects. Call calcMatchEconomy() after
- * every match to get the reward breakdown.
+ * Economy Engine — pure constants and helpers for the DN$/Pi dual-currency system.
  *
- * Division tier mapping (from league-progression):
- *   training  → DIV3
- *   coin      → DIV2
- *   pro       → PRO
- *   champion  → CHAMPIONS
+ * 🟣 Pi  = real payment currency (gifts, paid league entry)
+ * 🟢 DN$ = internal gamification points (rewards, shop, daily tasks, in-game help)
+ *
+ * Division tier mapping:
+ *   training  → div3
+ *   coin      → div2  (legacy internal ID)
+ *   pro       → pro
+ *   champion  → champions
  */
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type EconomyTier = 'div3' | 'div2' | 'pro' | 'champions';
 
-export interface MatchEconomyInput {
-  rank:        number;   // 1 = 1st place
-  accuracyPct: number;   // 0–1  (e.g. 0.8 = 80%)
-  tier:        EconomyTier;
-}
+// ── Pi entry costs (real currency — for paid leagues) ─────────────────────────
+//   Training   → free (0 π)
+//   Division 2 → 0.2 π
+//   Pro League → 0.5 π
+//   Champions  → 1.0 π
 
-export interface CoinBreakdown {
-  base:          number;  // always +1
-  rankBonus:     number;  // +3/+2/+1 for top 3
-  accuracyBonus: number;  // +1 for ≥80%; +2 for 100%
-  total:         number;
-}
-
-export interface GemBreakdown {
-  gemsEarned: number;
-  reason:     string;
-}
-
-export interface EconomyResult {
-  coinsEarned:   number;
-  gemsEarned:    number;
-  coinBreakdown: CoinBreakdown;
-  gemBreakdown:  GemBreakdown;
-  newCoins:      number;
-  newGems:       number;
-}
-
-// ── Gem reward table ─────────────────────────────────────────────────────────
-//
-//  DIV3      : 1st → +1
-//  DIV2      : 1st → +2, 2nd → +1
-//  PRO       : 1st → +3, 2nd → +2, 3rd → +1
-//  CHAMPIONS : 1st → +4, 2nd → +3, 3rd → +2, 4th → +1
-
-const GEM_TABLE: Record<EconomyTier, Partial<Record<number, number>>> = {
-  div3:      { 1: 1 },
-  div2:      { 1: 2, 2: 1 },
-  pro:       { 1: 3, 2: 2, 3: 1 },
-  champions: { 1: 4, 2: 3, 3: 2, 4: 1 },
+export const PI_ENTRY_COST: Record<EconomyTier, number> = {
+  div3:      0,
+  div2:      0.2,
+  pro:       0.5,
+  champions: 1.0,
 };
 
-// ── League entry gem requirements ────────────────────────────────────────────
+// ── Season-end DN$ reward table ───────────────────────────────────────────────
 //
-//  DIV3      : 0 gems (free)
-//  DIV2      : ≥1 gem
-//  PRO       : ≥2 gems
-//  CHAMPIONS : ≥4 gems
+//  Position → DN$ per league tier
+//
+//  Rank  | div3 | div2 | pro  | champions
+//  ──────+──────+──────+──────+──────────
+//  1st   |  5   |  10  |  15  |  20
+//  2nd   |  4   |   8  |  12  |  15
+//  3rd   |  3   |   5  |   8  |  10
+//  4th   |  2   |   3  |   5  |   8
+//  Rest  |  1   |   2  |   3  |   4
 
-const ENTRY_GEM_COST: Record<EconomyTier, number> = {
-  div3:      0,
-  div2:      1,
-  pro:       2,
+export const SEASON_END_DN_TABLE: Record<EconomyTier, Record<number, number>> = {
+  div3: {
+    1: 5, 2: 4, 3: 3, 4: 2,
+  },
+  div2: {
+    1: 10, 2: 8, 3: 5, 4: 3,
+  },
+  pro: {
+    1: 15, 2: 12, 3: 8, 4: 5,
+  },
+  champions: {
+    1: 20, 2: 15, 3: 10, 4: 8,
+  },
+};
+
+/** DN$ for participants outside the top-4 (by league tier). */
+export const SEASON_END_DN_PARTICIPANT: Record<EconomyTier, number> = {
+  div3:      1,
+  div2:      2,
+  pro:       3,
   champions: 4,
 };
 
+// ── DN$ activity rewards ─────────────────────────────────────────────────────
+
+export const ACTIVITY_DN = {
+  dailyLogin:    1,   // تسجيل الدخول اليومي
+  matchJoin:     1,   // المشاركة في مباراة
+  matchPlay:     1,   // لعب مباراة
+  accuracy100:   1,   // دقة 100%
+  socialActivity: 3,  // 5 إعجابات + 5 تعليقات
+  createContent:  1,  // منشور + ستوري
+  inviteFriend:  10,  // دعوة صديق جديد
+} as const;
+
+// ── In-game help cost ─────────────────────────────────────────────────────────
+
+/** Cost to eliminate one wrong answer during a match. */
+export const GAME_ASSIST_COST_DN = 2;
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Map a LeagueTier string (from league-progression) to an EconomyTier. */
+/** Map a league tier string (frontend/DB ID) to an EconomyTier. */
 export function leagueTierToEconomyTier(tier: string): EconomyTier {
   const map: Record<string, EconomyTier> = {
-    training: 'div3',
-    coin:     'div2',
-    pro:      'pro',
-    champion: 'champions',
+    training:  'div3',
+    coins:     'div3',
+    coin:      'div2',
+    dv2:       'div2',
+    pro:       'pro',
+    elite:     'pro',
+    champion:  'champions',
+    champions: 'champions',
   };
   return map[tier] ?? 'div3';
 }
 
-// ── Core calculation ─────────────────────────────────────────────────────────
-
-/**
- * Pure function — calculates coins and gems earned from a single match result.
- * Does not mutate any state; callers must persist the returned newCoins/newGems.
- */
-export function calcMatchEconomy(
-  input:       MatchEconomyInput,
-  playerCoins: number,
-  playerGems:  number,
-): EconomyResult {
-  // ── Coins ──────────────────────────────────────────────────────────────────
-  const base = 1; // participation coin
-
-  let rankBonus = 0;
-  if      (input.rank === 1) rankBonus = 3;
-  else if (input.rank === 2) rankBonus = 2;
-  else if (input.rank === 3) rankBonus = 1;
-
-  // +1 for ≥80%, +1 extra on top for 100% = max +2 from accuracy
-  let accuracyBonus = 0;
-  if (input.accuracyPct >= 1.0)        accuracyBonus = 2;
-  else if (input.accuracyPct >= 0.8)   accuracyBonus = 1;
-
-  const coinsEarned = base + rankBonus + accuracyBonus;
-
-  // ── Gems ───────────────────────────────────────────────────────────────────
-  const gemsEarned = GEM_TABLE[input.tier]?.[input.rank] ?? 0;
-
-  let gemReason = 'No gem reward for this rank/tier';
-  if (gemsEarned > 0) {
-    const place =
-      input.rank === 1 ? '1st place' :
-      input.rank === 2 ? '2nd place' : '3rd place';
-    gemReason = `${place} in ${input.tier.toUpperCase()}`;
-  }
-
-  return {
-    coinsEarned,
-    gemsEarned,
-    coinBreakdown: { base, rankBonus, accuracyBonus, total: coinsEarned },
-    gemBreakdown:  { gemsEarned, reason: gemReason },
-    newCoins: playerCoins + coinsEarned,
-    newGems:  Math.max(0, playerGems + gemsEarned),
-  };
+/** Pi entry cost for a league tier. */
+export function getPiEntryCost(tier: EconomyTier): number {
+  return PI_ENTRY_COST[tier];
 }
 
-/**
- * Check whether a player has enough gems to enter a league tier.
- */
-export function canEnterLeague(tier: EconomyTier, playerGems: number): boolean {
-  return playerGems >= ENTRY_GEM_COST[tier];
-}
-
-/**
- * Get the gem cost to enter a league tier.
- */
-export function getEntryGemCost(tier: EconomyTier): number {
-  return ENTRY_GEM_COST[tier];
-}
-
-// ── Promotion reward table ────────────────────────────────────────────────
-//
-//  div3 → div2   : +10 coins, +1 gem
-//  div2 → pro    : +20 coins, +2 gems
-//  pro  → champions : +30 coins, +3 gems
-
-const PROMOTION_REWARDS: Record<string, { coins: number; gems: number }> = {
-  'div3→div2':      { coins: 10, gems: 1 },
-  'div2→pro':       { coins: 20, gems: 2 },
-  'pro→champions':  { coins: 30, gems: 3 },
-};
-
-export interface PromotionRewardResult {
-  coinsAwarded: number;
-  gemsAwarded:  number;
-  fromTier:     string;
-  toTier:       string;
-  newCoins:     number;
-  newGems:      number;
-}
-
-/**
- * Calculate the promotion reward when a player advances from one tier to the next.
- * fromTier / toTier are economy tier strings (div3, div2, pro, champions).
- */
-export function calcPromotionReward(
-  fromTier:    string,
-  toTier:      string,
-  playerCoins: number,
-  playerGems:  number,
-): PromotionRewardResult {
-  const key    = `${fromTier}→${toTier}`;
-  const reward = PROMOTION_REWARDS[key] ?? { coins: 5, gems: 0 };
-  return {
-    coinsAwarded: reward.coins,
-    gemsAwarded:  reward.gems,
-    fromTier,
-    toTier,
-    newCoins: playerCoins + reward.coins,
-    newGems:  playerGems  + reward.gems,
-  };
+/** Season-end DN$ for a given rank and tier. Falls back to participant reward. */
+export function getSeasonEndDN(tier: EconomyTier, rank: number): number {
+  return SEASON_END_DN_TABLE[tier]?.[rank] ?? SEASON_END_DN_PARTICIPANT[tier];
 }

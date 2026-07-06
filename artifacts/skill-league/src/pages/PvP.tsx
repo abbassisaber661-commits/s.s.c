@@ -29,7 +29,7 @@ const DIFF_LABEL: Record<string, { ar: string; color: string }> = {
 };
 
 export default function PvP() {
-  const { authUser, username, coins, level, elo, pvpWins, pvpLosses, recordPvpResult, isGuest } = useGame();
+  const { authUser, username, dnBalance, level, elo, pvpWins, pvpLosses, recordPvpResult, isGuest } = useGame();
   const { connected } = useRealtime();
 
   const playerId = getStoredPlayerId() ?? authUser?.uid ?? username;
@@ -38,7 +38,7 @@ export default function PvP() {
   const [searchSeconds, setSearchSeconds] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [showWinAnim, setShowWinAnim] = useState(false);
-  const [coinsEarned, setCoinsEarned] = useState(0);
+  const [dnEarned, setDnEarned] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
   const [eloChange, setEloChange] = useState(0);
 
@@ -69,14 +69,14 @@ export default function PvP() {
     if (!matchEnd) return;
     const stake = ARENAS.find(a => a.id === matchEnd.leagueId)?.stake ?? 30;
     const mt: MatchType = matchEnd.isBot ? 'bot' : 'pvp';
-    const coins = getPvpRewardCoins(stake, matchEnd.won, matchEnd.draw, mt);
-    const xp    = getPvpRewardXp(matchEnd.won, matchEnd.draw, mt);
+    const dn     = getPvpRewardCoins(stake, matchEnd.won, matchEnd.draw, mt);
+    const xp     = getPvpRewardXp(matchEnd.won, matchEnd.draw, mt);
     const eloChg = getEloChange(matchEnd.won, matchEnd.draw, elo, matchInfo?.playerB.elo ?? elo, mt);
-    setCoinsEarned(coins);
+    setDnEarned(dn);
     setXpEarned(xp);
     setEloChange(eloChg);
     if (matchEnd.won) setTimeout(() => setShowWinAnim(true), 300);
-    recordPvpResult(matchEnd.won, matchEnd.scoreB / 10, coins, eloChg, xp);
+    recordPvpResult(matchEnd.won, matchEnd.scoreB / 10, dn, eloChg, xp);
   }, [matchEnd]);
 
   const handleTap = (colorId: string) => {
@@ -124,7 +124,7 @@ export default function PvP() {
             <div className="text-sm" style={{ color: levelInfo(level).color }}>Lv.{level} · {levelInfo(level).title}</div>
           </div>
           <div className="text-right">
-            <div className="text-yellow-400 font-bold tabular-nums">{coins} 🪙</div>
+            <div className="text-yellow-400 font-bold tabular-nums">{dnBalance ?? 0} DN$</div>
             <div className="text-xs text-muted-foreground">ELO {elo}</div>
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function PvP() {
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">اختر الحلبة</p>
         <div className="space-y-3 mb-6">
           {ARENAS.map(a => {
-            const canAfford = coins >= a.stake;
+            const canAfford = (dnBalance ?? 0) >= a.stake;
             return (
               <motion.button
                 key={a.id}
@@ -462,10 +462,10 @@ export default function PvP() {
 
           {/* Rewards */}
           <div className="grid grid-cols-3 gap-3">
-            {coinsEarned > 0 && (
+            {dnEarned > 0 && (
               <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">
-                <div className="text-yellow-400 font-black text-xl">+{coinsEarned}</div>
-                <div className="text-xs text-muted-foreground">عملات</div>
+                <div className="text-yellow-400 font-black text-xl">+{dnEarned} DN$</div>
+                <div className="text-xs text-muted-foreground">مكافأة</div>
               </div>
             )}
             {xpEarned > 0 && (

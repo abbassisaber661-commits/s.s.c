@@ -20,7 +20,7 @@ interface PlayerStats {
   skillSpeed: number;
   skillAccuracy: number;
   skillMemory: number;
-  coins: number;
+  dnBalance: number;
   tournamentWins: number;
   dailyChallengesCompleted: number;
   xpBoostUntil: number | null;
@@ -79,12 +79,12 @@ export function generateAiHints(stats: PlayerStats): AiHint[] {
   }
 
   // Coins advice
-  if (stats.coins < 50) {
+  if (stats.dnBalance < 50) {
     hints.push({
-      id: 'earn_coins', icon: '💰',
-      title: 'Low coins — time to grind',
-      body: `You have ${stats.coins} coins. Complete today's daily challenges for a quick +95 coins, then try PvP battles for up to 330 coins per win.`,
-      priority: 'high', actionLabel: 'Daily Challenges', actionUrl: '/daily-challenges',
+      id: 'earn_dn', icon: '💰',
+      title: 'Low DN$ — time to grind',
+      body: `You have ${stats.dnBalance} DN$. Complete today's daily tasks for DN$ rewards, then try PvP battles to earn more.`,
+      priority: 'high', actionLabel: 'Daily Tasks', actionUrl: '/daily-challenges',
     });
   }
 

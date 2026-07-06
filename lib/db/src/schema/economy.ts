@@ -121,6 +121,19 @@ export const giftLedgerTable = pgTable('gift_ledger', {
   createdAt:  timestamp('created_at').notNull().defaultNow(),
 });
 
+export const coinTransactionsTable = pgTable('coin_transactions', {
+  id:          text('id').primaryKey(),
+  playerId:    text('player_id').notNull(),
+  amount:      integer('amount').notNull(),
+  type:        text('type').notNull(),
+  source:      text('source').notNull().default(''),
+  description: text('description').notNull().default(''),
+  balanceAfter:integer('balance_after').notNull().default(0),
+  createdAt:   timestamp('created_at').notNull().defaultNow(),
+});
+
+export type CoinTransaction = typeof coinTransactionsTable.$inferSelect;
+
 export const insertStorePurchSchema  = createInsertSchema(storePurchasesTable).omit({ createdAt: true });
 export const insertBoostSchema       = createInsertSchema(boostUsageTable).omit({ createdAt: true });
 

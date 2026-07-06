@@ -16,7 +16,7 @@ export interface JourneyTierDef {
   minLevel: number;
   minElo: number;
   minMatches: number;
-  rewardCoins: number;
+  rewardDN: number;
   rewardXp: number;
   perks: string[];
 }
@@ -29,7 +29,7 @@ export const JOURNEY_TIERS: JourneyTierDef[] = [
     color: '#6b7280',
     glow: 'rgba(107,114,128,0.3)',
     minLevel: 1, minElo: 0, minMatches: 0,
-    rewardCoins: 0, rewardXp: 0,
+    rewardDN: 0, rewardXp: 0,
     perks: ['العب في دوري التدريب', 'تحديات يومية أساسية'],
   },
   {
@@ -39,7 +39,7 @@ export const JOURNEY_TIERS: JourneyTierDef[] = [
     color: '#CD7F32',
     glow: 'rgba(205,127,50,0.35)',
     minLevel: 5, minElo: 1050, minMatches: 10,
-    rewardCoins: 150, rewardXp: 300,
+    rewardDN: 150, rewardXp: 300,
     perks: ['فتح دوري البرونز', 'مباريات PvP', 'مكافآت أسبوعية'],
   },
   {
@@ -49,7 +49,7 @@ export const JOURNEY_TIERS: JourneyTierDef[] = [
     color: '#A8A9AD',
     glow: 'rgba(168,169,173,0.35)',
     minLevel: 15, minElo: 1150, minMatches: 30,
-    rewardCoins: 400, rewardXp: 800,
+    rewardDN: 400, rewardXp: 800,
     perks: ['فتح دوري الفضة', 'بطولات مميزة', 'شارة Pro'],
   },
   {
@@ -59,7 +59,7 @@ export const JOURNEY_TIERS: JourneyTierDef[] = [
     color: '#60a5fa',
     glow: 'rgba(96,165,250,0.35)',
     minLevel: 30, minElo: 1250, minMatches: 75,
-    rewardCoins: 800, rewardXp: 1500,
+    rewardDN: 800, rewardXp: 1500,
     perks: ['فتح دوري النخبة', 'مهام VIP', 'ترتيب الأبطال'],
   },
   {
@@ -69,7 +69,7 @@ export const JOURNEY_TIERS: JourneyTierDef[] = [
     color: '#FFD700',
     glow: 'rgba(255,215,0,0.4)',
     minLevel: 50, minElo: 1400, minMatches: 150,
-    rewardCoins: 2000, rewardXp: 5000,
+    rewardDN: 2000, rewardXp: 5000,
     perks: ['كل المزايا', 'لقب Legend', 'مكافأة Pi مميزة', 'إطار ذهبي'],
   },
 ];
@@ -175,7 +175,7 @@ export interface PiVipMission {
   title: string;
   desc: string;
   piCost: number;
-  rewardCoins: number;
+  rewardDN: number;
   rewardXp: number;
   rewardBadge?: string;
   minTier: JourneyTier;
@@ -185,25 +185,25 @@ export const PI_VIP_MISSIONS: PiVipMission[] = [
   {
     id: 'vip_xp_boost', icon: '⚡', title: 'XP مضاعف لـ 24 ساعة',
     desc: 'احصل على ضعف XP لمدة يوم كامل من كل مبارياتك',
-    piCost: 1, rewardCoins: 0, rewardXp: 0, rewardBadge: '⚡',
+    piCost: 1, rewardDN: 0, rewardXp: 0, rewardBadge: '⚡',
     minTier: 'competitor',
   },
   {
     id: 'vip_elite_challenge', icon: '💎', title: 'تحدي النخبة الخاص',
     desc: 'مباراة خاصة ضد أقوى البوتات مع مكافأة حصرية',
-    piCost: 2, rewardCoins: 500, rewardXp: 1000, rewardBadge: '💎',
+    piCost: 2, rewardDN: 500, rewardXp: 1000, rewardBadge: '💎',
     minTier: 'elite',
   },
   {
     id: 'vip_coin_boost', icon: '🪙', title: 'مضاعف العملات لـ 48 ساعة',
     desc: 'كل العملات المكتسبة تُضاعَف لمدة يومين',
-    piCost: 3, rewardCoins: 0, rewardXp: 0, rewardBadge: '💰',
+    piCost: 3, rewardDN: 0, rewardXp: 0, rewardBadge: '💰',
     minTier: 'pro',
   },
   {
     id: 'vip_legend_badge', icon: '👑', title: 'شارة Supporter',
     desc: 'شارة حصرية تُظهر دعمك لمنصة SkillLeague',
-    piCost: 5, rewardCoins: 1000, rewardXp: 2000, rewardBadge: '🌟',
+    piCost: 5, rewardDN: 1000, rewardXp: 2000, rewardBadge: '🌟',
     minTier: 'competitor',
   },
 ];

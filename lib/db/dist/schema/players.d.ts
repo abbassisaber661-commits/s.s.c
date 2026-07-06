@@ -54,23 +54,6 @@ export declare const playersTable: import("drizzle-orm/pg-core").PgTableWithColu
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        coins: import("drizzle-orm/pg-core").PgColumn<{
-            name: "coins";
-            tableName: "players";
-            dataType: "number";
-            columnType: "PgInteger";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
         xp: import("drizzle-orm/pg-core").PgColumn<{
             name: "xp";
             tableName: "players";
@@ -192,23 +175,6 @@ export declare const playersTable: import("drizzle-orm/pg-core").PgTableWithColu
         }, {}, {
             $type: string[];
         }>;
-        gems: import("drizzle-orm/pg-core").PgColumn<{
-            name: "gems";
-            tableName: "players";
-            dataType: "number";
-            columnType: "PgInteger";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
         ownedItems: import("drizzle-orm/pg-core").PgColumn<{
             name: "owned_items";
             tableName: "players";
@@ -725,7 +691,6 @@ export declare const insertPlayerSchema: z.ZodObject<{
     id: z.ZodString;
     username: z.ZodString;
     avatar: z.ZodOptional<z.ZodString>;
-    coins: z.ZodOptional<z.ZodInt>;
     xp: z.ZodOptional<z.ZodInt>;
     level: z.ZodOptional<z.ZodInt>;
     elo: z.ZodOptional<z.ZodInt>;
@@ -733,7 +698,6 @@ export declare const insertPlayerSchema: z.ZodObject<{
     fame: z.ZodOptional<z.ZodInt>;
     leagueDivision: z.ZodOptional<z.ZodString>;
     unlockedLeagues: z.ZodOptional<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>;
-    gems: z.ZodOptional<z.ZodInt>;
     ownedItems: z.ZodOptional<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>;
     xpBoostUntil: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     skillSpeed: z.ZodOptional<z.ZodInt>;

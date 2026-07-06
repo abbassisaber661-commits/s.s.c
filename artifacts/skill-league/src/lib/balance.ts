@@ -1,20 +1,20 @@
 export const BALANCE = {
-  coins: {
-    matchWin:          { base: 15,  variance: 5 },
-    matchLoss:         { base: 5,   variance: 2 },
-    pvpWin:            { base: 30,  variance: 10 },
-    pvpLoss:           { base: 5,   variance: 2 },
-    tournamentFirst:   500,
-    tournamentSecond:  200,
-    tournamentThird:   100,
-    dailyLogin:        10,
-    dailyChallenge:    { min: 15, max: 50 },
-    lootBoxCommon:     { min: 10, max: 25 },
-    lootBoxRare:       { min: 30, max: 75 },
-    lootBoxEpic:       { min: 80, max: 150 },
-    streakBonus:       { per3: 5, per7: 25, per30: 100 },
-    referral:          50,
-    maxDailyEarning:   500,
+  dn: {
+    matchWin:          { base: 2,  variance: 1 },
+    matchLoss:         { base: 1,  variance: 0 },
+    pvpWin:            { base: 5,  variance: 2 },
+    pvpLoss:           { base: 1,  variance: 0 },
+    tournamentFirst:   20,
+    tournamentSecond:  15,
+    tournamentThird:   10,
+    dailyLogin:        1,
+    dailyChallenge:    { min: 1, max: 3 },
+    lootBoxCommon:     { min: 1, max: 2 },
+    lootBoxRare:       { min: 2, max: 5 },
+    lootBoxEpic:       { min: 5, max: 10 },
+    streakBonus:       { per3: 1, per7: 3, per30: 10 },
+    referral:          10,
+    maxDailyEarning:   20,
   },
 
   xp: {
@@ -100,12 +100,14 @@ export const BALANCE = {
 
 export type Balance = typeof BALANCE;
 
-export function calcMatchCoins(won: boolean, streakBonus = 0): number {
-  const base  = won ? BALANCE.coins.matchWin.base : BALANCE.coins.matchLoss.base;
-  const var_  = won ? BALANCE.coins.matchWin.variance : BALANCE.coins.matchLoss.variance;
+export function calcMatchDN(won: boolean, streakBonus = 0): number {
+  const base  = won ? BALANCE.dn.matchWin.base : BALANCE.dn.matchLoss.base;
+  const var_  = won ? BALANCE.dn.matchWin.variance : BALANCE.dn.matchLoss.variance;
   const raw   = base + Math.floor(Math.random() * var_) + streakBonus;
-  return Math.min(raw, BALANCE.coins.maxDailyEarning);
+  return Math.min(raw, BALANCE.dn.maxDailyEarning);
 }
+/** @deprecated use calcMatchDN */
+export const calcMatchCoins = calcMatchDN;
 
 export function calcMatchXp(won: boolean): number {
   const base = won ? BALANCE.xp.matchWin.base : BALANCE.xp.matchLoss.base;

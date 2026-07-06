@@ -6,7 +6,7 @@ export interface CareerMilestone {
   descriptionAr: string;
   icon: string;
   requirement: (stats: CareerStats) => boolean;
-  reward: { coins: number; xp: number; badge?: string };
+  reward: { dn: number; xp: number; badge?: string };
   order: number;
 }
 
@@ -31,7 +31,7 @@ export interface CareerStats {
   pvpWins: number;
   tournamentWins: number;
   achievementCount: number;
-  coins: number;
+  dn: number;
   bestStreak: number;
   fame: number;
 }
@@ -131,18 +131,18 @@ export const CAREER_TIERS: CareerTier[] = [
 ];
 
 export const CAREER_MILESTONES: CareerMilestone[] = [
-  { id: 'first_match',      title: 'First Steps',         titleAr: 'الخطوات الأولى',   description: 'Play your first match',            descriptionAr: 'العب مباراتك الأولى',          icon: '👣', requirement: s => s.matchesPlayed >= 1,     reward: { coins: 50,   xp: 100  }, order: 1  },
-  { id: 'first_pvp_win',    title: 'PvP Initiation',       titleAr: 'انطلاقة PvP',      description: 'Win your first PvP match',         descriptionAr: 'اربح مباراة PvP الأولى',       icon: '⚔️', requirement: s => s.pvpWins >= 1,           reward: { coins: 100,  xp: 200  }, order: 2  },
-  { id: 'level10',          title: 'Rising Star',          titleAr: 'نجم صاعد',          description: 'Reach Level 10',                  descriptionAr: 'الوصول للمستوى 10',            icon: '⭐', requirement: s => s.level >= 10,            reward: { coins: 200,  xp: 400  }, order: 3  },
-  { id: 'elo1200',          title: 'Ranked Player',        titleAr: 'لاعب مصنّف',       description: 'Reach 1200 ELO',                  descriptionAr: 'الوصول لـ 1200 نقطة ELO',     icon: '📊', requirement: s => s.elo >= 1200,            reward: { coins: 300,  xp: 600  }, order: 4  },
-  { id: 'pvp_10',           title: 'PvP Veteran',          titleAr: 'محارب PvP',        description: 'Win 10 PvP matches',               descriptionAr: 'اربح 10 مباريات PvP',          icon: '🏅', requirement: s => s.pvpWins >= 10,          reward: { coins: 400,  xp: 800  }, order: 5  },
-  { id: 'tournament_win',   title: 'Tournament Victor',    titleAr: 'بطل البطولة',      description: 'Win your first tournament',        descriptionAr: 'اربح بطولتك الأولى',          icon: '🏆', requirement: s => s.tournamentWins >= 1,    reward: { coins: 600,  xp: 1200 }, order: 6  },
-  { id: 'level25',          title: 'Experienced',          titleAr: 'متمرس',             description: 'Reach Level 25',                  descriptionAr: 'الوصول للمستوى 25',            icon: '🌟', requirement: s => s.level >= 25,            reward: { coins: 500,  xp: 1000 }, order: 7  },
-  { id: 'elo1400',          title: 'Elite Contender',      titleAr: 'منافس نخبوي',      description: 'Reach 1400 ELO',                  descriptionAr: 'الوصول لـ 1400 نقطة ELO',     icon: '💎', requirement: s => s.elo >= 1400,            reward: { coins: 700,  xp: 1400 }, order: 8  },
-  { id: 'pvp_50',           title: 'PvP Warrior',          titleAr: 'محارب PvP متمرس', description: 'Win 50 PvP matches',               descriptionAr: 'اربح 50 مباراة PvP',          icon: '⚔️', requirement: s => s.pvpWins >= 50,          reward: { coins: 1000, xp: 2000 }, order: 9  },
-  { id: 'level50',          title: 'Half Century',         titleAr: 'نصف قرن',          description: 'Reach Level 50',                  descriptionAr: 'الوصول للمستوى 50',            icon: '👑', requirement: s => s.level >= 50,            reward: { coins: 1500, xp: 3000 }, order: 10 },
-  { id: 'elo1600',          title: 'Legend Territory',     titleAr: 'أرض الأساطير',     description: 'Reach 1600 ELO',                  descriptionAr: 'الوصول لـ 1600 نقطة ELO',     icon: '⚡', requirement: s => s.elo >= 1600,            reward: { coins: 2000, xp: 4000 }, order: 11 },
-  { id: 'pvp_100',          title: 'PvP Legend',           titleAr: 'أسطورة PvP',       description: 'Win 100 PvP matches',              descriptionAr: 'اربح 100 مباراة PvP',         icon: '🌟', requirement: s => s.pvpWins >= 100,         reward: { coins: 2500, xp: 5000 }, order: 12 },
+  { id: 'first_match',      title: 'First Steps',         titleAr: 'الخطوات الأولى',   description: 'Play your first match',            descriptionAr: 'العب مباراتك الأولى',          icon: '👣', requirement: s => s.matchesPlayed >= 1,     reward: { dn: 50,   xp: 100  }, order: 1  },
+  { id: 'first_pvp_win',    title: 'PvP Initiation',       titleAr: 'انطلاقة PvP',      description: 'Win your first PvP match',         descriptionAr: 'اربح مباراة PvP الأولى',       icon: '⚔️', requirement: s => s.pvpWins >= 1,           reward: { dn: 100,  xp: 200  }, order: 2  },
+  { id: 'level10',          title: 'Rising Star',          titleAr: 'نجم صاعد',          description: 'Reach Level 10',                  descriptionAr: 'الوصول للمستوى 10',            icon: '⭐', requirement: s => s.level >= 10,            reward: { dn: 200,  xp: 400  }, order: 3  },
+  { id: 'elo1200',          title: 'Ranked Player',        titleAr: 'لاعب مصنّف',       description: 'Reach 1200 ELO',                  descriptionAr: 'الوصول لـ 1200 نقطة ELO',     icon: '📊', requirement: s => s.elo >= 1200,            reward: { dn: 300,  xp: 600  }, order: 4  },
+  { id: 'pvp_10',           title: 'PvP Veteran',          titleAr: 'محارب PvP',        description: 'Win 10 PvP matches',               descriptionAr: 'اربح 10 مباريات PvP',          icon: '🏅', requirement: s => s.pvpWins >= 10,          reward: { dn: 400,  xp: 800  }, order: 5  },
+  { id: 'tournament_win',   title: 'Tournament Victor',    titleAr: 'بطل البطولة',      description: 'Win your first tournament',        descriptionAr: 'اربح بطولتك الأولى',          icon: '🏆', requirement: s => s.tournamentWins >= 1,    reward: { dn: 600,  xp: 1200 }, order: 6  },
+  { id: 'level25',          title: 'Experienced',          titleAr: 'متمرس',             description: 'Reach Level 25',                  descriptionAr: 'الوصول للمستوى 25',            icon: '🌟', requirement: s => s.level >= 25,            reward: { dn: 500,  xp: 1000 }, order: 7  },
+  { id: 'elo1400',          title: 'Elite Contender',      titleAr: 'منافس نخبوي',      description: 'Reach 1400 ELO',                  descriptionAr: 'الوصول لـ 1400 نقطة ELO',     icon: '💎', requirement: s => s.elo >= 1400,            reward: { dn: 700,  xp: 1400 }, order: 8  },
+  { id: 'pvp_50',           title: 'PvP Warrior',          titleAr: 'محارب PvP متمرس', description: 'Win 50 PvP matches',               descriptionAr: 'اربح 50 مباراة PvP',          icon: '⚔️', requirement: s => s.pvpWins >= 50,          reward: { dn: 1000, xp: 2000 }, order: 9  },
+  { id: 'level50',          title: 'Half Century',         titleAr: 'نصف قرن',          description: 'Reach Level 50',                  descriptionAr: 'الوصول للمستوى 50',            icon: '👑', requirement: s => s.level >= 50,            reward: { dn: 1500, xp: 3000 }, order: 10 },
+  { id: 'elo1600',          title: 'Legend Territory',     titleAr: 'أرض الأساطير',     description: 'Reach 1600 ELO',                  descriptionAr: 'الوصول لـ 1600 نقطة ELO',     icon: '⚡', requirement: s => s.elo >= 1600,            reward: { dn: 2000, xp: 4000 }, order: 11 },
+  { id: 'pvp_100',          title: 'PvP Legend',           titleAr: 'أسطورة PvP',       description: 'Win 100 PvP matches',              descriptionAr: 'اربح 100 مباراة PvP',         icon: '🌟', requirement: s => s.pvpWins >= 100,         reward: { dn: 2500, xp: 5000 }, order: 12 },
   { id: 'matches_500',      title: 'Road to Legend',       titleAr: 'طريق الأسطورة',    description: 'Play 500 matches',                 descriptionAr: 'العب 500 مباراة',             icon: '🛣️', requirement: s => s.matchesPlayed >= 500,   reward: { coins: 3000, xp: 6000 }, order: 13 },
   { id: 'elo1800',          title: 'Champion\'s Path',     titleAr: 'طريق البطل',       description: 'Reach 1800 ELO — true champion',   descriptionAr: 'الوصول لـ 1800 ELO — بطل حقيقي', icon: '🏆', requirement: s => s.elo >= 1800,         reward: { coins: 5000, xp: 10000}, order: 14 },
 ];

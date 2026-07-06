@@ -6,7 +6,7 @@ export interface DailyChallenge {
   type: ChallengeType;
   target: number;
   league: string | null;
-  rewardCoins: number;
+  rewardDN: number;
   rewardElo: number;
 }
 
@@ -39,19 +39,19 @@ export function getDailyChallenges(date: string): DailyChallenge[] {
       id: `${date}_1`, icon: '⚡', type: 'score',
       target: pick(scoreTargets, rand),
       league: pick(leagues, rand),
-      rewardCoins: 25, rewardElo: 5,
+      rewardDN: 25, rewardElo: 5,
     },
     {
       id: `${date}_2`, icon: '🎯', type: 'accuracy',
       target: pick(accTargets, rand),
       league: null,
-      rewardCoins: 30, rewardElo: 8,
+      rewardDN: 30, rewardElo: 8,
     },
     {
       id: `${date}_3`, icon: '🔥', type: 'streak',
       target: pick(streakTargets, rand),
       league: null,
-      rewardCoins: 40, rewardElo: 10,
+      rewardDN: 40, rewardElo: 10,
     },
   ];
 }

@@ -121,7 +121,7 @@ export default function DailyChallenges() {
                     </div>
                     <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/40">
                       <div className="flex items-center gap-1 text-sm font-bold text-yellow-400">
-                        <Coins className="w-3.5 h-3.5" /> +{c.rewardCoins}
+                        <Coins className="w-3.5 h-3.5" /> +{c.rewardDN} DN$
                       </div>
                       <div className="flex items-center gap-1 text-sm font-bold text-primary">
                         <Zap className="w-3.5 h-3.5" /> +{c.rewardElo} ELO
@@ -181,7 +181,7 @@ export default function DailyChallenges() {
                         <div className="text-xs text-muted-foreground">{m.description}</div>
                       </div>
                       <div className="text-right text-xs flex-shrink-0">
-                        <div className="text-yellow-400 font-bold">+{m.rewardCoins} 🪙</div>
+                        <div className="text-yellow-400 font-bold">+{m.rewardDN} DN$</div>
                         <div className="text-purple-400">+{m.rewardXp} XP</div>
                       </div>
                     </div>

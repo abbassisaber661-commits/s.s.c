@@ -132,9 +132,9 @@ export default function Journey() {
                           Lv.{tier.minLevel}+ · {tier.minElo}+ ELO · {tier.minMatches}+ مباراة
                         </div>
                       </div>
-                      {tier.rewardCoins > 0 && (
+                      {tier.rewardDN > 0 && (
                         <div className="text-right">
-                          <div className="text-sm font-black text-yellow-400">+{tier.rewardCoins}🪙</div>
+                          <div className="text-sm font-black text-yellow-400">+{tier.rewardDN} DN$</div>
                           <div className="text-xs text-muted-foreground">+{tier.rewardXp} XP</div>
                         </div>
                       )}
@@ -218,7 +218,7 @@ export default function Journey() {
                         <div className="text-xs text-muted-foreground">{m.days} أيام متتالية</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-black text-yellow-400">+{m.coins}🪙</div>
+                        <div className="text-sm font-black text-yellow-400">+{m.rewardDN ?? m.coins ?? 0} DN$</div>
                         <div className="text-xs text-muted-foreground">+{m.xp} XP</div>
                       </div>
                     </motion.div>
@@ -389,7 +389,7 @@ export default function Journey() {
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">{m.desc}</p>
                         <div className="flex items-center gap-3 mt-2">
-                          {m.rewardCoins > 0 && <span className="text-xs font-bold text-yellow-400">+{m.rewardCoins}🪙</span>}
+                          {m.rewardDN > 0 && <span className="text-xs font-bold text-yellow-400">+{m.rewardDN} DN$</span>}
                           {m.rewardXp > 0 && <span className="text-xs font-bold text-primary">+{m.rewardXp} XP</span>}
                           {m.rewardBadge && <span className="text-xs font-bold text-violet-400">شارة {m.rewardBadge}</span>}
                         </div>

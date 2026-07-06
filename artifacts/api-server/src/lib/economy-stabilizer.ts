@@ -14,7 +14,7 @@
  *   5. getStabilityReport()— full diagnostic for the dashboard
  */
 
-import { db, coinTransactionsTable, playersTable, userDailyEconomyTable } from '@workspace/db';
+import { db, walletTransactionsTable, playersTable, userDailyEconomyTable } from '@workspace/db';
 import { eq, and, gte, lte, count, sum, desc } from 'drizzle-orm';
 
 // ── 1. Hard Caps ──────────────────────────────────────────────────────────────
@@ -101,14 +101,14 @@ export async function normalizeReward(input: NormalizeInput): Promise<NormalizeR
   if (input.dailyTotal === undefined) {
     try {
       const rows = await db
-        .select({ total: sum(coinTransactionsTable.amount) })
-        .from(coinTransactionsTable)
+        .select({ total: sum(walletTransactionsTable.amount) })
+        .from(walletTransactionsTable)
         .where(
           and(
-            eq(coinTransactionsTable.playerId, playerId),
-            eq(coinTransactionsTable.type, 'earn'),
-            gte(coinTransactionsTable.createdAt, today),
-            lte(coinTransactionsTable.createdAt, tomorrow),
+            eq(walletTransactionsTable.playerId, playerId),
+            eq(walletTransactionsTable.type, 'earn'),
+            gte(walletTransactionsTable.createdAt, today),
+            lte(walletTransactionsTable.createdAt, tomorrow),
           ),
         );
       dailyEarned = Number(rows[0]?.total ?? 0);
@@ -181,12 +181,12 @@ export async function checkExploit(
       const oneHourAgo = new Date(now - 3_600_000);
       const rows = await db
         .select({ cnt: count() })
-        .from(coinTransactionsTable)
+        .from(walletTransactionsTable)
         .where(
           and(
-            eq(coinTransactionsTable.playerId, playerId),
-            eq(coinTransactionsTable.source, 'match_result'),
-            gte(coinTransactionsTable.createdAt, oneHourAgo),
+            eq(walletTransactionsTable.playerId, playerId),
+            eq(walletTransactionsTable.source, 'match_result'),
+            gte(walletTransactionsTable.createdAt, oneHourAgo),
           ),
         );
       const matchesThisHour = Number(rows[0]?.cnt ?? 0);
@@ -262,29 +262,29 @@ export async function getStabilityReport(): Promise<StabilityReport> {
 
   // Parallel data fetch
   const [earnRows, spendRows, playerRows, exploitRows] = await Promise.all([
-    db.select({ total: sum(coinTransactionsTable.amount) })
-      .from(coinTransactionsTable)
+    db.select({ total: sum(walletTransactionsTable.amount) })
+      .from(walletTransactionsTable)
       .where(and(
-        eq(coinTransactionsTable.type, 'earn'),
-        gte(coinTransactionsTable.createdAt, since7d),
+        eq(walletTransactionsTable.type, 'earn'),
+        gte(walletTransactionsTable.createdAt, since7d),
       )),
 
-    db.select({ total: sum(coinTransactionsTable.amount) })
-      .from(coinTransactionsTable)
+    db.select({ total: sum(walletTransactionsTable.amount) })
+      .from(walletTransactionsTable)
       .where(and(
-        eq(coinTransactionsTable.type, 'spend'),
-        gte(coinTransactionsTable.createdAt, since7d),
+        eq(walletTransactionsTable.type, 'spend'),
+        gte(walletTransactionsTable.createdAt, since7d),
       )),
 
-    db.select({ id: playersTable.id, gems: playersTable.gems, coins: playersTable.coins })
+    db.select({ id: playersTable.id })
       .from(playersTable),
 
     // Count suspicious/exploit-flagged transactions (very large single amounts)
     db.select({ cnt: count() })
-      .from(coinTransactionsTable)
+      .from(walletTransactionsTable)
       .where(and(
-        gte(coinTransactionsTable.amount, HARD_CAPS.maxCoinsPerEvent * 3),
-        gte(coinTransactionsTable.createdAt, since7d),
+        gte(walletTransactionsTable.amount, HARD_CAPS.maxCoinsPerEvent * 3),
+        gte(walletTransactionsTable.createdAt, since7d),
       )),
   ]);
 

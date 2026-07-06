@@ -208,7 +208,7 @@ function ZoneIndicator({ rank, total, lc }: { rank: number; total: number; lc: s
 
 export default function Results() {
   const [, go] = useLocation();
-  const { coins, addCoins } = useGame();
+  const { addCoins } = useGame();
 
   const [result, setResult] = useState<MatchResult | null>(null);
   const [showBoard, setShowBoard] = useState(false);

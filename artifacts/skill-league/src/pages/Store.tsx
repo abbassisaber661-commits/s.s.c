@@ -23,7 +23,7 @@ function SectionHeader({ icon, label, sublabel }: { icon: string; label: string;
 }
 
 export default function Store() {
-  const { coins, ownedItems, xpBoostUntil, purchaseItem, language } = useGame();
+  const { dnBalance, ownedItems, xpBoostUntil, purchaseItem, language } = useGame();
   const t = useT(language);
   const rtl = isRTL(language);
 
@@ -103,7 +103,7 @@ export default function Store() {
     );
   }
 
-  const coinItems    = STORE_ITEMS.filter(i => i.type === 'coins');
+  const dnItems      = STORE_ITEMS.filter(i => i.type === 'coins'); // legacy: 'coins' type = DN$ bundles
   const boostItems   = STORE_ITEMS.filter(i => i.type === 'xp_boost');
   const cosmeticItems = STORE_ITEMS.filter(i => i.type === 'cosmetic');
   const passItems    = STORE_ITEMS.filter(i => i.type === 'entry_pass');
@@ -118,7 +118,7 @@ export default function Store() {
         </button>
         <h1 className="text-lg font-black flex-1">🛍️ {t('nav_store')}</h1>
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/15 border border-yellow-500/30 rounded-xl text-sm font-black text-yellow-400">
-          {coins} 🪙
+          {dnBalance ?? 0} DN$
         </div>
       </div>
 
@@ -149,9 +149,9 @@ export default function Store() {
 
         {/* ── 1. COINS PACKAGES ── */}
         <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <SectionHeader icon="💰" label="Coins Packages" sublabel="Top up anytime" />
+          <SectionHeader icon="🪙" label="DN$ Bundles" sublabel="Earn DN$ to use in-game" />
           <div className="space-y-3">
-            {coinItems.map((item, idx) => <ItemCard key={item.id} item={item} idx={idx} />)}
+            {dnItems.map((item, idx) => <ItemCard key={item.id} item={item} idx={idx} />)}
           </div>
         </motion.section>
 

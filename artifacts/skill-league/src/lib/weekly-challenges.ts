@@ -13,7 +13,7 @@ export interface WeeklyMission {
   description: string;
   type: WeeklyMissionType;
   target: number;
-  rewardCoins: number;
+  rewardDN: number;
   rewardXp: number;
 }
 
@@ -68,7 +68,7 @@ export function getWeeklyMissions(weekStr: string): WeeklyMission[] {
       description: `Play ${matchTarget} matches this week`,
       type: 'play_matches',
       target: matchTarget,
-      rewardCoins: 100,
+      rewardDN: 100,
       rewardXp: 150,
     },
     {
@@ -78,7 +78,7 @@ export function getWeeklyMissions(weekStr: string): WeeklyMission[] {
       description: `Win ${pvpTarget} PvP battles`,
       type: 'win_pvp',
       target: pvpTarget,
-      rewardCoins: 200,
+      rewardDN: 200,
       rewardXp: 300,
     },
     {
@@ -88,7 +88,7 @@ export function getWeeklyMissions(weekStr: string): WeeklyMission[] {
       description: `Earn ${coinsTarget} coins`,
       type: 'earn_coins',
       target: coinsTarget,
-      rewardCoins: 150,
+      rewardDN: 150,
       rewardXp: 200,
     },
     {
@@ -98,7 +98,7 @@ export function getWeeklyMissions(weekStr: string): WeeklyMission[] {
       description: `Hit a ${streakTarget}-answer streak in one match`,
       type: 'reach_streak',
       target: streakTarget,
-      rewardCoins: 75,
+      rewardDN: 75,
       rewardXp: 120,
     },
     {
@@ -108,7 +108,7 @@ export function getWeeklyMissions(weekStr: string): WeeklyMission[] {
       description: `Finish a match with ${accTarget}%+ accuracy`,
       type: 'achieve_accuracy',
       target: accTarget,
-      rewardCoins: 80,
+      rewardDN: 80,
       rewardXp: 130,
     },
   ];

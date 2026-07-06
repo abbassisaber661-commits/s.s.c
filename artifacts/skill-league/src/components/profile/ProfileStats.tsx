@@ -6,7 +6,7 @@ type Props = {
   posts: number;
   followers: number;
   following: number;
-  coins: number;
+  dnBalance: number;
   winRate: number;
   className?: string;
 };
@@ -27,14 +27,14 @@ const StatCard = ({ label, value, icon }: { label: string; value: string | numbe
   </div>
 );
 
-export default function ProfileStats({ xp, level, posts, followers, following, coins, winRate, className }: Props) {
+export default function ProfileStats({ xp, level, posts, followers, following, dnBalance, winRate, className }: Props) {
   return (
     <div className={cn("space-y-2", className)}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <StatCard label="Level"    value={level}              icon="🎯" />
-        <StatCard label="XP"       value={formatNumber(xp)}   icon="⚡" />
-        <StatCard label="Coins"    value={formatNumber(coins)} icon="🪙" />
-        <StatCard label="Win Rate" value={`${winRate}%`}       icon="🏆" />
+        <StatCard label="Level"    value={level}                  icon="🎯" />
+        <StatCard label="XP"       value={formatNumber(xp)}       icon="⚡" />
+        <StatCard label="DN$"      value={formatNumber(dnBalance)} icon="🪙" />
+        <StatCard label="Win Rate" value={`${winRate}%`}           icon="🏆" />
       </div>
       <div className="grid grid-cols-3 gap-2">
         <StatCard label="Posts"     value={formatNumber(posts)}     icon="📝" />

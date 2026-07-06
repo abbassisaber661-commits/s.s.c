@@ -20,8 +20,8 @@ import { getBotAccuracy, getBotReactionMs, scorePvpAnswer } from '@/lib/pvp-engi
 type Phase = 'select' | 'bracket' | 'battle' | 'finished';
 
 const TOURNAMENT_SIZES = [
-  { size: 8 as const,  label: '8 Players',  icon: '⚔️',  entry: 100, coins: 500,  xp: 300  },
-  { size: 16 as const, label: '16 Players', icon: '🏆',  entry: 200, coins: 1000, xp: 600  },
+  { size: 8 as const,  label: '8 Players',  icon: '⚔️',  entry: 10, dn: 30,  xp: 300  },
+  { size: 16 as const, label: '16 Players', icon: '🏆',  entry: 20, dn: 60, xp: 600  },
 ];
 
 const PLACE_LABELS: Record<number, string> = { 1: '🥇 Champion', 2: '🥈 Runner-up', 3: '🥉 Third Place', 4: '4th Place' };
@@ -58,7 +58,7 @@ function buildStandings(bracket: TournamentBracket): Array<{ player: TournamentP
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function Tournament() {
-  const { username, coins, level, recordTournamentWin, spendCoins, isGuest } = useGame();
+  const { username, dnBalance, level, recordTournamentWin, spendCoins, isGuest } = useGame();
   const [phase, setPhase]             = useState<Phase>('select');
   const [bracket, setBracket]         = useState<TournamentBracket | null>(null);
   const [selectedSize, setSelectedSize] = useState<8 | 16>(8);
@@ -120,7 +120,7 @@ export default function Tournament() {
           setPhase('finished');
           if (isWinner) setShowWin(true);
           const cfg        = TOURNAMENT_SIZES.find(s => s.size === selectedSize)!;
-          const coinsReward = isWinner ? cfg.coins : Math.floor(cfg.coins * 0.3);
+          const coinsReward = isWinner ? cfg.dn : Math.floor(cfg.dn * 0.3);
           const xpReward   = isWinner ? cfg.xp   : Math.floor(cfg.xp   * 0.4);
           recordTournamentWin(isWinner ? 1 : 2, coinsReward, xpReward);
         } else {
@@ -290,14 +290,14 @@ export default function Tournament() {
               <div className="font-bold">{username}</div>
               <div className="text-sm" style={{ color: levelColor }}>Lv.{level} · {levelTitle}</div>
             </div>
-            <div className="ml-auto text-yellow-400 font-bold text-sm">{coins} 🪙</div>
+            <div className="ml-auto text-yellow-400 font-bold text-sm">{dnBalance ?? 0} DN$</div>
           </div>
         </div>
 
         <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Choose Tournament</h2>
         <div className="space-y-3">
           {TOURNAMENT_SIZES.map(t => {
-            const canAfford = coins >= t.entry;
+            const canAfford = (dnBalance ?? 0) >= t.entry;
             return (
               <button
                 key={t.size}
@@ -318,7 +318,7 @@ export default function Tournament() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="bg-background rounded-xl p-2 text-center">
-                    <div className="font-black text-green-400">{t.coins} 🪙</div>
+                    <div className="font-black text-green-400">{t.dn} DN$</div>
                     <div className="text-xs text-muted-foreground">1st Prize</div>
                   </div>
                   <div className="bg-background rounded-xl p-2 text-center">

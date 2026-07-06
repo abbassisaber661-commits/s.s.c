@@ -175,8 +175,8 @@ export declare const pvpMatchesTable: import("drizzle-orm/pg-core").PgTableWithC
         }, {}, {
             $type: any[];
         }>;
-        coinsStake: import("drizzle-orm/pg-core").PgColumn<{
-            name: "coins_stake";
+        dnStake: import("drizzle-orm/pg-core").PgColumn<{
+            name: "dn_stake";
             tableName: "pvp_matches";
             dataType: "number";
             columnType: "PgInteger";
@@ -226,8 +226,8 @@ export declare const pvpMatchesTable: import("drizzle-orm/pg-core").PgTableWithC
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        coinsWonA: import("drizzle-orm/pg-core").PgColumn<{
-            name: "coins_won_a";
+        dnWonA: import("drizzle-orm/pg-core").PgColumn<{
+            name: "dn_won_a";
             tableName: "pvp_matches";
             dataType: "number";
             columnType: "PgInteger";
@@ -243,8 +243,8 @@ export declare const pvpMatchesTable: import("drizzle-orm/pg-core").PgTableWithC
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        coinsWonB: import("drizzle-orm/pg-core").PgColumn<{
-            name: "coins_won_b";
+        dnWonB: import("drizzle-orm/pg-core").PgColumn<{
+            name: "dn_won_b";
             tableName: "pvp_matches";
             dataType: "number";
             columnType: "PgInteger";
@@ -505,8 +505,8 @@ export declare const tournamentsTable: import("drizzle-orm/pg-core").PgTableWith
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        rewardCoins: import("drizzle-orm/pg-core").PgColumn<{
-            name: "reward_coins";
+        rewardDn: import("drizzle-orm/pg-core").PgColumn<{
+            name: "reward_dn";
             tableName: "tournaments";
             dataType: "number";
             columnType: "PgInteger";
@@ -802,11 +802,11 @@ export declare const insertPvpMatchSchema: z.ZodObject<{
     leagueId: z.ZodString;
     matchType: z.ZodOptional<z.ZodString>;
     rounds: z.ZodOptional<z.ZodNullable<z.ZodType<any[], any[], z.core.$ZodTypeInternals<any[], any[]>>>>;
-    coinsStake: z.ZodOptional<z.ZodInt>;
+    dnStake: z.ZodOptional<z.ZodInt>;
     eloChangeA: z.ZodOptional<z.ZodInt>;
     eloChangeB: z.ZodOptional<z.ZodInt>;
-    coinsWonA: z.ZodOptional<z.ZodInt>;
-    coinsWonB: z.ZodOptional<z.ZodInt>;
+    dnWonA: z.ZodOptional<z.ZodInt>;
+    dnWonB: z.ZodOptional<z.ZodInt>;
     xpGainedA: z.ZodOptional<z.ZodInt>;
     xpGainedB: z.ZodOptional<z.ZodInt>;
     correctCount: z.ZodOptional<z.ZodInt>;
@@ -827,7 +827,7 @@ export declare const insertTournamentSchema: z.ZodObject<{
     type: z.ZodOptional<z.ZodString>;
     status: z.ZodOptional<z.ZodString>;
     size: z.ZodOptional<z.ZodInt>;
-    rewardCoins: z.ZodOptional<z.ZodInt>;
+    rewardDn: z.ZodOptional<z.ZodInt>;
     rewardXp: z.ZodOptional<z.ZodInt>;
     bracket: z.ZodOptional<z.ZodNullable<z.ZodDate | z.ZodType<Buffer<ArrayBufferLike>, unknown, z.core.$ZodTypeInternals<Buffer<ArrayBufferLike>, unknown>> | z.ZodType<any, any, z.core.$ZodTypeInternals<any, any>> | z.ZodType<import("drizzle-zod").Json, unknown, z.core.$ZodTypeInternals<import("drizzle-zod").Json, unknown>>>>;
     participants: z.ZodOptional<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>;

@@ -27,13 +27,10 @@ export type MatchResult = 'win' | 'draw' | 'loss';
 export type MatchStatus = 'upcoming' | 'available' | 'played' | 'missed';
 
 export interface League {
-  id:             LeagueId;
-  name:           string;
-  entryType:      'coins' | 'pi';
-  entryCostPi:    number;
-  entryCostCoins: number;
-  entryCostGems:  number;
-  difficulty:     string;
+  id:          LeagueId;
+  name:        string;
+  entryCostPi: number;   // 0 = free (Training), else Pi required
+  difficulty:  string;
   color:          string;
   icon:           string;
   description:    string;
@@ -162,10 +159,6 @@ export const leagueApi = {
       method: 'POST',
       body: JSON.stringify({ playerId, playerName }),
     }),
-
-  /** Get the player's current gem balance. */
-  getPlayerGems: (playerId: string) =>
-    apiFetch<{ gems: number }>(ECON + `/${playerId}/gems`),
 
   /** List all tournaments (open, full, upcoming). */
   getTournaments: () => apiFetch<Tournament[]>(MATCHES + '/tournaments'),

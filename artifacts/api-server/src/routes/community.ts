@@ -3,7 +3,7 @@ import { eq, desc, and, asc, sql, inArray } from "drizzle-orm";
 import { db, postsTable, postLikesTable, postCommentsTable, postSavesTable, playersTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { getOwnerPlayerId } from "../lib/owner.js";
-import { recordPost, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
+import { recordPostCreated, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
 import { createNotification } from "../lib/notificationService.js";
 import { getSocialSettings } from "../lib/settings-service.js";
 
@@ -187,7 +187,7 @@ router.post("/community/posts", async (req, res) => {
       meta: { ...(meta as Record<string, unknown> || {}), hashtags, mentions },
     }).returning();
 
-    if (authorId) recordPost(String(authorId)).catch(() => {});
+    if (authorId) recordPostCreated(String(authorId)).catch(() => {});
 
     if (mentions.length > 0) {
       const { playersTable } = await import("@workspace/db");

@@ -46,20 +46,17 @@ const RESULT_LABEL: Record<string, string> = { win: 'W', draw: 'D', loss: 'L' };
 
 function SubscribeModal({
   league,
-  gemBalance,
   onConfirm,
   onClose,
   joining,
 }: {
   league: League;
-  gemBalance: number;
   onConfirm: () => void;
   onClose: () => void;
   joining: boolean;
 }) {
-  const gemCost     = league.entryCostGems ?? 0;
-  const canAfford   = gemBalance >= gemCost;
-  const isFree      = gemCost === 0;
+  const isFree      = (league.entryCostPi ?? 0) === 0;
+  const canAfford   = true; // Pi payment handled by Pi SDK
 
   return (
     <AnimatePresence>
@@ -146,13 +143,12 @@ function SubscribeModal({
             >
               <div>
                 <div className="text-xs text-white/40 mb-0.5">تكلفة الدخول</div>
-                <div className="text-2xl font-black" style={{ color: isFree ? '#34d399' : canAfford ? league.color : '#ef4444' }}>
-                  {isFree ? 'مجاني' : `${gemCost} 💎`}
+                <div className="text-2xl font-black" style={{ color: isFree ? '#34d399' : '#f59e0b' }}>
+                  {isFree ? 'مجاني' : `${league.entryCostPi} π`}
                 </div>
                 {!isFree && (
-                  <div className="text-xs mt-0.5" style={{ color: canAfford ? 'rgba(255,255,255,0.4)' : '#ef4444' }}>
-                    رصيدك: {gemBalance} 💎
-                    {!canAfford && ` — تحتاج ${gemCost - gemBalance} 💎 إضافية`}
+                  <div className="text-xs mt-0.5 text-white/40">
+                    رسوم دخول Pi — يُدفع عند الاشتراك
                   </div>
                 )}
               </div>
@@ -360,7 +356,7 @@ function ActiveLeagueBanner({
 // ── LeagueCard ────────────────────────────────────────────────────────────────
 
 function LeagueCard({
-  league, isSelected, hasEntry, season, onClick, isBlocked, gemBalance, activeLeagueName,
+  league, isSelected, hasEntry, season, onClick, isBlocked, activeLeagueName,
 }: {
   league: League;
   isSelected: boolean;
@@ -368,14 +364,9 @@ function LeagueCard({
   season: Season | null;
   onClick: () => void;
   isBlocked: boolean;
-  gemBalance: number;
   activeLeagueName?: string;
 }) {
-  const entryLabel = league.entryType === 'coins'
-    ? (league.entryCostCoins === 0 ? 'FREE ENTRY' : `${league.entryCostCoins.toLocaleString()} 🪙`)
-    : `${league.entryCostPi} π`;
-  const gemCost       = league.entryCostGems ?? 0;
-  const canAffordGems = gemBalance >= gemCost;
+  const entryLabel = (league.entryCostPi ?? 0) === 0 ? 'FREE ENTRY' : `${league.entryCostPi} π`;
 
   return (
     <motion.div
@@ -720,7 +711,6 @@ export default function LeagueDashboard() {
   const [playingId,   setPlayingId]   = useState<string | null>(null);
   const [error,       setError]       = useState<string | null>(null);
   const [toast,       setToast]       = useState<string | null>(null);
-  const [gemBalance,  setGemBalance]  = useState(0);
   const [prizeData,   setPrizeData]   = useState<{ amount: number; rank: number; pct: number }[]>([]);
   const [progressKey, setProgressKey] = useState(0);
   const [dailyDone,   setDailyDone]   = useState(false);
@@ -736,12 +726,8 @@ export default function LeagueDashboard() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [ls, gemsData] = await Promise.all([
-        leagueApi.getLeagues(),
-        leagueApi.getPlayerGems(playerId).catch(() => ({ gems: 0 })),
-      ]);
+      const ls = await leagueApi.getLeagues();
       setLeagues(ls);
-      setGemBalance(gemsData.gems);
 
       const [seasonEntries, entryEntries] = await Promise.all([
         Promise.all(
@@ -792,8 +778,6 @@ export default function LeagueDashboard() {
     try {
       const result = await leagueApi.joinLeague(selected, playerId, playerName);
       const league = leagues.find(l => l.id === selected);
-      const gemCost = league?.entryCostGems ?? 0;
-      if (gemCost > 0) setGemBalance(prev => Math.max(0, prev - gemCost));
       setMyEntries(prev => ({ ...prev, [selected]: result.entry }));
       setMyMatches(result.matches);
       setSeasons(prev => ({
@@ -814,8 +798,7 @@ export default function LeagueDashboard() {
         setError(`أنت تنافس بالفعل في ${otherLeague?.name ?? 'دوري آخر'} هذا الموسم. دوري واحد لكل موسم.`);
       } else if (msg === 'insufficient_gems') {
         const league = leagues.find(l => l.id === selected);
-        const cost = league?.entryCostGems ?? 0;
-        setError(`رصيد الجواهر غير كافٍ. تحتاج ${cost} 💎 للاشتراك في ${league?.name}.`);
+        setError(`رسوم الدخول: ${league?.entryCostPi ?? 0} π للاشتراك في ${league?.name}.`);
       } else {
         setError(msg);
       }
@@ -911,7 +894,6 @@ export default function LeagueDashboard() {
       {showSubscribeModal && selectedLeague && (
         <SubscribeModal
           league={selectedLeague}
-          gemBalance={gemBalance}
           onConfirm={handleJoin}
           onClose={() => setShowSubscribeModal(false)}
           joining={joining}
@@ -930,8 +912,7 @@ export default function LeagueDashboard() {
           </div>
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-yellow-400">{(gameState.coins ?? 0).toLocaleString()} 🪙</span>
-              <span className="text-xs font-bold text-purple-400">{gemBalance} 💎</span>
+              <span className="text-xs font-bold text-yellow-400">{(gameState.dnBalance ?? 0).toLocaleString()} DN$</span>
             </div>
             {availableCount > 0 && (
               <span className="text-xs px-2 py-0.5 bg-indigo-500 rounded-full font-bold">
@@ -1086,7 +1067,6 @@ export default function LeagueDashboard() {
                   season={seasons[l.id] ?? null}
                   onClick={() => setSelected(l.id as LeagueId)}
                   isBlocked={!!activeLeagueId && activeLeagueId !== l.id && !myEntries[l.id]}
-                  gemBalance={gemBalance}
                   activeLeagueName={activeLeague?.name}
                 />
               </motion.div>
@@ -1125,13 +1105,12 @@ export default function LeagueDashboard() {
                 <div className="px-4 py-3 bg-white/3 border-t border-white/5">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-white/60">
-                      {(selectedLeague.entryCostGems ?? 0) > 0 ? (
+                      {(selectedLeague.entryCostPi ?? 0) > 0 ? (
                         <>
-                          يتطلب{' '}
-                          <span className={`font-bold ${gemBalance >= (selectedLeague.entryCostGems ?? 0) ? 'text-purple-300' : 'text-red-400'}`}>
-                            {selectedLeague.entryCostGems} 💎
+                          رسوم الدخول:{' '}
+                          <span className="font-bold text-yellow-300">
+                            {selectedLeague.entryCostPi} π
                           </span>
-                          <span className="text-white/30 ml-1">(رصيدك: {gemBalance})</span>
                         </>
                       ) : (
                         <>
@@ -1147,8 +1126,8 @@ export default function LeagueDashboard() {
                       className="px-4 py-2 rounded-xl font-bold text-sm text-white transition-colors"
                       style={{ backgroundColor: selectedLeague.color + 'cc' }}
                     >
-                      {(selectedLeague.entryCostGems ?? 0) > 0
-                        ? `اشترك (${selectedLeague.entryCostGems} 💎)`
+                      {(selectedLeague.entryCostPi ?? 0) > 0
+                        ? `اشترك (${selectedLeague.entryCostPi} π)`
                         : 'اشترك مجاناً'}
                     </motion.button>
                   </div>
@@ -1229,10 +1208,10 @@ export default function LeagueDashboard() {
 
                 {tab === 'prizes' && (
                   <>
-                    {selectedLeague.entryType === 'coins' ? (
+                    {(selectedLeague.entryCostPi ?? 0) === 0 ? (
                       <div className="text-center text-white/40 py-6 text-sm">
-                        دوري العملات مجاني — لا يوجد جائزة Pi.
-                        <br />أفضل اللاعبين يكسبون ترقياً للدوري الاحترافي!
+                        دوري التدريب مجاني — لا يوجد جائزة Pi.
+                        <br />أفضل اللاعبين يكسبون ترقياً للدوري التالي!
                       </div>
                     ) : (
                       <div>

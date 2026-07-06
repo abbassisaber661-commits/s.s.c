@@ -42,7 +42,7 @@ export interface StreakCheckResult {
   updated: LoginStreakData;
   isNewDay: boolean;
   streakBroken: boolean;
-  rewardCoins: number;
+  rewardDN: number;
   rewardXp: number;
   milestoneReached: number | null;
 }
@@ -53,7 +53,7 @@ export function checkAndUpdateStreak(): StreakCheckResult {
   const yesterday = yesterdayStr();
 
   if (data.lastLoginDate === today) {
-    return { updated: data, isNewDay: false, streakBroken: false, rewardCoins: 0, rewardXp: 0, milestoneReached: null };
+    return { updated: data, isNewDay: false, streakBroken: false, rewardDN: 0, rewardXp: 0, milestoneReached: null };
   }
 
   let newStreak: number;
@@ -71,7 +71,7 @@ export function checkAndUpdateStreak(): StreakCheckResult {
   const longestStreak = Math.max(data.longestStreak, newStreak);
   const totalLoginDays = data.totalLoginDays + 1;
 
-  const { coins, xp, milestone } = getStreakReward(newStreak);
+  const { dn, xp, milestone } = getStreakReward(newStreak);
 
   const updated: LoginStreakData = {
     currentStreak: newStreak,
@@ -87,19 +87,19 @@ export function checkAndUpdateStreak(): StreakCheckResult {
     updated,
     isNewDay: true,
     streakBroken,
-    rewardCoins: coins,
+    rewardDN: dn,
     rewardXp: xp,
     milestoneReached: milestone,
   };
 }
 
-export function getStreakReward(streak: number): { coins: number; xp: number; milestone: number | null } {
-  const milestones: Record<number, { coins: number; xp: number }> = {
-    3:  { coins: 50,   xp: 100  },
-    7:  { coins: 150,  xp: 300  },
-    14: { coins: 350,  xp: 600  },
-    30: { coins: 1000, xp: 2000 },
-    60: { coins: 2500, xp: 5000 },
+export function getStreakReward(streak: number): { dn: number; xp: number; milestone: number | null } {
+  const milestones: Record<number, { dn: number; xp: number }> = {
+    3:  { dn: 3,  xp: 100  },
+    7:  { dn: 7,  xp: 300  },
+    14: { dn: 14, xp: 600  },
+    30: { dn: 30, xp: 2000 },
+    60: { dn: 60, xp: 5000 },
   };
 
   if (milestones[streak]) {
@@ -107,17 +107,17 @@ export function getStreakReward(streak: number): { coins: number; xp: number; mi
   }
 
   // Daily base reward (increases with streak)
-  const base = Math.min(5 + Math.floor(streak / 3), 20);
-  return { coins: base, xp: base * 2, milestone: null };
+  const base = Math.min(1 + Math.floor(streak / 7), 5);
+  return { dn: base, xp: base * 10, milestone: null };
 }
 
-export function getStreakMilestones(): { days: number; coins: number; xp: number; label: string }[] {
+export function getStreakMilestones(): { days: number; dn: number; xp: number; label: string }[] {
   return [
-    { days: 1,  coins: 5,    xp: 10,   label: 'يوم واحد' },
-    { days: 3,  coins: 50,   xp: 100,  label: '3 أيام 🔥' },
-    { days: 7,  coins: 150,  xp: 300,  label: 'أسبوع 🌟' },
-    { days: 14, coins: 350,  xp: 600,  label: 'أسبوعان 💎' },
-    { days: 30, coins: 1000, xp: 2000, label: 'شهر 👑' },
-    { days: 60, coins: 2500, xp: 5000, label: 'شهران 🏆' },
+    { days: 1,  dn: 1,  xp: 10,   label: 'يوم واحد' },
+    { days: 3,  dn: 3,  xp: 100,  label: '3 أيام 🔥' },
+    { days: 7,  dn: 7,  xp: 300,  label: 'أسبوع 🌟' },
+    { days: 14, dn: 14, xp: 600,  label: 'أسبوعان 💎' },
+    { days: 30, dn: 30, xp: 2000, label: 'شهر 👑' },
+    { days: 60, dn: 60, xp: 5000, label: 'شهران 🏆' },
   ];
 }

@@ -209,7 +209,6 @@ router.post("/matches", optionalAuth, async (req, res) => {
     // ── Load current player snapshot ──────────────────────────────────────
     const [dbPlayer] = await db
       .select({
-        coins:         playersTable.coins,
         xp:            playersTable.xp,
         level:         playersTable.level,
         lp:            playersTable.lp,
@@ -228,7 +227,6 @@ router.post("/matches", optionalAuth, async (req, res) => {
     const tierStr    = String(leagueId);
     const currentLp  = dbPlayer?.lp    ?? 0;
     const currentXp  = dbPlayer?.xp    ?? 0;
-    const currentCoins = dbPlayer?.coins ?? 0;
 
     const lpResult   = calcLpDelta(currentLp, { score: pAScore, rank, bestStreak: bestStreakNum, correctPct: accuracyNum });
     const xpGained   = calcXpForMatch(pAScore, accuracyNum, isWin, bestStreakNum);

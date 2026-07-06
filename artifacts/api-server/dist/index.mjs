@@ -5345,10 +5345,10 @@ var require_raw_body = __commonJS({
       if (done) {
         return readStream(stream, encoding, length, limit, wrap(done));
       }
-      return new Promise(function executor(resolve6, reject) {
+      return new Promise(function executor(resolve4, reject) {
         readStream(stream, encoding, length, limit, function onRead(err, buf) {
           if (err) return reject(err);
-          resolve6(buf);
+          resolve4(buf);
         });
       });
     }
@@ -18683,7 +18683,7 @@ var require_view = __commonJS({
     var basename = path2.basename;
     var extname = path2.extname;
     var join = path2.join;
-    var resolve6 = path2.resolve;
+    var resolve4 = path2.resolve;
     module.exports = View2;
     function View2(name2, options) {
       var opts = options || {};
@@ -18717,7 +18717,7 @@ var require_view = __commonJS({
       debug('lookup "%s"', name2);
       for (var i = 0; i < roots.length && !path3; i++) {
         var root = roots[i];
-        var loc = resolve6(root, name2);
+        var loc = resolve4(root, name2);
         var dir = dirname3(loc);
         var file2 = basename(loc);
         path3 = this.resolve(dir, file2);
@@ -18742,7 +18742,7 @@ var require_view = __commonJS({
       });
       sync = false;
     };
-    View2.prototype.resolve = function resolve7(dir, file2) {
+    View2.prototype.resolve = function resolve5(dir, file2) {
       var ext = this.ext;
       var path3 = join(dir, file2);
       var stat = tryStat(path3);
@@ -20897,7 +20897,7 @@ var require_application = __commonJS({
     var compileETag = require_utils3().compileETag;
     var compileQueryParser = require_utils3().compileQueryParser;
     var compileTrust = require_utils3().compileTrust;
-    var resolve6 = __require("node:path").resolve;
+    var resolve4 = __require("node:path").resolve;
     var once = require_once();
     var Router36 = require_router();
     var slice = Array.prototype.slice;
@@ -20951,7 +20951,7 @@ var require_application = __commonJS({
       this.mountpath = "/";
       this.locals.settings = this.settings;
       this.set("view", View2);
-      this.set("views", resolve6("views"));
+      this.set("views", resolve4("views"));
       this.set("jsonp callback name", "callback");
       if (env === "production") {
         this.enable("view cache");
@@ -22456,7 +22456,7 @@ var require_send = __commonJS({
     var extname = path2.extname;
     var join = path2.join;
     var normalize = path2.normalize;
-    var resolve6 = path2.resolve;
+    var resolve4 = path2.resolve;
     var sep = path2.sep;
     var BYTES_RANGE_REGEXP = /^ *bytes=/;
     var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1e3;
@@ -22485,7 +22485,7 @@ var require_send = __commonJS({
       this._maxage = opts.maxAge || opts.maxage;
       this._maxage = typeof this._maxage === "string" ? ms(this._maxage) : Number(this._maxage);
       this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE) : 0;
-      this._root = opts.root ? resolve6(opts.root) : null;
+      this._root = opts.root ? resolve4(opts.root) : null;
     }
     util2.inherits(SendStream, Stream);
     SendStream.prototype.error = function error40(status, err) {
@@ -22634,7 +22634,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = normalize(path3).split(sep);
-        path3 = resolve6(path3);
+        path3 = resolve4(path3);
       }
       if (containsDotFile(parts)) {
         debug('%s dotfile "%s"', this._dotfiles, path3);
@@ -23012,7 +23012,7 @@ var require_response = __commonJS({
     var cookie = require_cookie();
     var send = require_send();
     var extname = path2.extname;
-    var resolve6 = path2.resolve;
+    var resolve4 = path2.resolve;
     var vary = require_vary();
     var { Buffer: Buffer2 } = __require("node:buffer");
     var res = Object.create(http.ServerResponse.prototype);
@@ -23218,7 +23218,7 @@ var require_response = __commonJS({
       }
       opts = Object.create(opts);
       opts.headers = headers;
-      var fullPath = !opts.root ? resolve6(path3) : path3;
+      var fullPath = !opts.root ? resolve4(path3) : path3;
       return this.sendFile(fullPath, opts, done);
     };
     res.contentType = res.type = function contentType(type) {
@@ -23467,7 +23467,7 @@ var require_serve_static = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var parseUrl = require_parseurl();
-    var resolve6 = __require("path").resolve;
+    var resolve4 = __require("path").resolve;
     var send = require_send();
     var url2 = __require("url");
     module.exports = serveStatic;
@@ -23486,7 +23486,7 @@ var require_serve_static = __commonJS({
         throw new TypeError("option setHeaders must be function");
       }
       opts.maxage = opts.maxage || opts.maxAge || 0;
-      opts.root = resolve6(root);
+      opts.root = resolve4(root);
       var onDirectory = redirect ? createRedirectDirectoryListener() : createNotFoundDirectoryListener();
       return function serveStatic2(req, res, next) {
         if (req.method !== "GET" && req.method !== "HEAD") {
@@ -29161,10 +29161,10 @@ var init_subquery = __esm({
     init_entity();
     Subquery = class {
       static [entityKind] = "Subquery";
-      constructor(sql4, fields, alias, isWith = false, usedTables = []) {
+      constructor(sql5, fields, alias, isWith = false, usedTables = []) {
         this._ = {
           brand: "Subquery",
-          sql: sql4,
+          sql: sql5,
           selectedFields: fields,
           alias,
           isWith,
@@ -35602,7 +35602,7 @@ var require_dist2 = __commonJS({
     function parse3(stream, callback) {
       const parser = new parser_1.Parser();
       stream.on("data", (buffer) => parser.parse(buffer, callback));
-      return new Promise((resolve6) => stream.on("end", () => resolve6()));
+      return new Promise((resolve4) => stream.on("end", () => resolve4()));
     }
     exports.parse = parse3;
   }
@@ -36333,12 +36333,12 @@ var require_client = __commonJS({
           this._connect(callback);
           return;
         }
-        return new this._Promise((resolve6, reject) => {
+        return new this._Promise((resolve4, reject) => {
           this._connect((error40) => {
             if (error40) {
               reject(error40);
             } else {
-              resolve6(this);
+              resolve4(this);
             }
           });
         });
@@ -36684,8 +36684,8 @@ var require_client = __commonJS({
           readTimeout = config2.query_timeout || this.connectionParameters.query_timeout;
           query = new Query2(config2, values, callback);
           if (!query.callback) {
-            result = new this._Promise((resolve6, reject) => {
-              query.callback = (err, res) => err ? reject(err) : resolve6(res);
+            result = new this._Promise((resolve4, reject) => {
+              query.callback = (err, res) => err ? reject(err) : resolve4(res);
             }).catch((err) => {
               Error.captureStackTrace(err);
               throw err;
@@ -36762,8 +36762,8 @@ var require_client = __commonJS({
         if (cb) {
           this.connection.once("end", cb);
         } else {
-          return new this._Promise((resolve6) => {
-            this.connection.once("end", resolve6);
+          return new this._Promise((resolve4) => {
+            this.connection.once("end", resolve4);
           });
         }
       }
@@ -36812,8 +36812,8 @@ var require_pg_pool = __commonJS({
       const cb = function(err, client) {
         err ? rej(err) : res(client);
       };
-      const result = new Promise2(function(resolve6, reject) {
-        res = resolve6;
+      const result = new Promise2(function(resolve4, reject) {
+        res = resolve4;
         rej = reject;
       }).catch((err) => {
         Error.captureStackTrace(err);
@@ -36874,7 +36874,7 @@ var require_pg_pool = __commonJS({
         if (typeof Promise2.try === "function") {
           return Promise2.try(f);
         }
-        return new Promise2((resolve6) => resolve6(f()));
+        return new Promise2((resolve4) => resolve4(f()));
       }
       _isFull() {
         return this._clients.length >= this.options.max;
@@ -37267,8 +37267,8 @@ var require_query2 = __commonJS({
     NativeQuery.prototype._getPromise = function() {
       if (this._promise) return this._promise;
       this._promise = new Promise(
-        function(resolve6, reject) {
-          this._once("end", resolve6);
+        function(resolve4, reject) {
+          this._once("end", resolve4);
           this._once("error", reject);
         }.bind(this)
       );
@@ -37445,12 +37445,12 @@ var require_client2 = __commonJS({
         this._connect(callback);
         return;
       }
-      return new this._Promise((resolve6, reject) => {
+      return new this._Promise((resolve4, reject) => {
         this._connect((error40) => {
           if (error40) {
             reject(error40);
           } else {
-            resolve6(this);
+            resolve4(this);
           }
         });
       });
@@ -37474,8 +37474,8 @@ var require_client2 = __commonJS({
         query = new NativeQuery(config2, values, callback);
         if (!query.callback) {
           let resolveOut, rejectOut;
-          result = new this._Promise((resolve6, reject) => {
-            resolveOut = resolve6;
+          result = new this._Promise((resolve4, reject) => {
+            resolveOut = resolve4;
             rejectOut = reject;
           }).catch((err) => {
             Error.captureStackTrace(err);
@@ -37535,8 +37535,8 @@ var require_client2 = __commonJS({
       }
       let result;
       if (!cb) {
-        result = new this._Promise(function(resolve6, reject) {
-          cb = (err) => err ? reject(err) : resolve6();
+        result = new this._Promise(function(resolve4, reject) {
+          cb = (err) => err ? reject(err) : resolve4();
         });
       }
       this.native.end(function() {
@@ -41222,10 +41222,10 @@ var init_raw = __esm({
     init_entity();
     init_query_promise();
     PgRaw = class extends QueryPromise {
-      constructor(execute, sql4, query, mapBatchResult) {
+      constructor(execute, sql5, query, mapBatchResult) {
         super();
         this.execute = execute;
-        this.sql = sql4;
+        this.sql = sql5;
         this.query = query;
         this.mapBatchResult = mapBatchResult;
       }
@@ -41545,8 +41545,8 @@ var init_db = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
-async function hashQuery(sql4, params) {
-  const dataToHash = `${sql4}-${JSON.stringify(params)}`;
+async function hashQuery(sql5, params) {
+  const dataToHash = `${sql5}-${JSON.stringify(params)}`;
   const encoder = new TextEncoder();
   const data = encoder.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -54092,7 +54092,6 @@ var init_players = __esm({
       id: text("id").primaryKey(),
       username: text("username").notNull(),
       avatar: text("avatar").notNull().default("\u{1F3AE}"),
-      coins: integer("coins").notNull().default(100),
       xp: integer("xp").notNull().default(0),
       level: integer("level").notNull().default(1),
       elo: integer("elo").notNull().default(1e3),
@@ -54100,7 +54099,6 @@ var init_players = __esm({
       fame: integer("fame").notNull().default(0),
       leagueDivision: text("league_division").notNull().default("training"),
       unlockedLeagues: jsonb("unlocked_leagues").$type().notNull().default(["training"]),
-      gems: integer("gems").notNull().default(0),
       ownedItems: jsonb("owned_items").$type().notNull().default([]),
       xpBoostUntil: timestamp("xp_boost_until"),
       skillSpeed: integer("skill_speed").notNull().default(50),
@@ -54175,12 +54173,12 @@ var init_matches = __esm({
       matchType: text("match_type").notNull().default("pvp"),
       duration: integer("duration").notNull().default(60),
       rounds: jsonb("rounds").$type().default([]),
-      coinsStake: integer("coins_stake").notNull().default(0),
+      dnStake: integer("dn_stake").notNull().default(0),
       // Per-player outcome data (stored for match history display)
       eloChangeA: integer("elo_change_a").notNull().default(0),
       eloChangeB: integer("elo_change_b").notNull().default(0),
-      coinsWonA: integer("coins_won_a").notNull().default(0),
-      coinsWonB: integer("coins_won_b").notNull().default(0),
+      dnWonA: integer("dn_won_a").notNull().default(0),
+      dnWonB: integer("dn_won_b").notNull().default(0),
       xpGainedA: integer("xp_gained_a").notNull().default(0),
       xpGainedB: integer("xp_gained_b").notNull().default(0),
       // SkillLeague detailed tracking
@@ -54198,7 +54196,7 @@ var init_matches = __esm({
       type: text("type").notNull().default("daily"),
       status: text("status").notNull().default("open"),
       size: integer("size").notNull().default(8),
-      rewardCoins: integer("reward_coins").notNull().default(500),
+      rewardDn: integer("reward_dn").notNull().default(50),
       rewardXp: integer("reward_xp").notNull().default(300),
       bracket: jsonb("bracket").$type().default(null),
       participants: jsonb("participants").$type().notNull().default([]),
@@ -54283,29 +54281,19 @@ var init_community = __esm({
 });
 
 // ../../lib/db/src/schema/economy.ts
-var coinTransactionsTable, storePurchasesTable, boostUsageTable, seasonsTable, userDailyEconomyTable, walletsTable, walletTransactionsTable, giftLedgerTable, insertCoinTxSchema, insertStorePurchSchema, insertBoostSchema;
+var storePurchasesTable, boostUsageTable, seasonsTable, userDailyEconomyTable, walletsTable, walletTransactionsTable, giftLedgerTable, coinTransactionsTable, insertStorePurchSchema, insertBoostSchema;
 var init_economy = __esm({
   "../../lib/db/src/schema/economy.ts"() {
     "use strict";
     init_pg_core();
     init_drizzle_zod();
-    coinTransactionsTable = pgTable("coin_transactions", {
-      id: text("id").primaryKey(),
-      playerId: text("player_id").notNull(),
-      amount: integer("amount").notNull(),
-      type: text("type").notNull(),
-      source: text("source").notNull(),
-      description: text("description").notNull().default(""),
-      balanceAfter: integer("balance_after").notNull().default(0),
-      createdAt: timestamp("created_at").notNull().defaultNow()
-    });
     storePurchasesTable = pgTable("store_purchases", {
       id: text("id").primaryKey(),
       playerId: text("player_id").notNull(),
       itemId: text("item_id").notNull(),
       itemName: text("item_name").notNull(),
       piPrice: real("pi_price").notNull().default(0),
-      coinsSpent: integer("coins_spent").notNull().default(0),
+      dnSpent: integer("dn_spent").notNull().default(0),
       piTxId: text("pi_tx_id"),
       status: text("status").notNull().default("completed"),
       createdAt: timestamp("created_at").notNull().defaultNow()
@@ -54402,7 +54390,16 @@ var init_economy = __esm({
       piPaymentId: text("pi_payment_id"),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
-    insertCoinTxSchema = createInsertSchema(coinTransactionsTable).omit({ createdAt: true });
+    coinTransactionsTable = pgTable("coin_transactions", {
+      id: text("id").primaryKey(),
+      playerId: text("player_id").notNull(),
+      amount: integer("amount").notNull(),
+      type: text("type").notNull(),
+      source: text("source").notNull().default(""),
+      description: text("description").notNull().default(""),
+      balanceAfter: integer("balance_after").notNull().default(0),
+      createdAt: timestamp("created_at").notNull().defaultNow()
+    });
     insertStorePurchSchema = createInsertSchema(storePurchasesTable).omit({ createdAt: true });
     insertBoostSchema = createInsertSchema(boostUsageTable).omit({ createdAt: true });
   }
@@ -54477,8 +54474,8 @@ var init_analytics = __esm({
       matchesPlayed: integer("matches_played").notNull().default(0),
       pvpMatches: integer("pvp_matches").notNull().default(0),
       avgSessionMins: real("avg_session_mins").notNull().default(0),
-      coinsEarned: integer("coins_earned").notNull().default(0),
-      coinsSpent: integer("coins_spent").notNull().default(0),
+      dnEarned: integer("dn_earned").notNull().default(0),
+      dnSpent: integer("dn_spent").notNull().default(0),
       topLeague: text("top_league").notNull().default("training"),
       createdAt: timestamp("created_at").notNull().defaultNow()
     });
@@ -54645,7 +54642,6 @@ __export(schema_exports, {
   giftLedgerTable: () => giftLedgerTable,
   insertBoostSchema: () => insertBoostSchema,
   insertBotSchema: () => insertBotSchema,
-  insertCoinTxSchema: () => insertCoinTxSchema,
   insertCommentSchema: () => insertCommentSchema,
   insertJobSchema: () => insertJobSchema,
   insertMessageSchema: () => insertMessageSchema,
@@ -54713,7 +54709,6 @@ __export(src_exports, {
   giftLedgerTable: () => giftLedgerTable,
   insertBoostSchema: () => insertBoostSchema,
   insertBotSchema: () => insertBotSchema,
-  insertCoinTxSchema: () => insertCoinTxSchema,
   insertCommentSchema: () => insertCommentSchema,
   insertJobSchema: () => insertJobSchema,
   insertMessageSchema: () => insertMessageSchema,
@@ -56352,8 +56347,8 @@ var require_eq = __commonJS({
   "../../node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/eq.js"(exports, module) {
     "use strict";
     var compare2 = require_compare();
-    var eq3 = (a, b, loose) => compare2(a, b, loose) === 0;
-    module.exports = eq3;
+    var eq5 = (a, b, loose) => compare2(a, b, loose) === 0;
+    module.exports = eq5;
   }
 });
 
@@ -56391,7 +56386,7 @@ var require_lte = __commonJS({
 var require_cmp = __commonJS({
   "../../node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/cmp.js"(exports, module) {
     "use strict";
-    var eq3 = require_eq();
+    var eq5 = require_eq();
     var neq = require_neq();
     var gt2 = require_gt();
     var gte5 = require_gte();
@@ -56418,7 +56413,7 @@ var require_cmp = __commonJS({
         case "":
         case "=":
         case "==":
-          return eq3(a, b, loose);
+          return eq5(a, b, loose);
         case "!=":
           return neq(a, b, loose);
         case ">":
@@ -57443,15 +57438,15 @@ var require_subset = __commonJS({
           return null;
         }
       }
-      for (const eq3 of eqSet) {
-        if (gt2 && !satisfies(eq3, String(gt2), options)) {
+      for (const eq5 of eqSet) {
+        if (gt2 && !satisfies(eq5, String(gt2), options)) {
           return null;
         }
-        if (lt2 && !satisfies(eq3, String(lt2), options)) {
+        if (lt2 && !satisfies(eq5, String(lt2), options)) {
           return null;
         }
         for (const c of dom) {
-          if (!satisfies(eq3, String(c), options)) {
+          if (!satisfies(eq5, String(c), options)) {
             return false;
           }
         }
@@ -57555,7 +57550,7 @@ var require_semver2 = __commonJS({
     var rsort = require_rsort();
     var gt2 = require_gt();
     var lt2 = require_lt();
-    var eq3 = require_eq();
+    var eq5 = require_eq();
     var neq = require_neq();
     var gte5 = require_gte();
     var lte2 = require_lte();
@@ -57594,7 +57589,7 @@ var require_semver2 = __commonJS({
       rsort,
       gt: gt2,
       lt: lt2,
-      eq: eq3,
+      eq: eq5,
       neq,
       gte: gte5,
       lte: lte2,
@@ -58577,6 +58572,64 @@ var require_jsonwebtoken = __commonJS({
       NotBeforeError: require_NotBeforeError(),
       TokenExpiredError: require_TokenExpiredError()
     };
+  }
+});
+
+// src/lib/dn-service.ts
+var dn_service_exports = {};
+__export(dn_service_exports, {
+  awardDN: () => awardDN,
+  getDNBalance: () => getDNBalance,
+  getOrCreateWallet: () => getOrCreateWallet,
+  spendDN: () => spendDN
+});
+async function getOrCreateWallet(playerId) {
+  const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
+  if (existing) return existing;
+  const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 }).returning();
+  return created;
+}
+async function getDNBalance(playerId) {
+  const wallet = await getOrCreateWallet(playerId);
+  return wallet.dnBalance;
+}
+async function awardDN(playerId, amount, type, description) {
+  const wallet = await getOrCreateWallet(playerId);
+  const newBalance = wallet.dnBalance + amount;
+  await db.update(walletsTable).set({ dnBalance: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, playerId));
+  await db.insert(walletTransactionsTable).values({
+    id: nanoid3(),
+    playerId,
+    amount,
+    type,
+    description,
+    balanceAfter: newBalance
+  });
+  return { newBalance };
+}
+async function spendDN(playerId, amount, type, description) {
+  const wallet = await getOrCreateWallet(playerId);
+  if (wallet.dnBalance < amount) {
+    return { success: false, newBalance: wallet.dnBalance, reason: "insufficient_balance" };
+  }
+  const newBalance = wallet.dnBalance - amount;
+  await db.update(walletsTable).set({ dnBalance: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, playerId));
+  await db.insert(walletTransactionsTable).values({
+    id: nanoid3(),
+    playerId,
+    amount: -amount,
+    type,
+    description,
+    balanceAfter: newBalance
+  });
+  return { success: true, newBalance };
+}
+var init_dn_service = __esm({
+  "src/lib/dn-service.ts"() {
+    "use strict";
+    init_drizzle_orm();
+    init_src();
+    init_nanoid();
   }
 });
 
@@ -76150,13 +76203,13 @@ var require_broadcast_operator = __commonJS({
        * @return a Promise that will be fulfilled when all clients have acknowledged the event
        */
       emitWithAck(ev, ...args) {
-        return new Promise((resolve6, reject) => {
+        return new Promise((resolve4, reject) => {
           args.push((err, responses) => {
             if (err) {
               err.responses = responses;
               return reject(err);
             } else {
-              return resolve6(responses);
+              return resolve4(responses);
             }
           });
           this.emit(ev, ...args);
@@ -76510,12 +76563,12 @@ var require_socket2 = __commonJS({
        */
       emitWithAck(ev, ...args) {
         const withErr = this.flags.timeout !== void 0;
-        return new Promise((resolve6, reject) => {
+        return new Promise((resolve4, reject) => {
           args.push((arg1, arg2) => {
             if (withErr) {
-              return arg1 ? reject(arg1) : resolve6(arg2);
+              return arg1 ? reject(arg1) : resolve4(arg2);
             } else {
-              return resolve6(arg1);
+              return resolve4(arg1);
             }
           });
           this.emit(ev, ...args);
@@ -77585,13 +77638,13 @@ var require_namespace = __commonJS({
        * @return a Promise that will be fulfilled when all servers have acknowledged the event
        */
       serverSideEmitWithAck(ev, ...args) {
-        return new Promise((resolve6, reject) => {
+        return new Promise((resolve4, reject) => {
           args.push((err, responses) => {
             if (err) {
               err.responses = responses;
               return reject(err);
             } else {
-              return resolve6(responses);
+              return resolve4(responses);
             }
           });
           this.serverSideEmit(ev, ...args);
@@ -78552,7 +78605,7 @@ var require_cluster_adapter = __commonJS({
           return localSockets;
         }
         const requestId = randomId();
-        return new Promise((resolve6, reject) => {
+        return new Promise((resolve4, reject) => {
           const timeout = setTimeout(() => {
             const storedRequest2 = this.requests.get(requestId);
             if (storedRequest2) {
@@ -78562,7 +78615,7 @@ var require_cluster_adapter = __commonJS({
           }, opts.flags.timeout || DEFAULT_TIMEOUT);
           const storedRequest = {
             type: MessageType.FETCH_SOCKETS,
-            resolve: resolve6,
+            resolve: resolve4,
             timeout,
             current: 0,
             expected: expectedResponseCount,
@@ -78773,7 +78826,7 @@ var require_cluster_adapter = __commonJS({
           return localSockets;
         }
         const requestId = randomId();
-        return new Promise((resolve6, reject) => {
+        return new Promise((resolve4, reject) => {
           const timeout = setTimeout(() => {
             const storedRequest2 = this.customRequests.get(requestId);
             if (storedRequest2) {
@@ -78783,7 +78836,7 @@ var require_cluster_adapter = __commonJS({
           }, opts.flags.timeout || DEFAULT_TIMEOUT);
           const storedRequest = {
             type: MessageType.FETCH_SOCKETS,
-            resolve: resolve6,
+            resolve: resolve4,
             timeout,
             missingUids: /* @__PURE__ */ new Set([...this.nodesMap.keys()]),
             responses: localSockets
@@ -79610,13 +79663,13 @@ var require_dist4 = __commonJS({
         this.engine.close();
         (0, uws_1.restoreAdapter)();
         if (this.httpServer) {
-          return new Promise((resolve6) => {
+          return new Promise((resolve4) => {
             this.httpServer.close((err) => {
               fn && fn(err);
               if (err) {
                 debug("server was not running");
               }
-              resolve6();
+              resolve4();
             });
           });
         } else {
@@ -80343,11 +80396,10 @@ function endRoom(io2, roomId) {
         finishedAt: /* @__PURE__ */ new Date()
       }).onConflictDoNothing();
       if (room.playerA.playerId && room.playerA.playerId !== "bot") {
-        const [aRow] = await db.update(playersTable).set({
+        await db.update(playersTable).set({
           elo: sql`GREATEST(800, ${playersTable.elo} + ${eloChange})`,
           lp: newLpA,
           leagueDivision: newDivA,
-          coins: sql`GREATEST(0, ${playersTable.coins} + ${coinsNet})`,
           xp: sql`${playersTable.xp} + ${xpGained}`,
           pvpWins: won ? sql`${playersTable.pvpWins} + 1` : playersTable.pvpWins,
           pvpLosses: !won && !draw ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
@@ -80357,25 +80409,22 @@ function endRoom(io2, roomId) {
           matchesWon: won ? sql`${playersTable.matchesWon} + 1` : playersTable.matchesWon,
           updatedAt: /* @__PURE__ */ new Date(),
           lastActiveAt: /* @__PURE__ */ new Date()
-        }).where(eq(playersTable.id, room.playerA.playerId)).returning({ coins: playersTable.coins });
+        }).where(eq(playersTable.id, room.playerA.playerId));
         if (coinsWon > 0) {
-          await db.insert(coinTransactionsTable).values({
-            id: `${matchId}_a`,
-            playerId: room.playerA.playerId,
-            amount: coinsWon,
-            type: "win",
-            source: isBot ? "bot_match" : "pvp_match",
-            description: `${isBot ? "Bot" : "PvP"} match ${arena.displayName} \u2014 ${won ? "win" : "draw"} reward`,
-            balanceAfter: aRow?.coins ?? 0
-          }).onConflictDoNothing();
+          awardDN(
+            room.playerA.playerId,
+            coinsWon,
+            isBot ? "bot_match" : "pvp_match",
+            `${isBot ? "Bot" : "PvP"} match ${arena.displayName} \u2014 ${won ? "win" : "draw"} DN$ reward`
+          ).catch(() => {
+          });
         }
       }
       if (!isBot && room.playerB.playerId && room.playerB.playerId !== "bot") {
-        const [bRow] = await db.update(playersTable).set({
+        await db.update(playersTable).set({
           elo: sql`GREATEST(800, ${playersTable.elo} + ${bEloChange})`,
           lp: newLpB,
           leagueDivision: newDivB,
-          coins: sql`GREATEST(0, ${playersTable.coins} + ${bCoinsNet})`,
           xp: sql`${playersTable.xp} + ${bXp}`,
           pvpWins: bWon ? sql`${playersTable.pvpWins} + 1` : playersTable.pvpWins,
           pvpLosses: !bWon && !bDraw ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
@@ -80385,17 +80434,15 @@ function endRoom(io2, roomId) {
           matchesWon: bWon ? sql`${playersTable.matchesWon} + 1` : playersTable.matchesWon,
           updatedAt: /* @__PURE__ */ new Date(),
           lastActiveAt: /* @__PURE__ */ new Date()
-        }).where(eq(playersTable.id, room.playerB.playerId)).returning({ coins: playersTable.coins });
+        }).where(eq(playersTable.id, room.playerB.playerId));
         if (bCoinsWon > 0) {
-          await db.insert(coinTransactionsTable).values({
-            id: `${matchId}_b`,
-            playerId: room.playerB.playerId,
-            amount: bCoinsWon,
-            type: "win",
-            source: "pvp_match",
-            description: `PvP match ${arena.displayName} \u2014 ${bWon ? "win" : "draw"} reward`,
-            balanceAfter: bRow?.coins ?? 0
-          }).onConflictDoNothing();
+          awardDN(
+            room.playerB.playerId,
+            bCoinsWon,
+            "pvp_match",
+            `PvP match ${arena.displayName} \u2014 ${bWon ? "win" : "draw"} DN$ reward`
+          ).catch(() => {
+          });
         }
       }
       await broadcastLeaderboard(io2);
@@ -80435,21 +80482,21 @@ function setupSocketIO(server2) {
       let stakeDeducted = false;
       if (stake > 0 && data.playerId && data.playerId !== "bot") {
         try {
-          const [player] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, data.playerId)).limit(1);
-          if (!player || player.coins < stake) {
-            socket.emit("matchmaking:error", { reason: "insufficient_coins", required: stake, have: player?.coins ?? 0 });
+          const wallet = await getOrCreateWallet(data.playerId);
+          if (wallet.dnBalance < stake) {
+            socket.emit("matchmaking:error", { reason: "insufficient_dn", required: stake, have: wallet.dnBalance });
             return;
           }
-          await db.update(playersTable).set({ coins: sql`GREATEST(0, ${playersTable.coins} - ${stake})` }).where(eq(playersTable.id, data.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id: `stake_${Date.now()}_${data.playerId.slice(-6)}`,
-            playerId: data.playerId,
-            amount: -stake,
-            type: "stake",
-            source: "arena_entry",
-            description: `Arena entry reserved: ${arena.displayName}`,
-            balanceAfter: player.coins - stake
-          }).onConflictDoNothing();
+          const stakeResult = await spendDN(
+            data.playerId,
+            stake,
+            "arena_entry",
+            `Arena entry stake: ${arena.displayName}`
+          );
+          if (!stakeResult.success) {
+            socket.emit("matchmaking:error", { reason: "insufficient_dn", required: stake, have: stakeResult.newBalance });
+            return;
+          }
           stakeDeducted = true;
         } catch (err) {
           logger.error({ err }, "matchmaking:join stake deduction error");
@@ -80477,16 +80524,12 @@ function setupSocketIO(server2) {
       matchmakingQueue.delete(socket.id);
       if (entry?.stakeDeducted && entry.stake > 0 && entry.playerId !== "bot") {
         try {
-          await db.update(playersTable).set({ coins: sql`${playersTable.coins} + ${entry.stake}` }).where(eq(playersTable.id, entry.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id: `refund_${Date.now()}_${entry.playerId.slice(-6)}`,
-            playerId: entry.playerId,
-            amount: entry.stake,
-            type: "refund",
-            source: "arena_cancel",
-            description: `Arena entry refunded: ${entry.leagueId}`,
-            balanceAfter: 0
-          }).onConflictDoNothing();
+          await awardDN(
+            entry.playerId,
+            entry.stake,
+            "arena_cancel",
+            `Arena entry refunded: ${entry.leagueId}`
+          );
         } catch (err) {
           logger.error({ err }, "matchmaking:cancel refund error");
         }
@@ -80667,16 +80710,12 @@ function setupSocketIO(server2) {
       }
       if (queueEntry?.stakeDeducted && queueEntry.stake > 0 && queueEntry.playerId !== "bot") {
         try {
-          await db.update(playersTable).set({ coins: sql`${playersTable.coins} + ${queueEntry.stake}` }).where(eq(playersTable.id, queueEntry.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id: `refund_dc_${Date.now()}_${queueEntry.playerId.slice(-6)}`,
-            playerId: queueEntry.playerId,
-            amount: queueEntry.stake,
-            type: "refund",
-            source: "arena_disconnect",
-            description: `Arena entry refunded (disconnected): ${queueEntry.leagueId}`,
-            balanceAfter: 0
-          }).onConflictDoNothing();
+          await awardDN(
+            queueEntry.playerId,
+            queueEntry.stake,
+            "arena_disconnect",
+            `Arena entry refunded (disconnected): ${queueEntry.leagueId}`
+          );
           logger.info({ playerId: queueEntry.playerId, stake: queueEntry.stake }, "Stake refunded on disconnect");
         } catch (err) {
           logger.error({ err }, "disconnect stake refund error");
@@ -80700,16 +80739,17 @@ var init_socket_manager = __esm({
     "use strict";
     init_wrapper();
     init_src();
+    init_dn_service();
     init_drizzle_orm();
     init_logger2();
     ARENA_CONFIG = {
       training: { entryCost: 0, winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Training" },
       bronze: { entryCost: 0, winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Bronze" },
-      coin: { entryCost: 50, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Coin" },
-      silver: { entryCost: 50, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Silver" },
-      pro: { entryCost: 200, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Pro" },
-      elite: { entryCost: 200, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Elite" },
-      champion: { entryCost: 500, winMultiplier: 4, drawMultiplier: 1.2, eloK: 48, displayName: "Champion" }
+      coin: { entryCost: 5, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Division II" },
+      silver: { entryCost: 5, winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Silver" },
+      pro: { entryCost: 15, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Pro" },
+      elite: { entryCost: 15, winMultiplier: 3, drawMultiplier: 1, eloK: 32, displayName: "Elite" },
+      champion: { entryCost: 30, winMultiplier: 4, drawMultiplier: 1.2, eloK: 48, displayName: "Champions" }
     };
     DEFAULT_ARENA = { entryCost: 0, winMultiplier: 2, drawMultiplier: 0.7, eloK: 24, displayName: "Standard" };
     antiCheatMap = /* @__PURE__ */ new Map();
@@ -80786,7 +80826,7 @@ var import_express35 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 import path from "node:path";
-import { existsSync as existsSync6 } from "node:fs";
+import { existsSync as existsSync4 } from "node:fs";
 
 // src/routes/index.ts
 var import_express34 = __toESM(require_express2(), 1);
@@ -84745,13 +84785,13 @@ function genSalt(rounds, seed_length, callback) {
       throw Error("Illegal callback: " + typeof callback);
     _async(callback);
   } else
-    return new Promise(function(resolve6, reject) {
+    return new Promise(function(resolve4, reject) {
       _async(function(err, res) {
         if (err) {
           reject(err);
           return;
         }
-        resolve6(res);
+        resolve4(res);
       });
     });
 }
@@ -84783,13 +84823,13 @@ function hash(password, salt, callback, progressCallback) {
       throw Error("Illegal callback: " + typeof callback);
     _async(callback);
   } else
-    return new Promise(function(resolve6, reject) {
+    return new Promise(function(resolve4, reject) {
       _async(function(err, res) {
         if (err) {
           reject(err);
           return;
         }
-        resolve6(res);
+        resolve4(res);
       });
     });
 }
@@ -84841,13 +84881,13 @@ function compare(password, hashValue, callback, progressCallback) {
       throw Error("Illegal callback: " + typeof callback);
     _async(callback);
   } else
-    return new Promise(function(resolve6, reject) {
+    return new Promise(function(resolve4, reject) {
       _async(function(err, res) {
         if (err) {
           reject(err);
           return;
         }
-        resolve6(res);
+        resolve4(res);
       });
     });
 }
@@ -86591,30 +86631,15 @@ setInterval(() => {
 init_drizzle_orm();
 init_src();
 init_nanoid();
-var TASK_COINS = {
-  login: 5,
-  social: 10,
-  content: 10,
-  match: 10
+init_dn_service();
+var TASK_DN = {
+  login: 1,
+  social: 3,
+  content: 1,
+  match: 1
 };
 function todayUTC() {
   return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-}
-async function awardCoins(playerId, amount, source, description) {
-  const [player] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, playerId)).limit(1);
-  if (!player) throw new Error(`Player not found: ${playerId}`);
-  const newBalance = player.coins + amount;
-  await db.update(playersTable).set({ coins: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, playerId));
-  await db.insert(coinTransactionsTable).values({
-    id: nanoid3(),
-    playerId,
-    amount,
-    type: "earn",
-    source,
-    description,
-    balanceAfter: newBalance
-  });
-  return { newBalance };
 }
 async function getOrCreateDailyRecord(playerId) {
   const today = todayUTC();
@@ -86634,13 +86659,13 @@ async function claimLoginReward(playerId) {
     return { awarded: false, reason: "Login reward already claimed today" };
   }
   await db.update(userDailyEconomyTable).set({ loginClaimed: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
-  const { newBalance } = await awardCoins(
+  const { newBalance } = await awardDN(
     playerId,
-    TASK_COINS.login,
+    TASK_DN.login,
     "daily_login",
     "Daily Login task reward"
   );
-  return { awarded: true, coins: TASK_COINS.login, newBalance, reason: "Daily Login reward" };
+  return { awarded: true, dn: TASK_DN.login, newBalance, reason: "Daily Login reward" };
 }
 async function recordLikeGiven(playerId) {
   const record2 = await getOrCreateDailyRecord(playerId);
@@ -86655,55 +86680,45 @@ async function recordCommentGiven(playerId) {
 async function claimSocialReward(playerId) {
   const record2 = await getOrCreateDailyRecord(playerId);
   if (record2.socialRewardClaimed) {
-    return { awarded: false, reason: "Social Activity reward already claimed today" };
+    return { awarded: false, reason: "Social reward already claimed today" };
   }
   if (record2.likesGiven < 5 || record2.commentsGiven < 5) {
-    return {
-      awarded: false,
-      reason: `Incomplete: ${record2.likesGiven}/5 likes, ${record2.commentsGiven}/5 comments given`
-    };
+    return { awarded: false, reason: `Need 5 likes + 5 comments. Have: ${record2.likesGiven} likes, ${record2.commentsGiven} comments` };
   }
   await db.update(userDailyEconomyTable).set({ socialRewardClaimed: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
-  const { newBalance } = await awardCoins(
+  const { newBalance } = await awardDN(
     playerId,
-    TASK_COINS.social,
+    TASK_DN.social,
     "daily_social",
     "Social Activity task: 5 likes + 5 comments given"
   );
-  return { awarded: true, coins: TASK_COINS.social, newBalance, reason: "Social Activity reward" };
+  return { awarded: true, dn: TASK_DN.social, newBalance, reason: "Social Activity reward" };
 }
-async function recordPost(playerId) {
+async function recordPostCreated(playerId) {
   const record2 = await getOrCreateDailyRecord(playerId);
-  await db.update(userDailyEconomyTable).set({
-    postsCount: Math.min(record2.postsCount + 1, 1),
-    updatedAt: /* @__PURE__ */ new Date()
-  }).where(eq(userDailyEconomyTable.id, record2.id));
-  return { awarded: false, reason: "Post recorded (1/1) \u2014 also post a story to complete the task" };
+  await db.update(userDailyEconomyTable).set({ postsCount: record2.postsCount + 1, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
 }
 async function recordStory(playerId) {
   const record2 = await getOrCreateDailyRecord(playerId);
   if (record2.storiesCount >= 1) return;
-  await db.update(userDailyEconomyTable).set({ storiesCount: 1, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
+  await db.update(userDailyEconomyTable).set({ storiesCount: record2.storiesCount + 1, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
 }
 async function claimContentReward(playerId) {
   const record2 = await getOrCreateDailyRecord(playerId);
   if (record2.contentRewardClaimed) {
-    return { awarded: false, reason: "Create Content reward already claimed today" };
+    return { awarded: false, reason: "Content reward already claimed today" };
   }
   if (record2.postsCount < 1 || record2.storiesCount < 1) {
-    return {
-      awarded: false,
-      reason: `Incomplete: ${record2.postsCount}/1 post, ${record2.storiesCount}/1 story`
-    };
+    return { awarded: false, reason: `Need 1 post + 1 story. Have: ${record2.postsCount} posts, ${record2.storiesCount} stories` };
   }
   await db.update(userDailyEconomyTable).set({ contentRewardClaimed: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
-  const { newBalance } = await awardCoins(
+  const { newBalance } = await awardDN(
     playerId,
-    TASK_COINS.content,
+    TASK_DN.content,
     "daily_content",
     "Create Content task: 1 post + 1 story"
   );
-  return { awarded: true, coins: TASK_COINS.content, newBalance, reason: "Create Content reward" };
+  return { awarded: true, dn: TASK_DN.content, newBalance, reason: "Create Content reward" };
 }
 async function recordMatchPlayed(playerId) {
   const record2 = await getOrCreateDailyRecord(playerId);
@@ -86719,13 +86734,13 @@ async function claimMatchReward(playerId) {
     return { awarded: false, reason: "No match played yet today" };
   }
   await db.update(userDailyEconomyTable).set({ matchPlayedClaimed: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
-  const { newBalance } = await awardCoins(
+  const { newBalance } = await awardDN(
     playerId,
-    TASK_COINS.match,
+    TASK_DN.match,
     "daily_match",
     "Play Match task: 1 full match completed"
   );
-  return { awarded: true, coins: TASK_COINS.match, newBalance, reason: "Play Match reward" };
+  return { awarded: true, dn: TASK_DN.match, newBalance, reason: "Play Match reward" };
 }
 async function getDailyStatus(playerId) {
   const today = todayUTC();
@@ -86734,19 +86749,23 @@ async function getDailyStatus(playerId) {
     date: today,
     // Task 1
     loginClaimed: record2.loginClaimed,
+    loginReward: TASK_DN.login,
     // Task 2
     likesGiven: record2.likesGiven,
     commentsGiven: record2.commentsGiven,
     socialRewardClaimed: record2.socialRewardClaimed,
     socialComplete: record2.likesGiven >= 5 && record2.commentsGiven >= 5,
+    socialReward: TASK_DN.social,
     // Task 3
     postsCount: record2.postsCount,
     storiesCount: record2.storiesCount,
     contentRewardClaimed: record2.contentRewardClaimed,
     contentComplete: record2.postsCount >= 1 && record2.storiesCount >= 1,
+    contentReward: TASK_DN.content,
     // Task 4
     matchPlayed: record2.matchPlayed,
-    matchPlayedClaimed: record2.matchPlayedClaimed
+    matchPlayedClaimed: record2.matchPlayedClaimed,
+    matchReward: TASK_DN.match
   };
 }
 
@@ -87138,7 +87157,6 @@ router4.get("/players/leaderboard/division/:division", async (req, res) => {
       avatar: playersTable.avatar,
       level: playersTable.level,
       lp: playersTable.lp,
-      coins: playersTable.coins,
       matchesPlayed: playersTable.matchesPlayed,
       matchesWon: playersTable.matchesWon,
       pvpWins: playersTable.pvpWins,
@@ -87171,7 +87189,6 @@ router4.get("/players/leaderboard", async (req, res) => {
       elo: playersTable.elo,
       lp: playersTable.lp,
       fame: playersTable.fame,
-      coins: playersTable.coins,
       leagueDivision: playersTable.leagueDivision,
       matchesPlayed: playersTable.matchesPlayed,
       matchesWon: playersTable.matchesWon,
@@ -87230,7 +87247,6 @@ router4.get("/players/:id/stats", async (req, res) => {
       pvpLosses: playersTable.pvpLosses,
       pvpWinStreak: playersTable.pvpWinStreak,
       bestPvpStreak: playersTable.bestPvpStreak,
-      coins: playersTable.coins,
       xp: playersTable.xp,
       fame: playersTable.fame
     }).from(playersTable).where(eq(playersTable.id, req.params.id)).limit(1);
@@ -87258,7 +87274,7 @@ router4.get("/players/:id/stats", async (req, res) => {
 router4.get("/players/:id/transactions", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 30, 100);
-    const rows = await db.select().from(coinTransactionsTable).where(eq(coinTransactionsTable.playerId, req.params.id)).orderBy(desc(coinTransactionsTable.createdAt)).limit(limit);
+    const rows = await db.select().from(walletTransactionsTable).where(eq(walletTransactionsTable.playerId, req.params.id)).orderBy(desc(walletTransactionsTable.createdAt)).limit(limit);
     res.json(rows);
   } catch (err) {
     req.log.error({ err }, "player transactions error");
@@ -87313,7 +87329,6 @@ router4.patch("/players/:id", async (req, res) => {
       "bio",
       "cover",
       "language",
-      "coins",
       "xp",
       "level",
       "elo",
@@ -87566,7 +87581,6 @@ router5.post("/matches", optionalAuth, async (req, res) => {
       return;
     }
     const [dbPlayer] = await db.select({
-      coins: playersTable.coins,
       xp: playersTable.xp,
       level: playersTable.level,
       lp: playersTable.lp,
@@ -87876,14 +87890,14 @@ router6.post("/community/posts", async (req, res) => {
       type: String(type || "text"),
       meta: { ...meta || {}, hashtags, mentions }
     }).returning();
-    if (authorId) recordPost(String(authorId)).catch(() => {
+    if (authorId) recordPostCreated(String(authorId)).catch(() => {
     });
     if (mentions.length > 0) {
-      const { playersTable: playersTable4 } = await Promise.resolve().then(() => (init_src(), src_exports));
+      const { playersTable: playersTable5 } = await Promise.resolve().then(() => (init_src(), src_exports));
       const { ilike: ilike3 } = await Promise.resolve().then(() => (init_drizzle_orm(), drizzle_orm_exports));
       for (const mention of mentions) {
         try {
-          const [mentionedPlayer] = await db.select({ id: playersTable4.id, username: playersTable4.username }).from(playersTable4).where(ilike3(playersTable4.username, mention)).limit(1);
+          const [mentionedPlayer] = await db.select({ id: playersTable5.id, username: playersTable5.username }).from(playersTable5).where(ilike3(playersTable5.username, mention)).limit(1);
           if (mentionedPlayer && mentionedPlayer.id !== String(authorId)) {
             notify(
               mentionedPlayer.id,
@@ -88223,111 +88237,183 @@ var import_express7 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
 init_nanoid();
+init_dn_service();
+
+// src/lib/shop-service.ts
+init_drizzle_orm();
+init_src();
+init_nanoid();
+init_dn_service();
+var SHOP_ITEMS = {
+  post_promotion: {
+    id: "post_promotion",
+    name: "Post Promotion",
+    description: "Boost your post to the top of the feed for 24 hours",
+    dnPrice: 50,
+    category: "social",
+    permanent: false
+  },
+  avatar_weekly: {
+    id: "avatar_weekly",
+    name: "Weekly Avatar",
+    description: "Unlock a special avatar for 7 days",
+    dnPrice: 8,
+    category: "cosmetic",
+    permanent: false
+  },
+  avatar_permanent: {
+    id: "avatar_permanent",
+    name: "Permanent Avatar",
+    description: "Permanently unlock a special avatar",
+    dnPrice: 80,
+    category: "cosmetic",
+    permanent: true
+  },
+  game_assist: {
+    id: "game_assist",
+    name: "Game Assist",
+    description: "Eliminate one wrong answer \u2014 leave 3 remaining choices",
+    dnPrice: 2,
+    category: "gameplay",
+    permanent: false
+  }
+};
+async function purchaseShopItem(playerId, itemId) {
+  const item = SHOP_ITEMS[itemId];
+  if (!item) {
+    return { success: false, reason: `Unknown shop item: ${itemId}` };
+  }
+  if (item.permanent) {
+    const [player] = await db.select({ ownedItems: playersTable.ownedItems }).from(playersTable).where(eq(playersTable.id, playerId)).limit(1);
+    const owned = player?.ownedItems ?? [];
+    if (owned.includes(itemId)) {
+      return { success: false, reason: "Item already owned" };
+    }
+  }
+  const result = await spendDN(
+    playerId,
+    item.dnPrice,
+    "shop_purchase",
+    `Purchased: ${item.name}`
+  );
+  if (!result.success) {
+    return {
+      success: false,
+      reason: `Insufficient DN$ (need ${item.dnPrice}, have ${result.newBalance})`
+    };
+  }
+  if (item.permanent) {
+    const [player] = await db.select({ ownedItems: playersTable.ownedItems }).from(playersTable).where(eq(playersTable.id, playerId)).limit(1);
+    const owned = player?.ownedItems ?? [];
+    await db.update(playersTable).set({ ownedItems: [...owned, itemId], updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, playerId));
+  }
+  const [purchase] = await db.insert(storePurchasesTable).values({
+    id: nanoid3(),
+    playerId,
+    itemId,
+    itemName: item.name,
+    piPrice: 0,
+    dnSpent: item.dnPrice,
+    status: "completed"
+  }).returning();
+  return { success: true, purchase, newBalance: result.newBalance };
+}
+async function getShopCatalog(playerId) {
+  const dnBalance = await getDNBalance(playerId);
+  return {
+    dnBalance,
+    items: Object.values(SHOP_ITEMS).map((item) => ({
+      ...item,
+      canAfford: dnBalance >= item.dnPrice,
+      owned: false
+      // permanent check done at purchase time
+    }))
+  };
+}
 
 // src/lib/economy-engine.ts
-var GEM_TABLE = {
-  div3: { 1: 1 },
-  div2: { 1: 2, 2: 1 },
-  pro: { 1: 3, 2: 2, 3: 1 },
-  champions: { 1: 4, 2: 3, 3: 2, 4: 1 }
+var SEASON_END_DN_TABLE = {
+  div3: {
+    1: 5,
+    2: 4,
+    3: 3,
+    4: 2
+  },
+  div2: {
+    1: 10,
+    2: 8,
+    3: 5,
+    4: 3
+  },
+  pro: {
+    1: 15,
+    2: 12,
+    3: 8,
+    4: 5
+  },
+  champions: {
+    1: 20,
+    2: 15,
+    3: 10,
+    4: 8
+  }
 };
-var ENTRY_GEM_COST = {
-  div3: 0,
-  div2: 1,
-  pro: 2,
+var SEASON_END_DN_PARTICIPANT = {
+  div3: 1,
+  div2: 2,
+  pro: 3,
   champions: 4
 };
-function calcMatchEconomy(input, playerCoins, playerGems) {
-  const base = 1;
-  let rankBonus = 0;
-  if (input.rank === 1) rankBonus = 3;
-  else if (input.rank === 2) rankBonus = 2;
-  else if (input.rank === 3) rankBonus = 1;
-  let accuracyBonus = 0;
-  if (input.accuracyPct >= 1) accuracyBonus = 2;
-  else if (input.accuracyPct >= 0.8) accuracyBonus = 1;
-  const coinsEarned = base + rankBonus + accuracyBonus;
-  const gemsEarned = GEM_TABLE[input.tier]?.[input.rank] ?? 0;
-  let gemReason = "No gem reward for this rank/tier";
-  if (gemsEarned > 0) {
-    const place = input.rank === 1 ? "1st place" : input.rank === 2 ? "2nd place" : "3rd place";
-    gemReason = `${place} in ${input.tier.toUpperCase()}`;
-  }
-  return {
-    coinsEarned,
-    gemsEarned,
-    coinBreakdown: { base, rankBonus, accuracyBonus, total: coinsEarned },
-    gemBreakdown: { gemsEarned, reason: gemReason },
-    newCoins: playerCoins + coinsEarned,
-    newGems: Math.max(0, playerGems + gemsEarned)
-  };
-}
-function canEnterLeague(tier, playerGems) {
-  return playerGems >= ENTRY_GEM_COST[tier];
-}
-function getEntryGemCost(tier) {
-  return ENTRY_GEM_COST[tier];
-}
-var PROMOTION_REWARDS = {
-  "div3\u2192div2": { coins: 10, gems: 1 },
-  "div2\u2192pro": { coins: 20, gems: 2 },
-  "pro\u2192champions": { coins: 30, gems: 3 }
+var ACTIVITY_DN = {
+  dailyLogin: 1,
+  // تسجيل الدخول اليومي
+  matchJoin: 1,
+  // المشاركة في مباراة
+  matchPlay: 1,
+  // لعب مباراة
+  accuracy100: 1,
+  // دقة 100%
+  socialActivity: 3,
+  // 5 إعجابات + 5 تعليقات
+  createContent: 1,
+  // منشور + ستوري
+  inviteFriend: 10
+  // دعوة صديق جديد
 };
-function calcPromotionReward(fromTier, toTier, playerCoins, playerGems) {
-  const key = `${fromTier}\u2192${toTier}`;
-  const reward = PROMOTION_REWARDS[key] ?? { coins: 5, gems: 0 };
-  return {
-    coinsAwarded: reward.coins,
-    gemsAwarded: reward.gems,
-    fromTier,
-    toTier,
-    newCoins: playerCoins + reward.coins,
-    newGems: playerGems + reward.gems
+var GAME_ASSIST_COST_DN = 2;
+function leagueTierToEconomyTier(tier) {
+  const map2 = {
+    training: "div3",
+    coins: "div3",
+    coin: "div2",
+    dv2: "div2",
+    pro: "pro",
+    elite: "pro",
+    champion: "champions",
+    champions: "champions"
   };
+  return map2[tier] ?? "div3";
+}
+function getSeasonEndDN(tier, rank) {
+  return SEASON_END_DN_TABLE[tier]?.[rank] ?? SEASON_END_DN_PARTICIPANT[tier];
 }
 
 // src/routes/economy.ts
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
 var router7 = (0, import_express7.Router)();
-router7.get("/economy/:playerId/transactions", async (req, res) => {
+router7.get("/economy/:playerId/dn-transactions", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 50, 200);
-    const rows = await db.select().from(coinTransactionsTable).where(eq(coinTransactionsTable.playerId, req.params.playerId)).orderBy(desc(coinTransactionsTable.createdAt)).limit(limit);
+    const rows = await db.select().from(walletTransactionsTable).where(eq(walletTransactionsTable.playerId, req.params.playerId)).orderBy(desc(walletTransactionsTable.createdAt)).limit(limit);
     res.json(rows);
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
   }
 });
-router7.post("/economy/transaction", async (req, res) => {
+router7.get("/economy/:playerId/dn-balance", async (req, res) => {
   try {
-    const { playerId, amount, type, source, description } = req.body;
-    if (!playerId || amount === void 0 || !type || !source) {
-      res.status(400).json({ error: "missing fields" });
-      return;
-    }
-    const [player] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, String(playerId))).limit(1);
-    if (!player) {
-      res.status(404).json({ error: "player not found" });
-      return;
-    }
-    const newBalance = player.coins + Number(amount);
-    if (newBalance < 0) {
-      res.status(400).json({ error: "insufficient balance" });
-      return;
-    }
-    const [tx] = await db.insert(coinTransactionsTable).values({
-      id: nanoid3(),
-      playerId: String(playerId),
-      amount: Number(amount),
-      type: String(type),
-      source: String(source),
-      description: String(description || ""),
-      balanceAfter: newBalance
-    }).returning();
-    await db.update(playersTable).set({ coins: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, String(playerId)));
-    res.status(201).json({ transaction: tx, newBalance });
+    const wallet = await getOrCreateWallet(req.params.playerId);
+    res.json({ dnBalance: wallet.dnBalance });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -88344,7 +88430,7 @@ router7.get("/economy/:playerId/purchases", async (req, res) => {
 });
 router7.post("/economy/purchase", async (req, res) => {
   try {
-    const { playerId, itemId, itemName, piPrice, coinsSpent, piTxId } = req.body;
+    const { playerId, itemId, itemName, piPrice, dnSpent, piTxId } = req.body;
     if (!playerId || !itemId || !itemName) {
       res.status(400).json({ error: "missing fields" });
       return;
@@ -88355,7 +88441,7 @@ router7.post("/economy/purchase", async (req, res) => {
       itemId: String(itemId),
       itemName: String(itemName),
       piPrice: Number(piPrice) || 0,
-      coinsSpent: Number(coinsSpent) || 0,
+      dnSpent: Number(dnSpent) || 0,
       piTxId: piTxId ? String(piTxId) : void 0,
       status: "completed"
     }).returning();
@@ -88372,17 +88458,19 @@ router7.post("/economy/purchase", async (req, res) => {
 router7.post("/economy/boost", async (req, res) => {
   try {
     const { playerId, type, multiplier, hours } = req.body;
-    if (!playerId || !hours) {
-      res.status(400).json({ error: "missing fields" });
+    if (!playerId) {
+      res.status(400).json({ error: "missing playerId" });
       return;
     }
-    const endAt = new Date(Date.now() + Number(hours) * 36e5);
+    const startAt = /* @__PURE__ */ new Date();
+    const endAt = new Date(startAt.getTime() + (Number(hours) || 1) * 36e5);
     const [boost] = await db.insert(boostUsageTable).values({
       id: nanoid3(),
       playerId: String(playerId),
       type: String(type || "xp"),
       multiplier: Number(multiplier) || 2,
-      hours: Number(hours),
+      hours: Number(hours) || 1,
+      startAt,
       endAt,
       active: true
     }).returning();
@@ -88393,144 +88481,82 @@ router7.post("/economy/boost", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
-router7.get("/seasons", async (req, res) => {
+router7.get("/seasons", async (_req, res) => {
   try {
-    const rows = await db.select().from(seasonsTable).orderBy(desc(seasonsTable.startAt)).limit(10);
+    const rows = await db.select().from(seasonsTable).orderBy(desc(seasonsTable.createdAt)).limit(10);
     res.json(rows);
   } catch (err) {
+    res.status(500).json({ error: "internal" });
+  }
+});
+router7.get("/economy/shop/:playerId", async (req, res) => {
+  try {
+    const catalog = await getShopCatalog(req.params.playerId);
+    res.json(catalog);
+  } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
   }
 });
-var PLAYER_DATA_FILE = process.env.PLAYER_DATA_FILE ?? resolve("data/players.json");
-function readPlayerStore() {
-  if (!existsSync(PLAYER_DATA_FILE)) return { schemaVersion: 1, profiles: [] };
+router7.post("/economy/shop/:playerId/buy", async (req, res) => {
   try {
-    return JSON.parse(readFileSync(PLAYER_DATA_FILE, "utf8"));
-  } catch {
-    return { schemaVersion: 1, profiles: [] };
-  }
-}
-function writePlayerStore(data) {
-  try {
-    writeFileSync(PLAYER_DATA_FILE, JSON.stringify(data, null, 2), "utf8");
-  } catch (err) {
-    console.error("[economy] failed to write player store:", err);
-  }
-}
-router7.post("/economy/match-result", async (req, res) => {
-  try {
-    const { playerId, playerName, rank, accuracyPct, tier } = req.body;
-    if (!playerId || rank === void 0 || accuracyPct === void 0 || !tier) {
-      res.status(400).json({ error: "missing fields: playerId, rank, accuracyPct, tier" });
+    const { itemId } = req.body;
+    if (!itemId) {
+      res.status(400).json({ error: "missing itemId" });
       return;
     }
-    const rankNum = Number(rank);
-    const accuracyNum = Number(accuracyPct);
-    const tierStr = String(tier);
-    const econTierMap = {
-      div3: "div3",
-      div2: "div2",
-      pro: "pro",
-      champions: "champions",
-      training: "div3",
-      coin: "div2",
-      champion: "champions"
-    };
-    const economyTier = econTierMap[tierStr] ?? "div3";
-    const playerIdStr = String(playerId);
-    const [dbPlayer] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, playerIdStr)).limit(1);
-    const currentCoins = dbPlayer?.coins ?? 0;
-    const psData = readPlayerStore();
-    const profile2 = psData.profiles.find(
-      (p) => p.playerId === playerIdStr || p.id === playerIdStr
-    );
-    const currentGems = typeof profile2?.gems === "number" ? profile2.gems : 0;
-    const result = calcMatchEconomy(
-      { rank: rankNum, accuracyPct: accuracyNum, tier: economyTier },
-      currentCoins,
-      currentGems
-    );
-    if (profile2) {
-      profile2.gems = result.newGems;
-      profile2.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-    } else {
-      const newProfile = {
-        id: playerIdStr,
-        playerId: playerIdStr,
-        playerName: String(playerName ?? "Player"),
-        xp: 0,
-        level: 1,
-        streak: 0,
-        bestStreak: 0,
-        badges: [],
-        arcadeCoins: 0,
-        gems: result.newGems,
-        totalWins: 0,
-        totalDraws: 0,
-        totalLosses: 0,
-        arcadePlays: 0,
-        dailyClaimCount: 0,
-        lastDailyAt: null,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-        updatedAt: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      psData.profiles.push(newProfile);
-    }
-    writePlayerStore(psData);
-    if (dbPlayer && result.gemsEarned > 0) {
-      const [currentPlayer] = await db.select({ gems: playersTable.gems }).from(playersTable).where(eq(playersTable.id, playerIdStr)).limit(1);
-      const newDbGems = (currentPlayer?.gems ?? 0) + result.gemsEarned;
-      await db.update(playersTable).set({ gems: newDbGems, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, playerIdStr));
-    }
-    res.status(200).json({
-      ...result,
-      tier: economyTier,
-      rank: rankNum,
-      accuracyPct: accuracyNum
-    });
-  } catch (err) {
-    req.log.error({ err });
-    res.status(500).json({ error: "internal" });
-  }
-});
-router7.get("/economy/:playerId/gems", async (req, res) => {
-  try {
-    const playerIdStr = req.params.playerId;
-    const [dbPlayer] = await db.select({ gems: playersTable.gems }).from(playersTable).where(eq(playersTable.id, playerIdStr)).limit(1);
-    if (dbPlayer !== void 0) {
-      res.json({ gems: dbPlayer.gems ?? 0 });
+    const result = await purchaseShopItem(req.params.playerId, itemId);
+    if (!result.success) {
+      res.status(400).json({ error: result.reason });
       return;
     }
-    const psData = readPlayerStore();
-    const profile2 = psData.profiles.find(
-      (p) => p.playerId === playerIdStr || p.id === playerIdStr
-    );
-    const gems = typeof profile2?.gems === "number" ? profile2.gems : 0;
-    res.json({ gems });
+    res.status(201).json(result);
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
   }
 });
-router7.get("/economy/entry-check/:tier/:gems", (req, res) => {
-  const tier = req.params.tier;
-  const playerGems = parseInt(req.params.gems, 10);
-  const econTierMap = {
-    div3: "div3",
-    div2: "div2",
-    pro: "pro",
-    champions: "champions",
-    training: "div3",
-    coin: "div2",
-    champion: "champions"
-  };
-  const economyTier = econTierMap[tier] ?? "div3";
-  res.json({
-    canEnter: canEnterLeague(economyTier, playerGems),
-    required: getEntryGemCost(economyTier),
-    playerGems
-  });
+router7.post("/economy/daily/:playerId/match-reward", async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const { accuracyPct } = req.body;
+    let total = ACTIVITY_DN.matchPlay;
+    const breakdown = ["Participation: +1 DN$"];
+    if (typeof accuracyPct === "number" && accuracyPct >= 1) {
+      total += ACTIVITY_DN.accuracy100;
+      breakdown.push("Perfect accuracy: +1 DN$");
+    }
+    const { newBalance } = await awardDN(
+      playerId,
+      total,
+      "match_play",
+      breakdown.join(", ")
+    );
+    res.json({ awarded: true, dn: total, newBalance, breakdown });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router7.post("/economy/game-assist/:playerId", async (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const { spendDN: spendDNHelper } = await Promise.resolve().then(() => (init_dn_service(), dn_service_exports));
+    const result = await spendDNHelper(
+      playerId,
+      GAME_ASSIST_COST_DN,
+      "game_assist",
+      "Eliminate one wrong answer"
+    );
+    if (!result.success) {
+      res.status(400).json({ error: "insufficient_dn", required: GAME_ASSIST_COST_DN, have: result.newBalance });
+      return;
+    }
+    res.json({ ok: true, dnSpent: GAME_ASSIST_COST_DN, newBalance: result.newBalance });
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
 });
 var economy_default = router7;
 
@@ -89031,12 +89057,12 @@ var import_express12 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
 init_nanoid();
+init_dn_service();
 var router12 = (0, import_express12.Router)();
 router12.get("/marketplace", async (req, res) => {
   try {
     const { type, maxPrice } = req.query;
-    let query = db.select().from(marketplaceListingsTable).where(eq(marketplaceListingsTable.status, "active")).orderBy(desc(marketplaceListingsTable.createdAt)).limit(100);
-    const rows = await query;
+    const rows = await db.select().from(marketplaceListingsTable).where(eq(marketplaceListingsTable.status, "active")).orderBy(desc(marketplaceListingsTable.createdAt)).limit(100);
     let result = rows;
     if (type) result = result.filter((r) => r.itemType === type);
     if (maxPrice) result = result.filter((r) => r.price <= Number(maxPrice));
@@ -89066,7 +89092,7 @@ router12.post("/marketplace", async (req, res) => {
       itemName,
       itemEmoji: itemEmoji || "\u{1F3A8}",
       itemType: itemType || "cosmetic",
-      price: Math.max(10, Math.min(99999, Number(price)))
+      price: Math.max(1, Math.min(9999, Number(price)))
     }).returning();
     res.json(listing[0]);
   } catch (err) {
@@ -89087,31 +89113,27 @@ router12.post("/marketplace/:id/buy", async (req, res) => {
       res.status(400).json({ error: "cannot_buy_own" });
       return;
     }
-    const [buyer] = await db.select().from(playersTable).where(eq(playersTable.id, buyerId)).limit(1);
-    if (!buyer) {
-      res.status(404).json({ error: "buyer_not_found" });
+    const buyerBalance = await getDNBalance(buyerId);
+    if (buyerBalance < listing.price) {
+      res.status(400).json({ error: "insufficient_dn", required: listing.price, have: buyerBalance });
       return;
     }
-    if (buyer.coins < listing.price) {
-      res.status(400).json({ error: "insufficient_coins" });
+    const spendResult = await spendDN(buyerId, listing.price, "marketplace", `\u0634\u0631\u0627\u0621 ${listing.itemName}`);
+    if (!spendResult.success) {
+      res.status(400).json({ error: "insufficient_dn" });
       return;
     }
+    await awardDN(listing.sellerId, listing.price, "marketplace", `\u0628\u064A\u0639 ${listing.itemName}`);
     await db.update(marketplaceListingsTable).set({
       status: "sold",
       buyerId,
       soldAt: /* @__PURE__ */ new Date()
     }).where(eq(marketplaceListingsTable.id, id));
-    await db.update(playersTable).set({ coins: buyer.coins - listing.price }).where(eq(playersTable.id, buyerId));
-    const [seller] = await db.select().from(playersTable).where(eq(playersTable.id, listing.sellerId)).limit(1);
-    if (seller) {
-      await db.update(playersTable).set({ coins: seller.coins + listing.price }).where(eq(playersTable.id, listing.sellerId));
+    const [buyer] = await db.select({ ownedItems: playersTable.ownedItems }).from(playersTable).where(eq(playersTable.id, buyerId)).limit(1);
+    if (buyer) {
+      const buyerItems = buyer.ownedItems.includes(listing.itemId) ? buyer.ownedItems : [...buyer.ownedItems, listing.itemId];
+      await db.update(playersTable).set({ ownedItems: buyerItems }).where(eq(playersTable.id, buyerId));
     }
-    const buyerItems = buyer.ownedItems.includes(listing.itemId) ? buyer.ownedItems : [...buyer.ownedItems, listing.itemId];
-    await db.update(playersTable).set({ ownedItems: buyerItems }).where(eq(playersTable.id, buyerId));
-    await db.insert(coinTransactionsTable).values([
-      { id: nanoid3(), playerId: buyerId, amount: -listing.price, type: "spend", source: "marketplace", description: `\u0634\u0631\u0627\u0621 ${listing.itemName}`, balanceAfter: buyer.coins - listing.price },
-      { id: nanoid3(), playerId: listing.sellerId, amount: listing.price, type: "earn", source: "marketplace", description: `\u0628\u064A\u0639 ${listing.itemName}`, balanceAfter: (seller?.coins ?? 0) + listing.price }
-    ]);
     res.json({ ok: true, item: listing.itemId });
   } catch (err) {
     req.log.error({ err }, "marketplace buy error");
@@ -89273,7 +89295,7 @@ var PI_PRODUCTS = {
   "coins_1000": { name: "1000 Coins Bundle", coins: 1e3, description: "1000 in-game coins" },
   "tournament_entry": { name: "Tournament Entry", description: "Entry to paid tournament" }
 };
-async function getOrCreateWallet(playerId) {
+async function getOrCreateWallet2(playerId) {
   const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
   if (existing) return existing;
   const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 }).returning();
@@ -89325,7 +89347,7 @@ router14.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => 
     status: "pending"
   });
   if (isGift && receiverId) {
-    const receiverWallet = await getOrCreateWallet(receiverId);
+    const receiverWallet = await getOrCreateWallet2(receiverId);
     await db.update(walletsTable).set({ pendingPi: Number(receiverWallet.pendingPi) + piAmount, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
   }
   await logAudit(
@@ -89389,7 +89411,7 @@ router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) 
       const message = meta.message ? String(meta.message).slice(0, 200) : "";
       const [senderPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
       const [receiverPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, receiverId)).limit(1);
-      const receiverWallet = await getOrCreateWallet(receiverId);
+      const receiverWallet = await getOrCreateWallet2(receiverId);
       const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
       const newTotalEarned = Number(receiverWallet.totalEarnedPi) + pending.amount;
       const newAvailable = Number(receiverWallet.availablePi) + pending.amount;
@@ -89422,17 +89444,14 @@ router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) 
       }).catch(() => {
       });
     } else if (productInfo?.coins) {
-      const [player] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
-      if (player) {
-        const newCoins = player.coins + productInfo.coins;
-        await db.update(playersTable).set({ coins: newCoins, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, pending.playerId));
-        const txRowId = nanoid3();
-        const desc5 = `Pi purchase: ${productInfo.name}`;
-        await db.execute(sql`
-          INSERT INTO coin_transactions (id, player_id, amount, type, source, description, balance_after)
-          VALUES (${txRowId}, ${pending.playerId}, ${productInfo.coins}, 'add', 'pi_purchase', ${desc5}, ${newCoins})
-        `);
-      }
+      const { awardDN: awardDN2 } = await Promise.resolve().then(() => (init_dn_service(), dn_service_exports));
+      await awardDN2(
+        pending.playerId,
+        productInfo.coins,
+        "pi_purchase",
+        `Pi purchase: ${productInfo.name}`
+      ).catch(() => {
+      });
     }
     await logAudit(
       pending.playerId,
@@ -89471,7 +89490,7 @@ router14.post("/pi/payments/:paymentId/fail", requireAuth, async (req, res) => {
   if (pending.kind === "gift") {
     const receiverId = pending.receiverId ?? (meta.receiverId ? String(meta.receiverId) : null);
     if (receiverId) {
-      const receiverWallet = await getOrCreateWallet(receiverId);
+      const receiverWallet = await getOrCreateWallet2(receiverId);
       const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
       await db.update(walletsTable).set({ pendingPi: newPending, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
     }
@@ -89683,7 +89702,7 @@ router16.get("/monitor/live", requireAdmin, async (req, res) => {
     const [activePlayers24h] = await db.select({ count: count() }).from(playersTable).where(gte(playersTable.lastActiveAt, since24h));
     const [matches1h] = await db.select({ count: count() }).from(pvpMatchesTable).where(gte(pvpMatchesTable.createdAt, since1h));
     const [events1h] = await db.select({ count: count() }).from(analyticsEventsTable).where(gte(analyticsEventsTable.createdAt, since1h));
-    const [coins1h] = await db.select({ count: count() }).from(coinTransactionsTable).where(gte(coinTransactionsTable.createdAt, since1h));
+    const [coins1h] = await db.select({ count: count() }).from(walletTransactionsTable).where(gte(walletTransactionsTable.createdAt, since1h));
     const avgResponseTime = responseTimeSamples.length > 0 ? Math.round(responseTimeSamples.reduce((a, b) => a + b, 0) / responseTimeSamples.length) : 0;
     const p95 = responseTimeSamples.length > 0 ? Math.round([...responseTimeSamples].sort((a, b) => a - b)[Math.floor(responseTimeSamples.length * 0.95)] ?? 0) : 0;
     const errorRate = totalRequests > 0 ? Math.round(errorRequests / totalRequests * 1e4) / 100 : 0;
@@ -89886,10 +89905,10 @@ var release_default = router17;
 var import_express18 = __toESM(require_express2(), 1);
 
 // src/lib/league-store.ts
-import { readFileSync as readFileSync2, writeFileSync as writeFileSync2, existsSync as existsSync2, mkdirSync } from "node:fs";
-import { resolve as resolve2, dirname } from "node:path";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { resolve, dirname } from "node:path";
 import { randomUUID } from "node:crypto";
-var DATA_FILE = process.env.LEAGUE_DATA_FILE ?? resolve2("data/leagues.json");
+var DATA_FILE = process.env.LEAGUE_DATA_FILE ?? resolve("data/leagues.json");
 try {
   mkdirSync(dirname(DATA_FILE), { recursive: true });
 } catch {
@@ -89921,76 +89940,52 @@ var BOT_NAMES2 = [
   "Ben Foster",
   "Mia Johnson"
 ];
-var LEAGUE_TO_ECONOMY_TIER = {
-  coins: "div3",
-  pro: "div2",
-  elite: "pro",
-  champion: "champions"
-};
-var LEAGUE_GEM_COST = {
-  coins: 0,
-  pro: 1,
-  elite: 2,
-  champion: 4
-};
 function makeLeagues() {
   return [
     {
       id: "coins",
-      name: "Coins League",
-      entryType: "coins",
+      name: "Training League",
       entryCostPi: 0,
-      entryCostCoins: 500,
-      entryCostGems: 0,
       difficulty: "easy",
       color: "#22d3ee",
       icon: "\u{1F949}",
-      description: "Free entry. Beginner tier \u2014 earn your first gems here.",
+      description: "Free entry. Beginner tier \u2014 start your journey here.",
       nextLeague: "pro",
       prevLeague: null,
       slotCount: 16
     },
     {
       id: "pro",
-      name: "Pro League",
-      entryType: "pi",
-      entryCostPi: 0.5,
-      entryCostCoins: 0,
-      entryCostGems: 1,
+      name: "Division II",
+      entryCostPi: 0.2,
       difficulty: "medium",
       color: "#a78bfa",
       icon: "\u{1F948}",
-      description: "Requires 1 \u{1F48E} gem. Medium difficulty. Real prize pool.",
+      description: "Entry: 0.2\u03C0. Medium difficulty. Real prize pool.",
       nextLeague: "elite",
       prevLeague: "coins",
       slotCount: 16
     },
     {
       id: "elite",
-      name: "Elite League",
-      entryType: "pi",
-      entryCostPi: 0.75,
-      entryCostCoins: 0,
-      entryCostGems: 2,
+      name: "Professional League",
+      entryCostPi: 0.5,
       difficulty: "hard",
       color: "#f59e0b",
       icon: "\u{1F947}",
-      description: "Requires 2 \u{1F48E} gems. Hard puzzles for serious competitors.",
+      description: "Entry: 0.5\u03C0. Hard puzzles for serious competitors.",
       nextLeague: "champion",
       prevLeague: "pro",
       slotCount: 20
     },
     {
       id: "champion",
-      name: "Champion League",
-      entryType: "pi",
+      name: "Champions League",
       entryCostPi: 1,
-      entryCostCoins: 0,
-      entryCostGems: 4,
       difficulty: "expert",
       color: "#ef4444",
       icon: "\u{1F451}",
-      description: "Requires 4 \u{1F48E} gems. Expert level. Highest prize pool.",
+      description: "Entry: 1\u03C0. Expert level. Highest prize pool.",
       nextLeague: null,
       prevLeague: "elite",
       slotCount: 25
@@ -90036,15 +90031,15 @@ function defaultStore() {
 }
 var _store;
 function load() {
-  if (existsSync2(DATA_FILE)) {
+  if (existsSync(DATA_FILE)) {
     try {
-      const raw = JSON.parse(readFileSync2(DATA_FILE, "utf8"));
+      const raw = JSON.parse(readFileSync(DATA_FILE, "utf8"));
       if (!raw.schemaVersion || raw.schemaVersion < 2) {
         raw.schemaVersion = 2;
         const fresh = makeLeagues();
         raw.leagues = raw.leagues.map((l) => {
           const f = fresh.find((x) => x.id === l.id);
-          return f ? { ...f, ...l, entryCostGems: f.entryCostGems, nextLeague: f.nextLeague, prevLeague: f.prevLeague, slotCount: f.slotCount } : l;
+          return f ? { ...f, ...l, nextLeague: f.nextLeague, prevLeague: f.prevLeague, slotCount: f.slotCount } : l;
         });
         raw.entries = raw.entries.map((e) => ({
           ...e,
@@ -90082,7 +90077,7 @@ function load() {
           endedAt: s.endedAt ?? null,
           finalRankings: s.finalRankings ?? []
         }));
-        writeFileSync2(DATA_FILE, JSON.stringify(raw, null, 2), "utf8");
+        writeFileSync(DATA_FILE, JSON.stringify(raw, null, 2), "utf8");
       }
       return raw;
     } catch {
@@ -90093,7 +90088,7 @@ function load() {
 }
 function save() {
   try {
-    writeFileSync2(DATA_FILE, JSON.stringify(_store, null, 2), "utf8");
+    writeFileSync(DATA_FILE, JSON.stringify(_store, null, 2), "utf8");
   } catch (err) {
     console.error("[league-store] failed to persist:", err);
   }
@@ -90251,7 +90246,7 @@ function joinLeague(leagueId, playerId, playerName) {
   s.entries.push(entry);
   s.matches.push(...matches);
   season.participantCount++;
-  if (league.entryType === "pi") season.prizePool += league.entryCostPi;
+  if (league.entryCostPi > 0) season.prizePool += league.entryCostPi;
   save();
   return { entry, matches };
 }
@@ -90436,8 +90431,8 @@ init_src();
 init_drizzle_orm();
 init_logger2();
 import { randomUUID as randomUUID2 } from "node:crypto";
-import { readFileSync as readFileSync3, writeFileSync as writeFileSync3, existsSync as existsSync3 } from "node:fs";
-import { resolve as resolve3 } from "node:path";
+import { readFileSync as readFileSync2, writeFileSync as writeFileSync2, existsSync as existsSync2 } from "node:fs";
+import { resolve as resolve2 } from "node:path";
 function skillLevelFromAccuracy(accuracy) {
   if (accuracy >= 87) return "elite";
   if (accuracy >= 68) return "advanced";
@@ -90707,18 +90702,18 @@ var FIXED_ROSTERS = {
   ]
   // 25 bots — LOCKED
 };
-var LEAGUE_DATA_FILE = process.env.LEAGUE_DATA_FILE ?? resolve3("data/leagues.json");
+var LEAGUE_DATA_FILE = process.env.LEAGUE_DATA_FILE ?? resolve2("data/leagues.json");
 function readLeagueStore() {
-  if (!existsSync3(LEAGUE_DATA_FILE)) return null;
+  if (!existsSync2(LEAGUE_DATA_FILE)) return null;
   try {
-    return JSON.parse(readFileSync3(LEAGUE_DATA_FILE, "utf8"));
+    return JSON.parse(readFileSync2(LEAGUE_DATA_FILE, "utf8"));
   } catch {
     return null;
   }
 }
 function writeLeagueStore(data) {
   try {
-    writeFileSync3(LEAGUE_DATA_FILE, JSON.stringify(data, null, 2), "utf8");
+    writeFileSync2(LEAGUE_DATA_FILE, JSON.stringify(data, null, 2), "utf8");
   } catch (err) {
     logger.error({ err }, "bot-simulator: failed to write league store");
   }
@@ -91048,7 +91043,6 @@ async function simulateTick() {
       id: playersTable.id,
       username: playersTable.username,
       lp: playersTable.lp,
-      coins: playersTable.coins,
       skillAccuracy: playersTable.skillAccuracy,
       matchesPlayed: playersTable.matchesPlayed,
       matchesWon: playersTable.matchesWon,
@@ -91122,10 +91116,10 @@ function startBotSimulator() {
 }
 
 // src/lib/player-store.ts
-import { readFileSync as readFileSync4, writeFileSync as writeFileSync4, existsSync as existsSync4, mkdirSync as mkdirSync2 } from "node:fs";
-import { resolve as resolve4, dirname as dirname2 } from "node:path";
+import { readFileSync as readFileSync3, writeFileSync as writeFileSync3, existsSync as existsSync3, mkdirSync as mkdirSync2 } from "node:fs";
+import { resolve as resolve3, dirname as dirname2 } from "node:path";
 import { randomUUID as randomUUID3 } from "node:crypto";
-var DATA_FILE2 = process.env.PLAYER_DATA_FILE ?? resolve4("data/players.json");
+var DATA_FILE2 = process.env.PLAYER_DATA_FILE ?? resolve3("data/players.json");
 try {
   mkdirSync2(dirname2(DATA_FILE2), { recursive: true });
 } catch {
@@ -91158,9 +91152,9 @@ var BADGE_DEFS = [
 ];
 var _store2;
 function load2() {
-  if (existsSync4(DATA_FILE2)) {
+  if (existsSync3(DATA_FILE2)) {
     try {
-      return JSON.parse(readFileSync4(DATA_FILE2, "utf8"));
+      return JSON.parse(readFileSync3(DATA_FILE2, "utf8"));
     } catch {
       console.warn("[player-store] corrupt data \u2014 starting fresh");
     }
@@ -91169,7 +91163,7 @@ function load2() {
 }
 function save2() {
   try {
-    writeFileSync4(DATA_FILE2, JSON.stringify(_store2, null, 2), "utf8");
+    writeFileSync3(DATA_FILE2, JSON.stringify(_store2, null, 2), "utf8");
   } catch (err) {
     console.error("[player-store] failed to persist:", err);
   }
@@ -91203,8 +91197,7 @@ function getOrCreateProfile(playerId, playerName) {
       streak: 0,
       bestStreak: 0,
       badges: [],
-      arcadeCoins: 0,
-      gems: 0,
+      arcadePoints: 0,
       totalWins: 0,
       totalDraws: 0,
       totalLosses: 0,
@@ -91269,7 +91262,7 @@ function playArcadeGame(playerId, playerName, gameId) {
   const profile2 = getOrCreateProfile(playerId, playerName);
   const oldLevel = profile2.level;
   profile2.xp += reward.xp;
-  profile2.arcadeCoins += reward.coins;
+  profile2.arcadePoints += reward.xp;
   profile2.arcadePlays++;
   profile2.level = calcLevel(profile2.xp);
   profile2.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
@@ -91294,7 +91287,7 @@ function claimDailyReward(playerId, playerName) {
   }
   const oldLevel = profile2.level;
   profile2.xp += DAILY_XP;
-  profile2.arcadeCoins += DAILY_COINS;
+  profile2.arcadePoints += DAILY_XP;
   profile2.level = calcLevel(profile2.xp);
   profile2.lastDailyAt = today;
   profile2.dailyClaimCount++;
@@ -91315,147 +91308,42 @@ function xpToNextLevel(xp) {
 }
 
 // src/routes/league-system.ts
+init_dn_service();
 init_drizzle_orm();
 init_src();
-init_nanoid();
-import { readFileSync as readFileSync5, writeFileSync as writeFileSync5, existsSync as existsSync5 } from "node:fs";
-import { resolve as resolve5 } from "node:path";
 var router18 = (0, import_express18.Router)();
-var SEASON_END_GEM_TABLE = {
-  div3: { 1: 1 },
-  div2: { 1: 2, 2: 1 },
-  pro: { 1: 3, 2: 2, 3: 1 },
-  champions: { 1: 4, 2: 3, 3: 2, 4: 1 }
-};
 var DIVISION_LP_RANGES = {
   training: { min: 0, max: 99 },
   coin: { min: 100, max: 299 },
   pro: { min: 300, max: 499 },
   champion: { min: 500, max: null }
 };
-async function awardSeasonEndGems(leagueId) {
-  const econTier = LEAGUE_TO_ECONOMY_TIER[leagueId] ?? "div3";
-  const gemMap = SEASON_END_GEM_TABLE[econTier];
-  if (!gemMap) return;
-  const maxRank = Math.max(...Object.keys(gemMap).map(Number));
+async function awardSeasonEndDN(leagueId) {
+  const econTier = leagueTierToEconomyTier(leagueId);
   const lpRange = DIVISION_LP_RANGES[leagueId];
   if (!lpRange) return;
   try {
     const condition = lpRange.max !== null ? and(gte(playersTable.lp, lpRange.min), lte(playersTable.lp, lpRange.max)) : gte(playersTable.lp, lpRange.min);
-    const topPlayers = await db.select({ id: playersTable.id, gems: playersTable.gems, coins: playersTable.coins }).from(playersTable).where(condition).orderBy(desc(playersTable.lp)).limit(maxRank);
+    const topPlayers = await db.select({ id: playersTable.id, username: playersTable.username }).from(playersTable).where(condition).orderBy(desc(playersTable.lp)).limit(25);
     for (let i = 0; i < topPlayers.length; i++) {
       const rank = i + 1;
-      const gemsToGive = gemMap[rank];
-      if (!gemsToGive) continue;
+      const dn = getSeasonEndDN(econTier, rank);
       const player = topPlayers[i];
-      const newGems = (player.gems ?? 0) + gemsToGive;
-      await db.update(playersTable).set({ gems: newGems, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, player.id));
-      await db.insert(coinTransactionsTable).values({
-        id: nanoid3(),
-        playerId: player.id,
-        amount: 0,
-        type: "gem_earn",
-        source: "season_end",
-        description: `Season end rank #${rank} in ${econTier.toUpperCase()} (+${gemsToGive} gems)`,
-        balanceAfter: player.coins ?? 0
-      });
-      console.info(`[season-gems] Awarded ${gemsToGive} gems to player ${player.id} (rank #${rank} in ${leagueId})`);
+      await awardDN(
+        player.id,
+        dn,
+        "season_end",
+        `Season end rank #${rank} in ${leagueId.toUpperCase()} (+${dn} DN$)`
+      );
+      console.info(`[season-dn] Awarded ${dn} DN$ to player ${player.id} (rank #${rank} in ${leagueId})`);
     }
   } catch (err) {
-    console.error("[season-gems] error awarding season-end gems:", err);
+    console.error("[season-dn] error awarding season-end DN$:", err);
   }
 }
 try {
   seedBotStandings();
 } catch {
-}
-var PLAYER_DATA_FILE2 = process.env.PLAYER_DATA_FILE ?? resolve5("data/players.json");
-function readPlayerStore2() {
-  if (!existsSync5(PLAYER_DATA_FILE2)) return { schemaVersion: 1, profiles: [] };
-  try {
-    return JSON.parse(readFileSync5(PLAYER_DATA_FILE2, "utf8"));
-  } catch {
-    return { schemaVersion: 1, profiles: [] };
-  }
-}
-function writePlayerStore2(data) {
-  try {
-    writeFileSync5(PLAYER_DATA_FILE2, JSON.stringify(data, null, 2), "utf8");
-  } catch (err) {
-    console.error("[league-system] failed to write player store:", err);
-  }
-}
-function getPlayerGems(playerId) {
-  const store4 = readPlayerStore2();
-  const profile2 = store4.profiles.find(
-    (p) => p.playerId === playerId || p.id === playerId
-  );
-  const gems = typeof profile2?.gems === "number" ? profile2.gems : 0;
-  return { gems, profile: profile2, store: store4 };
-}
-function deductGems(playerId, playerName, amount) {
-  const { gems, profile: profile2, store: store4 } = getPlayerGems(playerId);
-  if (gems < amount) return false;
-  if (profile2) {
-    profile2.gems = gems - amount;
-    profile2.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-  } else {
-    store4.profiles.push({
-      id: playerId,
-      playerId,
-      playerName,
-      xp: 0,
-      level: 1,
-      streak: 0,
-      bestStreak: 0,
-      badges: [],
-      arcadeCoins: 0,
-      gems: 0,
-      totalWins: 0,
-      totalDraws: 0,
-      totalLosses: 0,
-      arcadePlays: 0,
-      dailyClaimCount: 0,
-      lastDailyAt: null,
-      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
-    });
-    return true;
-  }
-  writePlayerStore2(store4);
-  return true;
-}
-function grantGems(playerId, playerName, amount) {
-  const { gems, profile: profile2, store: store4 } = getPlayerGems(playerId);
-  const newGems = gems + amount;
-  if (profile2) {
-    profile2.gems = newGems;
-    profile2.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-  } else {
-    store4.profiles.push({
-      id: playerId,
-      playerId,
-      playerName,
-      xp: 0,
-      level: 1,
-      streak: 0,
-      bestStreak: 0,
-      badges: [],
-      arcadeCoins: 0,
-      gems: newGems,
-      totalWins: 0,
-      totalDraws: 0,
-      totalLosses: 0,
-      arcadePlays: 0,
-      dailyClaimCount: 0,
-      lastDailyAt: null,
-      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
-    });
-    return newGems;
-  }
-  writePlayerStore2(store4);
-  return newGems;
 }
 var LP_DIVISION_RANGES_TOP5 = {
   training: { min: 0, max: 99 },
@@ -91569,19 +91457,6 @@ router18.post("/league-system/leagues/:id/join", async (req, res) => {
   }
   const pid = String(playerId);
   const pnam = String(playerName);
-  const gemCost = LEAGUE_GEM_COST[leagueId] ?? 0;
-  if (gemCost > 0) {
-    const { gems } = getPlayerGems(pid);
-    if (gems < gemCost) {
-      res.status(402).json({
-        error: "insufficient_gems",
-        required: gemCost,
-        playerGems: gems,
-        message: `You need ${gemCost} \u{1F48E} gem${gemCost !== 1 ? "s" : ""} to enter ${league.name}. You have ${gems}.`
-      });
-      return;
-    }
-  }
   const result = joinLeague(leagueId, pid, pnam);
   if ("error" in result) {
     if (result.error === "already_in_league") {
@@ -91595,9 +91470,6 @@ router18.post("/league-system/leagues/:id/join", async (req, res) => {
     const code = result.error === "already joined" ? 409 : 400;
     res.status(code).json(result);
     return;
-  }
-  if (gemCost > 0) {
-    deductGems(pid, pnam, gemCost);
   }
   try {
     const profile2 = getOrCreateProfile(pid, pnam);
@@ -91693,46 +91565,26 @@ router18.post("/league-system/admin/advance-season", async (req, res) => {
     }
   } catch {
   }
-  await awardSeasonEndGems(lid).catch(() => {
+  await awardSeasonEndDN(lid).catch(() => {
   });
   const result = advanceSeason(lid, lpMap);
   if ("error" in result) {
     res.status(400).json(result);
     return;
   }
-  const econFromTier = LEAGUE_TO_ECONOMY_TIER[String(leagueId)] ?? "div3";
   const promotionRewardResults = [];
   for (const promo of result.promotions) {
-    const toEconTier = LEAGUE_TO_ECONOMY_TIER[promo.toLeague];
-    if (!toEconTier) continue;
     try {
-      const [dbPlayer] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, promo.playerId)).limit(1);
-      const currentCoins = dbPlayer?.coins ?? 0;
-      const { gems: currentGems } = getPlayerGems(promo.playerId);
-      const reward = calcPromotionReward(econFromTier, toEconTier, currentCoins, currentGems);
-      if (reward.gemsAwarded > 0) {
-        grantGems(promo.playerId, promo.playerName, reward.gemsAwarded);
-      }
-      if (reward.coinsAwarded > 0 && dbPlayer) {
-        await db.update(playersTable).set({ coins: reward.newCoins, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, promo.playerId));
-        await db.insert(coinTransactionsTable).values({
-          id: nanoid3(),
-          playerId: promo.playerId,
-          amount: reward.coinsAwarded,
-          type: "earn",
-          source: "season_promotion",
-          description: `Promotion reward: ${promo.fromLeague} \u2192 ${promo.toLeague}`,
-          balanceAfter: reward.newCoins
-        });
-      }
-      promotionRewardResults.push({
-        playerId: promo.playerId,
-        playerName: promo.playerName,
-        coinsAwarded: reward.coinsAwarded,
-        gemsAwarded: reward.gemsAwarded
-      });
+      const dnBonus = 3;
+      await awardDN(
+        promo.playerId,
+        dnBonus,
+        "season_promotion",
+        `Promotion bonus: ${promo.fromLeague} \u2192 ${promo.toLeague}`
+      );
+      promotionRewardResults.push({ playerId: promo.playerId, playerName: promo.playerName, dnAwarded: dnBonus });
     } catch (err) {
-      console.error("[advance-season] promotion reward error:", err);
+      console.error("[advance-season] promotion DN$ reward error:", err);
     }
   }
   res.json({ ...result, promotionRewards: promotionRewardResults });
@@ -91757,7 +91609,7 @@ async function autoAdvanceExpiredSeasons() {
   for (const season of expired) {
     const leagueId = season.leagueId;
     try {
-      await awardSeasonEndGems(leagueId).catch(() => {
+      await awardSeasonEndDN(leagueId).catch(() => {
       });
       const result = advanceSeason(leagueId, lpMap);
       if ("error" in result) {
@@ -91771,28 +91623,9 @@ async function autoAdvanceExpiredSeasons() {
         seedBotStandings();
       } catch {
       }
-      const econFromTier = LEAGUE_TO_ECONOMY_TIER[leagueId] ?? "div3";
       for (const promo of result.promotions) {
-        const toEconTier = LEAGUE_TO_ECONOMY_TIER[promo.toLeague];
-        if (!toEconTier) continue;
         try {
-          const [dbPlayer] = await db.select({ coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, promo.playerId)).limit(1);
-          const currentCoins = dbPlayer?.coins ?? 0;
-          const { gems: currentGems } = getPlayerGems(promo.playerId);
-          const reward = calcPromotionReward(econFromTier, toEconTier, currentCoins, currentGems);
-          if (reward.gemsAwarded > 0) grantGems(promo.playerId, promo.playerName, reward.gemsAwarded);
-          if (reward.coinsAwarded > 0 && dbPlayer) {
-            await db.update(playersTable).set({ coins: reward.newCoins, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, promo.playerId));
-            await db.insert(coinTransactionsTable).values({
-              id: nanoid3(),
-              playerId: promo.playerId,
-              amount: reward.coinsAwarded,
-              type: "earn",
-              source: "season_promotion",
-              description: `Auto-advance promotion: ${promo.fromLeague} \u2192 ${promo.toLeague}`,
-              balanceAfter: reward.newCoins
-            });
-          }
+          await awardDN(promo.playerId, 3, "season_promotion", `Auto-advance promotion: ${promo.fromLeague} \u2192 ${promo.toLeague}`);
         } catch (err) {
           console.error("[season-scheduler] promotion reward error:", err);
         }
@@ -92010,115 +91843,14 @@ var arenas_default = router20;
 var import_express21 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
-
-// src/lib/shop-service.ts
-init_drizzle_orm();
-init_src();
-init_nanoid();
-var SHOP_ITEMS = {
-  post_promotion: {
-    id: "post_promotion",
-    name: "Post Promotion",
-    description: "Boost your post to the top of the feed for 24 hours",
-    coinPrice: 50,
-    category: "social",
-    permanent: false
-  },
-  avatar_weekly: {
-    id: "avatar_weekly",
-    name: "Weekly Avatar",
-    description: "Unlock a special avatar for 7 days",
-    coinPrice: 8,
-    category: "cosmetic",
-    permanent: false
-  },
-  avatar_permanent: {
-    id: "avatar_permanent",
-    name: "Permanent Avatar",
-    description: "Permanently unlock a special avatar",
-    coinPrice: 80,
-    category: "cosmetic",
-    permanent: true
-  },
-  game_assist: {
-    id: "game_assist",
-    name: "Game Assist",
-    description: "Get a hint or extra time during a match",
-    coinPrice: 20,
-    category: "gameplay",
-    permanent: false
-  }
-};
-async function purchaseShopItem(playerId, itemId) {
-  const item = SHOP_ITEMS[itemId];
-  if (!item) {
-    return { success: false, reason: `Unknown shop item: ${itemId}` };
-  }
-  const [player] = await db.select({ coins: playersTable.coins, ownedItems: playersTable.ownedItems }).from(playersTable).where(eq(playersTable.id, playerId)).limit(1);
-  if (!player) {
-    return { success: false, reason: "Player not found" };
-  }
-  if (item.permanent) {
-    const owned = player.ownedItems ?? [];
-    if (owned.includes(itemId)) {
-      return { success: false, reason: "Item already owned" };
-    }
-  }
-  if (player.coins < item.coinPrice) {
-    return {
-      success: false,
-      reason: `Insufficient coins (need ${item.coinPrice}, have ${player.coins})`
-    };
-  }
-  const newBalance = player.coins - item.coinPrice;
-  await db.update(playersTable).set({ coins: newBalance, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, playerId));
-  await db.insert(coinTransactionsTable).values({
-    id: nanoid3(),
-    playerId,
-    amount: -item.coinPrice,
-    type: "spend",
-    source: "shop_purchase",
-    description: `Purchased: ${item.name}`,
-    balanceAfter: newBalance
-  });
-  if (item.permanent) {
-    const owned = player.ownedItems ?? [];
-    await db.update(playersTable).set({ ownedItems: [...owned, itemId], updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, playerId));
-  }
-  const [purchase] = await db.insert(storePurchasesTable).values({
-    id: nanoid3(),
-    playerId,
-    itemId,
-    itemName: item.name,
-    piPrice: 0,
-    coinsSpent: item.coinPrice,
-    status: "completed"
-  }).returning();
-  return { success: true, purchase, newBalance };
-}
-async function getShopCatalog(playerId) {
-  const [player] = await db.select({ coins: playersTable.coins, ownedItems: playersTable.ownedItems }).from(playersTable).where(eq(playersTable.id, playerId)).limit(1);
-  const ownedItems = player?.ownedItems ?? [];
-  const coins = player?.coins ?? 0;
-  return {
-    coins,
-    items: Object.values(SHOP_ITEMS).map((item) => ({
-      ...item,
-      canAfford: coins >= item.coinPrice,
-      owned: item.permanent && ownedItems.includes(item.id)
-    }))
-  };
-}
-
-// src/routes/daily-economy.ts
-init_nanoid();
-init_src();
+init_dn_service();
 var router21 = (0, import_express21.Router)();
-var SEASON_GEM_TABLE = {
-  div3: { 1: 1 },
-  div2: { 1: 2, 2: 1 },
-  pro: { 1: 3, 2: 2, 3: 1 },
-  champions: { 1: 4, 2: 3, 3: 2, 4: 1 }
+var LP_RANGES = {
+  training: { min: 0, max: 99 },
+  coins: { min: 0, max: 99 },
+  coin: { min: 100, max: 299 },
+  pro: { min: 300, max: 499 },
+  champion: { min: 500, max: null }
 };
 function parsePlayerId(req) {
   return req.params.playerId?.trim() ?? "";
@@ -92130,8 +91862,7 @@ router21.get("/economy/daily/:playerId/status", async (req, res) => {
       res.status(400).json({ error: "missing playerId" });
       return;
     }
-    const status = await getDailyStatus(playerId);
-    res.json(status);
+    res.json(await getDailyStatus(playerId));
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -92221,29 +91952,40 @@ router21.post("/economy/daily/:playerId/record/story", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
-router21.post("/economy/daily/:playerId/login", async (req, res) => {
+router21.post("/economy/season-dn", async (req, res) => {
   try {
-    const playerId = parsePlayerId(req);
-    if (!playerId) {
-      res.status(400).json({ error: "missing playerId" });
+    const { leagueId } = req.body;
+    if (!leagueId) {
+      res.status(400).json({ error: "leagueId required" });
       return;
     }
-    const result = await claimLoginReward(playerId);
-    res.status(result.awarded ? 200 : 409).json(result);
-  } catch (err) {
-    req.log.error({ err });
-    res.status(500).json({ error: "internal" });
-  }
-});
-router21.post("/economy/daily/:playerId/match", async (req, res) => {
-  try {
-    const playerId = parsePlayerId(req);
-    if (!playerId) {
-      res.status(400).json({ error: "missing playerId" });
+    const econTier = leagueTierToEconomyTier(leagueId);
+    const lpRange = LP_RANGES[leagueId];
+    if (!lpRange) {
+      res.status(400).json({ error: "unknown leagueId" });
       return;
     }
-    await recordMatchPlayed(playerId);
-    res.json({ ok: true, recorded: true });
+    const condition = lpRange.max !== null ? and(gte(playersTable.lp, lpRange.min), lte(playersTable.lp, lpRange.max)) : gte(playersTable.lp, lpRange.min);
+    const topPlayers = await db.select({ id: playersTable.id, username: playersTable.username }).from(playersTable).where(condition).orderBy(desc(playersTable.lp)).limit(50);
+    const awarded = [];
+    for (let i = 0; i < topPlayers.length; i++) {
+      const rank = i + 1;
+      const dn = getSeasonEndDN(econTier, rank);
+      const p = topPlayers[i];
+      try {
+        await awardDN(
+          p.id,
+          dn,
+          "season_end",
+          `Season end rank #${rank} in ${leagueId.toUpperCase()} (+${dn} DN$)`
+        );
+        awarded.push({ playerId: p.id, rank, dn });
+        console.info(`[season-dn] Awarded ${dn} DN$ to ${p.username} (rank #${rank} in ${leagueId})`);
+      } catch (err) {
+        console.error(`[season-dn] error for player ${p.id}:`, err);
+      }
+    }
+    res.json({ awarded, total: awarded.reduce((s, a) => s + a.dn, 0) });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -92251,13 +91993,7 @@ router21.post("/economy/daily/:playerId/match", async (req, res) => {
 });
 router21.get("/economy/shop/:playerId", async (req, res) => {
   try {
-    const playerId = parsePlayerId(req);
-    if (!playerId) {
-      res.status(400).json({ error: "missing playerId" });
-      return;
-    }
-    const catalog = await getShopCatalog(playerId);
-    res.json(catalog);
+    res.json(await getShopCatalog(req.params.playerId));
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -92265,96 +92001,17 @@ router21.get("/economy/shop/:playerId", async (req, res) => {
 });
 router21.post("/economy/shop/:playerId/buy", async (req, res) => {
   try {
-    const playerId = parsePlayerId(req);
-    if (!playerId) {
-      res.status(400).json({ error: "missing playerId" });
-      return;
-    }
     const { itemId } = req.body;
     if (!itemId) {
       res.status(400).json({ error: "missing itemId" });
       return;
     }
-    const result = await purchaseShopItem(playerId, itemId);
-    res.status(result.success ? 200 : 400).json(result);
-  } catch (err) {
-    req.log.error({ err });
-    res.status(500).json({ error: "internal" });
-  }
-});
-router21.post("/economy/season-gems", async (req, res) => {
-  try {
-    const { playerId, division, rank } = req.body;
-    if (!playerId || !division || rank === void 0) {
-      res.status(400).json({ error: "missing fields: playerId, division, rank" });
+    const result = await purchaseShopItem(req.params.playerId, itemId);
+    if (!result.success) {
+      res.status(400).json({ error: result.reason });
       return;
     }
-    const playerIdStr = String(playerId);
-    const divStr = String(division).toLowerCase();
-    const rankNum = Number(rank);
-    const divMap = {
-      "division iii": "div3",
-      "div3": "div3",
-      "division3": "div3",
-      "division ii": "div2",
-      "div2": "div2",
-      "division2": "div2",
-      "professional": "pro",
-      "pro": "pro",
-      "champions": "champions",
-      "champion": "champions"
-    };
-    const economyDiv = divMap[divStr];
-    if (!economyDiv) {
-      res.status(400).json({ error: `Unknown division: ${division}` });
-      return;
-    }
-    const gemsAwarded = SEASON_GEM_TABLE[economyDiv]?.[rankNum] ?? 0;
-    if (gemsAwarded === 0) {
-      res.json({ gemsAwarded: 0, reason: "No gem reward for this rank/division", division: economyDiv, rank: rankNum });
-      return;
-    }
-    const [player] = await db.select({ gems: playersTable.gems, coins: playersTable.coins }).from(playersTable).where(eq(playersTable.id, playerIdStr)).limit(1);
-    if (!player) {
-      res.status(404).json({ error: "Player not found" });
-      return;
-    }
-    const newGems = player.gems + gemsAwarded;
-    await db.update(playersTable).set({ gems: newGems, updatedAt: /* @__PURE__ */ new Date() }).where(eq(playersTable.id, playerIdStr));
-    await db.insert(coinTransactionsTable).values({
-      id: nanoid3(),
-      playerId: playerIdStr,
-      amount: 0,
-      type: "gem_earn",
-      source: "season_end",
-      description: `Season end: rank #${rankNum} in ${economyDiv.toUpperCase()} (+${gemsAwarded} gems)`,
-      balanceAfter: player.coins
-    });
-    res.json({
-      gemsAwarded,
-      newGems,
-      division: economyDiv,
-      rank: rankNum,
-      reason: `Rank #${rankNum} in ${economyDiv.toUpperCase()}`
-    });
-  } catch (err) {
-    req.log.error({ err });
-    res.status(500).json({ error: "internal" });
-  }
-});
-router21.get("/economy/player/:playerId/balance", async (req, res) => {
-  try {
-    const playerId = parsePlayerId(req);
-    if (!playerId) {
-      res.status(400).json({ error: "missing playerId" });
-      return;
-    }
-    const [player] = await db.select({ coins: playersTable.coins, gems: playersTable.gems }).from(playersTable).where(eq(playersTable.id, playerId)).limit(1);
-    if (!player) {
-      res.status(404).json({ error: "Player not found" });
-      return;
-    }
-    res.json({ coins: player.coins, gems: player.gems });
+    res.status(201).json(result);
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -92367,8 +92024,7 @@ router21.get("/daily/status/:playerId", async (req, res) => {
       res.status(400).json({ error: "missing playerId" });
       return;
     }
-    const status = await getDailyStatus(playerId);
-    res.json(status);
+    res.json(await getDailyStatus(playerId));
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -92400,6 +92056,24 @@ router21.post("/daily/claim", async (req, res) => {
         return;
     }
     res.status(result.awarded ? 200 : 409).json(result);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router21.post("/economy/daily/:playerId/login", async (req, res) => {
+  try {
+    const result = await claimLoginReward(parsePlayerId(req));
+    res.status(result.awarded ? 200 : 409).json(result);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
+router21.post("/economy/daily/:playerId/match", async (req, res) => {
+  try {
+    await recordMatchPlayed(parsePlayerId(req));
+    res.json({ ok: true });
   } catch (err) {
     req.log.error({ err });
     res.status(500).json({ error: "internal" });
@@ -92541,8 +92215,8 @@ var INTEGRATION_MANIFEST = [
 ];
 async function probeCoinTxSource(source) {
   try {
-    const rows = await db.select({ id: coinTransactionsTable.id, createdAt: coinTransactionsTable.createdAt }).from(coinTransactionsTable).where(eq(coinTransactionsTable.source, source)).orderBy(desc(coinTransactionsTable.createdAt)).limit(1);
-    const total = await db.select({ n: count() }).from(coinTransactionsTable).where(eq(coinTransactionsTable.source, source));
+    const rows = await db.select({ id: walletTransactionsTable.id, createdAt: walletTransactionsTable.createdAt }).from(walletTransactionsTable).where(eq(walletTransactionsTable.source, source)).orderBy(desc(walletTransactionsTable.createdAt)).limit(1);
+    const total = await db.select({ n: count() }).from(walletTransactionsTable).where(eq(walletTransactionsTable.source, source));
     return { count: total[0]?.n ?? 0, lastAt: rows[0]?.createdAt?.toISOString() };
   } catch {
     return { count: 0 };
@@ -92550,9 +92224,9 @@ async function probeCoinTxSource(source) {
 }
 async function probeGemsTx(source) {
   try {
-    const rows = await db.select({ n: count() }).from(coinTransactionsTable).where(and(
-      eq(coinTransactionsTable.type, "gem_earn"),
-      eq(coinTransactionsTable.source, source)
+    const rows = await db.select({ n: count() }).from(walletTransactionsTable).where(and(
+      eq(walletTransactionsTable.type, "gem_earn"),
+      eq(walletTransactionsTable.source, source)
     ));
     return { count: rows[0]?.n ?? 0 };
   } catch {
@@ -92577,7 +92251,7 @@ async function probeDailyField(field) {
 async function probeTableRows(key) {
   try {
     if (key === "gems_column") {
-      const [r] = await db.select({ n: count() }).from(playersTable).where(gte(playersTable.gems, 0));
+      const [r] = await db.select({ n: count() }).from(walletTransactionsTable);
       return { rowCount: r?.n ?? 0, ok: (r?.n ?? 0) >= 0 };
     }
     if (key === "user_daily_economy") {
@@ -92939,33 +92613,24 @@ function dateStr(d) {
 }
 async function getEconomyMetrics(periodDays = 7) {
   const since = daysAgo(periodDays);
-  const earnRows = await db.select({ total: sum(coinTransactionsTable.amount) }).from(coinTransactionsTable).where(
+  const earnRows = await db.select({ total: sum(walletTransactionsTable.amount) }).from(walletTransactionsTable).where(
     and(
-      eq(coinTransactionsTable.type, "earn"),
-      gte(coinTransactionsTable.createdAt, since)
+      eq(walletTransactionsTable.type, "earn"),
+      gte(walletTransactionsTable.createdAt, since)
     )
   );
   const totalEarned = Number(earnRows[0]?.total ?? 0);
   const spendRows = await db.select({ total: sum(storePurchasesTable.coinsSpent) }).from(storePurchasesTable).where(gte(storePurchasesTable.createdAt, since));
   const totalSpent = Number(spendRows[0]?.total ?? 0);
-  const allPlayers = await db.select({ id: playersTable.id, coins: playersTable.coins, gems: playersTable.gems }).from(playersTable);
+  const allPlayers = await db.select({ id: playersTable.id }).from(playersTable);
   const totalUsers = allPlayers.length || 1;
-  const totalGems = allPlayers.reduce((sum5, p) => sum5 + (p.gems ?? 0), 0);
-  const gemsPerLeague = {
-    div3: allPlayers.filter((p) => (p.gems ?? 0) <= 1).length,
-    div2: allPlayers.filter((p) => (p.gems ?? 0) === 2).length,
-    pro: allPlayers.filter((p) => (p.gems ?? 0) >= 3 && (p.gems ?? 0) < 5).length,
-    champions: allPlayers.filter((p) => (p.gems ?? 0) >= 5).length
-  };
-  const allCoins = allPlayers.map((p) => p.coins ?? 0);
-  const p25 = percentile(allCoins, 25);
-  const p75 = percentile(allCoins, 75);
-  const p95 = percentile(allCoins, 95);
+  const totalGems = 0;
+  const gemsPerLeague = { div3: 0, div2: 0, pro: 0, champions: 0 };
   const rarityDistribution = {
-    common: allPlayers.filter((p) => (p.coins ?? 0) <= p25).length,
-    uncommon: allPlayers.filter((p) => (p.coins ?? 0) > p25 && (p.coins ?? 0) <= p75).length,
-    rare: allPlayers.filter((p) => (p.coins ?? 0) > p75 && (p.coins ?? 0) <= p95).length,
-    legendary: allPlayers.filter((p) => (p.coins ?? 0) > p95).length
+    common: Math.floor(totalUsers * 0.5),
+    uncommon: Math.floor(totalUsers * 0.3),
+    rare: Math.floor(totalUsers * 0.15),
+    legendary: Math.ceil(totalUsers * 0.05)
   };
   const coinsEarnedPerDay = totalEarned / periodDays;
   const coinsSpentPerDay = totalSpent / periodDays;
@@ -93083,11 +92748,11 @@ async function buildBalanceReport() {
   };
 }
 async function computeWeekSnapshot(startDate, endDate) {
-  const earnRows = await db.select({ total: sum(coinTransactionsTable.amount) }).from(coinTransactionsTable).where(
+  const earnRows = await db.select({ total: sum(walletTransactionsTable.amount) }).from(walletTransactionsTable).where(
     and(
-      eq(coinTransactionsTable.type, "earn"),
-      gte(coinTransactionsTable.createdAt, startDate),
-      lte(coinTransactionsTable.createdAt, endDate)
+      eq(walletTransactionsTable.type, "earn"),
+      gte(walletTransactionsTable.createdAt, startDate),
+      lte(walletTransactionsTable.createdAt, endDate)
     )
   );
   const spendRows = await db.select({ total: sum(storePurchasesTable.coinsSpent) }).from(storePurchasesTable).where(
@@ -93146,12 +92811,6 @@ async function getWeeklyAnalysis() {
 }
 function round2(n) {
   return Math.round(n * 100) / 100;
-}
-function percentile(arr, p) {
-  if (arr.length === 0) return 0;
-  const sorted = [...arr].sort((a, b) => a - b);
-  const idx = Math.floor(p / 100 * sorted.length);
-  return sorted[Math.min(idx, sorted.length - 1)] ?? 0;
 }
 
 // src/routes/economy-balance.ts
@@ -93262,12 +92921,12 @@ async function normalizeReward(input) {
   let dailyEarned = input.dailyTotal ?? 0;
   if (input.dailyTotal === void 0) {
     try {
-      const rows = await db.select({ total: sum(coinTransactionsTable.amount) }).from(coinTransactionsTable).where(
+      const rows = await db.select({ total: sum(walletTransactionsTable.amount) }).from(walletTransactionsTable).where(
         and(
-          eq(coinTransactionsTable.playerId, playerId),
-          eq(coinTransactionsTable.type, "earn"),
-          gte(coinTransactionsTable.createdAt, today),
-          lte(coinTransactionsTable.createdAt, tomorrow)
+          eq(walletTransactionsTable.playerId, playerId),
+          eq(walletTransactionsTable.type, "earn"),
+          gte(walletTransactionsTable.createdAt, today),
+          lte(walletTransactionsTable.createdAt, tomorrow)
         )
       );
       dailyEarned = Number(rows[0]?.total ?? 0);
@@ -93307,11 +92966,11 @@ async function checkExploit(playerId, source) {
   if (source === "match_result") {
     try {
       const oneHourAgo = new Date(now - 36e5);
-      const rows = await db.select({ cnt: count() }).from(coinTransactionsTable).where(
+      const rows = await db.select({ cnt: count() }).from(walletTransactionsTable).where(
         and(
-          eq(coinTransactionsTable.playerId, playerId),
-          eq(coinTransactionsTable.source, "match_result"),
-          gte(coinTransactionsTable.createdAt, oneHourAgo)
+          eq(walletTransactionsTable.playerId, playerId),
+          eq(walletTransactionsTable.source, "match_result"),
+          gte(walletTransactionsTable.createdAt, oneHourAgo)
         )
       );
       const matchesThisHour = Number(rows[0]?.cnt ?? 0);
@@ -93354,19 +93013,19 @@ async function getStabilityReport() {
   const since7d = new Date(Date.now() - 7 * 864e5);
   const now = /* @__PURE__ */ new Date();
   const [earnRows, spendRows, playerRows, exploitRows] = await Promise.all([
-    db.select({ total: sum(coinTransactionsTable.amount) }).from(coinTransactionsTable).where(and(
-      eq(coinTransactionsTable.type, "earn"),
-      gte(coinTransactionsTable.createdAt, since7d)
+    db.select({ total: sum(walletTransactionsTable.amount) }).from(walletTransactionsTable).where(and(
+      eq(walletTransactionsTable.type, "earn"),
+      gte(walletTransactionsTable.createdAt, since7d)
     )),
-    db.select({ total: sum(coinTransactionsTable.amount) }).from(coinTransactionsTable).where(and(
-      eq(coinTransactionsTable.type, "spend"),
-      gte(coinTransactionsTable.createdAt, since7d)
+    db.select({ total: sum(walletTransactionsTable.amount) }).from(walletTransactionsTable).where(and(
+      eq(walletTransactionsTable.type, "spend"),
+      gte(walletTransactionsTable.createdAt, since7d)
     )),
-    db.select({ id: playersTable.id, gems: playersTable.gems, coins: playersTable.coins }).from(playersTable),
+    db.select({ id: playersTable.id }).from(playersTable),
     // Count suspicious/exploit-flagged transactions (very large single amounts)
-    db.select({ cnt: count() }).from(coinTransactionsTable).where(and(
-      gte(coinTransactionsTable.amount, HARD_CAPS.maxCoinsPerEvent * 3),
-      gte(coinTransactionsTable.createdAt, since7d)
+    db.select({ cnt: count() }).from(walletTransactionsTable).where(and(
+      gte(walletTransactionsTable.amount, HARD_CAPS.maxCoinsPerEvent * 3),
+      gte(walletTransactionsTable.createdAt, since7d)
     ))
   ]);
   const totalEarned = Number(earnRows[0]?.total ?? 0);
@@ -93732,7 +93391,6 @@ router25.get("/social/profile/:id", async (req, res) => {
       username: playersTable.username,
       level: playersTable.level,
       xp: playersTable.xp,
-      coins: playersTable.coins,
       elo: playersTable.elo,
       fame: playersTable.fame,
       language: playersTable.language,
@@ -94214,7 +93872,7 @@ init_src();
 init_nanoid();
 init_notificationService();
 var router28 = (0, import_express28.Router)();
-async function getOrCreateWallet2(playerId) {
+async function getOrCreateWallet3(playerId) {
   const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
   if (existing) return existing;
   const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 }).returning();
@@ -94223,7 +93881,7 @@ async function getOrCreateWallet2(playerId) {
 router28.get("/wallet/:playerId", async (req, res) => {
   try {
     const { playerId } = req.params;
-    const wallet = await getOrCreateWallet2(playerId);
+    const wallet = await getOrCreateWallet3(playerId);
     const [incomeRow] = await db.select({ total: sql`coalesce(sum(amount),0)` }).from(walletTransactionsTable).where(and(eq(walletTransactionsTable.playerId, playerId), gt(walletTransactionsTable.amount, 0)));
     const [spendingRow] = await db.select({ total: sql`coalesce(sum(abs(amount)),0)` }).from(walletTransactionsTable).where(and(eq(walletTransactionsTable.playerId, playerId), lt(walletTransactionsTable.amount, 0)));
     res.json({
@@ -94273,7 +93931,7 @@ router28.post("/wallet/credit", async (req, res) => {
       res.status(400).json({ error: "amount must be a non-zero integer" });
       return;
     }
-    const wallet = await getOrCreateWallet2(String(playerId));
+    const wallet = await getOrCreateWallet3(String(playerId));
     const newBalance = wallet.dnBalance + dn;
     if (newBalance < 0) {
       res.status(400).json({ error: "insufficient balance" });
@@ -95065,7 +94723,7 @@ function calculateMatchResult(answers, shapeSection) {
   const correctAnswers = answers.filter((a) => a.correct).length;
   const wrongAnswers = answers.filter((a) => !a.correct).length;
   const totalPoints = correctAnswers;
-  const totalTime = answers.reduce((sum5, a) => sum5 + a.responseTime, 0);
+  const totalTime = answers.reduce((sum4, a) => sum4 + a.responseTime, 0);
   const totalQuestions = correctAnswers + wrongAnswers;
   const accuracy = totalQuestions > 0 ? correctAnswers / totalQuestions * 100 : 0;
   return {
@@ -95351,7 +95009,7 @@ if (process.env.NODE_ENV === "production") {
     globalThis.__dirname ?? import.meta.dirname,
     "../../skill-league/dist/public"
   );
-  if (existsSync6(frontendDist)) {
+  if (existsSync4(frontendDist)) {
     app.use(import_express35.default.static(frontendDist));
     app.get("*", (_req, res) => {
       res.sendFile(path.join(frontendDist, "index.html"));

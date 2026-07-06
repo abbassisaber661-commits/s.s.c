@@ -14,7 +14,7 @@
 import { desc, eq, and, gte, count } from 'drizzle-orm';
 import {
   db,
-  coinTransactionsTable,
+  walletTransactionsTable,
   playersTable,
   postsTable,
   pvpMatchesTable,
@@ -230,15 +230,15 @@ const INTEGRATION_MANIFEST: IntegrationPoint[] = [
 async function probeCoinTxSource(source: string): Promise<{ count: number; lastAt?: string }> {
   try {
     const rows = await db
-      .select({ id: coinTransactionsTable.id, createdAt: coinTransactionsTable.createdAt })
-      .from(coinTransactionsTable)
-      .where(eq(coinTransactionsTable.source, source))
-      .orderBy(desc(coinTransactionsTable.createdAt))
+      .select({ id: walletTransactionsTable.id, createdAt: walletTransactionsTable.createdAt })
+      .from(walletTransactionsTable)
+      .where(eq(walletTransactionsTable.type, source))
+      .orderBy(desc(walletTransactionsTable.createdAt))
       .limit(1);
     const total = await db
       .select({ n: count() })
-      .from(coinTransactionsTable)
-      .where(eq(coinTransactionsTable.source, source));
+      .from(walletTransactionsTable)
+      .where(eq(walletTransactionsTable.type, source));
     return { count: total[0]?.n ?? 0, lastAt: rows[0]?.createdAt?.toISOString() };
   } catch {
     return { count: 0 };
@@ -249,10 +249,10 @@ async function probeGemsTx(source: string): Promise<{ count: number }> {
   try {
     const rows = await db
       .select({ n: count() })
-      .from(coinTransactionsTable)
+      .from(walletTransactionsTable)
       .where(and(
-        eq(coinTransactionsTable.type, 'gem_earn'),
-        eq(coinTransactionsTable.source, source),
+        eq(walletTransactionsTable.type, 'gem_earn'),
+        eq(walletTransactionsTable.type, source),
       ));
     return { count: rows[0]?.n ?? 0 };
   } catch {
@@ -279,7 +279,8 @@ async function probeDailyField(field: 'likes_received' | 'comments_received'): P
 async function probeTableRows(key: string): Promise<{ rowCount: number; ok: boolean }> {
   try {
     if (key === 'gems_column') {
-      const [r] = await db.select({ n: count() }).from(playersTable).where(gte(playersTable.gems, 0));
+      // gems removed — check DN$ wallet table instead
+      const [r] = await db.select({ n: count() }).from(walletTransactionsTable);
       return { rowCount: r?.n ?? 0, ok: (r?.n ?? 0) >= 0 };
     }
     if (key === 'user_daily_economy') {

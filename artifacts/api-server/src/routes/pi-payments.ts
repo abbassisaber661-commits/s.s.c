@@ -197,19 +197,14 @@ router.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) =>
         data: { receiverId, amount: pending.amount, emoji, currency: "pi" },
       }).catch(() => {});
     } else if (productInfo?.coins) {
-      const [player] = await db.select({ coins: playersTable.coins })
-        .from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
-      if (player) {
-        const newCoins = player.coins + productInfo.coins;
-        await db.update(playersTable).set({ coins: newCoins, updatedAt: new Date() })
-          .where(eq(playersTable.id, pending.playerId));
-        const txRowId = nanoid();
-        const desc = `Pi purchase: ${productInfo.name}`;
-        await db.execute(sql`
-          INSERT INTO coin_transactions (id, player_id, amount, type, source, description, balance_after)
-          VALUES (${txRowId}, ${pending.playerId}, ${productInfo.coins}, 'add', 'pi_purchase', ${desc}, ${newCoins})
-        `);
-      }
+      // Award DN$ for Pi product purchases (coins → DN$ migration)
+      const { awardDN } = await import('../lib/dn-service.js');
+      await awardDN(
+        pending.playerId,
+        productInfo.coins,
+        'pi_purchase',
+        `Pi purchase: ${productInfo.name}`,
+      ).catch(() => {});
     }
 
     await logAudit(pending.playerId, "pi_payment_complete", "pi_payment", String(paymentId),

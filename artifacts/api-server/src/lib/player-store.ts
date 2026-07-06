@@ -76,8 +76,7 @@ export interface PlayerProfile {
   streak:          number;    // current consecutive win streak
   bestStreak:      number;    // all-time best streak
   badges:          string[];  // badge ids
-  arcadeCoins:     number;    // coins earned from arcade/daily (game layer)
-  gems:            number;    // premium currency earned from ranked matches
+  arcadePoints:    number;    // points earned from arcade mode (game layer)
   totalWins:       number;
   totalDraws:      number;
   totalLosses:     number;
@@ -158,7 +157,7 @@ export function getOrCreateProfile(playerId: string, playerName: string): Player
     profile = {
       id: randomUUID(), playerId, playerName,
       xp: 0, level: 1, streak: 0, bestStreak: 0,
-      badges: [], arcadeCoins: 0, gems: 0,
+      badges: [], arcadePoints: 0,
       totalWins: 0, totalDraws: 0, totalLosses: 0,
       arcadePlays: 0, dailyClaimCount: 0,
       lastDailyAt: null, createdAt: now, updatedAt: now,
@@ -260,7 +259,7 @@ export function playArcadeGame(
   const oldLevel = profile.level;
 
   profile.xp         += reward.xp;
-  profile.arcadeCoins += reward.coins;
+  profile.arcadePoints += reward.xp;
   profile.arcadePlays++;
   profile.level       = calcLevel(profile.xp);
   profile.updatedAt   = new Date().toISOString();
@@ -273,7 +272,7 @@ export function playArcadeGame(
   return {
     game:        reward,
     xpGained:    reward.xp,
-    coinsGained: reward.coins,
+    arcadePoints: reward.xp,
     newXp:       profile.xp,
     newLevel:    profile.level,
     levelledUp:  profile.level > oldLevel,
@@ -303,7 +302,7 @@ export function claimDailyReward(
 
   const oldLevel = profile.level;
   profile.xp          += DAILY_XP;
-  profile.arcadeCoins += DAILY_COINS;
+  profile.arcadePoints += DAILY_XP;
   profile.level        = calcLevel(profile.xp);
   profile.lastDailyAt  = today;
   profile.dailyClaimCount++;

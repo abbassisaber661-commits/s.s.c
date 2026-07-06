@@ -1,147 +1,4 @@
 import { z } from 'zod/v4';
-export declare const coinTransactionsTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
-    name: "coin_transactions";
-    schema: undefined;
-    columns: {
-        id: import("drizzle-orm/pg-core").PgColumn<{
-            name: "id";
-            tableName: "coin_transactions";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: true;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        playerId: import("drizzle-orm/pg-core").PgColumn<{
-            name: "player_id";
-            tableName: "coin_transactions";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        amount: import("drizzle-orm/pg-core").PgColumn<{
-            name: "amount";
-            tableName: "coin_transactions";
-            dataType: "number";
-            columnType: "PgInteger";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        type: import("drizzle-orm/pg-core").PgColumn<{
-            name: "type";
-            tableName: "coin_transactions";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        source: import("drizzle-orm/pg-core").PgColumn<{
-            name: "source";
-            tableName: "coin_transactions";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        description: import("drizzle-orm/pg-core").PgColumn<{
-            name: "description";
-            tableName: "coin_transactions";
-            dataType: "string";
-            columnType: "PgText";
-            data: string;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: [string, ...string[]];
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        balanceAfter: import("drizzle-orm/pg-core").PgColumn<{
-            name: "balance_after";
-            tableName: "coin_transactions";
-            dataType: "number";
-            columnType: "PgInteger";
-            data: number;
-            driverParam: string | number;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        createdAt: import("drizzle-orm/pg-core").PgColumn<{
-            name: "created_at";
-            tableName: "coin_transactions";
-            dataType: "date";
-            columnType: "PgTimestamp";
-            data: Date;
-            driverParam: string;
-            notNull: true;
-            hasDefault: true;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-    };
-    dialect: "pg";
-}>;
 export declare const storePurchasesTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "store_purchases";
     schema: undefined;
@@ -231,8 +88,8 @@ export declare const storePurchasesTable: import("drizzle-orm/pg-core").PgTableW
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        coinsSpent: import("drizzle-orm/pg-core").PgColumn<{
-            name: "coins_spent";
+        dnSpent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "dn_spent";
             tableName: "store_purchases";
             dataType: "number";
             columnType: "PgInteger";
@@ -524,7 +381,7 @@ export declare const seasonsTable: import("drizzle-orm/pg-core").PgTableWithColu
             columnType: "PgJsonb";
             data: {
                 rank: number;
-                coins: number;
+                dn: number;
                 xp: number;
                 badge?: string;
             }[];
@@ -541,7 +398,7 @@ export declare const seasonsTable: import("drizzle-orm/pg-core").PgTableWithColu
         }, {}, {
             $type: {
                 rank: number;
-                coins: number;
+                dn: number;
                 xp: number;
                 badge?: string;
             }[];
@@ -1376,45 +1233,176 @@ export declare const giftLedgerTable: import("drizzle-orm/pg-core").PgTableWithC
     };
     dialect: "pg";
 }>;
-export declare const insertCoinTxSchema: z.ZodObject<{
-    id: z.ZodString;
-    playerId: z.ZodString;
-    amount: z.ZodInt;
-    type: z.ZodString;
-    source: z.ZodString;
-    description: z.ZodOptional<z.ZodString>;
-    balanceAfter: z.ZodOptional<z.ZodInt>;
-}, {
-    out: {};
-    in: {};
+export declare const coinTransactionsTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "coin_transactions";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "coin_transactions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        playerId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "player_id";
+            tableName: "coin_transactions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        amount: import("drizzle-orm/pg-core").PgColumn<{
+            name: "amount";
+            tableName: "coin_transactions";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        type: import("drizzle-orm/pg-core").PgColumn<{
+            name: "type";
+            tableName: "coin_transactions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        source: import("drizzle-orm/pg-core").PgColumn<{
+            name: "source";
+            tableName: "coin_transactions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        description: import("drizzle-orm/pg-core").PgColumn<{
+            name: "description";
+            tableName: "coin_transactions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        balanceAfter: import("drizzle-orm/pg-core").PgColumn<{
+            name: "balance_after";
+            tableName: "coin_transactions";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "coin_transactions";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
 }>;
+export type CoinTransaction = typeof coinTransactionsTable.$inferSelect;
 export declare const insertStorePurchSchema: z.ZodObject<{
     id: z.ZodString;
+    status: z.ZodOptional<z.ZodString>;
     playerId: z.ZodString;
     itemId: z.ZodString;
     itemName: z.ZodString;
     piPrice: z.ZodOptional<z.ZodNumber>;
-    coinsSpent: z.ZodOptional<z.ZodInt>;
+    dnSpent: z.ZodOptional<z.ZodInt>;
     piTxId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    status: z.ZodOptional<z.ZodString>;
 }, {
     out: {};
     in: {};
 }>;
 export declare const insertBoostSchema: z.ZodObject<{
     id: z.ZodString;
-    playerId: z.ZodString;
     type: z.ZodOptional<z.ZodString>;
-    multiplier: z.ZodOptional<z.ZodNumber>;
-    hours: z.ZodOptional<z.ZodInt>;
     startAt: z.ZodOptional<z.ZodDate>;
     endAt: z.ZodDate;
+    playerId: z.ZodString;
+    multiplier: z.ZodOptional<z.ZodNumber>;
+    hours: z.ZodOptional<z.ZodInt>;
     active: z.ZodOptional<z.ZodBoolean>;
 }, {
     out: {};
     in: {};
 }>;
-export type CoinTransaction = typeof coinTransactionsTable.$inferSelect;
 export type StorePurchase = typeof storePurchasesTable.$inferSelect;
 export type BoostUsage = typeof boostUsageTable.$inferSelect;
 export type Season = typeof seasonsTable.$inferSelect;

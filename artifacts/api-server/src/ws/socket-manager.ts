@@ -1,6 +1,7 @@
 import { Server as HttpServer } from "http";
 import { Server as IOServer, Socket } from "socket.io";
-import { db, pvpMatchesTable, playersTable, notificationsTable, postsTable, messagesTable, coinTransactionsTable } from "@workspace/db";
+import { db, pvpMatchesTable, playersTable, notificationsTable, postsTable, messagesTable, walletsTable, walletTransactionsTable } from "@workspace/db";
+import { awardDN, spendDN, getOrCreateWallet } from "../lib/dn-service.js";
 import { desc, eq, and, or, sql } from "drizzle-orm";
 import { logger } from "../lib/logger.js";
 
@@ -16,14 +17,15 @@ interface ArenaConfig {
   displayName:     string;
 }
 
+// DN$ entry stakes (not Pi — Pi is for league season entry, not PvP stakes)
 const ARENA_CONFIG: Record<string, ArenaConfig> = {
-  training:  { entryCost: 0,   winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Training"  },
-  bronze:    { entryCost: 0,   winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Bronze"    },
-  coin:      { entryCost: 50,  winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Coin"      },
-  silver:    { entryCost: 50,  winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Silver"    },
-  pro:       { entryCost: 200, winMultiplier: 3.0, drawMultiplier: 1.0, eloK: 32, displayName: "Pro"       },
-  elite:     { entryCost: 200, winMultiplier: 3.0, drawMultiplier: 1.0, eloK: 32, displayName: "Elite"     },
-  champion:  { entryCost: 500, winMultiplier: 4.0, drawMultiplier: 1.2, eloK: 48, displayName: "Champion"  },
+  training:  { entryCost: 0,  winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Training"  },
+  bronze:    { entryCost: 0,  winMultiplier: 1.5, drawMultiplier: 0.5, eloK: 16, displayName: "Bronze"    },
+  coin:      { entryCost: 5,  winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Division II" },
+  silver:    { entryCost: 5,  winMultiplier: 2.5, drawMultiplier: 0.8, eloK: 24, displayName: "Silver"    },
+  pro:       { entryCost: 15, winMultiplier: 3.0, drawMultiplier: 1.0, eloK: 32, displayName: "Pro"       },
+  elite:     { entryCost: 15, winMultiplier: 3.0, drawMultiplier: 1.0, eloK: 32, displayName: "Elite"     },
+  champion:  { entryCost: 30, winMultiplier: 4.0, drawMultiplier: 1.2, eloK: 48, displayName: "Champions" },
 };
 
 const DEFAULT_ARENA: ArenaConfig = { entryCost: 0, winMultiplier: 2.0, drawMultiplier: 0.7, eloK: 24, displayName: "Standard" };
@@ -533,15 +535,15 @@ function endRoom(io: IOServer, roomId: string) {
   const scoreVal   = won ? 1 : draw ? 0.5 : 0;
   const eloChange  = Math.round(K * (scoreVal - expectedA));
 
-  // ── Arena coin reward (uses arena multipliers, stake already pre-deducted) ─
-  // Since stake was pre-deducted at queue entry, coinsNet here is PURELY winnings
-  const coinsWon  = won  ? Math.round(room.stake * arena.winMultiplier)
-                  : draw ? Math.round(room.stake * arena.drawMultiplier)
-                  : 0;
-  // coinsNet = net change from the PRE-DEDUCTED state
-  // If won: player gets coinsWon back (stake already gone) → net = coinsWon
+  // ── Arena DN$ reward (uses arena multipliers, stake already pre-deducted) ─
+  // Since stake was pre-deducted at queue entry, dnNet here is PURELY winnings
+  const dnWon  = won  ? Math.round(room.stake * arena.winMultiplier)
+               : draw ? Math.round(room.stake * arena.drawMultiplier)
+               : 0;
+  // dnNet = net DN$ change from the PRE-DEDUCTED state
+  // If won: player gets dnWon back (stake already gone) → net = dnWon
   // If lost/draw 0: player already lost stake → net = 0 here (stake was pre-deducted)
-  const coinsNet  = coinsWon;   // stake was already deducted at queue entry
+  const dnNet  = dnWon;   // stake was already deducted at queue entry
 
   // ── XP (scales with arena tier + real vs bot) ────────────────────────────
   const xpGained = isBot
@@ -564,8 +566,8 @@ function endRoom(io: IOServer, roomId: string) {
     isBot,
     leagueId:          room.leagueId,
     stake:             room.stake,
-    coinReward:        coinsWon,
-    coinsNet,
+    dnReward:          dnWon,
+    dnNet,
     eloChange,
     xpGained,
     newLp:             newLpA,
@@ -573,7 +575,7 @@ function endRoom(io: IOServer, roomId: string) {
     newLeagueDivision: newDivA,
   });
 
-  logger.info({ roomId, scoreA: room.playerA.score, scoreB: room.playerB.score, won, eloChange, coinsNet, newDivA }, "Match ended");
+  logger.info({ roomId, scoreA: room.playerA.score, scoreB: room.playerB.score, won, eloChange, dnNet, newDivA }, "Match ended");
 
   // ── Persist to DB (fire-and-forget) ──────────────────────────────────────
   ;(async () => {
@@ -585,10 +587,10 @@ function endRoom(io: IOServer, roomId: string) {
       const bWon        = !won && !draw;
       const bDraw       = draw;
       const bEloChange  = Math.round(K * ((1 - scoreVal) - (1 - expectedA)));
-      const bCoinsWon   = bWon  ? Math.round(room.stake * arena.winMultiplier)
+      const bDnWon      = bWon  ? Math.round(room.stake * arena.winMultiplier)
                         : bDraw ? Math.round(room.stake * arena.drawMultiplier)
                         : 0;
-      const bCoinsNet   = bCoinsWon;
+      const bDnNet      = bDnWon;
       const bXp         = isBot ? 0 : (bWon ? 120 + (arena.eloK - 16) * 2 : bDraw ? 50 : 25);
       const newEloB     = Math.max(800, room.playerB.elo + bEloChange);
       const { lp: newLpB, leagueDivision: newDivB } = computeLP(newEloB);
@@ -603,11 +605,11 @@ function endRoom(io: IOServer, roomId: string) {
         leagueId:     room.leagueId,
         matchType:    isBot ? "bot" : "pvp",
         duration:     room.duration,
-        coinsStake:   room.stake,
+        dnStake:   room.stake,
         eloChangeA:   eloChange,
         eloChangeB:   isBot ? 0 : bEloChange,
-        coinsWonA:    coinsWon,
-        coinsWonB:    isBot ? 0 : bCoinsWon,
+        dnWonA:    dnWon,
+        dnWonB:    isBot ? 0 : bDnWon,
         xpGainedA:    xpGained,
         xpGainedB:    isBot ? 0 : bXp,
         finishedAt:   new Date(),
@@ -615,12 +617,11 @@ function endRoom(io: IOServer, roomId: string) {
 
       // ── Update real player A stats in DB ──────────────────────────────
       if (room.playerA.playerId && room.playerA.playerId !== "bot") {
-        const [aRow] = await db.update(playersTable)
+        await db.update(playersTable)
           .set({
             elo:            sql`GREATEST(800, ${playersTable.elo} + ${eloChange})`,
             lp:             newLpA,
             leagueDivision: newDivA,
-            coins:          sql`GREATEST(0, ${playersTable.coins} + ${coinsNet})`,
             xp:             sql`${playersTable.xp} + ${xpGained}`,
             pvpWins:        won  ? sql`${playersTable.pvpWins} + 1`   : playersTable.pvpWins,
             pvpLosses:      (!won && !draw) ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
@@ -631,32 +632,27 @@ function endRoom(io: IOServer, roomId: string) {
             updatedAt:      new Date(),
             lastActiveAt:   new Date(),
           })
-          .where(eq(playersTable.id, room.playerA.playerId))
-          .returning({ coins: playersTable.coins });
+          .where(eq(playersTable.id, room.playerA.playerId));
 
-        if (coinsWon > 0) {
-          await db.insert(coinTransactionsTable).values({
-            id:          `${matchId}_a`,
-            playerId:    room.playerA.playerId,
-            amount:      coinsWon,
-            type:        "win",
-            source:      isBot ? "bot_match" : "pvp_match",
-            description: `${isBot ? "Bot" : "PvP"} match ${arena.displayName} — ${won ? "win" : "draw"} reward`,
-            balanceAfter: aRow?.coins ?? 0,
-          }).onConflictDoNothing();
+        if (dnWon > 0) {
+          awardDN(
+            room.playerA.playerId,
+            dnWon,
+            isBot ? "bot_match" : "pvp_match",
+            `${isBot ? "Bot" : "PvP"} match ${arena.displayName} — ${won ? "win" : "draw"} DN$ reward`,
+          ).catch(() => {});
         }
       }
 
       // ── Update real player B stats in DB (non-bot PvP) ─────────────────
-      // Note: bWon/bDraw/bEloChange/bCoinsWon/bCoinsNet/bXp/newLpB/newDivB
+      // Note: bWon/bDraw/bEloChange/bDnWon/bDnNet/bXp/newLpB/newDivB
       //       are all computed above before the pvpMatchesTable insert
       if (!isBot && room.playerB.playerId && room.playerB.playerId !== "bot") {
-        const [bRow] = await db.update(playersTable)
+        await db.update(playersTable)
           .set({
             elo:            sql`GREATEST(800, ${playersTable.elo} + ${bEloChange})`,
             lp:             newLpB,
             leagueDivision: newDivB,
-            coins:          sql`GREATEST(0, ${playersTable.coins} + ${bCoinsNet})`,
             xp:             sql`${playersTable.xp} + ${bXp}`,
             pvpWins:        bWon  ? sql`${playersTable.pvpWins} + 1`   : playersTable.pvpWins,
             pvpLosses:      (!bWon && !bDraw) ? sql`${playersTable.pvpLosses} + 1` : playersTable.pvpLosses,
@@ -667,19 +663,15 @@ function endRoom(io: IOServer, roomId: string) {
             updatedAt:      new Date(),
             lastActiveAt:   new Date(),
           })
-          .where(eq(playersTable.id, room.playerB.playerId))
-          .returning({ coins: playersTable.coins });
+          .where(eq(playersTable.id, room.playerB.playerId));
 
-        if (bCoinsWon > 0) {
-          await db.insert(coinTransactionsTable).values({
-            id:          `${matchId}_b`,
-            playerId:    room.playerB.playerId,
-            amount:      bCoinsWon,
-            type:        "win",
-            source:      "pvp_match",
-            description: `PvP match ${arena.displayName} — ${bWon ? "win" : "draw"} reward`,
-            balanceAfter: bRow?.coins ?? 0,
-          }).onConflictDoNothing();
+        if (bDnWon > 0) {
+          awardDN(
+            room.playerB.playerId,
+            bDnWon,
+            "pvp_match",
+            `PvP match ${arena.displayName} — ${bWon ? "win" : "draw"} DN$ reward`,
+          ).catch(() => {});
         }
       }
 
@@ -740,28 +732,24 @@ export function setupSocketIO(server: HttpServer): IOServer {
 
       if (stake > 0 && data.playerId && data.playerId !== "bot") {
         try {
-          const [player] = await db.select({ coins: playersTable.coins })
-            .from(playersTable).where(eq(playersTable.id, data.playerId)).limit(1);
+          const wallet = await getOrCreateWallet(data.playerId);
 
-          if (!player || player.coins < stake) {
-            socket.emit("matchmaking:error", { reason: "insufficient_coins", required: stake, have: player?.coins ?? 0 });
+          if (wallet.dnBalance < stake) {
+            socket.emit("matchmaking:error", { reason: "insufficient_dn", required: stake, have: wallet.dnBalance });
             return;
           }
 
-          // Pre-deduct stake so coins are reserved while player waits in queue
-          await db.update(playersTable)
-            .set({ coins: sql`GREATEST(0, ${playersTable.coins} - ${stake})` })
-            .where(eq(playersTable.id, data.playerId));
-
-          await db.insert(coinTransactionsTable).values({
-            id:          `stake_${Date.now()}_${data.playerId.slice(-6)}`,
-            playerId:    data.playerId,
-            amount:      -stake,
-            type:        "stake",
-            source:      "arena_entry",
-            description: `Arena entry reserved: ${arena.displayName}`,
-            balanceAfter: player.coins - stake,
-          }).onConflictDoNothing();
+          // Pre-deduct DN$ stake so balance is reserved while player waits in queue
+          const stakeResult = await spendDN(
+            data.playerId,
+            stake,
+            "arena_entry",
+            `Arena entry stake: ${arena.displayName}`,
+          );
+          if (!stakeResult.success) {
+            socket.emit("matchmaking:error", { reason: "insufficient_dn", required: stake, have: stakeResult.newBalance });
+            return;
+          }
 
           stakeDeducted = true;
         } catch (err) {
@@ -794,18 +782,12 @@ export function setupSocketIO(server: HttpServer): IOServer {
       // Refund pre-deducted stake
       if (entry?.stakeDeducted && entry.stake > 0 && entry.playerId !== "bot") {
         try {
-          await db.update(playersTable)
-            .set({ coins: sql`${playersTable.coins} + ${entry.stake}` })
-            .where(eq(playersTable.id, entry.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id:          `refund_${Date.now()}_${entry.playerId.slice(-6)}`,
-            playerId:    entry.playerId,
-            amount:      entry.stake,
-            type:        "refund",
-            source:      "arena_cancel",
-            description: `Arena entry refunded: ${entry.leagueId}`,
-            balanceAfter: 0,
-          }).onConflictDoNothing();
+          await awardDN(
+            entry.playerId,
+            entry.stake,
+            "arena_cancel",
+            `Arena entry refunded: ${entry.leagueId}`,
+          );
         } catch (err) {
           logger.error({ err }, "matchmaking:cancel refund error");
         }
@@ -1025,18 +1007,12 @@ export function setupSocketIO(server: HttpServer): IOServer {
       // Refund pre-deducted stake if player was still in queue (never matched)
       if (queueEntry?.stakeDeducted && queueEntry.stake > 0 && queueEntry.playerId !== "bot") {
         try {
-          await db.update(playersTable)
-            .set({ coins: sql`${playersTable.coins} + ${queueEntry.stake}` })
-            .where(eq(playersTable.id, queueEntry.playerId));
-          await db.insert(coinTransactionsTable).values({
-            id:          `refund_dc_${Date.now()}_${queueEntry.playerId.slice(-6)}`,
-            playerId:    queueEntry.playerId,
-            amount:      queueEntry.stake,
-            type:        "refund",
-            source:      "arena_disconnect",
-            description: `Arena entry refunded (disconnected): ${queueEntry.leagueId}`,
-            balanceAfter: 0,
-          }).onConflictDoNothing();
+          await awardDN(
+            queueEntry.playerId,
+            queueEntry.stake,
+            "arena_disconnect",
+            `Arena entry refunded (disconnected): ${queueEntry.leagueId}`,
+          );
           logger.info({ playerId: queueEntry.playerId, stake: queueEntry.stake }, "Stake refunded on disconnect");
         } catch (err) {
           logger.error({ err }, "disconnect stake refund error");

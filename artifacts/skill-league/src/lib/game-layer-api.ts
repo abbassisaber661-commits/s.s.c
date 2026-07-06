@@ -63,13 +63,13 @@ export interface ArcadeGame {
 }
 
 export interface ArcadeResult {
-  game:        ArcadeGame;
-  xpGained:    number;
-  coinsGained: number;
-  newXp:       number;
-  newLevel:    number;
-  levelledUp:  boolean;
-  newBadges:   string[];
+  game:          ArcadeGame;
+  xpGained:      number;
+  arcadePoints:  number;
+  newXp:         number;
+  newLevel:      number;
+  levelledUp:    boolean;
+  newBadges:     string[];
 }
 
 export interface DailyResult {

@@ -29,7 +29,7 @@ export interface TrophyUnlock {
 
 export interface PlayerData {
   username: string;
-  coins: number;
+  dnBalance: number;
   highScores: Record<string, number>;
   leaderboard: Record<string, LeaderboardEntry[]>;
   unlockedLeagues: string[];
@@ -54,8 +54,8 @@ export interface PlayerData {
   bestPvpStreak: number;
   tournamentWins: number;
   trophies: TrophyUnlock[];
-  totalCoinsEarned: number;
-  totalCoinsSpent: number;
+  totalDnEarned: number;
+  totalDnSpent: number;
   // Phase 5
   fame: number;
   weeklyChallenge: WeeklyChallengeState;
@@ -91,7 +91,7 @@ function generateUsername(): string {
 
 function migrateOld(old: any): Partial<PlayerData> {
   const out: Partial<PlayerData> = {};
-  if (typeof old.trainingCoins === 'number') out.coins = Math.floor(old.trainingCoins / 2) + 100;
+  if (typeof old.trainingCoins === 'number') out.dnBalance = 0; // migrated to server wallet (DN$)
   if (old.language) out.language = old.language as Language;
   if (old.highScores) {
     const hs = { ...old.highScores };
@@ -104,7 +104,7 @@ function migrateOld(old: any): Partial<PlayerData> {
 
 export const DEFAULTS: PlayerData = {
   username: '',
-  coins: 100,
+  dnBalance: 0,
   highScores: {},
   leaderboard: {},
   unlockedLeagues: ['training'],

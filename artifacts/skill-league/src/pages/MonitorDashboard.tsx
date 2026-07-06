@@ -21,8 +21,8 @@ interface LiveData {
   health: { status: 'healthy' | 'degraded' | 'critical'; alerts: Array<{ level: string; msg: string }> };
 }
 interface FeatureRow { event: string; uses: number; unique_users: number }
-interface BotRow    { id: string; username: string; matches_played: number; matches_won: number; coins: number; flag_type?: string; severity?: string; created_at: string }
-interface EconData  { hourly: Array<{ hour: string; type: string; total_amount: number; tx_count: number }>; topBalances: Array<{ username: string; coins: number; level: number; elo: number }> }
+interface BotRow    { id: string; username: string; matches_played: number; matches_won: number; flag_type?: string; severity?: string; created_at: string }
+interface EconData  { hourly: Array<{ hour: string; type: string; total_amount: number; tx_count: number }>; topBalances: Array<{ username: string; dnBalance?: number; level: number; elo: number }> }
 
 const STATUS_COLOR = { healthy: '#22c55e', degraded: '#f59e0b', critical: '#ef4444' };
 const STATUS_LABEL = { healthy: '✅ سليم', degraded: '⚠️ متدهور', critical: '🔴 حرج' };
@@ -323,7 +323,7 @@ export default function MonitorDashboard() {
                     </div>
                     <div>
                       <div className="text-xs text-muted-foreground">عملات</div>
-                      <div className="font-bold text-sm text-yellow-400">{b.coins?.toLocaleString()}</div>
+                      <div className="font-bold text-sm text-yellow-400">{(b as any).elo}</div>
                     </div>
                   </div>
                 </motion.div>
@@ -345,7 +345,7 @@ export default function MonitorDashboard() {
                       <div className="font-medium text-sm truncate">{p.username}</div>
                       <div className="text-xs text-muted-foreground">Lv.{p.level} · ELO {p.elo}</div>
                     </div>
-                    <span className="font-black text-yellow-400 tabular-nums">{Number(p.coins).toLocaleString()} 🪙</span>
+                    <span className="font-black text-yellow-400 tabular-nums">{Number(p.dnBalance ?? 0).toLocaleString()} DN$</span>
                   </div>
                 ))}
               </div>

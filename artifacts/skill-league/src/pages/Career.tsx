@@ -13,12 +13,12 @@ import {
 } from "@/lib/career";
 
 export default function Career() {
-  const { language, level, elo, matchesPlayed, pvpWins, tournamentWins, achievements, coins, bestStreak, fame, addCoins } = useGame();
+  const { language, level, elo, matchesPlayed, pvpWins, tournamentWins, achievements, dnBalance, bestStreak, fame, addCoins } = useGame();
   const rtl = isRTL(language);
 
   const stats: CareerStats = {
     level, elo, matchesPlayed, pvpWins, tournamentWins,
-    achievementCount: achievements.length, coins, bestStreak, fame: fame ?? 0,
+    achievementCount: achievements.length, coins: dnBalance ?? 0, bestStreak, fame: fame ?? 0,
   };
 
   const currentTier  = getCurrentCareerTier(stats);
@@ -33,14 +33,14 @@ export default function Career() {
     setTimeout(() => setToast(null), 3000);
   }
 
-  function handleClaim(milestoneId: string, reward: { coins: number; xp: number }) {
+  function handleClaim(milestoneId: string, reward: { dn: number; xp: number }) {
     claimMilestone(milestoneId);
     setClaimed(getClaimedMilestones());
-    addCoins(reward.coins);
+    addCoins(reward.dn);
     setClaimAnim(milestoneId);
     setTimeout(() => setClaimAnim(null), 1000);
     playCoin();
-    showToast(`🎁 +${reward.coins} 🪙 +${reward.xp} XP`, true);
+    showToast(`🎁 +${reward.dn} DN$ · +${reward.xp} XP`, true);
   }
 
   const earnedMilestones   = CAREER_MILESTONES.filter(m => m.requirement(stats));
@@ -161,7 +161,7 @@ export default function Career() {
                     <div className="text-xs font-bold">{language === 'ar' ? m.titleAr : m.title}</div>
                     <div className="text-[10px] text-muted-foreground">{language === 'ar' ? m.descriptionAr : m.description}</div>
                     <div className="text-[10px] text-yellow-400 font-bold mt-0.5">
-                      🎁 +{m.reward.coins} 🪙 · +{m.reward.xp} XP
+                      🎁 +{m.reward.dn} DN$ · +{m.reward.xp} XP
                     </div>
                   </div>
                   <div className="flex-shrink-0">

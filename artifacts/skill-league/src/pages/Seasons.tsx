@@ -446,7 +446,7 @@ export default function Seasons() {
                         <div className="text-xs text-white/40">{rec.finalElo} ELO · {rec.rank}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-black text-yellow-400">+{rec.coinsEarned} 🪙</div>
+                        <div className="text-sm font-black text-purple-400">+{rec.xpEarned} XP</div>
                         <div className="text-xs text-purple-400">+{rec.xpEarned} XP</div>
                       </div>
                     </div>

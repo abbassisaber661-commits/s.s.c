@@ -55,21 +55,13 @@ export const LEAGUE_TO_ECONOMY_TIER: Record<LeagueId, string> = {
   champion: 'champions',
 };
 
-/** Gem cost to subscribe to a league (aligned with economy engine). */
-export const LEAGUE_GEM_COST: Record<LeagueId, number> = {
-  coins:    0,
-  pro:      1,
-  elite:    2,
-  champion: 4,
-};
+// Pi entry costs: training=0, div2=0.2, pro=0.5, champions=1.0
+// Gems removed — see economy-engine.ts for Pi costs.
 
 export interface League {
   id:             LeagueId;
   name:           string;
-  entryType:      'coins' | 'pi';
-  entryCostPi:    number;    // Pi entry (0 for Coins league)
-  entryCostCoins: number;    // Coin entry (for Coins league; 0 for Pi leagues)
-  entryCostGems:  number;    // Gem entry cost (0/1/2/4)
+  entryCostPi:    number;    // Pi entry cost (0 for Training; 0.2/0.5/1.0 for others)
   difficulty:     Difficulty;
   color:          string;
   icon:           string;
@@ -164,35 +156,31 @@ interface Store {
 function makeLeagues(): League[] {
   return [
     {
-      id: 'coins', name: 'Coins League',
-      entryType: 'coins', entryCostPi: 0, entryCostCoins: 500,
-      entryCostGems: 0,
+      id: 'coins', name: 'Training League',
+      entryCostPi: 0,
       difficulty: 'easy', color: '#22d3ee', icon: '🥉',
-      description: 'Free entry. Beginner tier — earn your first gems here.',
+      description: 'Free entry. Beginner tier — start your journey here.',
       nextLeague: 'pro', prevLeague: null, slotCount: 16,
     },
     {
-      id: 'pro', name: 'Pro League',
-      entryType: 'pi', entryCostPi: 0.5, entryCostCoins: 0,
-      entryCostGems: 1,
+      id: 'pro', name: 'Division II',
+      entryCostPi: 0.2,
       difficulty: 'medium', color: '#a78bfa', icon: '🥈',
-      description: 'Requires 1 💎 gem. Medium difficulty. Real prize pool.',
+      description: 'Entry: 0.2π. Medium difficulty. Real prize pool.',
       nextLeague: 'elite', prevLeague: 'coins', slotCount: 16,
     },
     {
-      id: 'elite', name: 'Elite League',
-      entryType: 'pi', entryCostPi: 0.75, entryCostCoins: 0,
-      entryCostGems: 2,
+      id: 'elite', name: 'Professional League',
+      entryCostPi: 0.5,
       difficulty: 'hard', color: '#f59e0b', icon: '🥇',
-      description: 'Requires 2 💎 gems. Hard puzzles for serious competitors.',
+      description: 'Entry: 0.5π. Hard puzzles for serious competitors.',
       nextLeague: 'champion', prevLeague: 'pro', slotCount: 20,
     },
     {
-      id: 'champion', name: 'Champion League',
-      entryType: 'pi', entryCostPi: 1.0, entryCostCoins: 0,
-      entryCostGems: 4,
+      id: 'champion', name: 'Champions League',
+      entryCostPi: 1.0,
       difficulty: 'expert', color: '#ef4444', icon: '👑',
-      description: 'Requires 4 💎 gems. Expert level. Highest prize pool.',
+      description: 'Entry: 1π. Expert level. Highest prize pool.',
       nextLeague: null, prevLeague: 'elite', slotCount: 25,
     },
   ];
@@ -245,7 +233,7 @@ function load(): Store {
         const fresh = makeLeagues();
         raw.leagues = raw.leagues.map(l => {
           const f = fresh.find(x => x.id === l.id);
-          return f ? { ...f, ...l, entryCostGems: f.entryCostGems, nextLeague: f.nextLeague, prevLeague: f.prevLeague, slotCount: f.slotCount } : l;
+          return f ? { ...f, ...l, nextLeague: f.nextLeague, prevLeague: f.prevLeague, slotCount: f.slotCount } : l;
         });
         // Migrate entries: add missing fields
         raw.entries = raw.entries.map(e => ({
@@ -505,7 +493,7 @@ export function joinLeague(
   s.entries.push(entry);
   s.matches.push(...matches);
   season.participantCount++;
-  if (league.entryType === 'pi') season.prizePool += league.entryCostPi;
+  if (league.entryCostPi > 0) season.prizePool += league.entryCostPi;
   save();
 
   return { entry, matches };

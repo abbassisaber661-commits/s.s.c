@@ -1,18 +1,20 @@
 import { Router } from "express";
 import { eq, and, desc } from "drizzle-orm";
-import { db, marketplaceListingsTable, playersTable, coinTransactionsTable } from "@workspace/db";
+import { db, marketplaceListingsTable, playersTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
+import { awardDN, spendDN, getDNBalance } from "../lib/dn-service.js";
 
 const router = Router();
 
 router.get("/marketplace", async (req, res) => {
   try {
     const { type, maxPrice } = req.query;
-    let query = db.select().from(marketplaceListingsTable)
+    const rows = await db
+      .select()
+      .from(marketplaceListingsTable)
       .where(eq(marketplaceListingsTable.status, "active"))
       .orderBy(desc(marketplaceListingsTable.createdAt))
       .limit(100);
-    const rows = await query;
     let result = rows;
     if (type) result = result.filter(r => r.itemType === type);
     if (maxPrice) result = result.filter(r => r.price <= Number(maxPrice));
@@ -38,7 +40,7 @@ router.post("/marketplace", async (req, res) => {
       itemName,
       itemEmoji: itemEmoji || "🎨",
       itemType: itemType || "cosmetic",
-      price: Math.max(10, Math.min(99999, Number(price))),
+      price: Math.max(1, Math.min(9999, Number(price))),
     }).returning();
     res.json(listing[0]);
   } catch (err) {
@@ -52,32 +54,44 @@ router.post("/marketplace/:id/buy", async (req, res) => {
     const { id } = req.params;
     const { buyerId } = req.body;
 
-    const [listing] = await db.select().from(marketplaceListingsTable)
-      .where(and(eq(marketplaceListingsTable.id, id), eq(marketplaceListingsTable.status, "active"))).limit(1);
+    const [listing] = await db
+      .select()
+      .from(marketplaceListingsTable)
+      .where(and(eq(marketplaceListingsTable.id, id), eq(marketplaceListingsTable.status, "active")))
+      .limit(1);
     if (!listing) { res.status(404).json({ error: "listing_not_found" }); return; }
     if (listing.sellerId === buyerId) { res.status(400).json({ error: "cannot_buy_own" }); return; }
 
-    const [buyer] = await db.select().from(playersTable).where(eq(playersTable.id, buyerId)).limit(1);
-    if (!buyer) { res.status(404).json({ error: "buyer_not_found" }); return; }
-    if (buyer.coins < listing.price) { res.status(400).json({ error: "insufficient_coins" }); return; }
+    // Check buyer DN$ balance
+    const buyerBalance = await getDNBalance(buyerId);
+    if (buyerBalance < listing.price) {
+      res.status(400).json({ error: "insufficient_dn", required: listing.price, have: buyerBalance });
+      return;
+    }
 
+    // Deduct DN$ from buyer
+    const spendResult = await spendDN(buyerId, listing.price, "marketplace", `شراء ${listing.itemName}`);
+    if (!spendResult.success) {
+      res.status(400).json({ error: "insufficient_dn" });
+      return;
+    }
+
+    // Award DN$ to seller
+    await awardDN(listing.sellerId, listing.price, "marketplace", `بيع ${listing.itemName}`);
+
+    // Mark listing as sold
     await db.update(marketplaceListingsTable).set({
       status: "sold", buyerId, soldAt: new Date(),
     }).where(eq(marketplaceListingsTable.id, id));
 
-    await db.update(playersTable).set({ coins: buyer.coins - listing.price }).where(eq(playersTable.id, buyerId));
-    const [seller] = await db.select().from(playersTable).where(eq(playersTable.id, listing.sellerId)).limit(1);
-    if (seller) {
-      await db.update(playersTable).set({ coins: seller.coins + listing.price }).where(eq(playersTable.id, listing.sellerId));
+    // Transfer item ownership to buyer
+    const [buyer] = await db.select({ ownedItems: playersTable.ownedItems }).from(playersTable).where(eq(playersTable.id, buyerId)).limit(1);
+    if (buyer) {
+      const buyerItems = buyer.ownedItems.includes(listing.itemId)
+        ? buyer.ownedItems
+        : [...buyer.ownedItems, listing.itemId];
+      await db.update(playersTable).set({ ownedItems: buyerItems }).where(eq(playersTable.id, buyerId));
     }
-
-    const buyerItems = buyer.ownedItems.includes(listing.itemId) ? buyer.ownedItems : [...buyer.ownedItems, listing.itemId];
-    await db.update(playersTable).set({ ownedItems: buyerItems }).where(eq(playersTable.id, buyerId));
-
-    await db.insert(coinTransactionsTable).values([
-      { id: nanoid(), playerId: buyerId, amount: -listing.price, type: "spend", source: "marketplace", description: `شراء ${listing.itemName}`, balanceAfter: buyer.coins - listing.price },
-      { id: nanoid(), playerId: listing.sellerId, amount: listing.price, type: "earn", source: "marketplace", description: `بيع ${listing.itemName}`, balanceAfter: (seller?.coins ?? 0) + listing.price },
-    ]);
 
     res.json({ ok: true, item: listing.itemId });
   } catch (err) {

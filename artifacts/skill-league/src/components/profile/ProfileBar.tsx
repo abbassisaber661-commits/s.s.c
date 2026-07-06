@@ -5,7 +5,7 @@ import { getFameTitle } from "@/lib/fame";
 import Avatar from "@/components/Avatar";
 
 export default function ProfileBar() {
-  const { username, level, fame, coins } = useGame();
+  const { username, level, fame, dnBalance } = useGame();
   const fameTitle = getFameTitle(fame);
 
   return (
@@ -36,8 +36,8 @@ export default function ProfileBar() {
       </div>
 
       <div className="text-right flex-shrink-0">
-        <div className="text-xs text-muted-foreground">Coins</div>
-        <div className="text-sm font-black text-yellow-400">💰 {coins.toLocaleString()}</div>
+        <div className="text-xs text-muted-foreground">DN$</div>
+        <div className="text-sm font-black text-yellow-400">🪙 {(dnBalance ?? 0).toLocaleString()}</div>
       </div>
     </motion.div>
   );

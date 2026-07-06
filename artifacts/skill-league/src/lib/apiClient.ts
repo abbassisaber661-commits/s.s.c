@@ -39,7 +39,7 @@ export interface ApiPlayer {
   username: string;
   level: number;
   xp: number;
-  coins: number;
+  dnBalance?: number;
   elo: number;
   fame?: number;
   language?: string;

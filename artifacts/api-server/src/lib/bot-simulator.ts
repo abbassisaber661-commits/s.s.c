@@ -37,7 +37,6 @@ interface BotSnapshot {
   id: string;
   username: string;
   lp: number | null;
-  coins: number | null;
   skillAccuracy: number | null;
   matchesPlayed: number | null;
   matchesWon: number | null;
@@ -209,9 +208,9 @@ async function simulateBotMatch(botA: BotSnapshot, botB: BotSnapshot): Promise<v
       matchType:    "bot_sim",
       duration:     30 + randInt(0, 30),
       rounds:       [],
-      coinsStake:   0,
-      coinsWonA:    coinsA,
-      coinsWonB:    coinsB,
+      dnStake:   0,
+      dnWonA:    coinsA,
+      dnWonB:    coinsB,
       xpGainedA:    0,
       xpGainedB:    0,
       eloChangeA:   lpResultA.delta,
@@ -227,7 +226,6 @@ async function simulateBotMatch(botA: BotSnapshot, botB: BotSnapshot): Promise<v
   await db.update(playersTable).set({
     lp:             lpResultA.newLp,
     leagueDivision: getTier(lpResultA.newLp),
-    coins:          (botA.coins ?? 0) + coinsA,
     matchesPlayed:  (botA.matchesPlayed ?? 0) + 1,
     matchesWon:     (botA.matchesWon   ?? 0) + (isWinA ? 1 : 0),
     pvpWins:        (botA.pvpWins      ?? 0) + (isWinA ? 1 : 0),
@@ -243,7 +241,6 @@ async function simulateBotMatch(botA: BotSnapshot, botB: BotSnapshot): Promise<v
   await db.update(playersTable).set({
     lp:             lpResultB.newLp,
     leagueDivision: getTier(lpResultB.newLp),
-    coins:          (botB.coins ?? 0) + coinsB,
     matchesPlayed:  (botB.matchesPlayed ?? 0) + 1,
     matchesWon:     (botB.matchesWon   ?? 0) + (isWinB ? 1 : 0),
     pvpWins:        (botB.pvpWins      ?? 0) + (isWinB ? 1 : 0),
@@ -701,7 +698,6 @@ async function simulateTick(): Promise<void> {
         id:            playersTable.id,
         username:      playersTable.username,
         lp:            playersTable.lp,
-        coins:         playersTable.coins,
         skillAccuracy: playersTable.skillAccuracy,
         matchesPlayed: playersTable.matchesPlayed,
         matchesWon:    playersTable.matchesWon,

@@ -95,8 +95,8 @@ export default function Achievements() {
                     )}
                   </div>
                   <div className="text-right flex-shrink-0">
-                    {def.rewardCoins > 0 && (
-                      <div className="text-xs text-yellow-400 font-bold">+{def.rewardCoins}🪙</div>
+                    {def.rewardDN > 0 && (
+                      <div className="text-xs text-yellow-400 font-bold">+{def.rewardDN} DN$</div>
                     )}
                     {def.rewardElo > 0 && (
                       <div className="text-xs text-primary font-bold">+{def.rewardElo} ELO</div>

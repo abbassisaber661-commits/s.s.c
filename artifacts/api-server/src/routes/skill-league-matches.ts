@@ -120,7 +120,7 @@ router.post('/matches/submit-result', optionalAuth, async (req, res) => {
       matchType:       'skill',
       duration:        Math.ceil(result.totalTime + result.shapeTime),
       rounds:          answers as any[],
-      coinsStake:      0,
+      dnStake:         0,
       correctCount:    result.correctAnswers,
       wrongCount:      result.wrongAnswers,
       totalAnswerTime: result.totalTime,

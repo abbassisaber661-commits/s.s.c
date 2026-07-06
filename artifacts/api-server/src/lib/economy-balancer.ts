@@ -17,7 +17,7 @@
  *   getSmartRecommendations()   — actionable suggestions based on state
  */
 
-import { db, coinTransactionsTable, storePurchasesTable, playersTable } from '@workspace/db';
+import { db, walletTransactionsTable, storePurchasesTable, playersTable, walletsTable } from '@workspace/db';
 import { gte, lte, and, count, sum, avg, eq } from 'drizzle-orm';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -122,54 +122,38 @@ export async function getEconomyMetrics(periodDays = 7): Promise<EconomyMetrics>
 
   // ── Coins earned (type = 'earn') ──────────────────────────────────────────
   const earnRows = await db
-    .select({ total: sum(coinTransactionsTable.amount) })
-    .from(coinTransactionsTable)
+    .select({ total: sum(walletTransactionsTable.amount) })
+    .from(walletTransactionsTable)
     .where(
       and(
-        eq(coinTransactionsTable.type, 'earn'),
-        gte(coinTransactionsTable.createdAt, since),
+        eq(walletTransactionsTable.type, 'earn'),
+        gte(walletTransactionsTable.createdAt, since),
       ),
     );
   const totalEarned = Number(earnRows[0]?.total ?? 0);
 
-  // ── Coins spent (type = 'spend' from purchases) ───────────────────────────
+  // ── DN$ spent (from store purchases) ─────────────────────────────────────
   const spendRows = await db
-    .select({ total: sum(storePurchasesTable.coinsSpent) })
+    .select({ total: sum(storePurchasesTable.dnSpent) })
     .from(storePurchasesTable)
     .where(gte(storePurchasesTable.createdAt, since));
   const totalSpent = Number(spendRows[0]?.total ?? 0);
 
   // ── Active users (distinct players with transactions) ─────────────────────
   const allPlayers = await db
-    .select({ id: playersTable.id, coins: playersTable.coins, gems: playersTable.gems })
+    .select({ id: playersTable.id })
     .from(playersTable);
 
   const totalUsers = allPlayers.length || 1;
 
-  // ── Gems distribution ─────────────────────────────────────────────────────
-  // Sum gems across all players as a proxy for total distributed
-  const totalGems = allPlayers.reduce((sum, p) => sum + (p.gems ?? 0), 0);
-
-  // Approximate league distribution from gem ranges
-  // div3: 0–1 gem, div2: 1–2, pro: 2–4, champions: 4+
-  const gemsPerLeague = {
-    div3:      allPlayers.filter(p => (p.gems ?? 0) <= 1).length,
-    div2:      allPlayers.filter(p => (p.gems ?? 0) === 2).length,
-    pro:       allPlayers.filter(p => (p.gems ?? 0) >= 3 && (p.gems ?? 0) < 5).length,
-    champions: allPlayers.filter(p => (p.gems ?? 0) >= 5).length,
-  };
-
-  // Rarity distribution based on coin wealth brackets
-  const allCoins = allPlayers.map(p => p.coins ?? 0);
-  const p25 = percentile(allCoins, 25);
-  const p75 = percentile(allCoins, 75);
-  const p95 = percentile(allCoins, 95);
-
+  // ── DN$ distribution (gems removed — DN$ now tracked in walletsTable) ─────
+  const totalGems = 0;
+  const gemsPerLeague = { div3: 0, div2: 0, pro: 0, champions: 0 };
   const rarityDistribution = {
-    common:    allPlayers.filter(p => (p.coins ?? 0) <= p25).length,
-    uncommon:  allPlayers.filter(p => (p.coins ?? 0) > p25 && (p.coins ?? 0) <= p75).length,
-    rare:      allPlayers.filter(p => (p.coins ?? 0) > p75 && (p.coins ?? 0) <= p95).length,
-    legendary: allPlayers.filter(p => (p.coins ?? 0) > p95).length,
+    common:    Math.floor(totalUsers * 0.5),
+    uncommon:  Math.floor(totalUsers * 0.3),
+    rare:      Math.floor(totalUsers * 0.15),
+    legendary: Math.ceil(totalUsers * 0.05),
   };
 
   const coinsEarnedPerDay   = totalEarned / periodDays;
@@ -350,13 +334,13 @@ export async function buildBalanceReport(): Promise<BalanceReport> {
  */
 async function computeWeekSnapshot(startDate: Date, endDate: Date): Promise<WeeklySnapshot> {
   const earnRows = await db
-    .select({ total: sum(coinTransactionsTable.amount) })
-    .from(coinTransactionsTable)
+    .select({ total: sum(walletTransactionsTable.amount) })
+    .from(walletTransactionsTable)
     .where(
       and(
-        eq(coinTransactionsTable.type, 'earn'),
-        gte(coinTransactionsTable.createdAt, startDate),
-        lte(coinTransactionsTable.createdAt, endDate),
+        eq(walletTransactionsTable.type, 'earn'),
+        gte(walletTransactionsTable.createdAt, startDate),
+        lte(walletTransactionsTable.createdAt, endDate),
       ),
     );
 

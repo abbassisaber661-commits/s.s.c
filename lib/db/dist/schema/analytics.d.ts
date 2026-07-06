@@ -232,8 +232,8 @@ export declare const dailyStatsTable: import("drizzle-orm/pg-core").PgTableWithC
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        coinsEarned: import("drizzle-orm/pg-core").PgColumn<{
-            name: "coins_earned";
+        dnEarned: import("drizzle-orm/pg-core").PgColumn<{
+            name: "dn_earned";
             tableName: "daily_stats";
             dataType: "number";
             columnType: "PgInteger";
@@ -249,8 +249,8 @@ export declare const dailyStatsTable: import("drizzle-orm/pg-core").PgTableWithC
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        coinsSpent: import("drizzle-orm/pg-core").PgColumn<{
-            name: "coins_spent";
+        dnSpent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "dn_spent";
             tableName: "daily_stats";
             dataType: "number";
             columnType: "PgInteger";

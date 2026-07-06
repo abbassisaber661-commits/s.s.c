@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq, desc, gte, sql, count } from "drizzle-orm";
-import { db, playersTable, pvpMatchesTable, analyticsEventsTable, dailyStatsTable, betaFeedbackTable, coinTransactionsTable } from "@workspace/db";
+import { db, playersTable, pvpMatchesTable, analyticsEventsTable, dailyStatsTable, betaFeedbackTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 
 const router = Router();

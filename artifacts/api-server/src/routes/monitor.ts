@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, playersTable, pvpMatchesTable, analyticsEventsTable, coinTransactionsTable } from "@workspace/db";
+import { db, playersTable, pvpMatchesTable, analyticsEventsTable, walletTransactionsTable } from "@workspace/db";
 import { gte, count, desc, sql } from "drizzle-orm";
 import { requireAdmin } from "../middleware/auth.js";
 
@@ -57,7 +57,7 @@ router.get("/monitor/live", requireAdmin, async (req, res) => {
     const [events1h] = await db.select({ count: count() })
       .from(analyticsEventsTable).where(gte(analyticsEventsTable.createdAt, since1h));
     const [coins1h] = await db.select({ count: count() })
-      .from(coinTransactionsTable).where(gte(coinTransactionsTable.createdAt, since1h));
+      .from(walletTransactionsTable).where(gte(walletTransactionsTable.createdAt, since1h));
 
     const avgResponseTime = responseTimeSamples.length > 0
       ? Math.round(responseTimeSamples.reduce((a, b) => a + b, 0) / responseTimeSamples.length)
@@ -150,7 +150,7 @@ router.get("/monitor/bots", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(sql`
       SELECT p.id, p.username, p.created_at, p.last_active_at,
-        p.matches_played, p.matches_won, p.coins, p.elo,
+        p.matches_played, p.matches_won, p.elo,
         sa.type as flag_type, sa.severity
       FROM players p
       LEFT JOIN suspicious_activity sa ON sa.player_id = p.id AND sa.resolved = FALSE

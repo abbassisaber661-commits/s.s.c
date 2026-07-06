@@ -43,13 +43,17 @@ interface GameState extends PlayerData {
   recordPvpResult: (
     won: boolean,
     opponentLevel: number,
-    coinsEarned: number,
+    dnEarned: number,
     eloChange?: number,
     xpOverride?: number
   ) => void;
 
-  // Economy
+  // Economy (DN$ — internal gamification currency)
+  addDN: (amount: number) => void;
+  spendDN: (amount: number) => boolean;
+  /** @deprecated use addDN */
   addCoins: (amount: number) => void;
+  /** @deprecated use spendDN */
   spendCoins: (amount: number) => boolean;
   addFame: (amount: number) => void;
   setLastPostTime: (t: number) => void;
@@ -68,7 +72,7 @@ interface GameState extends PlayerData {
   toggleVibration: () => void;
 
   // Tournament
-  recordTournamentWin: (place: number, coins: number, xp: number) => void;
+  recordTournamentWin: (place: number, dn: number, xp: number) => void;
 
   // State safety
   currentQuestionSet: string[];
@@ -108,14 +112,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   // =========================
-  // ADD COINS
+  // ADD DN$ / SPEND DN$
   // =========================
-  const addCoins = (amount: number) => {
-    persist({
-      ...data,
-      coins: (data.coins || 0) + amount,
-    });
+  const addDN = (amount: number) => {
+    persist({ ...data, dnBalance: (data.dnBalance || 0) + amount });
   };
+  const addCoins = addDN; // backward-compat alias
 
   const addFame = (amount: number) => {
     persist({ ...data, fame: (data.fame || 0) + amount });
@@ -125,19 +127,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     persist({ ...data, lastPostTime: t });
   };
 
-  // =========================
-  // SPEND COINS
-  // =========================
-  const spendCoins = (amount: number) => {
-    if ((data.coins || 0) < amount) return false;
-
-    persist({
-      ...data,
-      coins: data.coins - amount,
-    });
-
+  const spendDN = (amount: number) => {
+    if ((data.dnBalance || 0) < amount) return false;
+    persist({ ...data, dnBalance: (data.dnBalance || 0) - amount });
     return true;
   };
+  const spendCoins = spendDN; // backward-compat alias
 
   const LEAGUE_UNLOCK_COSTS: Record<string, number> = {
     coin: 50,
@@ -146,14 +141,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const purchaseItem = async (item: { id: string; name: string; price: number; [key: string]: unknown }): Promise<boolean> => {
-    if ((data.coins || 0) < item.price) return false;
+    if ((data.dnBalance || 0) < item.price) return false;
     const already = data.ownedItems || [];
     if (already.includes(item.id)) return true;
-    persist({
-      ...data,
-      coins: data.coins - item.price,
-      ownedItems: [...already, item.id],
-    });
+    persist({ ...data, dnBalance: (data.dnBalance || 0) - item.price, ownedItems: [...already, item.id] });
     return true;
   };
 
@@ -161,25 +152,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const recordTournamentWin = (place: number, coins: number, xp: number) => {
+  const recordTournamentWin = (place: number, dn: number, xp: number) => {
     persist({
       ...data,
-      coins: (data.coins || 0) + coins,
+      dnBalance: (data.dnBalance || 0) + dn,
       xp: (data.xp || 0) + xp,
       fame: (data.fame || 0) + Math.max(0, 3 - place),
     });
   };
 
   const unlockLeagueWithCoins = (leagueId: string): boolean => {
-    const cost = LEAGUE_UNLOCK_COSTS[leagueId] ?? 100;
-    if ((data.coins || 0) < cost) return false;
+    // Leagues now unlocked via Pi payment — this is a legacy no-op stub
     const already = data.unlockedLeagues || ['training'];
     if (already.includes(leagueId)) return true;
-    persist({
-      ...data,
-      coins: data.coins - cost,
-      unlockedLeagues: [...already, leagueId],
-    });
+    persist({ ...data, unlockedLeagues: [...already, leagueId] });
     return true;
   };
 
@@ -229,15 +215,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const recordPvpResult = (
     won: boolean,
     opponentLevel: number,
-    coinsEarned: number,
+    dnEarned: number,
     eloChange?: number,
     xpOverride?: number
   ) => {
     const xpGain = xpOverride ?? (won ? 50 : 10);
-
     persist({
       ...data,
-      coins: data.coins + coinsEarned,
+      dnBalance: (data.dnBalance || 0) + dnEarned,
       xp: (data.xp || 0) + xpGain,
       elo: (data.elo || 0) + (eloChange ?? (won ? 10 : -5)),
     });
@@ -331,7 +316,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         recordMatch,
         recordPvpResult,
 
-        // Economy
+        // Economy (DN$)
+        addDN,
+        spendDN,
         addCoins,
         spendCoins,
         addFame,

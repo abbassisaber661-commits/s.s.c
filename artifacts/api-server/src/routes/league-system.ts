@@ -24,34 +24,20 @@ import {
   joinLeague, getPlayerMatches, playMatch, advanceSeason,
   getPrizeBreakdown, refreshMatchStatuses, getSeasonCurrentRound,
   getSeasonSnapshot, getAllSeasons, getExpiredActiveSeasons,
-  LEAGUE_TO_ECONOMY_TIER, LEAGUE_GEM_COST,
+  LEAGUE_TO_ECONOMY_TIER,
   type LeagueId,
 } from '../lib/league-store.js';
 import { seedBotStandings } from '../lib/bot-simulator.js';
 import { applyMatchResult, getOrCreateProfile } from '../lib/player-store.js';
-import { calcPromotionReward } from '../lib/economy-engine.js';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { leagueTierToEconomyTier, getSeasonEndDN } from '../lib/economy-engine.js';
+import { awardDN } from '../lib/dn-service.js';
 import { eq, desc, and, gte, lte } from 'drizzle-orm';
-import { db, playersTable, coinTransactionsTable } from '@workspace/db';
+import { db, playersTable } from '@workspace/db';
 import { nanoid } from '../lib/nanoid.js';
 
 const router = Router();
 
-// ── Season-End Gem Table ───────────────────────────────────────────────────
-//  Gems awarded to top-ranked REAL players at season end (not bots).
-//
-//  div3      : 1st → +1
-//  div2      : 1st → +2, 2nd → +1
-//  pro       : 1st → +3, 2nd → +2, 3rd → +1
-//  champions : 1st → +4, 2nd → +3, 3rd → +2, 4th → +1
-
-const SEASON_END_GEM_TABLE: Record<string, Partial<Record<number, number>>> = {
-  div3:      { 1: 1 },
-  div2:      { 1: 2, 2: 1 },
-  pro:       { 1: 3, 2: 2, 3: 1 },
-  champions: { 1: 4, 2: 3, 3: 2, 4: 1 },
-};
+// Season-end DN$ rewards — see economy-engine.ts for the full table
 
 // LP ranges for each division — used to query real players by rank
 const DIVISION_LP_RANGES: Record<string, { min: number; max: number | null }> = {
@@ -62,15 +48,11 @@ const DIVISION_LP_RANGES: Record<string, { min: number; max: number | null }> = 
 };
 
 /**
- * Award season-end gems to top real players in a league/division.
+ * Award season-end DN$ to top real players in a league/division.
  * Fire-and-forget safe — errors are swallowed.
  */
-async function awardSeasonEndGems(leagueId: LeagueId): Promise<void> {
-  const econTier = LEAGUE_TO_ECONOMY_TIER[leagueId] ?? 'div3';
-  const gemMap   = SEASON_END_GEM_TABLE[econTier];
-  if (!gemMap) return;
-
-  const maxRank  = Math.max(...Object.keys(gemMap).map(Number));
+async function awardSeasonEndDN(leagueId: LeagueId): Promise<void> {
+  const econTier = leagueTierToEconomyTier(leagueId);
   const lpRange  = DIVISION_LP_RANGES[leagueId];
   if (!lpRange) return;
 
@@ -81,111 +63,33 @@ async function awardSeasonEndGems(leagueId: LeagueId): Promise<void> {
         : gte(playersTable.lp, lpRange.min);
 
     const topPlayers = await db
-      .select({ id: playersTable.id, gems: playersTable.gems, coins: playersTable.coins })
+      .select({ id: playersTable.id, username: playersTable.username })
       .from(playersTable)
       .where(condition)
       .orderBy(desc(playersTable.lp))
-      .limit(maxRank);
+      .limit(25);
 
     for (let i = 0; i < topPlayers.length; i++) {
-      const rank       = i + 1;
-      const gemsToGive = gemMap[rank];
-      if (!gemsToGive) continue;
+      const rank = i + 1;
+      const dn   = getSeasonEndDN(econTier, rank);
+      const player = topPlayers[i];
 
-      const player   = topPlayers[i];
-      const newGems  = (player.gems ?? 0) + gemsToGive;
+      await awardDN(
+        player.id,
+        dn,
+        'season_end',
+        `Season end rank #${rank} in ${leagueId.toUpperCase()} (+${dn} DN$)`,
+      );
 
-      await db.update(playersTable)
-        .set({ gems: newGems, updatedAt: new Date() })
-        .where(eq(playersTable.id, player.id));
-
-      await db.insert(coinTransactionsTable).values({
-        id:           nanoid(),
-        playerId:     player.id,
-        amount:       0,
-        type:         'gem_earn',
-        source:       'season_end',
-        description:  `Season end rank #${rank} in ${econTier.toUpperCase()} (+${gemsToGive} gems)`,
-        balanceAfter: player.coins ?? 0,
-      });
-
-      console.info(`[season-gems] Awarded ${gemsToGive} gems to player ${player.id} (rank #${rank} in ${leagueId})`);
+      console.info(`[season-dn] Awarded ${dn} DN$ to player ${player.id} (rank #${rank} in ${leagueId})`);
     }
   } catch (err) {
-    console.error('[season-gems] error awarding season-end gems:', err);
+    console.error('[season-dn] error awarding season-end DN$:', err);
   }
 }
 
 // Seed bot standings on startup (idempotent — botsSeeded flag prevents re-seeding)
 try { seedBotStandings(); } catch { /* never block startup */ }
-
-// ── Player store helpers (gem r/w) ─────────────────────────────────────────
-
-const PLAYER_DATA_FILE = process.env.PLAYER_DATA_FILE ?? resolve('data/players.json');
-
-function readPlayerStore(): { schemaVersion: number; profiles: Array<Record<string, unknown>> } {
-  if (!existsSync(PLAYER_DATA_FILE)) return { schemaVersion: 1, profiles: [] };
-  try { return JSON.parse(readFileSync(PLAYER_DATA_FILE, 'utf8')); }
-  catch { return { schemaVersion: 1, profiles: [] }; }
-}
-
-function writePlayerStore(data: { schemaVersion: number; profiles: Array<Record<string, unknown>> }) {
-  try { writeFileSync(PLAYER_DATA_FILE, JSON.stringify(data, null, 2), 'utf8'); }
-  catch (err) { console.error('[league-system] failed to write player store:', err); }
-}
-
-function getPlayerGems(playerId: string): { gems: number; profile: Record<string, unknown> | undefined; store: ReturnType<typeof readPlayerStore> } {
-  const store   = readPlayerStore();
-  const profile = store.profiles.find(
-    (p) => p.playerId === playerId || p.id === playerId,
-  ) as Record<string, unknown> | undefined;
-  const gems = typeof profile?.gems === 'number' ? profile.gems : 0;
-  return { gems, profile, store };
-}
-
-function deductGems(playerId: string, playerName: string, amount: number): boolean {
-  const { gems, profile, store } = getPlayerGems(playerId);
-  if (gems < amount) return false;
-  if (profile) {
-    profile.gems      = gems - amount;
-    profile.updatedAt = new Date().toISOString();
-  } else {
-    store.profiles.push({
-      id: playerId, playerId, playerName,
-      xp: 0, level: 1, streak: 0, bestStreak: 0,
-      badges: [], arcadeCoins: 0, gems: 0,
-      totalWins: 0, totalDraws: 0, totalLosses: 0,
-      arcadePlays: 0, dailyClaimCount: 0, lastDailyAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    return true; // cost 0 → no deduction needed
-  }
-  writePlayerStore(store);
-  return true;
-}
-
-function grantGems(playerId: string, playerName: string, amount: number): number {
-  const { gems, profile, store } = getPlayerGems(playerId);
-  const newGems = gems + amount;
-  if (profile) {
-    profile.gems      = newGems;
-    profile.updatedAt = new Date().toISOString();
-  } else {
-    store.profiles.push({
-      id: playerId, playerId, playerName,
-      xp: 0, level: 1, streak: 0, bestStreak: 0,
-      badges: [], arcadeCoins: 0, gems: newGems,
-      totalWins: 0, totalDraws: 0, totalLosses: 0,
-      arcadePlays: 0, dailyClaimCount: 0, lastDailyAt: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    return newGems;
-  }
-  writePlayerStore(store);
-  return newGems;
-}
 
 // ── Top 5 Per Division (same source as Leaderboard page) ─────────────────────
 //
@@ -297,10 +201,10 @@ router.get('/league-system/leagues/:id/history', (req, res) => {
 //
 //  Full flow:
 //    1. Validate league + player fields
-//    2. Gem balance check (if entryCostGems > 0)
-//    3. joinLeague() — enforces one-league-per-season
-//    4. Deduct gems on success
-//    5. Return entry + matches
+//    2. joinLeague() — enforces one-league-per-season
+//    3. Return entry + matches
+//    Note: Pi entry fees (DV2=0.2π, Pro=0.5π, Champions=1π) are handled
+//          by the Pi SDK on the frontend before this endpoint is called.
 
 router.post('/league-system/leagues/:id/join', async (req, res) => {
   const leagueId = req.params.id as LeagueId;
@@ -315,21 +219,6 @@ router.post('/league-system/leagues/:id/join', async (req, res) => {
   const pid  = String(playerId);
   const pnam = String(playerName);
 
-  // Gem balance check
-  const gemCost = LEAGUE_GEM_COST[leagueId] ?? 0;
-  if (gemCost > 0) {
-    const { gems } = getPlayerGems(pid);
-    if (gems < gemCost) {
-      res.status(402).json({
-        error:        'insufficient_gems',
-        required:     gemCost,
-        playerGems:   gems,
-        message:      `You need ${gemCost} 💎 gem${gemCost !== 1 ? 's' : ''} to enter ${league.name}. You have ${gems}.`,
-      });
-      return;
-    }
-  }
-
   const result = joinLeague(leagueId, pid, pnam);
 
   if ('error' in result) {
@@ -343,11 +232,6 @@ router.post('/league-system/leagues/:id/join', async (req, res) => {
     }
     const code = result.error === 'already joined' ? 409 : 400;
     res.status(code).json(result); return;
-  }
-
-  // Deduct gems (after successful join so we don't lose gems on error)
-  if (gemCost > 0) {
-    deductGems(pid, pnam, gemCost);
   }
 
   // Game Layer: ensure profile exists + grant league-tier badges
@@ -455,62 +339,29 @@ router.post('/league-system/admin/advance-season', async (req, res) => {
     for (const r of rows) { if (r.lp !== null) lpMap[r.id] = r.lp; }
   } catch { /* non-fatal — snapshot will have null LP for all */ }
 
-  // ── Season-end gem awards (before advancing, so LP snapshot is current) ──
-  await awardSeasonEndGems(lid).catch(() => {});
+  // ── Season-end DN$ awards (before advancing, so LP snapshot is current) ──
+  await awardSeasonEndDN(lid).catch(() => {});
 
   const result = advanceSeason(lid, lpMap);
   if ('error' in result) { res.status(400).json(result); return; }
 
-  // ── Promotion rewards ────────────────────────────────────────────────────
-  const econFromTier  = LEAGUE_TO_ECONOMY_TIER[String(leagueId) as LeagueId] ?? 'div3';
+  // ── Promotion DN$ bonus ─────────────────────────────────────────────────
   const promotionRewardResults: Array<{
-    playerId: string; playerName: string;
-    coinsAwarded: number; gemsAwarded: number;
+    playerId: string; playerName: string; dnAwarded: number;
   }> = [];
 
   for (const promo of result.promotions) {
-    const toEconTier = LEAGUE_TO_ECONOMY_TIER[promo.toLeague];
-    if (!toEconTier) continue;
     try {
-      // Get current coins from DB
-      const [dbPlayer] = await db.select({ coins: playersTable.coins })
-        .from(playersTable).where(eq(playersTable.id, promo.playerId)).limit(1);
-      const currentCoins = dbPlayer?.coins ?? 0;
-
-      // Get current gems
-      const { gems: currentGems } = getPlayerGems(promo.playerId);
-
-      const reward = calcPromotionReward(econFromTier, toEconTier, currentCoins, currentGems);
-
-      // Grant gems
-      if (reward.gemsAwarded > 0) {
-        grantGems(promo.playerId, promo.playerName, reward.gemsAwarded);
-      }
-
-      // Grant coins via DB
-      if (reward.coinsAwarded > 0 && dbPlayer) {
-        await db.update(playersTable)
-          .set({ coins: reward.newCoins, updatedAt: new Date() })
-          .where(eq(playersTable.id, promo.playerId));
-        await db.insert(coinTransactionsTable).values({
-          id:          nanoid(),
-          playerId:    promo.playerId,
-          amount:      reward.coinsAwarded,
-          type:        'earn',
-          source:      'season_promotion',
-          description: `Promotion reward: ${promo.fromLeague} → ${promo.toLeague}`,
-          balanceAfter: reward.newCoins,
-        });
-      }
-
-      promotionRewardResults.push({
-        playerId: promo.playerId,
-        playerName: promo.playerName,
-        coinsAwarded: reward.coinsAwarded,
-        gemsAwarded: reward.gemsAwarded,
-      });
+      const dnBonus = 3; // flat promotion bonus
+      await awardDN(
+        promo.playerId,
+        dnBonus,
+        'season_promotion',
+        `Promotion bonus: ${promo.fromLeague} → ${promo.toLeague}`,
+      );
+      promotionRewardResults.push({ playerId: promo.playerId, playerName: promo.playerName, dnAwarded: dnBonus });
     } catch (err) {
-      console.error('[advance-season] promotion reward error:', err);
+      console.error('[advance-season] promotion DN$ reward error:', err);
     }
   }
 
@@ -546,8 +397,8 @@ async function autoAdvanceExpiredSeasons(): Promise<void> {
   for (const season of expired) {
     const leagueId = season.leagueId;
     try {
-      // ── Season-end gem awards (before advancing, so LP snapshot is current) ──
-      await awardSeasonEndGems(leagueId).catch(() => {});
+      // ── Season-end DN$ awards (before advancing, so LP snapshot is current) ──
+      await awardSeasonEndDN(leagueId).catch(() => {});
 
       const result = advanceSeason(leagueId, lpMap);
       if ('error' in result) {
@@ -563,31 +414,10 @@ async function autoAdvanceExpiredSeasons(): Promise<void> {
       // Re-seed bots for the new season
       try { seedBotStandings(); } catch { /* never block */ }
 
-      // Grant promotion rewards (coins + gems)
-      const econFromTier = LEAGUE_TO_ECONOMY_TIER[leagueId] ?? 'div3';
+      // Grant promotion DN$ bonus
       for (const promo of result.promotions) {
-        const toEconTier = LEAGUE_TO_ECONOMY_TIER[promo.toLeague];
-        if (!toEconTier) continue;
         try {
-          const [dbPlayer] = await db.select({ coins: playersTable.coins })
-            .from(playersTable).where(eq(playersTable.id, promo.playerId)).limit(1);
-          const currentCoins = dbPlayer?.coins ?? 0;
-          const { gems: currentGems } = getPlayerGems(promo.playerId);
-          const reward = calcPromotionReward(econFromTier, toEconTier, currentCoins, currentGems);
-
-          if (reward.gemsAwarded > 0) grantGems(promo.playerId, promo.playerName, reward.gemsAwarded);
-          if (reward.coinsAwarded > 0 && dbPlayer) {
-            await db.update(playersTable)
-              .set({ coins: reward.newCoins, updatedAt: new Date() })
-              .where(eq(playersTable.id, promo.playerId));
-            await db.insert(coinTransactionsTable).values({
-              id: nanoid(), playerId: promo.playerId,
-              amount: reward.coinsAwarded, type: 'earn',
-              source: 'season_promotion',
-              description: `Auto-advance promotion: ${promo.fromLeague} → ${promo.toLeague}`,
-              balanceAfter: reward.newCoins,
-            });
-          }
+          await awardDN(promo.playerId, 3, 'season_promotion', `Auto-advance promotion: ${promo.fromLeague} → ${promo.toLeague}`);
         } catch (err) {
           console.error('[season-scheduler] promotion reward error:', err);
         }

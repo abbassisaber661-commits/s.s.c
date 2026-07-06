@@ -1,15 +1,16 @@
-# [Project name]
+# SkillLeague
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+منصة اجتماعية تنافسية متكاملة تجمع الألعاب التعليمية والبطولات والاقتصاد الرقمي في مكان واحد.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- **Start workflow**: `Start application` — يشغّل الخادم الخلفي (port 8080) والواجهة الأمامية (port 5000) معاً
+- `pnpm --filter @workspace/api-server run dev` — تشغيل الخادم الخلفي فقط
+- `pnpm run typecheck` — فحص الأنواع عبر جميع الحزم
+- `pnpm run build` — فحص الأنواع + بناء جميع الحزم
+- `pnpm --filter @workspace/api-spec run codegen` — إعادة توليد API hooks و Zod schemas
+- `pnpm --filter @workspace/db run push` — تطبيق تغييرات مخطط قاعدة البيانات (dev فقط)
+- `DATABASE_URL` — مُدار تلقائياً بواسطة Replit (لا حاجة لإعداده يدوياً)
 
 ## Stack
 

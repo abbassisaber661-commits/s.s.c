@@ -75,7 +75,7 @@ function ResultFlash({ result }: { result: ArcadeResult }) {
     >
       <div className="text-3xl mb-2">{result.game.icon}</div>
       <div className="font-bold text-emerald-300 text-base">+{result.xpGained} XP</div>
-      <div className="text-yellow-300 text-sm">+{result.coinsGained} 🪙</div>
+      <div className="text-yellow-300 text-sm">+{result.xpGained} XP</div>
       {result.levelledUp && (
         <motion.div
           initial={{ scale: 0 }}
@@ -113,7 +113,7 @@ function GameCard({
         <div className="text-xs text-white/40 mb-1">{game.desc}</div>
         <div className="flex gap-2 text-xs">
           <span className="text-indigo-400 font-bold">+{game.xp} XP</span>
-          <span className="text-yellow-400">+{game.coins} 🪙</span>
+          <span className="text-yellow-400">+{game.xp} XP</span>
         </div>
       </div>
       <motion.button
