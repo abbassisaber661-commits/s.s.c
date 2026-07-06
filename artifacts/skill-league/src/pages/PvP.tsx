@@ -88,7 +88,7 @@ export default function PvP() {
     reset();
     setSelectedArena(null);
     setShowWinAnim(false);
-    setCoinsEarned(0);
+    setDnEarned(0);
     setXpEarned(0);
     setEloChange(0);
   };

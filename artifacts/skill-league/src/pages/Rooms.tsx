@@ -29,7 +29,7 @@ const MOCK_PUBLIC_ROOMS: Room[] = [
 ];
 
 export default function Rooms() {
-  const { username, coins, level } = useGame();
+  const { username, dnBalance, level } = useGame();
   const [tab, setTab] = useState<'browse' | 'create' | 'join'>('browse');
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState('');

@@ -243,13 +243,13 @@ export function playArcadeGame(
   playerName: string,
   gameId:     string,
 ): {
-  game:       (typeof ARCADE_REWARDS)[string];
-  xpGained:   number;
-  coinsGained:number;
-  newXp:      number;
-  newLevel:   number;
-  levelledUp: boolean;
-  newBadges:  string[];
+  game:        (typeof ARCADE_REWARDS)[string];
+  xpGained:    number;
+  arcadePoints:number;
+  newXp:       number;
+  newLevel:    number;
+  levelledUp:  boolean;
+  newBadges:   string[];
 } | null {
   const reward = ARCADE_REWARDS[gameId];
   if (!reward) return null;

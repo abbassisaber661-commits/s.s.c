@@ -218,7 +218,7 @@ export default function Journey() {
                         <div className="text-xs text-muted-foreground">{m.days} أيام متتالية</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-black text-yellow-400">+{m.rewardDN ?? m.coins ?? 0} DN$</div>
+                        <div className="text-sm font-black text-yellow-400">+{m.dn ?? 0} DN$</div>
                         <div className="text-xs text-muted-foreground">+{m.xp} XP</div>
                       </div>
                     </motion.div>

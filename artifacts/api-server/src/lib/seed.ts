@@ -275,7 +275,7 @@ const TOURNAMENTS = [
     type: "daily",
     status: "open",
     size: 16,
-    rewardCoins: 500,
+    rewardDn: 500,
     rewardXp: 300,
     participants: [] as string[],
     startAt: (() => { const d = new Date(); d.setHours(d.getHours() + 2, 0, 0, 0); return d; })(),
@@ -287,7 +287,7 @@ const TOURNAMENTS = [
     type: "weekly",
     status: "open",
     size: 32,
-    rewardCoins: 2000,
+    rewardDn: 2000,
     rewardXp: 1000,
     participants: [] as string[],
     startAt: nextMonday(),
@@ -299,7 +299,7 @@ const TOURNAMENTS = [
     type: "invite",
     status: "open",
     size: 8,
-    rewardCoins: 5000,
+    rewardDn: 5000,
     rewardXp: 2500,
     participants: [] as string[],
     startAt: nextSunday(),
@@ -311,7 +311,7 @@ const TOURNAMENTS = [
     type: "champion",
     status: "open",
     size: 16,
-    rewardCoins: 10000,
+    rewardDn: 10000,
     rewardXp: 5000,
     participants: [] as string[],
     startAt: (() => { const d = new Date(); d.setDate(d.getDate() + 14); d.setHours(20, 0, 0, 0); return d; })(),
@@ -334,13 +334,16 @@ export async function runSeed(): Promise<void> {
     } else {
       // Always update username, avatar, lp, and leagueDivision for all bots
       // so renames and avatar upgrades take effect on existing deployments.
+      const lpToTier = (lp: number) =>
+        lp >= 500 ? 'champion' : lp >= 300 ? 'pro' : lp >= 100 ? 'coin' : 'training';
+
       const updatePromises = FIXED_BOTS.map(bot =>
         db.update(playersTable)
           .set({
             username:       bot.username,
             avatar:         bot.avatar,
             lp:             bot.lp,
-            leagueDivision: bot.leagueDivision,
+            leagueDivision: lpToTier(bot.lp),
             updatedAt:      new Date(),
           })
           .where(eq(playersTable.id, bot.id))
@@ -394,7 +397,7 @@ export async function refreshDailyTournament(): Promise<void> {
           type:         "daily",
           status:       "open",
           size:         16,
-          rewardCoins:  500,
+          rewardDn:     500,
           rewardXp:     300,
           participants: [],
           startAt,

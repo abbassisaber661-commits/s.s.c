@@ -18,7 +18,7 @@ export default function Career() {
 
   const stats: CareerStats = {
     level, elo, matchesPlayed, pvpWins, tournamentWins,
-    achievementCount: achievements.length, coins: dnBalance ?? 0, bestStreak, fame: fame ?? 0,
+    achievementCount: achievements.length, dn: dnBalance ?? 0, bestStreak, fame: fame ?? 0,
   };
 
   const currentTier  = getCurrentCareerTier(stats);

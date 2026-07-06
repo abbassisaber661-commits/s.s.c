@@ -88,7 +88,7 @@ export const TROPHIES: {
   { id: 'tournament_win',   name: 'Champion',        icon: '🏆',  desc: 'Win a tournament',         condition: s => s.tournamentWins >= 1 },
   { id: 'win_streak_5',     name: 'On Fire',         icon: '🔥',  desc: '5 wins in a row',           condition: s => s.pvpWinStreak >= 5 },
   { id: 'win_streak_10',    name: 'Unstoppable',     icon: '💥',  desc: '10 wins in a row',          condition: s => s.pvpWinStreak >= 10 },
-  { id: 'coins_1000',       name: 'Moneybags',       icon: '💰',  desc: 'Hold 1000+ coins',          condition: s => s.coins >= 1000 },
+  { id: 'coins_1000',       name: 'Moneybags',       icon: '💰',  desc: 'Hold 1000+ DN
 ];
 
 export interface TrophyStats {
@@ -96,7 +96,21 @@ export interface TrophyStats {
   pvpWinStreak: number;
   level: number;
   tournamentWins: number;
-  coins: number;
+  dnBalance: number;
+}
+
+export function checkNewTrophies(stats: TrophyStats, earnedIds: string[]): typeof TROPHIES {
+  return TROPHIES.filter(t => !earnedIds.includes(t.id) && t.condition(stats));
+}
+,            condition: s => s.dnBalance >= 1000 },
+];
+
+export interface TrophyStats {
+  pvpWins: number;
+  pvpWinStreak: number;
+  level: number;
+  tournamentWins: number;
+  dnBalance: number;
 }
 
 export function checkNewTrophies(stats: TrophyStats, earnedIds: string[]): typeof TROPHIES {

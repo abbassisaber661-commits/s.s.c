@@ -80337,8 +80337,8 @@ function endRoom(io2, roomId) {
   const expectedA = 1 / (1 + Math.pow(10, (room.playerB.elo - room.playerA.elo) / 400));
   const scoreVal = won ? 1 : draw ? 0.5 : 0;
   const eloChange = Math.round(K * (scoreVal - expectedA));
-  const coinsWon = won ? Math.round(room.stake * arena.winMultiplier) : draw ? Math.round(room.stake * arena.drawMultiplier) : 0;
-  const coinsNet = coinsWon;
+  const dnWon = won ? Math.round(room.stake * arena.winMultiplier) : draw ? Math.round(room.stake * arena.drawMultiplier) : 0;
+  const dnNet = dnWon;
   const xpGained = isBot ? won ? 60 : draw ? 20 : 8 : won ? 120 + (arena.eloK - 16) * 2 : draw ? 50 : 25;
   const newEloA = Math.max(800, room.playerA.elo + eloChange);
   const { lp: newLpA, leagueDivision: newDivA } = computeLP(newEloA);
@@ -80354,15 +80354,15 @@ function endRoom(io2, roomId) {
     isBot,
     leagueId: room.leagueId,
     stake: room.stake,
-    coinReward: coinsWon,
-    coinsNet,
+    dnReward: dnWon,
+    dnNet,
     eloChange,
     xpGained,
     newLp: newLpA,
     lpChange: lpChangeA,
     newLeagueDivision: newDivA
   });
-  logger.info({ roomId, scoreA: room.playerA.score, scoreB: room.playerB.score, won, eloChange, coinsNet, newDivA }, "Match ended");
+  logger.info({ roomId, scoreA: room.playerA.score, scoreB: room.playerB.score, won, eloChange, dnNet, newDivA }, "Match ended");
   ;
   (async () => {
     try {
@@ -80371,8 +80371,8 @@ function endRoom(io2, roomId) {
       const bWon = !won && !draw;
       const bDraw = draw;
       const bEloChange = Math.round(K * (1 - scoreVal - (1 - expectedA)));
-      const bCoinsWon = bWon ? Math.round(room.stake * arena.winMultiplier) : bDraw ? Math.round(room.stake * arena.drawMultiplier) : 0;
-      const bCoinsNet = bCoinsWon;
+      const bDnWon = bWon ? Math.round(room.stake * arena.winMultiplier) : bDraw ? Math.round(room.stake * arena.drawMultiplier) : 0;
+      const bDnNet = bDnWon;
       const bXp = isBot ? 0 : bWon ? 120 + (arena.eloK - 16) * 2 : bDraw ? 50 : 25;
       const newEloB = Math.max(800, room.playerB.elo + bEloChange);
       const { lp: newLpB, leagueDivision: newDivB } = computeLP(newEloB);
@@ -80386,11 +80386,11 @@ function endRoom(io2, roomId) {
         leagueId: room.leagueId,
         matchType: isBot ? "bot" : "pvp",
         duration: room.duration,
-        coinsStake: room.stake,
+        dnStake: room.stake,
         eloChangeA: eloChange,
         eloChangeB: isBot ? 0 : bEloChange,
-        coinsWonA: coinsWon,
-        coinsWonB: isBot ? 0 : bCoinsWon,
+        dnWonA: dnWon,
+        dnWonB: isBot ? 0 : bDnWon,
         xpGainedA: xpGained,
         xpGainedB: isBot ? 0 : bXp,
         finishedAt: /* @__PURE__ */ new Date()
@@ -80410,10 +80410,10 @@ function endRoom(io2, roomId) {
           updatedAt: /* @__PURE__ */ new Date(),
           lastActiveAt: /* @__PURE__ */ new Date()
         }).where(eq(playersTable.id, room.playerA.playerId));
-        if (coinsWon > 0) {
+        if (dnWon > 0) {
           awardDN(
             room.playerA.playerId,
-            coinsWon,
+            dnWon,
             isBot ? "bot_match" : "pvp_match",
             `${isBot ? "Bot" : "PvP"} match ${arena.displayName} \u2014 ${won ? "win" : "draw"} DN$ reward`
           ).catch(() => {
@@ -80435,10 +80435,10 @@ function endRoom(io2, roomId) {
           updatedAt: /* @__PURE__ */ new Date(),
           lastActiveAt: /* @__PURE__ */ new Date()
         }).where(eq(playersTable.id, room.playerB.playerId));
-        if (bCoinsWon > 0) {
+        if (bDnWon > 0) {
           awardDN(
             room.playerB.playerId,
-            bCoinsWon,
+            bDnWon,
             "pvp_match",
             `PvP match ${arena.displayName} \u2014 ${bWon ? "win" : "draw"} DN$ reward`
           ).catch(() => {
@@ -87388,7 +87388,6 @@ router4.post("/players/:id/sync", async (req, res) => {
     const body = req.body;
     const updates = { updatedAt: /* @__PURE__ */ new Date(), lastActiveAt: /* @__PURE__ */ new Date() };
     const fields = [
-      "coins",
       "xp",
       "level",
       "elo",
@@ -87552,6 +87551,7 @@ router5.post("/matches", optionalAuth, async (req, res) => {
       playerAScore,
       playerBScore,
       duration: duration3,
+      dnStake,
       coinsStake,
       rounds,
       matchType,
@@ -87594,13 +87594,11 @@ router5.post("/matches", optionalAuth, async (req, res) => {
     const tierStr = String(leagueId);
     const currentLp = dbPlayer?.lp ?? 0;
     const currentXp = dbPlayer?.xp ?? 0;
-    const currentCoins = dbPlayer?.coins ?? 0;
     const lpResult = calcLpDelta(currentLp, { score: pAScore, rank, bestStreak: bestStreakNum, correctPct: accuracyNum });
     const xpGained = calcXpForMatch(pAScore, accuracyNum, isWin, bestStreakNum);
     const newXp = currentXp + xpGained;
     const newLevel = levelFromXp(newXp);
-    const coinsEarned = calcCoinsForMatch(pAScore, rank, accuracyNum, tierStr);
-    const newCoins = currentCoins + coinsEarned;
+    const dnEarned = calcCoinsForMatch(pAScore, rank, accuracyNum, tierStr);
     const [match] = await db.insert(pvpMatchesTable).values({
       id: nanoid3(),
       playerAId: pAId,
@@ -87611,8 +87609,8 @@ router5.post("/matches", optionalAuth, async (req, res) => {
       leagueId: String(leagueId),
       duration: Number(duration3) || 30,
       rounds: rounds || [],
-      coinsStake: Number(coinsStake) || 0,
-      coinsWonA: coinsEarned,
+      dnStake: Number(dnStake ?? coinsStake) || 0,
+      dnWonA: dnEarned,
       xpGainedA: xpGained,
       eloChangeA: lpResult.delta,
       finishedAt: /* @__PURE__ */ new Date()
@@ -87624,7 +87622,6 @@ router5.post("/matches", optionalAuth, async (req, res) => {
         lp: lpResult.newLp,
         xp: newXp,
         level: newLevel,
-        coins: newCoins,
         leagueDivision: lpResult.newTier,
         matchesPlayed: (dbPlayer.matchesPlayed ?? 0) + 1,
         matchesWon: (dbPlayer.matchesWon ?? 0) + (isWin ? 1 : 0),
@@ -87639,7 +87636,7 @@ router5.post("/matches", optionalAuth, async (req, res) => {
     }
     res.status(201).json({
       ...match,
-      coinsWonA: coinsEarned,
+      dnWonA: dnEarned,
       xpGainedA: xpGained,
       eloChangeA: lpResult.delta,
       rewards: {
@@ -87658,10 +87655,8 @@ router5.post("/matches", optionalAuth, async (req, res) => {
           newLevel,
           levelUp: newLevel > levelFromXp(currentXp)
         },
-        coins: {
-          earned: coinsEarned,
-          oldCoins: currentCoins,
-          newCoins
+        dn: {
+          earned: dnEarned
         }
       }
     });
@@ -87694,7 +87689,7 @@ router5.get("/tournaments", async (req, res) => {
 });
 router5.post("/tournaments", async (req, res) => {
   try {
-    const { name: name2, type, size, rewardCoins, rewardXp, startAt, endAt } = req.body;
+    const { name: name2, type, size, rewardDn, rewardCoins, rewardXp, startAt, endAt } = req.body;
     if (!name2 || !startAt) {
       res.status(400).json({ error: "missing fields" });
       return;
@@ -87705,7 +87700,7 @@ router5.post("/tournaments", async (req, res) => {
       type: String(type || "daily"),
       status: "open",
       size: Number(size) || 8,
-      rewardCoins: Number(rewardCoins) || 500,
+      rewardDn: Number(rewardDn ?? rewardCoins) || 500,
       rewardXp: Number(rewardXp) || 300,
       startAt: new Date(String(startAt)),
       endAt: endAt ? new Date(String(endAt)) : void 0
@@ -89783,7 +89778,7 @@ router16.get("/monitor/bots", requireAdmin, async (req, res) => {
   try {
     const rows = await db.execute(sql`
       SELECT p.id, p.username, p.created_at, p.last_active_at,
-        p.matches_played, p.matches_won, p.coins, p.elo,
+        p.matches_played, p.matches_won, p.elo,
         sa.type as flag_type, sa.severity
       FROM players p
       LEFT JOIN suspicious_activity sa ON sa.player_id = p.id AND sa.resolved = FALSE
@@ -90571,9 +90566,9 @@ async function simulateBotMatch(botA, botB) {
       matchType: "bot_sim",
       duration: 30 + randInt(0, 30),
       rounds: [],
-      coinsStake: 0,
-      coinsWonA: coinsA,
-      coinsWonB: coinsB,
+      dnStake: 0,
+      dnWonA: coinsA,
+      dnWonB: coinsB,
       xpGainedA: 0,
       xpGainedB: 0,
       eloChangeA: lpResultA.delta,
@@ -90586,7 +90581,6 @@ async function simulateBotMatch(botA, botB) {
   await db.update(playersTable).set({
     lp: lpResultA.newLp,
     leagueDivision: getTier2(lpResultA.newLp),
-    coins: (botA.coins ?? 0) + coinsA,
     matchesPlayed: (botA.matchesPlayed ?? 0) + 1,
     matchesWon: (botA.matchesWon ?? 0) + (isWinA ? 1 : 0),
     pvpWins: (botA.pvpWins ?? 0) + (isWinA ? 1 : 0),
@@ -90600,7 +90594,6 @@ async function simulateBotMatch(botA, botB) {
   await db.update(playersTable).set({
     lp: lpResultB.newLp,
     leagueDivision: getTier2(lpResultB.newLp),
-    coins: (botB.coins ?? 0) + coinsB,
     matchesPlayed: (botB.matchesPlayed ?? 0) + 1,
     matchesWon: (botB.matchesWon ?? 0) + (isWinB ? 1 : 0),
     pvpWins: (botB.pvpWins ?? 0) + (isWinB ? 1 : 0),
@@ -91272,7 +91265,7 @@ function playArcadeGame(playerId, playerName, gameId) {
   return {
     game: reward,
     xpGained: reward.xp,
-    coinsGained: reward.coins,
+    arcadePoints: reward.xp,
     newXp: profile2.xp,
     newLevel: profile2.level,
     levelledUp: profile2.level > oldLevel,
@@ -92215,8 +92208,8 @@ var INTEGRATION_MANIFEST = [
 ];
 async function probeCoinTxSource(source) {
   try {
-    const rows = await db.select({ id: walletTransactionsTable.id, createdAt: walletTransactionsTable.createdAt }).from(walletTransactionsTable).where(eq(walletTransactionsTable.source, source)).orderBy(desc(walletTransactionsTable.createdAt)).limit(1);
-    const total = await db.select({ n: count() }).from(walletTransactionsTable).where(eq(walletTransactionsTable.source, source));
+    const rows = await db.select({ id: walletTransactionsTable.id, createdAt: walletTransactionsTable.createdAt }).from(walletTransactionsTable).where(eq(walletTransactionsTable.type, source)).orderBy(desc(walletTransactionsTable.createdAt)).limit(1);
+    const total = await db.select({ n: count() }).from(walletTransactionsTable).where(eq(walletTransactionsTable.type, source));
     return { count: total[0]?.n ?? 0, lastAt: rows[0]?.createdAt?.toISOString() };
   } catch {
     return { count: 0 };
@@ -92226,7 +92219,7 @@ async function probeGemsTx(source) {
   try {
     const rows = await db.select({ n: count() }).from(walletTransactionsTable).where(and(
       eq(walletTransactionsTable.type, "gem_earn"),
-      eq(walletTransactionsTable.source, source)
+      eq(walletTransactionsTable.type, source)
     ));
     return { count: rows[0]?.n ?? 0 };
   } catch {
@@ -92620,7 +92613,7 @@ async function getEconomyMetrics(periodDays = 7) {
     )
   );
   const totalEarned = Number(earnRows[0]?.total ?? 0);
-  const spendRows = await db.select({ total: sum(storePurchasesTable.coinsSpent) }).from(storePurchasesTable).where(gte(storePurchasesTable.createdAt, since));
+  const spendRows = await db.select({ total: sum(storePurchasesTable.dnSpent) }).from(storePurchasesTable).where(gte(storePurchasesTable.createdAt, since));
   const totalSpent = Number(spendRows[0]?.total ?? 0);
   const allPlayers = await db.select({ id: playersTable.id }).from(playersTable);
   const totalUsers = allPlayers.length || 1;
@@ -92755,7 +92748,7 @@ async function computeWeekSnapshot(startDate, endDate) {
       lte(walletTransactionsTable.createdAt, endDate)
     )
   );
-  const spendRows = await db.select({ total: sum(storePurchasesTable.coinsSpent) }).from(storePurchasesTable).where(
+  const spendRows = await db.select({ total: sum(storePurchasesTable.dnSpent) }).from(storePurchasesTable).where(
     and(
       gte(storePurchasesTable.createdAt, startDate),
       lte(storePurchasesTable.createdAt, endDate)
@@ -92966,11 +92959,11 @@ async function checkExploit(playerId, source) {
   if (source === "match_result") {
     try {
       const oneHourAgo = new Date(now - 36e5);
-      const rows = await db.select({ cnt: count() }).from(walletTransactionsTable).where(
+      const rows = await db.select({ cnt: count() }).from(coinTransactionsTable).where(
         and(
-          eq(walletTransactionsTable.playerId, playerId),
-          eq(walletTransactionsTable.source, "match_result"),
-          gte(walletTransactionsTable.createdAt, oneHourAgo)
+          eq(coinTransactionsTable.playerId, playerId),
+          eq(coinTransactionsTable.source, "match_result"),
+          gte(coinTransactionsTable.createdAt, oneHourAgo)
         )
       );
       const matchesThisHour = Number(rows[0]?.cnt ?? 0);
@@ -93046,12 +93039,7 @@ async function getStabilityReport() {
   else if (spendRatio > 0.1 && spendRatio < 0.3) spendScore = 15;
   else if (spendRatio > 1) spendScore = 8;
   else spendScore = 5;
-  const avgGems = playerRows.reduce((s, p) => s + (p.gems ?? 0), 0) / totalPlayers;
-  let gemScore;
-  if (avgGems >= 0.5 && avgGems <= 3) gemScore = 20;
-  else if (avgGems > 3 && avgGems <= 5) gemScore = 14;
-  else if (avgGems > 5) gemScore = 8;
-  else gemScore = 10;
+  const gemScore = 10;
   let exploitScore;
   if (exploitFlags === 0) exploitScore = 15;
   else if (exploitFlags <= 5) exploitScore = 10;
@@ -93429,7 +93417,6 @@ router25.get("/social/profile/:id", async (req, res) => {
         username: player.username ?? "",
         level: player.level ?? 1,
         xp: player.xp ?? 0,
-        coins: player.coins ?? 0,
         elo: player.elo ?? 0,
         fame: player.fame ?? 0,
         language: player.language ?? "en",
@@ -94765,7 +94752,7 @@ router33.post("/matches/submit-result", optionalAuth, async (req, res) => {
       matchType: "skill",
       duration: Math.ceil(result.totalTime + result.shapeTime),
       rounds: answers,
-      coinsStake: 0,
+      dnStake: 0,
       correctCount: result.correctAnswers,
       wrongCount: result.wrongAnswers,
       totalAnswerTime: result.totalTime,
@@ -95092,10 +95079,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AlexAhmed"),
     elo: 1920,
     lp: 680,
-    coins: 15600,
-    xp: 14200,
-    level: 28,
-    leagueDivision: "champion",
+    // coins removed: 15600, xp: 14200, level: 28, leagueDivision: "champion",
     pvpWins: 187,
     pvpLosses: 43,
     pvpWinStreak: 5,
@@ -95114,10 +95098,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("OmarSilva"),
     elo: 1780,
     lp: 620,
-    coins: 11200,
-    xp: 10800,
-    level: 22,
-    leagueDivision: "champion",
+    // coins removed: 11200, xp: 10800, level: 22, leagueDivision: "champion",
     pvpWins: 143,
     pvpLosses: 58,
     pvpWinStreak: 3,
@@ -95136,10 +95117,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("JamesCarter"),
     elo: 2100,
     lp: 780,
-    coins: 24e3,
-    xp: 21e3,
-    level: 42,
-    leagueDivision: "champion",
+    // coins removed: 24000, xp: 21000, level: 42, leagueDivision: "champion",
     pvpWins: 311,
     pvpLosses: 29,
     pvpWinStreak: 12,
@@ -95158,10 +95136,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("LucasMartin"),
     elo: 1850,
     lp: 560,
-    coins: 18500,
-    xp: 16e3,
-    level: 33,
-    leagueDivision: "champion",
+    // coins removed: 18500, xp: 16000, level: 33, leagueDivision: "champion",
     pvpWins: 220,
     pvpLosses: 51,
     pvpWinStreak: 7,
@@ -95180,10 +95155,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("RyanChen"),
     elo: 1760,
     lp: 530,
-    coins: 13400,
-    xp: 12100,
-    level: 26,
-    leagueDivision: "champion",
+    // coins removed: 13400, xp: 12100, level: 26, leagueDivision: "champion",
     pvpWins: 172,
     pvpLosses: 62,
     pvpWinStreak: 4,
@@ -95203,10 +95175,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("ElenaPetrov"),
     elo: 1490,
     lp: 445,
-    coins: 6500,
-    xp: 7200,
-    level: 16,
-    leagueDivision: "pro",
+    // coins removed: 6500, xp: 7200, level: 16, leagueDivision: "pro",
     pvpWins: 108,
     pvpLosses: 77,
     pvpWinStreak: 2,
@@ -95225,10 +95194,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("KarimHassan"),
     elo: 1380,
     lp: 315,
-    coins: 4900,
-    xp: 4600,
-    level: 11,
-    leagueDivision: "pro",
+    // coins removed: 4900, xp: 4600, level: 11, leagueDivision: "pro",
     pvpWins: 65,
     pvpLosses: 92,
     pvpWinStreak: 0,
@@ -95247,10 +95213,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("YunaKim"),
     elo: 1555,
     lp: 395,
-    coins: 7800,
-    xp: 7100,
-    level: 17,
-    leagueDivision: "pro",
+    // coins removed: 7800, xp: 7100, level: 17, leagueDivision: "pro",
     pvpWins: 121,
     pvpLosses: 68,
     pvpWinStreak: 3,
@@ -95269,10 +95232,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("DiegoFernandez"),
     elo: 1460,
     lp: 340,
-    coins: 5200,
-    xp: 5e3,
-    level: 13,
-    leagueDivision: "pro",
+    // coins removed: 5200, xp: 5000, level: 13, leagueDivision: "pro",
     pvpWins: 83,
     pvpLosses: 88,
     pvpWinStreak: 1,
@@ -95291,10 +95251,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("PriyaSharma"),
     elo: 1610,
     lp: 465,
-    coins: 9200,
-    xp: 8800,
-    level: 19,
-    leagueDivision: "pro",
+    // coins removed: 9200, xp: 8800, level: 19, leagueDivision: "pro",
     pvpWins: 132,
     pvpLosses: 59,
     pvpWinStreak: 4,
@@ -95313,10 +95270,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SofiaTorres"),
     elo: 1650,
     lp: 480,
-    coins: 8900,
-    xp: 8500,
-    level: 18,
-    leagueDivision: "pro",
+    // coins removed: 8900, xp: 8500, level: 18, leagueDivision: "pro",
     pvpWins: 112,
     pvpLosses: 71,
     pvpWinStreak: 2,
@@ -95335,10 +95289,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AishaPatel"),
     elo: 1540,
     lp: 420,
-    coins: 7200,
-    xp: 6900,
-    level: 15,
-    leagueDivision: "pro",
+    // coins removed: 7200, xp: 6900, level: 15, leagueDivision: "pro",
     pvpWins: 98,
     pvpLosses: 84,
     pvpWinStreak: 1,
@@ -95357,10 +95308,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("MarcoRossi"),
     elo: 1420,
     lp: 360,
-    coins: 5800,
-    xp: 5400,
-    level: 12,
-    leagueDivision: "pro",
+    // coins removed: 5800, xp: 5400, level: 12, leagueDivision: "pro",
     pvpWins: 76,
     pvpLosses: 89,
     pvpWinStreak: 0,
@@ -95380,10 +95328,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("JakeThompson"),
     elo: 1310,
     lp: 280,
-    coins: 4500,
-    xp: 4e3,
-    level: 9,
-    leagueDivision: "coin",
+    // coins removed: 4500, xp: 4000, level: 9, leagueDivision: "coin",
     pvpWins: 54,
     pvpLosses: 78,
     pvpWinStreak: 2,
@@ -95402,10 +95347,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("NourRashid"),
     elo: 1200,
     lp: 175,
-    coins: 3200,
-    xp: 2800,
-    level: 7,
-    leagueDivision: "coin",
+    // coins removed: 3200, xp: 2800, level: 7, leagueDivision: "coin",
     pvpWins: 38,
     pvpLosses: 67,
     pvpWinStreak: 0,
@@ -95424,10 +95366,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("MiaJohnson"),
     elo: 1260,
     lp: 240,
-    coins: 3800,
-    xp: 3500,
-    level: 8,
-    leagueDivision: "coin",
+    // coins removed: 3800, xp: 3500, level: 8, leagueDivision: "coin",
     pvpWins: 47,
     pvpLosses: 72,
     pvpWinStreak: 1,
@@ -95446,10 +95385,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("EthanWilliams"),
     elo: 1350,
     lp: 295,
-    coins: 4200,
-    xp: 3900,
-    level: 9,
-    leagueDivision: "coin",
+    // coins removed: 4200, xp: 3900, level: 9, leagueDivision: "coin",
     pvpWins: 58,
     pvpLosses: 74,
     pvpWinStreak: 2,
@@ -95468,10 +95404,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AmaraOsei"),
     elo: 1180,
     lp: 145,
-    coins: 2700,
-    xp: 2300,
-    level: 6,
-    leagueDivision: "coin",
+    // coins removed: 2700, xp: 2300, level: 6, leagueDivision: "coin",
     pvpWins: 32,
     pvpLosses: 60,
     pvpWinStreak: 0,
@@ -95490,10 +95423,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("LeoZhang"),
     elo: 1290,
     lp: 215,
-    coins: 3600,
-    xp: 3200,
-    level: 8,
-    leagueDivision: "coin",
+    // coins removed: 3600, xp: 3200, level: 8, leagueDivision: "coin",
     pvpWins: 44,
     pvpLosses: 69,
     pvpWinStreak: 1,
@@ -95512,10 +95442,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SanaMalik"),
     elo: 1225,
     lp: 165,
-    coins: 2900,
-    xp: 2600,
-    level: 7,
-    leagueDivision: "coin",
+    // coins removed: 2900, xp: 2600, level: 7, leagueDivision: "coin",
     pvpWins: 36,
     pvpLosses: 64,
     pvpWinStreak: 0,
@@ -95534,10 +95461,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("IvanPetrov"),
     elo: 1320,
     lp: 260,
-    coins: 4100,
-    xp: 3700,
-    level: 9,
-    leagueDivision: "coin",
+    // coins removed: 4100, xp: 3700, level: 9, leagueDivision: "coin",
     pvpWins: 51,
     pvpLosses: 76,
     pvpWinStreak: 1,
@@ -95556,10 +95480,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("LenaMuller"),
     elo: 1165,
     lp: 120,
-    coins: 2400,
-    xp: 1900,
-    level: 6,
-    leagueDivision: "coin",
+    // coins removed: 2400, xp: 1900, level: 6, leagueDivision: "coin",
     pvpWins: 28,
     pvpLosses: 56,
     pvpWinStreak: 0,
@@ -95578,10 +95499,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("TariqIbrahim"),
     elo: 1245,
     lp: 195,
-    coins: 3300,
-    xp: 3e3,
-    level: 7,
-    leagueDivision: "coin",
+    // coins removed: 3300, xp: 3000, level: 7, leagueDivision: "coin",
     pvpWins: 41,
     pvpLosses: 66,
     pvpWinStreak: 1,
@@ -95601,10 +95519,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("ChloeDubois"),
     elo: 1100,
     lp: 85,
-    coins: 2100,
-    xp: 1800,
-    level: 5,
-    leagueDivision: "training",
+    // coins removed: 2100, xp: 1800, level: 5, leagueDivision: "training",
     pvpWins: 22,
     pvpLosses: 51,
     pvpWinStreak: 1,
@@ -95623,10 +95538,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("RamiKhalil"),
     elo: 1020,
     lp: 45,
-    coins: 1400,
-    xp: 900,
-    level: 3,
-    leagueDivision: "training",
+    // coins removed: 1400, xp: 900, level: 3, leagueDivision: "training",
     pvpWins: 11,
     pvpLosses: 38,
     pvpWinStreak: 0,
@@ -95645,10 +95557,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SaraNovak"),
     elo: 1050,
     lp: 65,
-    coins: 1700,
-    xp: 1400,
-    level: 4,
-    leagueDivision: "training",
+    // coins removed: 1700, xp: 1400, level: 4, leagueDivision: "training",
     pvpWins: 15,
     pvpLosses: 43,
     pvpWinStreak: 0,
@@ -95667,10 +95576,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("TomNakamura"),
     elo: 1010,
     lp: 30,
-    coins: 1100,
-    xp: 700,
-    level: 2,
-    leagueDivision: "training",
+    // coins removed: 1100, xp: 700, level: 2, leagueDivision: "training",
     pvpWins: 8,
     pvpLosses: 32,
     pvpWinStreak: 0,
@@ -95689,10 +95595,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AnyaSmirnova"),
     elo: 1080,
     lp: 78,
-    coins: 1900,
-    xp: 1600,
-    level: 4,
-    leagueDivision: "training",
+    // coins removed: 1900, xp: 1600, level: 4, leagueDivision: "training",
     pvpWins: 18,
     pvpLosses: 46,
     pvpWinStreak: 1,
@@ -95711,10 +95614,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("BenFoster"),
     elo: 1035,
     lp: 15,
-    coins: 900,
-    xp: 500,
-    level: 2,
-    leagueDivision: "training",
+    // coins removed: 900, xp: 500, level: 2, leagueDivision: "training",
     pvpWins: 6,
     pvpLosses: 28,
     pvpWinStreak: 0,
@@ -95733,10 +95633,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("MayaRivera"),
     elo: 1060,
     lp: 55,
-    coins: 1600,
-    xp: 1200,
-    level: 3,
-    leagueDivision: "training",
+    // coins removed: 1600, xp: 1200, level: 3, leagueDivision: "training",
     pvpWins: 13,
     pvpLosses: 41,
     pvpWinStreak: 0,
@@ -95755,10 +95652,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SamOBrien"),
     elo: 1015,
     lp: 8,
-    coins: 800,
-    xp: 400,
-    level: 1,
-    leagueDivision: "training",
+    // coins removed: 800, xp: 400, level: 1, leagueDivision: "training",
     pvpWins: 4,
     pvpLosses: 25,
     pvpWinStreak: 0,
@@ -95777,10 +95671,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("HanaYamamoto"),
     elo: 1045,
     lp: 38,
-    coins: 1300,
-    xp: 1e3,
-    level: 3,
-    leagueDivision: "training",
+    // coins removed: 1300, xp: 1000, level: 3, leagueDivision: "training",
     pvpWins: 10,
     pvpLosses: 36,
     pvpWinStreak: 0,
@@ -95799,10 +95690,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("KiranPatel"),
     elo: 1090,
     lp: 92,
-    coins: 2e3,
-    xp: 1700,
-    level: 5,
-    leagueDivision: "training",
+    // coins removed: 2000, xp: 1700, level: 5, leagueDivision: "training",
     pvpWins: 20,
     pvpLosses: 49,
     pvpWinStreak: 1,
@@ -95839,7 +95727,7 @@ var TOURNAMENTS = [
     type: "daily",
     status: "open",
     size: 16,
-    rewardCoins: 500,
+    rewardDn: 500,
     rewardXp: 300,
     participants: [],
     startAt: (() => {
@@ -95859,7 +95747,7 @@ var TOURNAMENTS = [
     type: "weekly",
     status: "open",
     size: 32,
-    rewardCoins: 2e3,
+    rewardDn: 2e3,
     rewardXp: 1e3,
     participants: [],
     startAt: nextMonday(),
@@ -95875,7 +95763,7 @@ var TOURNAMENTS = [
     type: "invite",
     status: "open",
     size: 8,
-    rewardCoins: 5e3,
+    rewardDn: 5e3,
     rewardXp: 2500,
     participants: [],
     startAt: nextSunday(),
@@ -95891,7 +95779,7 @@ var TOURNAMENTS = [
     type: "champion",
     status: "open",
     size: 16,
-    rewardCoins: 1e4,
+    rewardDn: 1e4,
     rewardXp: 5e3,
     participants: [],
     startAt: (() => {
@@ -95915,12 +95803,13 @@ async function runSeed() {
       await db.insert(playersTable).values(FIXED_BOTS).onConflictDoNothing();
       logger.info({ count: FIXED_BOTS.length }, "Seeded bot players");
     } else {
+      const lpToTier = (lp) => lp >= 500 ? "champion" : lp >= 300 ? "pro" : lp >= 100 ? "coin" : "training";
       const updatePromises = FIXED_BOTS.map(
         (bot) => db.update(playersTable).set({
           username: bot.username,
           avatar: bot.avatar,
           lp: bot.lp,
-          leagueDivision: bot.leagueDivision,
+          leagueDivision: lpToTier(bot.lp),
           updatedAt: /* @__PURE__ */ new Date()
         }).where(eq(playersTable.id, bot.id)).catch(() => {
         })
@@ -95956,7 +95845,7 @@ async function refreshDailyTournament() {
           type: "daily",
           status: "open",
           size: 16,
-          rewardCoins: 500,
+          rewardDn: 500,
           rewardXp: 300,
           participants: [],
           startAt,

@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
-import { Link } from "wouter";
-import { ChevronLeft, Clock, Trophy, Users, Zap } from "lucide-react";
+import { ChevronLeft, Clock, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { playTap } from "@/lib/sounds";
 import { isRTL } from "@/lib/i18n";
 import { ACTIVE_EVENTS, getTimeRemaining, getTimeRemainingAr, getEventProgress, type GameEvent } from "@/lib/events";
 
 export default function Events() {
-  const { language, pvpWins, matchesPlayed, coins } = useGame();
+  const { language, pvpWins, matchesPlayed, dnBalance } = useGame();
   const rtl = isRTL(language);
 
   const [selectedEvent, setSelectedEvent] = useState<GameEvent | null>(null);
@@ -25,7 +24,7 @@ export default function Events() {
     const stored = progress[event.id]?.[missionId] ?? 0;
     if (type === 'pvp_wins') return Math.max(stored, pvpWins);
     if (type === 'matches')  return Math.max(stored, matchesPlayed);
-    if (type === 'coins')    return Math.max(stored, coins);
+    if (type === 'coins')    return Math.max(stored, dnBalance);
     return stored;
   };
 
@@ -66,25 +65,27 @@ export default function Events() {
                   className={`p-3 rounded-xl border ${done ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold">{language === 'ar' ? m.titleAr : m.title}</span>
-                    {done ? <span className="text-xs text-green-400 font-bold">✅ {language === 'ar' ? 'مكتملة' : 'Done'}</span> :
-                            <span className="text-xs text-muted-foreground">{userVal}/{m.goal}</span>}
+                    {done
+                      ? <span className="text-xs text-green-400 font-bold">✅ {language === 'ar' ? 'مكتملة' : 'Done'}</span>
+                      : <span className="text-xs text-muted-foreground">{userVal}/{m.goal}</span>
+                    }
                   </div>
                   <div className="h-1.5 bg-background rounded-full overflow-hidden">
                     <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                       style={{ background: done ? '#22c55e' : selectedEvent.color }} />
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
-                    <span>🎁 {(m.reward.coins ?? 0) > 0 ? `+${m.reward.coins} DNimport { useState } from "react";
+                    <span>
+                      🎁 {(m.reward.dn ?? 0) > 0 ? `+${m.reward.dn} DNimport { useState } from "react";
 import { useGame } from "@/contexts/GameContext";
-import { Link } from "wouter";
-import { ChevronLeft, Clock, Trophy, Users, Zap } from "lucide-react";
+import { ChevronLeft, Clock, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 import { playTap } from "@/lib/sounds";
 import { isRTL } from "@/lib/i18n";
 import { ACTIVE_EVENTS, getTimeRemaining, getTimeRemainingAr, getEventProgress, type GameEvent } from "@/lib/events";
 
 export default function Events() {
-  const { language, pvpWins, matchesPlayed, coins } = useGame();
+  const { language, pvpWins, matchesPlayed, dnBalance } = useGame();
   const rtl = isRTL(language);
 
   const [selectedEvent, setSelectedEvent] = useState<GameEvent | null>(null);
@@ -101,7 +102,7 @@ export default function Events() {
     const stored = progress[event.id]?.[missionId] ?? 0;
     if (type === 'pvp_wins') return Math.max(stored, pvpWins);
     if (type === 'matches')  return Math.max(stored, matchesPlayed);
-    if (type === 'coins')    return Math.max(stored, coins);
+    if (type === 'coins')    return Math.max(stored, dnBalance);
     return stored;
   };
 
@@ -142,15 +143,20 @@ export default function Events() {
                   className={`p-3 rounded-xl border ${done ? 'border-green-500/30 bg-green-500/5' : 'border-border'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold">{language === 'ar' ? m.titleAr : m.title}</span>
-                    {done ? <span className="text-xs text-green-400 font-bold">✅ {language === 'ar' ? 'مكتملة' : 'Done'}</span> :
-                            <span className="text-xs text-muted-foreground">{userVal}/{m.goal}</span>}
+                    {done
+                      ? <span className="text-xs text-green-400 font-bold">✅ {language === 'ar' ? 'مكتملة' : 'Done'}</span>
+                      : <span className="text-xs text-muted-foreground">{userVal}/{m.goal}</span>
+                    }
                   </div>
                   <div className="h-1.5 bg-background rounded-full overflow-hidden">
                     <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }}
                       style={{ background: done ? '#22c55e' : selectedEvent.color }} />
                   </div>
                   <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
- : ''} {m.reward.xp > 0 ? `+${m.reward.xp} XP` : ''}</span>
+                    <span>
+ : ''}
+                      {m.reward.xp > 0 ? ` +${m.reward.xp} XP` : ''}
+                    </span>
                   </div>
                 </motion.div>
               );
@@ -168,8 +174,8 @@ export default function Events() {
                   {r.special && <div className="text-[10px] text-purple-400 font-bold">{language === 'ar' ? r.specialAr : r.special}</div>}
                 </div>
                 <div className="text-right">
-                  {(r.coins ?? 0) > 0 && <div className="text-xs font-bold text-yellow-400">+{r.coins} DN$</div>}
-                  {r.xp > 0   && <div className="text-[10px] text-purple-400">+{r.xp} XP</div>}
+                  {(r.dn ?? 0) > 0 && <div className="text-xs font-bold text-yellow-400">+{r.dn} DN$</div>}
+                  {r.xp > 0 && <div className="text-[10px] text-purple-400">+{r.xp} XP</div>}
                 </div>
               </div>
             ))}
@@ -182,9 +188,13 @@ export default function Events() {
   return (
     <div dir={rtl ? 'rtl' : 'ltr'} className="min-h-screen bg-background text-foreground pb-24">
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/60 px-4 py-3 flex items-center gap-3">
-        <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={() => { playTap(); window.history.back(); }}><ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} /></button>
+        <button className="p-2 rounded-xl hover:bg-card active:scale-95 transition-all" onClick={() => { playTap(); window.history.back(); }}>
+          <ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} />
+        </button>
         <h1 className="text-lg font-black flex-1">🌍 {language === 'ar' ? 'الأحداث العالمية' : 'Global Events'}</h1>
-        <span className="text-xs px-2 py-1 rounded-full bg-green-500/15 text-green-400 font-bold">{ACTIVE_EVENTS.length} {language === 'ar' ? 'نشط' : 'Active'}</span>
+        <span className="text-xs px-2 py-1 rounded-full bg-green-500/15 text-green-400 font-bold">
+          {ACTIVE_EVENTS.length} {language === 'ar' ? 'نشط' : 'Active'}
+        </span>
       </div>
 
       <div className="max-w-md mx-auto px-4 pt-4 space-y-4">
@@ -200,7 +210,6 @@ export default function Events() {
 
         {ACTIVE_EVENTS.map((event, i) => {
           const timeLeft = language === 'ar' ? getTimeRemainingAr(event.endDate) : getTimeRemaining(event.endDate);
-          const userPvp = getUserProgress(event, 'pvp', 'pvp_wins');
           return (
             <motion.div key={event.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
               onClick={() => { setSelectedEvent(event); playTap(); }}
@@ -229,7 +238,8 @@ export default function Events() {
                         <Clock className="w-3 h-3" /><span>{timeLeft}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Trophy className="w-3 h-3" /><span>{event.rewards.length} {language === 'ar' ? 'جوائز' : 'prizes'}</span>
+                        <Trophy className="w-3 h-3" />
+                        <span>{event.rewards.length} {language === 'ar' ? 'جوائز' : 'prizes'}</span>
                       </div>
                     </div>
                   </div>
@@ -240,7 +250,7 @@ export default function Events() {
                   style={{ background: event.color + '12' }}>
                   <span className="text-lg">{event.rewards[0].icon}</span>
                   <span className="text-xs font-bold" style={{ color: event.color }}>
-                    {language === 'ar' ? 'الجائزة الأولى:' : '1st Prize:'} {(event.rewards[0].coins ?? 0).toLocaleString()} DN$
+                    {language === 'ar' ? 'الجائزة الأولى:' : '1st Prize:'} {(event.rewards[0].dn ?? 0).toLocaleString()} DN$
                     {event.rewards[0].special && ` + ${language === 'ar' ? event.rewards[0].specialAr : event.rewards[0].special}`}
                   </span>
                   <ChevronLeft className={`w-4 h-4 ml-auto opacity-50 ${rtl ? '' : 'rotate-180'}`} />

@@ -84,10 +84,10 @@ const QUICK_PROMPTS = [
 ];
 
 export default function AICoach() {
-  const { language, level, elo, matchesPlayed, matchesWon, pvpWins, pvpLosses, pvpWinStreak, bestStreak, skillSpeed, skillAccuracy, skillMemory, coins, tournamentWins, dailyChallengesCompleted, xpBoostUntil } = useGame();
+  const { language, level, elo, matchesPlayed, matchesWon, pvpWins, pvpLosses, pvpWinStreak, bestStreak, skillSpeed, skillAccuracy, skillMemory, dnBalance, tournamentWins, dailyChallengesCompleted, xpBoostUntil } = useGame();
   const rtl = isRTL(language);
 
-  const stats = { level, elo, matchesPlayed, matchesWon, pvpWins, pvpLosses, pvpWinStreak, bestStreak, skillSpeed, skillAccuracy, skillMemory, coins, tournamentWins, dailyChallengesCompleted: dailyChallengesCompleted ?? 0, xpBoostUntil: xpBoostUntil ?? null };
+  const stats = { level, elo, matchesPlayed, matchesWon, pvpWins, pvpLosses, pvpWinStreak, bestStreak, skillSpeed, skillAccuracy, skillMemory, dnBalance, tournamentWins, dailyChallengesCompleted: dailyChallengesCompleted ?? 0, xpBoostUntil: xpBoostUntil ?? null };
 
   const [messages, setMessages] = useState<Message[]>([{
     id: '0', role: 'assistant',

@@ -13,11 +13,11 @@ export function meetsScoreRequirement(id: LeagueId, data: PlayerData): boolean {
 
 export function canAffordCoinUnlock(id: LeagueId, data: PlayerData): boolean {
   const cfg = LEAGUES[id];
-  return cfg.unlockCoinsCost > 0 && data.coins >= cfg.unlockCoinsCost;
+  return cfg.unlockCoinsCost > 0 && (data.dnBalance ?? 0) >= cfg.unlockCoinsCost;
 }
 
 export function canAffordEntry(id: LeagueId, data: PlayerData): boolean {
-  return data.coins >= LEAGUES[id].entryCost;
+  return (data.dnBalance ?? 0) >= LEAGUES[id].entryCost;
 }
 
 export function getCurrentLeague(data: PlayerData): LeagueId {

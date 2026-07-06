@@ -182,7 +182,7 @@ function SubscribeModal({
                 </span>
               ) : (
                 <span>
-                  {isFree ? '⚔️ اشترك مجاناً' : canAfford ? `⚔️ اشترك مقابل ${gemCost} 💎` : `❌ رصيد غير كافٍ`}
+                  {isFree ? '⚔️ اشترك مجاناً' : `⚔️ اشترك مقابل ${league.entryCostPi} π`}
                 </span>
               )}
             </motion.button>
@@ -465,16 +465,7 @@ function LeagueCard({
                 🔒 محجوب
               </span>
             )}
-            {!isBlocked && (gemCost > 0 ? (
-              <span className="text-[10px] font-black px-2.5 py-1 rounded-full tracking-wide"
-                style={{
-                  background: canAffordGems ? `${league.color}15` : 'rgba(255,255,255,0.06)',
-                  border: `1px solid ${canAffordGems ? league.color + '40' : 'rgba(255,255,255,0.12)'}`,
-                  color: canAffordGems ? league.color : 'rgba(255,255,255,0.35)',
-                }}>
-                {gemCost} 💎
-              </span>
-            ) : (
+            {!isBlocked && (
               <span className="text-[10px] font-black px-2.5 py-1 rounded-full tracking-wide"
                 style={{
                   background: 'rgba(52,211,153,0.12)',
@@ -483,7 +474,7 @@ function LeagueCard({
                 }}>
                 {entryLabel}
               </span>
-            ))}
+            )}
           </div>
         </div>
 
@@ -549,10 +540,8 @@ function LeagueCard({
               {hasEntry
                 ? '▶ متابعة الموسم'
                 : isSelected
-                  ? gemCost > 0
-                    ? canAffordGems
-                      ? `⚔️ اشترك (${gemCost} 💎)`
-                      : `❌ تحتاج ${gemCost} 💎`
+                  ? (league.entryCostPi ?? 0) > 0
+                    ? `⚔️ اشترك (${league.entryCostPi} π)`
                     : '⚔️ اشترك مجاناً'
                   : 'عرض الدوري →'}
             </span>

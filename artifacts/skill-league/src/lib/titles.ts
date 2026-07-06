@@ -17,7 +17,7 @@ export interface TitleStats {
   pvpWins: number;
   tournamentWins: number;
   trophyCount: number;
-  coins: number;
+  dnBalance: number;
   pvpWinStreak: number;
   achievementCount: number;
   currentSeasonNumber: number;
@@ -132,7 +132,7 @@ export const TITLES: Title[] = [
     description: '10,000+ coins earned',
     color: '#fbbf24',
     rarity: 'rare',
-    requirement: (s) => s.coins >= 10000,
+    requirement: (s) => s.dnBalance >= 10000,
     priority: 45,
   },
   {

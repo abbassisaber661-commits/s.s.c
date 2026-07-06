@@ -74,7 +74,7 @@ const LEAGUES = [
     diffLabel: "متقدم",
     eloLabel: "LP 100+",
     entryCost: 1,
-    entryLabel: "1 💎",
+    entryLabel: "1 π",
     free: false,
     perks: [
       "أسئلة بمستوى أعلى من Division III",
@@ -101,7 +101,7 @@ const LEAGUES = [
     diffLabel: "محترف",
     eloLabel: "LP 300+",
     entryCost: 2,
-    entryLabel: "2 💎",
+    entryLabel: "2 π",
     free: false,
     perks: [
       "أسئلة من مستوى PRO — صعوبة عالية",
@@ -128,7 +128,7 @@ const LEAGUES = [
     diffLabel: "نخبة",
     eloLabel: "LP 500+",
     entryCost: 4,
-    entryLabel: "4 💎",
+    entryLabel: "4 π",
     free: false,
     perks: [
       "أصعب أسئلة في المنصة — مستوى CHAMPION",
@@ -153,13 +153,11 @@ const PARTICLES = Array.from({ length: 16 }, (_, i) => ({
 // ── Subscribe Modal ────────────────────────────────────────────────────────────
 function SubscribeModal({
   league,
-  gems,
   participantCount,
   onClose,
   onConfirm,
 }: {
   league: League;
-  gems: number;
   participantCount: number;
   onClose: () => void;
   onConfirm: () => Promise<void>;
@@ -168,7 +166,7 @@ function SubscribeModal({
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
 
-  const canAfford = gems >= league.entryCost;
+  const canAfford = true; // Pi payments handled by Pi SDK
 
   const handleConfirm = async () => {
     setJoining(true);
@@ -274,26 +272,14 @@ function SubscribeModal({
                 </div>
                 {!league.free && (
                   <div className="text-right">
-                    <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>رصيدك الحالي</div>
-                    <div className="text-lg font-black" style={{ color: gems >= league.entryCost ? "#4ade80" : "#f87171" }}>
-                      {gems} 💎
+                    <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>رسوم الدخول</div>
+                    <div className="text-lg font-black" style={{ color: "#a78bfa" }}>
+                      {league.entryCost} π
                     </div>
                   </div>
                 )}
               </div>
 
-              {!league.free && !canAfford && (
-                <div
-                  className="rounded-xl p-3 mb-4 flex items-start gap-2"
-                  style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.25)" }}
-                >
-                  <span className="text-base shrink-0">⚠️</span>
-                  <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    رصيدك الحالي {gems} 💎 غير كافٍ. تحتاج إلى {league.entryCost} 💎.
-                    العب مباريات للحصول على جواهر في نهاية الموسم.
-                  </p>
-                </div>
-              )}
 
               <div
                 className="rounded-xl p-3 mb-5 flex items-start gap-2"
@@ -343,9 +329,9 @@ function SubscribeModal({
                   className="rounded-2xl p-3 mb-5 flex items-center justify-center gap-2"
                   style={{ background: `rgba(${league.colorRgb},0.1)`, border: `1px solid rgba(${league.colorRgb},0.25)` }}
                 >
-                  <span className="text-2xl">💎</span>
+                  <span className="text-2xl">π</span>
                   <span className="text-base font-black" style={{ color: league.color }}>{league.entryLabel}</span>
-                  <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>ستُخصم من رصيدك</span>
+                  <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>رسوم دخول Pi</span>
                 </div>
               )}
 
@@ -550,13 +536,13 @@ function LeagueCard({
               </motion.button>
             )}
 
-            {league.diamondCost > 0 && !isJoined && (
+            {league.entryCost > 0 && !isJoined && (
               <div
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg shrink-0"
                 style={{ background: "rgba(0,0,0,0.3)", border: `1px solid rgba(${league.colorRgb},0.35)` }}
               >
-                <span className="text-xs">💎</span>
-                <span className="text-[12px] font-black" style={{ color: league.color }}>{league.diamondCost}</span>
+                <span className="text-xs font-bold" style={{ color: league.color }}>π</span>
+                <span className="text-[12px] font-black" style={{ color: league.color }}>{league.entryCost}</span>
               </div>
             )}
 
@@ -581,15 +567,6 @@ export default function LeagueSelectPage() {
 
   const [modalLeague, setModalLeague] = useState<League | null>(null);
 
-  // ── Gem balance ──────────────────────────────────────────────────────────────
-  const { data: gemData } = useQuery({
-    queryKey: ["gems", playerId],
-    queryFn:  () => leagueApi.getPlayerGems(playerId!),
-    enabled:  !!playerId,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-  });
-  const gems = gemData?.gems ?? 0;
 
   // ── Active league (one-per-season) ───────────────────────────────────────────
   const { data: activeLeague, refetch: refetchActive } = useQuery({
@@ -623,7 +600,6 @@ export default function LeagueSelectPage() {
     await leagueApi.joinLeague(backendId, playerId, username || "Player");
     await Promise.all([
       qc.invalidateQueries({ queryKey: ["activeLeague", playerId] }),
-      qc.invalidateQueries({ queryKey: ["gems", playerId] }),
       qc.invalidateQueries({ queryKey: ["season", backendId] }),
     ]);
   }, [playerId, username, qc]);
@@ -709,10 +685,8 @@ export default function LeagueSelectPage() {
         >
           <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.55)" }}>
             <span style={{ color: "#2dd4bf" }} className="font-black">Division 3</span> مفتوح مجاناً للجميع، باقي
-            الدوريات تتطلب اشتراكاً بـ{" "}
-            <span style={{ color: "#a78bfa" }} className="font-black">💎 جواهر</span>
-            <span style={{ color: "rgba(255,255,255,0.35)" }}> · رصيدك </span>
-            <span style={{ color: gems > 0 ? "#a78bfa" : "#f87171" }} className="font-black">{gems} 💎</span>
+            الدوريات تتطلب رسوم دخول بـ{" "}
+            <span style={{ color: "#a78bfa" }} className="font-black">π Pi</span>
             {activeLeague && (
               <span style={{ color: "#fbbf24" }} className="font-black">
                 {" "}· أنت مسجّل حالياً في الدوري هذا الموسم.
@@ -741,7 +715,6 @@ export default function LeagueSelectPage() {
         {modalLeague && (
           <SubscribeModal
             league={modalLeague}
-            gems={gems}
             participantCount={getPlayerCount(LEAGUES.findIndex(l => l.id === modalLeague.id)) ?? 0}
             onClose={() => { setModalLeague(null); refetchActive(); }}
             onConfirm={() => joinLeague(modalLeague.id)}

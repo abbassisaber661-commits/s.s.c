@@ -142,7 +142,7 @@ export function checkWeeklyCompletions(
     const progress = state.progress[m.type] ?? 0;
     if (progress >= m.target) {
       newlyCompleted.push(m);
-      coinsReward += m.rewardCoins;
+      coinsReward += m.rewardDN;
       xpReward    += m.rewardXp;
     }
   }

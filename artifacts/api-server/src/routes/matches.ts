@@ -171,7 +171,7 @@ router.post("/matches", optionalAuth, async (req, res) => {
     const {
       playerAId, playerBId, leagueId,
       playerAScore, playerBScore,
-      duration, coinsStake, rounds, matchType,
+      duration, dnStake, coinsStake, rounds, matchType,
       accuracy, bestStreak,
     } = req.body as Record<string, unknown>;
 
@@ -232,8 +232,7 @@ router.post("/matches", optionalAuth, async (req, res) => {
     const xpGained   = calcXpForMatch(pAScore, accuracyNum, isWin, bestStreakNum);
     const newXp      = currentXp + xpGained;
     const newLevel   = levelFromXp(newXp);
-    const coinsEarned = calcCoinsForMatch(pAScore, rank, accuracyNum, tierStr);
-    const newCoins   = currentCoins + coinsEarned;
+    const dnEarned   = calcCoinsForMatch(pAScore, rank, accuracyNum, tierStr);
 
     // ── Insert match record ───────────────────────────────────────────────
     const [match] = await db.insert(pvpMatchesTable).values({
@@ -246,14 +245,14 @@ router.post("/matches", optionalAuth, async (req, res) => {
       leagueId:     String(leagueId),
       duration:     Number(duration) || 30,
       rounds:       (rounds as unknown[]) || [],
-      coinsStake:   Number(coinsStake) || 0,
-      coinsWonA:    coinsEarned,
+      dnStake:      Number(dnStake ?? coinsStake) || 0,
+      dnWonA:       dnEarned,
       xpGainedA:    xpGained,
       eloChangeA:   lpResult.delta,
       finishedAt:   new Date(),
     }).returning();
 
-    // ── Persist LP / XP / Coins / level to players table ─────────────────
+    // ── Persist LP / XP / level to players table ─────────────────────────
     if (dbPlayer) {
       const newPvpWinStreak  = isWin ? (dbPlayer.pvpWinStreak ?? 0) + 1 : 0;
       const newBestPvpStreak = Math.max(dbPlayer.bestPvpStreak ?? 0, newPvpWinStreak);
@@ -262,7 +261,6 @@ router.post("/matches", optionalAuth, async (req, res) => {
         lp:            lpResult.newLp,
         xp:            newXp,
         level:         newLevel,
-        coins:         newCoins,
         leagueDivision: lpResult.newTier,
         matchesPlayed: (dbPlayer.matchesPlayed ?? 0) + 1,
         matchesWon:    (dbPlayer.matchesWon    ?? 0) + (isWin ? 1 : 0),
@@ -273,14 +271,14 @@ router.post("/matches", optionalAuth, async (req, res) => {
         updatedAt:     new Date(),
       }).where(eq(playersTable.id, pAId));
 
-      // ── Economy hook: daily match coin (fire-and-forget) ─────────────
+      // ── Economy hook: daily match DN reward (fire-and-forget) ────────
       claimMatchReward(pAId).catch(() => {});
     }
 
     // ── Respond with full breakdown ───────────────────────────────────────
     res.status(201).json({
       ...match,
-      coinsWonA:  coinsEarned,
+      dnWonA:     dnEarned,
       xpGainedA:  xpGained,
       eloChangeA: lpResult.delta,
       rewards: {
@@ -299,10 +297,8 @@ router.post("/matches", optionalAuth, async (req, res) => {
           newLevel,
           levelUp:  newLevel > levelFromXp(currentXp),
         },
-        coins: {
-          earned:   coinsEarned,
-          oldCoins: currentCoins,
-          newCoins,
+        dn: {
+          earned:  dnEarned,
         },
       },
     });
@@ -336,12 +332,12 @@ router.get("/tournaments", async (req, res) => {
 
 router.post("/tournaments", async (req, res) => {
   try {
-    const { name, type, size, rewardCoins, rewardXp, startAt, endAt } = req.body as Record<string, unknown>;
+    const { name, type, size, rewardDn, rewardCoins, rewardXp, startAt, endAt } = req.body as Record<string, unknown>;
     if (!name || !startAt) { res.status(400).json({ error: "missing fields" }); return; }
     const [t] = await db.insert(tournamentsTable).values({
       id: nanoid(), name: String(name), type: String(type || 'daily'),
       status: 'open', size: Number(size) || 8,
-      rewardCoins: Number(rewardCoins) || 500, rewardXp: Number(rewardXp) || 300,
+      rewardDn: Number(rewardDn ?? rewardCoins) || 500, rewardXp: Number(rewardXp) || 300,
       startAt: new Date(String(startAt)),
       endAt: endAt ? new Date(String(endAt)) : undefined,
     }).returning();

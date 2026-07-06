@@ -29,7 +29,7 @@ const DEMO_ITEMS = [
 ];
 
 export default function Marketplace() {
-  const { authUser, coins } = useGame();
+  const { authUser, dnBalance } = useGame();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -59,7 +59,7 @@ export default function Marketplace() {
 
   const handleBuy = async (l: Listing) => {
     if (!authUser?.uid) return;
-    if (coins < l.price) { showToast("❌ رصيدك غير كافٍ!"); return; }
+    if (dnBalance < l.price) { showToast("❌ رصيدك غير كافٍ!"); return; }
     setBuying(l.id);
     const d = await api.marketplace.buy(l.id, authUser.uid);
     setBuying(null);
@@ -153,7 +153,7 @@ export default function Marketplace() {
         {/* Stats */}
         <div className="flex items-center gap-4 mb-4 text-xs text-[#666666]">
           <span className="flex items-center gap-1"><TrendingUp size={12} /> {filtered.length} عنصر متاح</span>
-          <span className="flex items-center gap-1"><Coins size={12} className="text-[#FFD60A]" /> رصيدك: {coins.toLocaleString()} 🪙</span>
+          <span className="flex items-center gap-1"><Coins size={12} className="text-[#FFD60A]" /> رصيدك: {dnBalance.toLocaleString()} DN$</span>
         </div>
 
         {loading ? (

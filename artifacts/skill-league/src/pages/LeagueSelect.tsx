@@ -37,7 +37,7 @@ function DifficultyDots({ level, color, label }: { level: number; color: string;
 
 export default function LeagueSelect() {
   const ctx = useGame();
-  const { coins, highScores, unlockedLeagues, unlockLeagueWithCoins, language } = ctx;
+  const { dnBalance, highScores, unlockedLeagues, unlockLeagueWithCoins, language } = ctx;
   const [, setLocation] = useLocation();
   const [unlocking, setUnlocking] = useState<string | null>(null);
   const t = useT(language);
@@ -69,7 +69,7 @@ export default function LeagueSelect() {
         </Link>
         <h1 className="text-lg font-black flex-1">{t('select_league')}</h1>
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/15 border border-yellow-500/30 rounded-xl text-sm font-black text-yellow-400">
-          {coins} 🪙
+          {dnBalance} DN$
         </div>
       </div>
 

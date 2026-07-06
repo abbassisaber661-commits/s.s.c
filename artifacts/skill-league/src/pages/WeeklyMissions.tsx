@@ -14,14 +14,14 @@ function daysUntilNextWeek(): number {
 }
 
 export default function WeeklyMissions() {
-  const { weeklyChallenge, coins } = useGame();
+  const { weeklyChallenge, dnBalance } = useGame();
   const thisWeek = getWeekString();
   const missions = getWeeklyMissions(thisWeek);
   const wc       = weeklyChallenge?.week === thisWeek ? weeklyChallenge : { week: thisWeek, completedIds: [], progress: {} };
   const daysLeft = daysUntilNextWeek();
   const completedCount = wc.completedIds.length;
 
-  const totalCoins = missions.reduce((s, m) => s + m.rewardCoins, 0);
+  const totalCoins = missions.reduce((s, m) => s + m.rewardDN, 0);
   const totalXp    = missions.reduce((s, m) => s + m.rewardXp, 0);
 
   return (
@@ -94,7 +94,7 @@ export default function WeeklyMissions() {
                   <p className="text-xs text-muted-foreground mt-0.5">{mission.description}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-xs text-yellow-400 font-bold">+{mission.rewardCoins} 🪙</div>
+                  <div className="text-xs text-yellow-400 font-bold">+{mission.rewardDN} DN$</div>
                   <div className="text-xs text-purple-400">+{mission.rewardXp} XP</div>
                 </div>
               </div>

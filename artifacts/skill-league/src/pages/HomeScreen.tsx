@@ -5,7 +5,6 @@ import { useGame } from "@/contexts/GameContext";
 import { getLevelTitle, xpProgressInLevel } from "@/lib/xp";
 import { getVerificationStatus } from "@/lib/verified";
 import { loadStreakData } from "@/lib/login-streak";
-import { loadLocalGems } from "@/lib/economy";
 import { Bell } from "lucide-react";
 import { Logo } from "@/components/Logo";
 
@@ -65,12 +64,11 @@ export default function HomeScreen() {
   const game      = useGame();
   const {
     user, authUser, isGuest,
-    coins, xp, level,
+    dnBalance, xp, level,
     verificationLevel,
   } = game;
 
   const [pressed, setPressed] = useState(false);
-  const gems                  = loadLocalGems();
   const unreadCount           = 0;
 
   const { title: levelTitle, color: levelColor } = getLevelTitle(level);
@@ -161,19 +159,11 @@ export default function HomeScreen() {
                 )}
               </button>
             </Link>
-            {gems > 0 && (
-              <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-black"
-                style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.25)", color: "#c084fc" }}
-              >
-                {gems} 💎
-              </div>
-            )}
             <div
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-black"
               style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fbbf24" }}
             >
-              {coins} 🪙
+              {dnBalance} 🪙
             </div>
           </motion.div>
         </div>

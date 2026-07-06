@@ -345,7 +345,7 @@ async function computeWeekSnapshot(startDate: Date, endDate: Date): Promise<Week
     );
 
   const spendRows = await db
-    .select({ total: sum(storePurchasesTable.coinsSpent) })
+    .select({ total: sum(storePurchasesTable.dnSpent) })
     .from(storePurchasesTable)
     .where(
       and(

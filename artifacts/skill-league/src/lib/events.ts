@@ -19,7 +19,7 @@ export interface EventReward {
   rank: string;
   rankAr: string;
   icon: string;
-  coins: number;
+  dn: number;
   xp: number;
   special?: string;
   specialAr?: string;
@@ -31,7 +31,7 @@ export interface EventMission {
   titleAr: string;
   goal: number;
   type: 'wins' | 'matches' | 'pvp_wins' | 'score' | 'coins';
-  reward: { coins: number; xp: number };
+  reward: { dn: number; xp: number };
 }
 
 const PROGRESS_KEY = 'skill_league_event_progress';
@@ -67,15 +67,15 @@ export const ACTIVE_EVENTS: GameEvent[] = [
     color: '#f59e0b',
     isActive: true,
     rewards: [
-      { rank: '1st', rankAr: 'المركز الأول',  icon: '🥇', coins: 2000, xp: 1000, special: 'Season Winner Title', specialAr: 'لقب بطل الموسم' },
-      { rank: '2nd', rankAr: 'المركز الثاني', icon: '🥈', coins: 1200, xp: 600  },
-      { rank: '3rd', rankAr: 'المركز الثالث', icon: '🥉', coins: 700,  xp: 350  },
-      { rank: 'Top 10', rankAr: 'أفضل 10',    icon: '🏅', coins: 300,  xp: 150  },
+      { rank: '1st', rankAr: 'المركز الأول',  icon: '🥇', dn: 2000, xp: 1000, special: 'Season Winner Title', specialAr: 'لقب بطل الموسم' },
+      { rank: '2nd', rankAr: 'المركز الثاني', icon: '🥈', dn: 1200, xp: 600  },
+      { rank: '3rd', rankAr: 'المركز الثالث', icon: '🥉', dn: 700,  xp: 350  },
+      { rank: 'Top 10', rankAr: 'أفضل 10',    icon: '🏅', dn: 300,  xp: 150  },
     ],
     missions: [
-      { id: 'win5',    title: 'Win 5 PvP matches',    titleAr: 'اربح 5 مباريات PvP',   goal: 5,   type: 'pvp_wins', reward: { coins: 100, xp: 50  } },
-      { id: 'win15',   title: 'Win 15 PvP matches',   titleAr: 'اربح 15 مباراة PvP',   goal: 15,  type: 'pvp_wins', reward: { coins: 250, xp: 120 } },
-      { id: 'win30',   title: 'Win 30 PvP matches',   titleAr: 'اربح 30 مباراة PvP',   goal: 30,  type: 'pvp_wins', reward: { coins: 500, xp: 250 } },
+      { id: 'win5',    title: 'Win 5 PvP matches',    titleAr: 'اربح 5 مباريات PvP',   goal: 5,   type: 'pvp_wins', reward: { dn: 100, xp: 50  } },
+      { id: 'win15',   title: 'Win 15 PvP matches',   titleAr: 'اربح 15 مباراة PvP',   goal: 15,  type: 'pvp_wins', reward: { dn: 250, xp: 120 } },
+      { id: 'win30',   title: 'Win 30 PvP matches',   titleAr: 'اربح 30 مباراة PvP',   goal: 30,  type: 'pvp_wins', reward: { dn: 500, xp: 250 } },
     ],
   },
   {
@@ -91,15 +91,15 @@ export const ACTIVE_EVENTS: GameEvent[] = [
     color: '#10b981',
     isActive: true,
     rewards: [
-      { rank: '1st',    rankAr: 'المركز الأول',  icon: '🥇', coins: 5000, xp: 2000, special: 'Legendary Frame', specialAr: 'إطار أسطوري' },
-      { rank: '2nd',    rankAr: 'المركز الثاني', icon: '🥈', coins: 3000, xp: 1200 },
-      { rank: '3rd',    rankAr: 'المركز الثالث', icon: '🥉', coins: 1500, xp: 700  },
-      { rank: 'Top 50', rankAr: 'أفضل 50',       icon: '🏅', coins: 500,  xp: 200  },
+      { rank: '1st',    rankAr: 'المركز الأول',  icon: '🥇', dn: 5000, xp: 2000, special: 'Legendary Frame', specialAr: 'إطار أسطوري' },
+      { rank: '2nd',    rankAr: 'المركز الثاني', icon: '🥈', dn: 3000, xp: 1200 },
+      { rank: '3rd',    rankAr: 'المركز الثالث', icon: '🥉', dn: 1500, xp: 700  },
+      { rank: 'Top 50', rankAr: 'أفضل 50',       icon: '🏅', dn: 500,  xp: 200  },
     ],
     missions: [
-      { id: 'earn500',   title: 'Earn 500 coins',   titleAr: 'اكسب 500 عملة',   goal: 500,  type: 'coins', reward: { coins: 75,  xp: 40  } },
-      { id: 'earn2000',  title: 'Earn 2000 coins',  titleAr: 'اكسب 2000 عملة',  goal: 2000, type: 'coins', reward: { coins: 200, xp: 100 } },
-      { id: 'earn5000',  title: 'Earn 5000 coins',  titleAr: 'اكسب 5000 عملة',  goal: 5000, type: 'coins', reward: { coins: 500, xp: 250 } },
+      { id: 'earn500',   title: 'Earn 500 coins',   titleAr: 'اكسب 500 عملة',   goal: 500,  type: 'coins', reward: { dn: 75,  xp: 40  } },
+      { id: 'earn2000',  title: 'Earn 2000 coins',  titleAr: 'اكسب 2000 عملة',  goal: 2000, type: 'coins', reward: { dn: 200, xp: 100 } },
+      { id: 'earn5000',  title: 'Earn 5000 coins',  titleAr: 'اكسب 5000 عملة',  goal: 5000, type: 'coins', reward: { dn: 500, xp: 250 } },
     ],
   },
   {
@@ -115,16 +115,16 @@ export const ACTIVE_EVENTS: GameEvent[] = [
     color: '#8b5cf6',
     isActive: true,
     rewards: [
-      { rank: 'Champion',  rankAr: 'البطل',         icon: '👑', coins: 10000, xp: 5000, special: 'Champion Title + Legendary Frame', specialAr: 'لقب بطل + إطار أسطوري' },
-      { rank: 'Runner-up', rankAr: 'الوصيف',        icon: '🥈', coins: 6000,  xp: 3000, special: 'Legend Title', specialAr: 'لقب أسطورة' },
-      { rank: '3rd Place', rankAr: 'المركز الثالث', icon: '🥉', coins: 3500,  xp: 1500 },
-      { rank: 'Top 10',    rankAr: 'أفضل 10',       icon: '🏅', coins: 1500,  xp: 700  },
-      { rank: 'Top 100',   rankAr: 'أفضل 100',      icon: '🎖️', coins: 500,   xp: 200  },
+      { rank: 'Champion',  rankAr: 'البطل',         icon: '👑', dn: 10000, xp: 5000, special: 'Champion Title + Legendary Frame', specialAr: 'لقب بطل + إطار أسطوري' },
+      { rank: 'Runner-up', rankAr: 'الوصيف',        icon: '🥈', dn: 6000,  xp: 3000, special: 'Legend Title', specialAr: 'لقب أسطورة' },
+      { rank: '3rd Place', rankAr: 'المركز الثالث', icon: '🥉', dn: 3500,  xp: 1500 },
+      { rank: 'Top 10',    rankAr: 'أفضل 10',       icon: '🏅', dn: 1500,  xp: 700  },
+      { rank: 'Top 100',   rankAr: 'أفضل 100',      icon: '🎖️', dn: 500,   xp: 200  },
     ],
     missions: [
-      { id: 'play10',    title: 'Play 10 matches',    titleAr: 'العب 10 مباريات',     goal: 10,  type: 'matches',  reward: { coins: 150,  xp: 75  } },
-      { id: 'pvpwin20',  title: 'Win 20 PvP matches', titleAr: 'اربح 20 مباراة PvP',  goal: 20,  type: 'pvp_wins', reward: { coins: 400,  xp: 200 } },
-      { id: 'score300',  title: 'Score 300 in a match',titleAr: 'سجّل 300 في مباراة', goal: 300, type: 'score',    reward: { coins: 600,  xp: 300 } },
+      { id: 'play10',    title: 'Play 10 matches',    titleAr: 'العب 10 مباريات',     goal: 10,  type: 'matches',  reward: { dn: 150,  xp: 75  } },
+      { id: 'pvpwin20',  title: 'Win 20 PvP matches', titleAr: 'اربح 20 مباراة PvP',  goal: 20,  type: 'pvp_wins', reward: { dn: 400,  xp: 200 } },
+      { id: 'score300',  title: 'Score 300 in a match',titleAr: 'سجّل 300 في مباراة', goal: 300, type: 'score',    reward: { dn: 600,  xp: 300 } },
     ],
   },
 ];

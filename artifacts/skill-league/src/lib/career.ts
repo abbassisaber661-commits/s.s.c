@@ -143,8 +143,8 @@ export const CAREER_MILESTONES: CareerMilestone[] = [
   { id: 'level50',          title: 'Half Century',         titleAr: 'نصف قرن',          description: 'Reach Level 50',                  descriptionAr: 'الوصول للمستوى 50',            icon: '👑', requirement: s => s.level >= 50,            reward: { dn: 1500, xp: 3000 }, order: 10 },
   { id: 'elo1600',          title: 'Legend Territory',     titleAr: 'أرض الأساطير',     description: 'Reach 1600 ELO',                  descriptionAr: 'الوصول لـ 1600 نقطة ELO',     icon: '⚡', requirement: s => s.elo >= 1600,            reward: { dn: 2000, xp: 4000 }, order: 11 },
   { id: 'pvp_100',          title: 'PvP Legend',           titleAr: 'أسطورة PvP',       description: 'Win 100 PvP matches',              descriptionAr: 'اربح 100 مباراة PvP',         icon: '🌟', requirement: s => s.pvpWins >= 100,         reward: { dn: 2500, xp: 5000 }, order: 12 },
-  { id: 'matches_500',      title: 'Road to Legend',       titleAr: 'طريق الأسطورة',    description: 'Play 500 matches',                 descriptionAr: 'العب 500 مباراة',             icon: '🛣️', requirement: s => s.matchesPlayed >= 500,   reward: { coins: 3000, xp: 6000 }, order: 13 },
-  { id: 'elo1800',          title: 'Champion\'s Path',     titleAr: 'طريق البطل',       description: 'Reach 1800 ELO — true champion',   descriptionAr: 'الوصول لـ 1800 ELO — بطل حقيقي', icon: '🏆', requirement: s => s.elo >= 1800,         reward: { coins: 5000, xp: 10000}, order: 14 },
+  { id: 'matches_500',      title: 'Road to Legend',       titleAr: 'طريق الأسطورة',    description: 'Play 500 matches',                 descriptionAr: 'العب 500 مباراة',             icon: '🛣️', requirement: s => s.matchesPlayed >= 500,   reward: { dn: 3000, xp: 6000 }, order: 13 },
+  { id: 'elo1800',          title: 'Champion\'s Path',     titleAr: 'طريق البطل',       description: 'Reach 1800 ELO — true champion',   descriptionAr: 'الوصول لـ 1800 ELO — بطل حقيقي', icon: '🏆', requirement: s => s.elo >= 1800,         reward: { dn: 5000, xp: 10000}, order: 14 },
 ];
 
 const MILESTONES_KEY = 'skill_league_career_milestones';

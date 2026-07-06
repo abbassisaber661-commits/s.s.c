@@ -13,7 +13,7 @@ import {
 } from "@/lib/clans";
 
 export default function Clans() {
-  const { language, username, level, elo, coins, spendCoins } = useGame();
+  const { language, username, level, elo, dnBalance, spendCoins } = useGame();
   const rtl = isRTL(language);
 
   const [tab, setTab] = useState<'rankings' | 'myClan' | 'create'>('rankings');
@@ -230,7 +230,7 @@ export default function Clans() {
                       </button>
                     ))}
                   </div>
-                  <Button onClick={handleContribute} className="w-full text-sm font-bold" disabled={coins < contributeAmount}>
+                  <Button onClick={handleContribute} className="w-full text-sm font-bold" disabled={dnBalance < contributeAmount}>
                     {language === 'ar' ? `ساهم بـ ${contributeAmount} عملة` : `Contribute ${contributeAmount} Coins`}
                   </Button>
                   <p className="text-[10px] text-muted-foreground text-center">

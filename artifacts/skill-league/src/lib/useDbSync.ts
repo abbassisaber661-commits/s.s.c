@@ -8,7 +8,7 @@ let syncTimer: ReturnType<typeof setTimeout> | null = null;
 
 function mapToApiPayload(d: PlayerData) {
   return {
-    coins:          d.coins,
+    dnBalance:      d.dnBalance ?? 0,
     xp:             d.xp,
     level:          d.level,
     elo:            d.elo,

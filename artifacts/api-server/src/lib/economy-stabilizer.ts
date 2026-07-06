@@ -14,7 +14,7 @@
  *   5. getStabilityReport()— full diagnostic for the dashboard
  */
 
-import { db, walletTransactionsTable, playersTable, userDailyEconomyTable } from '@workspace/db';
+import { db, walletTransactionsTable, coinTransactionsTable, playersTable, userDailyEconomyTable } from '@workspace/db';
 import { eq, and, gte, lte, count, sum, desc } from 'drizzle-orm';
 
 // ── 1. Hard Caps ──────────────────────────────────────────────────────────────
@@ -181,12 +181,12 @@ export async function checkExploit(
       const oneHourAgo = new Date(now - 3_600_000);
       const rows = await db
         .select({ cnt: count() })
-        .from(walletTransactionsTable)
+        .from(coinTransactionsTable)
         .where(
           and(
-            eq(walletTransactionsTable.playerId, playerId),
-            eq(walletTransactionsTable.source, 'match_result'),
-            gte(walletTransactionsTable.createdAt, oneHourAgo),
+            eq(coinTransactionsTable.playerId, playerId),
+            eq(coinTransactionsTable.source, 'match_result'),
+            gte(coinTransactionsTable.createdAt, oneHourAgo),
           ),
         );
       const matchesThisHour = Number(rows[0]?.cnt ?? 0);
@@ -315,14 +315,9 @@ export async function getStabilityReport(): Promise<StabilityReport> {
   else if (spendRatio > 1.0)                       spendScore = 8;  // deflation
   else                                             spendScore = 5;  // no spending
 
-  // ── Gem score (0–20) ──────────────────────────────────────────────────────
-  // Balanced gem distribution across leagues → 20 pts
-  const avgGems = playerRows.reduce((s, p) => s + (p.gems ?? 0), 0) / totalPlayers;
-  let gemScore: number;
-  if (avgGems >= 0.5 && avgGems <= 3)  gemScore = 20;
-  else if (avgGems > 3 && avgGems <= 5) gemScore = 14;
-  else if (avgGems > 5)                 gemScore = 8;
-  else                                  gemScore = 10; // near zero — low activity
+  // ── DN$ velocity score (0–20) — replaces legacy gem score ───────────────
+  // Gems are removed; award neutral mid-range points since we no longer track per-player gem balance.
+  const gemScore = 10; // neutral — kept in StabilityComponents for API compat
 
   // ── Exploit score (0–15) ─────────────────────────────────────────────────
   let exploitScore: number;

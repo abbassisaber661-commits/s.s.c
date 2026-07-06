@@ -548,7 +548,7 @@ export default function Tournament() {
     const won       = playerPlace === 1;
     const place     = playerPlace ?? 4;
     const placeLabel = PLACE_LABELS[place] ?? `Top ${place}`;
-    const coinsWon  = won ? cfg.coins : place === 2 ? Math.floor(cfg.coins * 0.3) : 0;
+    const coinsWon  = won ? cfg.dn : place === 2 ? Math.floor(cfg.dn * 0.3) : 0;
     const standings = bracket ? buildStandings(bracket) : [];
 
     return (

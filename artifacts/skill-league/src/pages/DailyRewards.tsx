@@ -188,7 +188,7 @@ export default function DailyRewards() {
       const result = await api.daily.claim(playerId, task);
       if (result.awarded) {
         playCorrect();
-        setToast({ msg: ar ? `+${result.dn ?? result.coins ?? 0} DN$!` : `+${result.dn ?? result.coins ?? 0} DN$!`, coins: result.dn ?? result.coins ?? 0 });
+        setToast({ msg: ar ? `+${result.coins ?? 0} DN$!` : `+${result.coins ?? 0} DN$!`, coins: result.coins ?? 0 });
         setTimeout(() => setToast(null), 3000);
       }
       await fetchStatus();
