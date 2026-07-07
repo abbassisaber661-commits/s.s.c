@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCcw, Menu } from "lucide-react";
-import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { api, getStoredPlayerId, getJwtRole } from "@/lib/apiClient";
 import { compressImageToBase64 } from "@/lib/imageUtils";
 
 import { useTranslation } from "@/hooks/useTranslation";
@@ -106,6 +106,10 @@ export default function ProfilePage() {
     !routeParams?.userId ||
     routeParams.userId === authUser?.uid ||
     routeParams.userId === storedPlayerId;
+
+  // isAdminUser: true only when the stored JWT carries role="admin" (set by backend
+  // when player.piUid matches OWNER_UID secret).  Used to gate owner-only UI.
+  const isAdminUser = getJwtRole() === "admin";
 
   const creatorStats = useCreatorStats(userId || "1", profile?.postsCount ?? 0);
 
@@ -328,7 +332,7 @@ export default function ProfilePage() {
               Shows the Pi Network UID so the owner can copy it and
               set it as OWNER_UID in Replit Secrets for admin access.
       ══════════════════════════════════════════════════════════════ */}
-      {isOwner && piUser?.uid && (
+      {isOwner && isAdminUser && piUser?.uid && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

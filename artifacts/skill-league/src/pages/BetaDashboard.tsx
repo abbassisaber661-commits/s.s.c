@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGame } from '@/contexts/GameContext';
-import { api } from '@/lib/apiClient';
+import { api, getJwtRole } from '@/lib/apiClient';
 import { isOfflineMode } from '@/lib/syncService';
 import { BETA_VERSION, getBetaAccess, getBetaTierLabel } from '@/lib/betaSystem';
 import { getTotalPlaytimeFormatted } from '@/lib/sessionTracker';
@@ -108,7 +108,7 @@ export default function BetaDashboard() {
     } catch {}
   }
 
-  const isAdmin = (authUser as any)?.role === 'admin' || access.tier === 'team';
+  const isAdmin = getJwtRole() === "admin" || access.tier === 'team';
 
   const TABS = [
     { id: 'overview', label: 'نظرة عامة', icon: BarChart3 },

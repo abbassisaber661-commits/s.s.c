@@ -7,19 +7,7 @@ import {
   Search, ChevronLeft, ChevronRight, CheckCircle, XCircle,
   UserX, UserCheck, Eye, RefreshCw, BarChart3, Lock, BadgeCheck,
 } from "lucide-react";
-import { api, getToken } from "@/lib/apiClient";
-
-/* ─── JWT role decoder (client-side, no signature needed) ─────────────── */
-function getJwtRole(): string | null {
-  try {
-    const token = getToken();
-    if (!token) return null;
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.role ?? null;
-  } catch {
-    return null;
-  }
-}
+import { api, getJwtRole } from "@/lib/apiClient";
 
 function useOwnerAccess() {
   const [role, setRole] = useState<string | null>(null);

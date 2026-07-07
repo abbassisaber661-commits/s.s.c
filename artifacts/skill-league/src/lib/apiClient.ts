@@ -19,6 +19,18 @@ export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
+/** Read the `role` claim from the stored JWT (client-side, no signature needed). */
+export function getJwtRole(): string | null {
+  try {
+    const token = getToken();
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.role ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const getStoredPlayerId = () => localStorage.getItem(PLAYER_ID_KEY);
 export const setStoredPlayerId = (id: string) =>
   localStorage.setItem(PLAYER_ID_KEY, id);
