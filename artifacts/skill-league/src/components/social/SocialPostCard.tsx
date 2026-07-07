@@ -23,6 +23,10 @@ import { isRTL } from "@/lib/i18n";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
+/** Normalise official-page display names: "SkillLeague X" → "S.S.C X" (null-safe) */
+const officialPageName = (name?: string | null) =>
+  (name ?? "").replace(/^SkillLeague(\s+|$)/i, (_, sp) => sp ? "S.S.C " : "S.S.C");
+
 const fmt = (n: number) =>
   n >= 1_000_000
     ? (n / 1_000_000).toFixed(1) + "M"
@@ -462,7 +466,9 @@ const SocialPostCard = memo(function SocialPostCard({
               rtl ? "text-right" : "text-left"
             )}
           >
-            <span className="truncate">{post.authorName}</span>
+            <span className="truncate">
+              {post.isOfficialPage ? officialPageName(post.authorName) : post.authorName}
+            </span>
             {post.authorIsOwner && (
               <VerificationBadge tier="owner" size="sm" showTooltip={false} />
             )}

@@ -8,7 +8,6 @@ import {
   Code2,
   Megaphone,
   Brush,
-  Globe,
   UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -44,7 +43,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     isPrimary: true,
   },
   official: {
-    icon: Globe,
+    icon: BadgeCheck,
     color: "text-white",
     bg: "bg-sky-500",
     glowColor: "rgba(14,165,233,0.6)",

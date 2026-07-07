@@ -136,19 +136,31 @@ export const ProfileCoverHeader = memo(
           className="mt-20 text-center px-4"
         >
           {/* Display name + badge */}
-          <div className="flex items-center justify-center gap-1.5 flex-wrap">
-            <h1 className="text-xl font-bold text-[#111111] leading-tight">
-              {profile.displayName ?? profile.username}
-            </h1>
-            {profile.verification && profile.verification !== "none" && (
-              <VerificationBadge tier={profile.verification} size="md" />
-            )}
-          </div>
-
-          {/* @username */}
-          <p className="text-sm text-[#666666] mt-0.5">
-            @{profile.username}
-          </p>
+          {(() => {
+            const isOfficial = profile.verification === "official";
+            const rawName = profile.displayName ?? profile.username ?? "";
+            const displayName = isOfficial
+              ? rawName.replace(/^SkillLeague(\s+|$)/i, (_, sp) => sp ? "S.S.C " : "S.S.C")
+              : rawName;
+            return (
+              <>
+                <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                  <h1 className="text-xl font-bold text-[#111111] leading-tight">
+                    {displayName}
+                  </h1>
+                  {profile.verification && profile.verification !== "none" && (
+                    <VerificationBadge tier={profile.verification} size="md" />
+                  )}
+                </div>
+                {/* @username — hidden for official pages (would duplicate the page name) */}
+                {!isOfficial && (
+                  <p className="text-sm text-[#666666] mt-0.5">
+                    @{profile.username}
+                  </p>
+                )}
+              </>
+            );
+          })()}
 
           {/* Bio */}
           {profile.bio && (
