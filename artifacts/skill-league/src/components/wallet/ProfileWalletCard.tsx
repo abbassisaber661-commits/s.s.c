@@ -5,7 +5,7 @@
  */
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Info, Receipt, X } from "lucide-react";
+import { Info, Receipt, X, Wallet } from "lucide-react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
@@ -57,7 +57,7 @@ function InfoPopover({ text, onClose }: { text: string; onClose: () => void }) {
 
 /** Loading pulse skeleton */
 function BalanceSkeleton() {
-  return <div className="h-7 w-20 bg-[#F0F0F0] rounded-lg animate-pulse mt-0.5" />;
+  return <div className="h-7 w-20 bg-white/10 rounded-lg animate-pulse mt-0.5" />;
 }
 
 export default function ProfileWalletCard() {
@@ -86,9 +86,26 @@ export default function ProfileWalletCard() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E5E5] shadow-sm overflow-visible">
+    <div
+      className="rounded-2xl shadow-md overflow-visible"
+      style={{
+        background: "linear-gradient(135deg, #0F1B35 0%, #1A2D5A 50%, #0E1F44 100%)",
+        border: "1px solid rgba(99,130,255,0.25)",
+      }}
+    >
+      {/* ── Wallet header ── */}
+      <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-white/10">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(99,130,255,0.25)" }}
+        >
+          <Wallet size={15} className="text-[#A5B4FC]" />
+        </div>
+        <span className="text-sm font-bold text-white tracking-wide">Wallet</span>
+      </div>
+
       {/* Two-column balance row */}
-      <div className="grid grid-cols-2 divide-x divide-[#F0F0F0]">
+      <div className="grid grid-cols-2 divide-x divide-white/10">
         {/* ── DN$ Balance ── */}
         <div className="relative p-4">
           {/* Label row */}
@@ -100,14 +117,14 @@ export default function ProfileWalletCard() {
                 className="w-4 h-4 rounded-full object-cover flex-shrink-0"
                 draggable={false}
               />
-              <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
                 DN$ Balance
               </span>
             </div>
             <button
               onClick={toggleDnInfo}
               aria-label="About DN$"
-              className="w-6 h-6 rounded-full flex items-center justify-center text-[#AAAAAA] hover:text-[#555555] hover:bg-[#F5F5F7] transition-colors"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
             >
               <Info size={13} />
             </button>
@@ -120,10 +137,10 @@ export default function ProfileWalletCard() {
             <BalanceSkeleton />
           ) : (
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-[#111111] tabular-nums leading-none">
+              <span className="text-2xl font-black text-white tabular-nums leading-none">
                 {dnBalance.toLocaleString("en-US")}
               </span>
-              <span className="text-xs font-bold text-[#8B5CF6]">DN$</span>
+              <span className="text-xs font-bold text-[#C4B5FD]">DN$</span>
             </div>
           )}
         </div>
@@ -133,15 +150,15 @@ export default function ProfileWalletCard() {
           {/* Label row */}
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-black text-[#7B3FF2] leading-none">π</span>
-              <span className="text-[10px] font-bold text-[#888888] uppercase tracking-wider">
+              <span className="text-sm font-black text-[#C4B5FD] leading-none">π</span>
+              <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
                 Pi Balance
               </span>
             </div>
             <button
               onClick={togglePiInfo}
               aria-label="About Pi"
-              className="w-6 h-6 rounded-full flex items-center justify-center text-[#AAAAAA] hover:text-[#555555] hover:bg-[#F5F5F7] transition-colors"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors"
             >
               <Info size={13} />
             </button>
@@ -154,20 +171,20 @@ export default function ProfileWalletCard() {
             <BalanceSkeleton />
           ) : (
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-[#111111] tabular-nums leading-none">
+              <span className="text-2xl font-black text-white tabular-nums leading-none">
                 {piBalance.toLocaleString("en-US", { maximumFractionDigits: 4 })}
               </span>
-              <span className="text-xs font-bold text-[#7B3FF2]">π</span>
+              <span className="text-xs font-bold text-[#C4B5FD]">π</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Transaction History button */}
-      <div className="border-t border-[#F0F0F0]">
+      <div className="border-t border-white/10">
         <button
           onClick={() => navigate("/wallet")}
-          className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F7] active:bg-[#EEEEEE] transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-white/60 hover:text-white hover:bg-white/10 active:bg-white/15 transition-colors rounded-b-2xl"
         >
           <Receipt size={14} />
           Transaction History

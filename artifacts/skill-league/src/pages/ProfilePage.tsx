@@ -50,7 +50,10 @@ export default function ProfilePage() {
 
   const [, routeParams] = useRoute("/profile/:userId?");
   const { authUser, isGuest } = useGame();
-  const userId = routeParams?.userId ?? authUser?.uid ?? "";
+  const storedPlayerId = getStoredPlayerId();
+  // Prefer storedPlayerId (DB nanoid) over authUser.uid (Pi UUID for Pi users)
+  // so profile fetch and upload handlers always target the correct player record.
+  const userId = routeParams?.userId ?? storedPlayerId ?? authUser?.uid ?? "";
 
   // ── Guest paywall ──────────────────────────────────────────────────────────
   const [paywallVisible, setPaywallVisible] = useState(false);
@@ -96,8 +99,13 @@ export default function ProfilePage() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef  = useRef<HTMLInputElement>(null);
 
-  const currentPlayerId = getStoredPlayerId() ?? undefined;
-  const isOwner = !routeParams?.userId || routeParams.userId === authUser?.uid;
+  const currentPlayerId = storedPlayerId ?? undefined;
+  // isOwner: true when no URL param (own profile tab), or when URL param matches
+  // either the Pi UUID (authUser.uid) OR the DB player nanoid (storedPlayerId).
+  const isOwner =
+    !routeParams?.userId ||
+    routeParams.userId === authUser?.uid ||
+    routeParams.userId === storedPlayerId;
 
   const creatorStats = useCreatorStats(userId || "1", profile?.postsCount ?? 0);
 
