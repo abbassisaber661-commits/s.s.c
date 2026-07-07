@@ -170,9 +170,25 @@ async function _doAuth(): Promise<PiAuthResult> {
   try {
     const authWithTimeout = Promise.race([
       Pi.authenticate(
-        ["username"],
-        (_incompletePayment: unknown) => {
-          console.warn("[Pi] Incomplete payment found during auth — ignored.");
+        ["username", "payments"],
+        async (incompletePayment: {
+          identifier: string;
+          transaction: { txid: string } | null;
+        }) => {
+          console.info("[Pi] onIncompletePaymentFound:", incompletePayment.identifier);
+          try {
+            // Dynamic import avoids a circular dependency between pi-auth ↔ apiClient.
+            const { api } = await import("./apiClient");
+            await api.pi.incomplete(
+              incompletePayment.identifier,
+              incompletePayment.transaction?.txid,
+            );
+            console.info("[Pi] Incomplete payment handled via backend");
+          } catch (err) {
+            // Non-fatal — log and let auth proceed; the Pi SDK keeps the
+            // payment in recoverable state so the user can retry later.
+            console.error("[Pi] Failed to handle incomplete payment:", err);
+          }
         },
       ) as Promise<unknown>,
       new Promise<never>((_, reject) =>
