@@ -9,8 +9,9 @@
  */
 import { Router } from "express";
 import { eq, and, gt } from "drizzle-orm";
-import { db, subscriptionsTable } from "@workspace/db";
+import { db, subscriptionsTable, playersTable } from "@workspace/db";
 import { requireAuth } from "../middleware/auth.js";
+import { isOwnerPlayer } from "../lib/owner.js";
 
 const router = Router();
 
@@ -25,6 +26,25 @@ router.get("/subscriptions/status/:playerId", requireAuth, async (req, res) => {
   }
 
   try {
+    // ── Owner bypass: app owner never needs a paid subscription ──────────
+    const [player] = await db
+      .select({ piUid: playersTable.piUid, username: playersTable.username })
+      .from(playersTable)
+      .where(eq(playersTable.id, playerId))
+      .limit(1);
+
+    if (player && isOwnerPlayer(player)) {
+      res.json({
+        active:    true,
+        plan:      "owner",
+        expiresAt: new Date("2099-12-31T23:59:59Z").toISOString(),
+        daysLeft:  99999,
+        piTxId:    null,
+        isOwner:   true,
+      });
+      return;
+    }
+
     const now = new Date();
     const [active] = await db
       .select()

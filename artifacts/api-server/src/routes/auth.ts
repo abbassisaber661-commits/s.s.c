@@ -188,7 +188,8 @@ router.post("/auth/pi", strictRateLimit, async (req, res) => {
     // Economy hook: daily login coin (fire-and-forget)
     claimLoginReward(player.id).catch(() => {});
     const token = buildToken(player);
-    res.json({ token, player });
+    const ownerFlag = isOwnerPlayer(player);
+    res.json({ token, player: { ...player, isOwner: ownerFlag }, isOwner: ownerFlag });
   } catch (err) {
     req.log.error({ err }, "pi auth error");
     res.status(500).json({ error: "internal" });

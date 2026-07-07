@@ -420,11 +420,13 @@ export default function SubscriptionPage({ onBack }: Props) {
       /* Step 3 ─ Backend Pi auth → create/get player, issue JWT ─────────── */
       let playerId:  string;
       let jwtToken:  string;
+      let isOwnerUser = false;
 
       try {
         const authResp = await api.auth.pi(piAccessToken);
-        jwtToken  = authResp.token;
-        playerId  = authResp.player.id;
+        jwtToken    = authResp.token;
+        playerId    = authResp.player.id;
+        isOwnerUser = !!(authResp as Record<string, unknown>).isOwner;
         // Persist token + playerId so subsequent API calls are authenticated
         setToken(jwtToken);
         setStoredPlayerId(playerId);
@@ -433,6 +435,17 @@ export default function SubscriptionPage({ onBack }: Props) {
         setError(tx.error_pi);
         setLoadingPlan(null);
         setLoadStep("idle");
+        return;
+      }
+
+      /* Owner bypass ─ skip payment, enter app directly ─────────────────── */
+      if (isOwnerUser) {
+        console.info("[Sub] Owner detected — skipping payment gate");
+        // Synthetic subscription so the gate passes (local-only, non-expiring)
+        confirmSubscription({ playerId, plan: "premium3" as never, piTxId: "owner_bypass" });
+        setAuthFromPi(piUid, piUsername);
+        setLoadStep("done");
+        navigate("/");
         return;
       }
 
