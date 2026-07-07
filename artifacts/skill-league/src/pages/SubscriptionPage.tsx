@@ -662,9 +662,9 @@ export default function SubscriptionPage({ onBack }: Props) {
                           color: active ? "#c4b5fd" : "rgba(255,255,255,0.65)",
                         }}
                       >
-                        <span>{lang.flag}</span>
-                        <span className={active ? "font-bold" : ""}>{lang.native}</span>
-                        {active && <span className="ml-auto text-purple-400">✓</span>}
+                        <span className={active ? "font-bold flex-1" : "flex-1"}>{lang.native}</span>
+                        <span className="text-white/30">{lang.label}</span>
+                        {active && <span className="ml-2 text-purple-400">✓</span>}
                       </button>
                     );
                   })}
