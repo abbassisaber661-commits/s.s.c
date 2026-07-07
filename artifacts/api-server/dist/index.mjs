@@ -87005,7 +87005,8 @@ router2.post("/auth/pi", strictRateLimit, async (req, res) => {
     claimLoginReward(player.id).catch(() => {
     });
     const token = buildToken(player);
-    res.json({ token, player });
+    const ownerFlag = isOwnerPlayer(player);
+    res.json({ token, player: { ...player, isOwner: ownerFlag }, isOwner: ownerFlag });
   } catch (err) {
     req.log.error({ err }, "pi auth error");
     res.status(500).json({ error: "internal" });
@@ -95109,6 +95110,18 @@ router34.get("/subscriptions/status/:playerId", requireAuth, async (req, res) =>
     return;
   }
   try {
+    const [player] = await db.select({ piUid: playersTable.piUid, username: playersTable.username }).from(playersTable).where(eq(playersTable.id, playerId)).limit(1);
+    if (player && isOwnerPlayer(player)) {
+      res.json({
+        active: true,
+        plan: "owner",
+        expiresAt: (/* @__PURE__ */ new Date("2099-12-31T23:59:59Z")).toISOString(),
+        daysLeft: 99999,
+        piTxId: null,
+        isOwner: true
+      });
+      return;
+    }
     const now = /* @__PURE__ */ new Date();
     const [active] = await db.select().from(subscriptionsTable).where(
       and(
