@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Search, Users } from "lucide-react";
+import { Loader2, Search, Users, Send, ImageIcon } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useLocation } from "wouter";
 
@@ -46,15 +46,62 @@ const FeedErrorBanner = ({ onRetry }: { onRetry: () => void }) => (
 );
 
 const CreatePostTrigger = ({ username, onOpen }: { username: string; onOpen: () => void }) => (
-  <div
-    onClick={onOpen}
-    className="flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#E5E5E5] cursor-pointer hover:bg-[#F5F5F7] transition-colors shadow-sm"
-  >
-    <Avatar username={username} />
-    <div className="flex-1 text-sm text-[#666666]">What's on your mind, {username}?</div>
-    <button className="w-9 h-9 rounded-xl bg-[#FFD60A] text-black flex items-center justify-center font-bold text-lg hover:bg-[#F5C800] transition-colors">
-      +
-    </button>
+  <div className="rounded-2xl overflow-hidden bg-white border border-[#E5E5E5] shadow-sm" dir="ltr">
+    {/* Row 1: Avatar · placeholder · paper-plane */}
+    <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+      <div className="flex-shrink-0">
+        <Avatar username={username} size="sm" shape="rounded-full" />
+      </div>
+
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex-1 text-left px-3 py-2 rounded-full text-sm transition-colors active:scale-[0.99]"
+        style={{ background: "#F0F2F5", border: "1px solid #CED0D4", color: "#65676B" }}
+      >
+        Write something...
+      </button>
+
+      {/* Paper-plane pointing ↖️, slightly raised */}
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform -translate-y-0.5"
+        style={{ background: "#1877F2" }}
+        aria-label="Create post"
+      >
+        <Send
+          className="w-4 h-4 text-white"
+          strokeWidth={2.2}
+          style={{ transform: "rotate(225deg)" }}
+        />
+      </button>
+    </div>
+
+    {/* Row 2: Image · Video — compact, left-aligned */}
+    <div className="flex items-center gap-2 px-3 pb-3">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium active:scale-95 transition-transform"
+        style={{ background: "#F0FDF4", color: "#16A34A" }}
+        aria-label="Add photo"
+      >
+        <ImageIcon className="w-4 h-4" />
+        <span>Image</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium active:scale-95 transition-transform"
+        style={{ background: "#FFFBEB", color: "#92400E" }}
+        aria-label="Add video"
+      >
+        <span>🎬</span>
+        <span>Video</span>
+      </button>
+    </div>
   </div>
 );
 
