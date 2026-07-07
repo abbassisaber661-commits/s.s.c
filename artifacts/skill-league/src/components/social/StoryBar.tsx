@@ -146,23 +146,24 @@ export default function StoryBar() {
         onChange={handleMediaSelect}
       />
 
-      <div className="overflow-x-auto scrollbar-hide" style={{ borderBottom: "1px solid #E4E6EB" }}>
+      <div className="overflow-x-auto scrollbar-hide" dir="ltr" style={{ borderBottom: "1px solid #E4E6EB" }}>
         <div className="flex items-start gap-2 px-4 py-3 w-max">
-          <button
+          {/* Add Story card — same size/shape as story cards */}
+          <div
             onClick={() => setCreating(true)}
-            className="flex flex-col items-center gap-1 flex-shrink-0 active:scale-90 transition-transform"
+            className="relative w-[100px] h-[160px] rounded-xl overflow-hidden cursor-pointer flex-shrink-0 flex flex-col items-center justify-center transition-transform duration-200 hover:scale-105 active:scale-95"
+            style={{ background: "#F0F2F5", border: "2px dashed #C4C6CA" }}
           >
-            <div className="relative w-14 h-14">
-              <Avatar username={username || 'A'} size="lg" shape="rounded-full" />
-              <div
-                className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white"
-                style={{ background: "#1877F2" }}
-              >
-                <Plus className="w-3 h-3 text-white" strokeWidth={3} />
-              </div>
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center mb-2"
+              style={{ background: "#1877F2" }}
+            >
+              <Plus className="w-5 h-5 text-white" strokeWidth={3} />
             </div>
-            <span className="text-[10px] font-semibold w-16 text-center truncate" style={{ color: "#050505" }}>Your Story</span>
-          </button>
+            <span className="text-[11px] font-semibold px-2 text-center leading-tight" style={{ color: "#65676B" }}>
+              Add Story
+            </span>
+          </div>
 
           {stories.map(s => {
             const color = ringColor(s.authorLevel);
