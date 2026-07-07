@@ -207,23 +207,24 @@ export default function CreatePost({
             </div>
 
             {/* Row 2: Media shortcuts */}
-            <div className="flex items-center gap-1 px-3 pb-2.5 pt-1" style={{ borderTop: "1px solid #F0F2F5" }}>
+            <div className="flex items-center gap-2 px-3 pb-2.5 pt-1" style={{ borderTop: "1px solid #F0F2F5" }}>
               <button
                 type="button"
                 onClick={() => galleryRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+                className="w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition-transform"
                 style={{ color: "#45BD62", background: "#F0FDF4" }}
+                aria-label="Add photo"
               >
-                <ImageIcon className="w-4 h-4" />
-                Photo
+                <ImageIcon className="w-5 h-5" />
               </button>
               <button
                 type="button"
                 onClick={() => videoRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
-                style={{ color: "#F59E0B", background: "#FFFBEB" }}
+                className="w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition-transform text-lg leading-none"
+                style={{ background: "#FFFBEB" }}
+                aria-label="Add video"
               >
-                🎥 Video
+                🎬
               </button>
             </div>
           </motion.div>
