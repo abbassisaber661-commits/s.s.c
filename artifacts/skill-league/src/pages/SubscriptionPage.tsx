@@ -16,11 +16,11 @@
  *  6. onCancel / onError: reset loading state, show error
  */
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { useGame } from "@/contexts/GameContext";
-import { Language } from "@/lib/i18n";
+import { Language, LANGUAGES } from "@/lib/i18n";
 import { useEntryLanguage } from "@/contexts/EntryLanguageContext";
 import { ensurePiInitialized } from "@/lib/pi-auth";
 import { api, setToken, setStoredPlayerId } from "@/lib/apiClient";
@@ -31,6 +31,7 @@ import {
   confirmSubscription,
 } from "@/lib/pi-subscription";
 import { Logo } from "@/components/Logo";
+import { Globe } from "lucide-react";
 
 /* ─── Subscription price map ────────────────────────────────────────────── */
 const PLAN_PRICE: Record<SubscriptionPlanId, number> = {
@@ -317,7 +318,7 @@ interface Props {
 }
 
 export default function SubscriptionPage({ onBack }: Props) {
-  const { language, isRTL } = useEntryLanguage();
+  const { language, setLanguage, isRTL } = useEntryLanguage();
   const { setAuthFromPi, loginAsGuest, loginWithPiNetwork } = useGame();
   const [, navigate]        = useLocation();
   const tx                  = T[language];
@@ -327,6 +328,17 @@ export default function SubscriptionPage({ onBack }: Props) {
   const [error,         setError]         = useState("");
   const [signInError,   setSignInError]   = useState("");
   const [signInSuccess, setSignInSuccess] = useState(false);
+  const [langOpen,      setLangOpen]      = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!langOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [langOpen]);
 
   /* ── Core subscription payment handler ─────────────────────────────────── */
   const handleSubscribe = async (plan: PlanConfig) => {
@@ -606,6 +618,61 @@ export default function SubscriptionPage({ onBack }: Props) {
           </div>
           <p className="text-white/40 text-xs">{tx.powered}</p>
         </motion.div>
+
+        {/* Language selector — far right */}
+        <div className="ml-auto relative" ref={langRef}>
+          <button
+            onClick={() => setLangOpen(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              color: "rgba(255,255,255,0.8)",
+            }}
+          >
+            <Globe size={13} />
+            <span>{LANGUAGES.find(l => l.code === language)?.native ?? "English"}</span>
+          </button>
+
+          <AnimatePresence>
+            {langOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                transition={{ duration: 0.13 }}
+                className="absolute right-0 top-full mt-1 z-[999] w-44 rounded-2xl overflow-hidden shadow-2xl"
+                style={{ background: "#1a1030", border: "1px solid rgba(255,255,255,0.12)" }}
+              >
+                <div className="px-3 py-2 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    Language
+                  </p>
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {LANGUAGES.map(lang => {
+                    const active = language === lang.code;
+                    return (
+                      <button
+                        key={lang.code}
+                        onClick={() => { setLanguage(lang.code as Language); setLangOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors"
+                        style={{
+                          background: active ? "rgba(124,58,237,0.25)" : "transparent",
+                          color: active ? "#c4b5fd" : "rgba(255,255,255,0.65)",
+                        }}
+                      >
+                        <span>{lang.flag}</span>
+                        <span className={active ? "font-bold" : ""}>{lang.native}</span>
+                        {active && <span className="ml-auto text-purple-400">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* PI TEST notice */}
