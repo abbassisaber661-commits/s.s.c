@@ -70,6 +70,10 @@ import Wallet from "@/pages/Wallet";
 // Settings
 import Settings from "@/pages/Settings";
 
+// Legal
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
+
 // Admin
 import AdminVerificationPanel from "@/pages/AdminVerificationPanel";
 import OwnerPanel from "@/pages/OwnerPanel";
@@ -272,6 +276,10 @@ function AppShell() {
         {/* ── SETTINGS ── */}
         <Route path="/settings"          component={Settings} />
 
+        {/* ── LEGAL ── */}
+        <Route path="/privacy"           component={PrivacyPolicy} />
+        <Route path="/terms"             component={TermsOfService} />
+
         {/* ── ADMIN ── */}
         <Route path="/admin/verification" component={AdminVerificationPanel} />
         <Route path="/owner-panel"        component={OwnerPanel} />
@@ -327,6 +335,7 @@ function SubscriptionGate({ playerId }: { playerId: string }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AppRoot() {
+  const [location] = useLocation();
   const { isAuthenticated, authUser } = useGame();
   const [splashDone, setSplashDone]   = useState(false);
   // Expiry tick — incremented by SubscriptionGate when subscription expires,
@@ -397,6 +406,10 @@ function AppRoot() {
       })
       .finally(() => setSubChecking(false));
   }, [splashDone, isAuthenticated, isPiUser, hasValidSub, storedPlayerId]);
+
+  // ── Public legal pages — bypass auth gate entirely ───────────────────────
+  if (location === "/privacy") return <PrivacyPolicy />;
+  if (location === "/terms")   return <TermsOfService />;
 
   // ── Splash phase ──────────────────────────────────────────────────────────
   // AnimatePresence stays mounted at all times so the SplashScreen exit
