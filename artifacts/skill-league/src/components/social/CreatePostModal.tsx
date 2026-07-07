@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { compressImage } from "@/lib/imageUtils";
+import { compressImageToBase64 } from "@/lib/imageUtils";
 import { saveDraft, getDraft, clearDraft } from "@/lib/engagement";
 import { useGame } from "@/contexts/GameContext";
 
@@ -217,9 +217,9 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
 
     for (const file of toProcess) {
       try {
-        const compressed = await compressImage(file);
-        const url = URL.createObjectURL(compressed);
-        setImages((prev) => [...prev, url]);
+        // Use base64 so the URL is persistable in the database
+        const base64 = await compressImageToBase64(file);
+        setImages((prev) => [...prev, base64]);
       } catch {
         toast.error("Failed to load image");
       }
@@ -230,8 +230,37 @@ export const CreatePostModal = memo(({ isOpen, onClose, onSubmit }: CreatePostMo
   const handleVideoPick = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 100 * 1024 * 1024) { toast.error("Video must be under 100 MB"); return; }
-    setVideoUrl(URL.createObjectURL(file));
+    // 30 MB client cap → ~40 MB as base64 → safely under the 50 MB API body limit
+    if (file.size > 30 * 1024 * 1024) { toast.error("Video must be under 30 MB"); e.target.value = ""; return; }
+
+    // Enforce 30-second maximum before accepting
+    const duration = await new Promise<number>((resolve) => {
+      const blobUrl = URL.createObjectURL(file);
+      const vid = document.createElement("video");
+      vid.preload = "metadata";
+      vid.onloadedmetadata = () => { URL.revokeObjectURL(blobUrl); resolve(vid.duration); };
+      vid.onerror = () => { URL.revokeObjectURL(blobUrl); resolve(Infinity); };
+      vid.src = blobUrl;
+    });
+
+    if (duration > 30) {
+      toast.error("Video must be 30 seconds or less (Reel limit)");
+      e.target.value = "";
+      return;
+    }
+
+    // Convert to base64 data-URL so it persists in the database
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target!.result as string);
+        reader.onerror = () => reject(new Error("Read failed"));
+        reader.readAsDataURL(file);
+      });
+      setVideoUrl(dataUrl);
+    } catch {
+      toast.error("Failed to load video");
+    }
     e.target.value = "";
   }, []);
 

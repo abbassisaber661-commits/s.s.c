@@ -2,7 +2,7 @@ import React, { memo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Edit3, Share2, UserPlus, UserCheck,
-  MessageCircle, Loader2,
+  MessageCircle, Loader2, BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ interface ProfileActionButtonsProps {
   onShareProfile?: () => void;
   onFollowToggle?: () => void;
   onMessage?: () => void;
+  onStatistics?: () => void;
   className?: string;
 }
 
@@ -47,14 +48,14 @@ const ActionButton = memo(
         onClick={onClick}
         disabled={disabled || loading}
         className={cn(
-          "flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3",
-          "rounded-xl text-sm font-semibold transition-all duration-200",
+          "flex-1 flex items-center justify-center gap-1 py-2.5 px-2",
+          "rounded-xl text-xs font-semibold transition-all duration-200",
           "disabled:opacity-60 disabled:cursor-not-allowed",
           variantClasses[variant],
           className
         )}
       >
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} strokeWidth={2.5} />}
+        {loading ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} strokeWidth={2.5} />}
         <span className="truncate">{label}</span>
       </motion.button>
     );
@@ -72,6 +73,7 @@ export const ProfileActionButtons = memo(
     onShareProfile,
     onFollowToggle,
     onMessage,
+    onStatistics,
     className,
   }: ProfileActionButtonsProps) => {
     const [copyDone, setCopyDone] = useState(false);
@@ -90,13 +92,14 @@ export const ProfileActionButtons = memo(
           animate={{ opacity: 1, y: 0 }}
           className={cn("flex gap-2 w-full", className)}
         >
-          <ActionButton icon={Edit3} label="Edit Profile" variant="secondary" onClick={onEditProfile} />
+          <ActionButton icon={BarChart2} label="Statistics"    variant="secondary" onClick={onStatistics} />
           <ActionButton
             icon={Share2}
-            label={copyDone ? "Copied!" : "Share"}
+            label={copyDone ? "Copied!" : "Share Profile"}
             variant={copyDone ? "success" : "secondary"}
             onClick={handleShare}
           />
+          <ActionButton icon={Edit3} label="Edit Profile" variant="secondary" onClick={onEditProfile} />
         </motion.div>
       );
     }

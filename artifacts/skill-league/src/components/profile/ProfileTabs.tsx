@@ -1,8 +1,6 @@
 import React, { memo } from "react";
 import { motion } from "framer-motion";
-import { Clapperboard, Image, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "@/hooks/useTranslation";
 
 export type ActiveTab = "all" | "video" | "image" | "saved";
 
@@ -11,37 +9,33 @@ interface ProfileTabsProps {
   onTabChange: (tab: ActiveTab) => void;
 }
 
+const TABS: { id: ActiveTab; emoji?: string; label: string }[] = [
+  { id: "all",   label: "All" },
+  { id: "image", emoji: "🖼",  label: "Photos" },
+  { id: "video", emoji: "📽",  label: "Videos" },
+  { id: "saved", emoji: "🔖",  label: "Saved" },
+];
+
 export default memo(function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
-  const { isRTL: rtl, t } = useTranslation();
-
-  const TABS: { id: ActiveTab; icon?: React.ElementType; label?: string }[] = [
-    { id: "all",   label: t("all") ?? "All" },
-    { id: "image", icon: Image },
-    { id: "video", icon: Clapperboard },
-    { id: "saved", icon: Bookmark },
-  ];
-
   return (
     <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm">
-      <div dir={rtl ? "rtl" : "ltr"} className="flex">
+      <div className="flex" dir="ltr">
         {TABS.map((tab) => {
-          const Icon   = tab.icon;
           const active = activeTab === tab.id;
-
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "relative flex items-center justify-center flex-1",
-                "py-3 transition-all duration-200",
+                "relative flex items-center justify-center gap-1 flex-1",
+                "py-3 text-xs font-semibold transition-all duration-200",
                 active ? "text-[#111111]" : "text-[#888888] hover:text-[#444444]"
               )}
             >
-              {Icon
-                ? <Icon size={19} strokeWidth={active ? 2.5 : 2} />
-                : <span className="text-xs font-bold">{tab.label}</span>
-              }
+              {tab.emoji && (
+                <span className="text-sm leading-none">{tab.emoji}</span>
+              )}
+              <span>{tab.label}</span>
 
               {active && (
                 <motion.div

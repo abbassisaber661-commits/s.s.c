@@ -78,7 +78,7 @@ export default function FeedPage() {
     refetch,
   } = usePosts("fyp");
 
-  const { mutate: createPost } = useCreatePost();
+  const { mutateAsync: createPost } = useCreatePost();
 
   const playerId = getStoredPlayerId();
 
@@ -95,11 +95,13 @@ export default function FeedPage() {
   const handleCreate = useCallback(
     async (payload: CreatePostData): Promise<void> => {
       const pid = getStoredPlayerId();
-      createPost({
+      const isVideoPost = payload.format === "video" || payload.format === "reel";
+      await createPost({
         authorId: pid ?? undefined,
         username:  username || undefined,
         content:   payload.content,
-        imageUrl:  payload.imageUrls?.[0],
+        // For video posts send the video data-URL; for image posts send the first image
+        imageUrl:  isVideoPost ? payload.videoUrl : payload.imageUrls?.[0],
         type: (payload.format as import("@/shared/community").PostType) || "text",
       });
       setIsOpen(false);

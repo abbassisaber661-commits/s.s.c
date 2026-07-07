@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, RefreshCcw, Menu, Wallet2 } from "lucide-react";
+import { AlertCircle, RefreshCcw, Menu } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 import { compressImageToBase64 } from "@/lib/imageUtils";
 
@@ -28,10 +28,9 @@ import { PostModal }         from "@/components/profile/PostModal";
 import SocialPostCard        from "@/components/social/SocialPostCard";
 import { CommentsSheet }     from "@/components/social/CommentsSheet";
 
-import CreatorDashboard from "@/components/profile/CreatorDashboard";
-import DanousWalletSection from "@/components/wallet/DanousWalletSection";
+import CreatorDashboard  from "@/components/profile/CreatorDashboard";
+import ProfileWalletCard from "@/components/wallet/ProfileWalletCard";
 import { useCreatorStats } from "@/hooks/useCreatorStats";
-import VerificationRequestButton from "@/components/profile/VerificationRequestButton";
 
 import type { SortOption } from "@/components/profile/ProfileSortFilter";
 import type { CommunityPost } from "@/shared/community";
@@ -58,12 +57,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isGuest) return;
-    // Show the paywall shortly after the profile renders — premium UX delay
-    const t = setTimeout(() => setPaywallVisible(true), 700);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setPaywallVisible(true), 700);
+    return () => clearTimeout(timer);
   }, [isGuest]);
 
-  /** Re-show the paywall and block the action for guest users. */
   const guardGuest = useCallback(
     (action: () => void) => {
       if (isGuest) { setPaywallVisible(true); return; }
@@ -72,12 +69,10 @@ export default function ProfilePage() {
     [isGuest],
   );
 
-  // ── Profile metadata (player info, followers, following) ──
-  const {
-    profile, isLoading, isError, refetch,
-  } = useProfileData(userId || "1");
+  // ── Profile metadata ──
+  const { profile, isLoading, isError, refetch } = useProfileData(userId || "1");
 
-  // ── Posts — shared React Query cache, per-user likedByMe/savedByMe ──
+  // ── Posts ──
   const {
     data: postsData,
     fetchNextPage,
@@ -85,19 +80,18 @@ export default function ProfilePage() {
     isFetchingNextPage,
   } = usePosts("latest", userId || "1");
 
-  // ── Saved posts (backend-persistent, owner only) ──
   const { data: savedData } = useSavedPosts();
-
   const followMutation = useFollowUser(userId || "1");
 
-  const [activeTab, setActiveTab]   = useState<ActiveTab>("all");
-  const [selectedPost, setSelectedPost] = useState<CommunityPost | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen]   = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
-  const [sort, setSort]               = useState<SortOption>("latest");
+  const [activeTab, setActiveTab]               = useState<ActiveTab>("all");
+  const [selectedPost, setSelectedPost]         = useState<CommunityPost | null>(null);
+  const [isModalOpen, setIsModalOpen]           = useState(false);
+  const [isEditOpen, setIsEditOpen]             = useState(false);
+  const [isShareOpen, setIsShareOpen]           = useState(false);
+  const [statsOpen, setStatsOpen]               = useState(false);
+  const [sort, setSort]                         = useState<SortOption>("latest");
   const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
-  const [commentCounts, setCommentCounts]         = useState<Record<string, number>>({});
+  const [commentCounts, setCommentCounts]       = useState<Record<string, number>>({});
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef  = useRef<HTMLInputElement>(null);
@@ -182,14 +176,8 @@ export default function ProfilePage() {
   }, [userId, refetch]);
 
   // ── Flatten paginated data ──
-  const allPosts   = useMemo(() =>
-    postsData?.pages.flatMap((p) => p.data) ?? [],
-    [postsData],
-  );
-  const savedPosts = useMemo(() =>
-    savedData?.pages.flatMap((p) => p.data) ?? [],
-    [savedData],
-  );
+  const allPosts   = useMemo(() => postsData?.pages.flatMap((p) => p.data) ?? [], [postsData]);
+  const savedPosts = useMemo(() => savedData?.pages.flatMap((p) => p.data) ?? [], [savedData]);
 
   const pinnedPosts = useMemo(() => allPosts.filter((p) => p.isPinned), [allPosts]);
   const nonPinned   = useMemo(() => allPosts.filter((p) => !p.isPinned), [allPosts]);
@@ -203,10 +191,9 @@ export default function ProfilePage() {
     }
   }, [activeTab, nonPinned, savedPosts]);
 
-  const visiblePosts = useMemo(
-    () => sortPosts(filteredPosts, sort),
-    [filteredPosts, sort],
-  );
+  const visiblePosts = useMemo(() => sortPosts(filteredPosts, sort), [filteredPosts, sort]);
+
+  // ─────────────────────── Loading / Error ──────────────────────────────────
 
   if (isLoading) {
     return (
@@ -222,9 +209,7 @@ export default function ProfilePage() {
         <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
           <AlertCircle size={32} className="text-red-500" />
         </div>
-        <h2 className="text-lg font-bold text-[#111111]">
-          {t("profilePage.loadError")}
-        </h2>
+        <h2 className="text-lg font-bold text-[#111111]">{t("profilePage.loadError")}</h2>
         <p className="text-sm text-[#666666] max-w-xs">
           We couldn't load this profile. Check your connection and try again.
         </p>
@@ -241,17 +226,22 @@ export default function ProfilePage() {
 
   const profileUrl = `${window.location.origin}/profile/${profile.id}`;
 
+  // ─────────────────────── Render ───────────────────────────────────────────
+
   return (
     <div className="max-w-2xl mx-auto min-h-screen bg-[#F5F5F7] pb-24">
 
-      {/* ── Back to Social button ── */}
+      {/* ── Back button ── */}
       <div className="absolute top-3 left-3 z-30">
         <button
           onClick={() => navigate("/feed")}
           className="w-9 h-9 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/50 transition-colors"
-          aria-label="Back to Social"
+          aria-label="Back"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
         </button>
       </div>
 
@@ -271,23 +261,27 @@ export default function ProfilePage() {
       <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
       <input ref={coverInputRef}  type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
 
-      {/* ── Cover + Avatar + Identity ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          1. Cover  ·  Avatar  ·  Pi Login Name  ·  @username
+      ══════════════════════════════════════════════════════════════ */}
       <div className="bg-white">
         <ProfileCoverHeader
           profile={profile}
           isOwner={isOwner}
           onAvatarClick={() => {
             if (isGuest) { setPaywallVisible(true); return; }
-            isOwner && avatarInputRef.current?.click();
+            if (isOwner) avatarInputRef.current?.click();
           }}
           onCoverClick={() => {
             if (isGuest) { setPaywallVisible(true); return; }
-            isOwner && coverInputRef.current?.click();
+            if (isOwner) coverInputRef.current?.click();
           }}
         />
       </div>
 
-      {/* ── Stats row ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          2. Following  |  Followers  |  Posts
+      ══════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -302,55 +296,52 @@ export default function ProfilePage() {
             onFollowersClick={() => navigate(`/profile/${profile.id}/followers`)}
             onFollowingClick={() => navigate(`/profile/${profile.id}/following`)}
           />
-          {isOwner && (
-            <div className="mt-2 mx-3 border-t border-[#F0F0F0] pt-3 pb-1">
-              <DanousWalletSection />
-              <button
-                onClick={() => navigate("/wallet")}
-                className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 rounded-xl hover:bg-[#F5F5F7] active:scale-[0.98] transition-all"
-              >
-                <Wallet2 className="w-3.5 h-3.5 text-[#65676B]" />
-                <span className="text-xs font-bold text-[#65676B]">عرض سجل المعاملات الكامل</span>
-              </button>
-            </div>
-          )}
         </div>
       </motion.div>
 
-      {/* ── Action Buttons ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          3. Wallet  (owner only)
+             ⓘ DN$ Balance  |  Pi Balance ⓘ
+             Transaction History
+      ══════════════════════════════════════════════════════════════ */}
+      {isOwner && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.13 }}
+          className="mt-3 px-4"
+        >
+          <ProfileWalletCard />
+        </motion.div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════
+          4. 📊 Statistics  |  Share Profile  |  Edit Profile
+             (owner)  —or—  Follow  |  Message  (visitor)
+      ══════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.16 }}
         className="mt-3 px-4"
       >
         <ProfileActionButtons
           isOwner={isOwner}
           isFollowing={profile.isFollowing ?? false}
           isFollowLoading={followMutation.isPending}
+          onStatistics={() => setStatsOpen(true)}
           onEditProfile={() => guardGuest(() => setIsEditOpen(true))}
           onShareProfile={() => setIsShareOpen(true)}
           onFollowToggle={handleFollowToggle}
-          onMessage={() => guardGuest(() => navigate(`/chat/${encodeURIComponent(profile.username)}`))}
+          onMessage={() => guardGuest(() => {
+            navigate("/chat/" + encodeURIComponent(profile.username));
+          })}
         />
       </motion.div>
 
-      {/* ── Verification Request (owner only, not yet verified) ── */}
-      {isOwner && profile.verification !== "verified" && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.18 }}
-          className="mt-3 px-4"
-        >
-          <VerificationRequestButton
-            verificationStatus={profile.verificationStatus}
-            onRequested={refetch}
-          />
-        </motion.div>
-      )}
-
-      {/* ── League / Level card ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          5. League / Level card
+      ══════════════════════════════════════════════════════════════ */}
       {(profile.league || profile.level) && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -366,20 +357,29 @@ export default function ProfilePage() {
         </motion.div>
       )}
 
-      {/* ── Creator Dashboard ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          Creator stats drawer  — triggered by Statistics button above
+          (no inline button rendered in controlled mode)
+      ══════════════════════════════════════════════════════════════ */}
       <CreatorDashboard
         stats={creatorStats}
         postsCount={profile.postsCount}
         joinedAt={profile.joinedAt}
         username={profile.username}
+        open={statsOpen}
+        onClose={() => setStatsOpen(false)}
       />
 
-      {/* ── Unified Tab Bar ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          6. Tab bar  —  All  |  🖼 Photos  |  📽 Videos  |  🔖 Saved
+      ══════════════════════════════════════════════════════════════ */}
       <div className="mt-4">
         <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
-      {/* ── Tab Content ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          7. Posts feed
+      ══════════════════════════════════════════════════════════════ */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
@@ -430,7 +430,9 @@ export default function ProfilePage() {
         </motion.div>
       </AnimatePresence>
 
-      {/* ── Modals ── */}
+      {/* ══════════════════════════════════════════════════════════════
+          Modals & Sheets
+      ══════════════════════════════════════════════════════════════ */}
       {isOwner && (
         <EditProfileModal
           isOpen={isEditOpen}
@@ -470,16 +472,16 @@ export default function ProfilePage() {
             (allPosts.find((p) => p.id === openCommentPostId)?.replyCount ?? 0)
           }
           onCountChange={(delta) => {
-            setCommentCounts((prev) => ({
-              ...prev,
-              [openCommentPostId]: (prev[openCommentPostId] ??
-                (allPosts.find((p) => p.id === openCommentPostId)?.replyCount ?? 0)) + delta,
-            }));
+            setCommentCounts((prev) => {
+              const cur = prev[openCommentPostId] ??
+                (allPosts.find((p) => p.id === openCommentPostId)?.replyCount ?? 0);
+              return { ...prev, [openCommentPostId]: cur + delta };
+            });
           }}
         />
       )}
 
-      {/* ── Guest Paywall ─────────────────────────────────────────────────── */}
+      {/* ── Guest Paywall ── */}
       <GuestPaywall
         visible={paywallVisible}
         onDismiss={() => setPaywallVisible(false)}

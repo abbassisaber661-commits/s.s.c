@@ -95246,8 +95246,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express36.default.json({ limit: "10mb" }));
-app.use(import_express36.default.urlencoded({ extended: true, limit: "10mb" }));
+app.use(import_express36.default.json({ limit: "50mb" }));
+app.use(import_express36.default.urlencoded({ extended: true, limit: "50mb" }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();

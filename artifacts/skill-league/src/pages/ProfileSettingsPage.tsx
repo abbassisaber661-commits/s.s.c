@@ -6,10 +6,13 @@ import {
   Shield,
   ChevronRight,
   LogOut,
+  BadgeCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGame } from "@/contexts/GameContext";
+import { useProfileData } from "@/hooks/useProfileData";
 import { PrivacySettings } from "@/components/profile/PrivacySettings";
+import VerificationRequestButton from "@/components/profile/VerificationRequestButton";
 import type { PrivacyConfig } from "@/types/profile";
 
 const DEFAULT_PRIVACY: PrivacyConfig = {
@@ -110,7 +113,10 @@ export default function ProfileSettingsPage() {
   const [, navigate] = useLocation();
   const [view, setView] = useState<SettingsView>("main");
   const [privacy, setPrivacy] = useState<PrivacyConfig>(DEFAULT_PRIVACY);
-  const { logout } = useGame();
+  const { logout, authUser } = useGame();
+
+  // Fetch profile to get current verification status
+  const { profile, refetch: refetchProfile } = useProfileData(authUser?.uid ?? "");
 
   const handlePrivacyChange = (
     key: keyof PrivacyConfig,
@@ -123,6 +129,10 @@ export default function ProfileSettingsPage() {
     logout();
     navigate("/");
   };
+
+  // Only show verification section if not already verified
+  const showVerification =
+    profile && profile.verification !== "verified" && profile.verification !== "official";
 
   return (
     <div className="max-w-2xl mx-auto min-h-screen bg-white dark:bg-gray-950">
@@ -164,6 +174,26 @@ export default function ProfileSettingsPage() {
               onClick={() => setView("privacy")}
             />
           </div>
+
+          {/* ── Verification section (hidden when already verified) ── */}
+          {showVerification && (
+            <>
+              <SectionHeader title="Verification" />
+              <div className="mx-4">
+                <div className="flex items-start gap-3 mb-3 px-1">
+                  <BadgeCheck size={15} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Request a verification badge for your account. Our team will review your profile
+                    and respond within a few days.
+                  </p>
+                </div>
+                <VerificationRequestButton
+                  verificationStatus={profile?.verificationStatus}
+                  onRequested={refetchProfile}
+                />
+              </div>
+            </>
+          )}
 
           <SectionHeader title="Account" />
           <div className="bg-white dark:bg-gray-900/60 rounded-2xl mx-4 border border-gray-100 dark:border-gray-800 overflow-hidden">

@@ -1,6 +1,6 @@
 export interface Post {
   id: string;
-  type: "text" | "image" | "reel";
+  type: "text" | "image" | "reel" | "video";
   content: string;
   imageUrl?: string;
   videoUrl?: string;

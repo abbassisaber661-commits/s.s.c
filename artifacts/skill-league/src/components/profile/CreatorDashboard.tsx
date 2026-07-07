@@ -344,6 +344,9 @@ interface CreatorDashboardProps {
   postsCount: number;
   joinedAt?: string | number;
   username: string;
+  /** When provided the component renders only the drawer (no internal button). */
+  open?: boolean;
+  onClose?: () => void;
 }
 
 export default function CreatorDashboard({
@@ -351,8 +354,17 @@ export default function CreatorDashboard({
   postsCount,
   joinedAt,
   username,
+  open: controlledOpen,
+  onClose: controlledClose,
 }: CreatorDashboardProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Support both controlled (from parent) and uncontrolled (internal button) modes
+  const isOpen    = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setIsOpen = (v: boolean) => {
+    if (controlledOpen !== undefined) { if (!v) controlledClose?.(); }
+    else setInternalOpen(v);
+  };
   const { giftStats, walletStats, rank, badges, isLoading } = stats;
 
   const engagementLevel =
@@ -367,7 +379,8 @@ export default function CreatorDashboard({
 
   return (
     <>
-      {/* ── Single entry-point button ─────────────────────────────────── */}
+      {/* ── Single entry-point button (only in uncontrolled mode) ─────── */}
+      {controlledOpen === undefined && (
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -431,6 +444,7 @@ export default function CreatorDashboard({
           </svg>
         </motion.button>
       </motion.div>
+      )}
 
       {/* ── Bottom-sheet drawer ───────────────────────────────────────── */}
       <AnimatePresence>

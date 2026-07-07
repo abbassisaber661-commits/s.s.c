@@ -57,10 +57,11 @@ export const ProfileSocialStats = memo(
     onFollowingClick,
     className,
   }: ProfileSocialStatsProps) => {
+    // LTR order: Following | Followers | Posts  (Posts always on the right)
     const stats = [
-      { label: "Posts",     value: postsCount, onClick: undefined          },
-      { label: "Followers", value: followers,  onClick: onFollowersClick   },
       { label: "Following", value: following,  onClick: onFollowingClick   },
+      { label: "Followers", value: followers,  onClick: onFollowersClick   },
+      { label: "Posts",     value: postsCount, onClick: undefined          },
     ];
 
     return (

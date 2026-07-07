@@ -24,7 +24,7 @@ const MediaItem = memo(({ post, index, onClick }: MediaItemProps) => (
     className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer group"
     onClick={() => onClick(post)}
   >
-    {post.type === "reel" ? (
+    {post.type === "reel" || post.type === "video" ? (
       <>
         {post.imageUrl ? (
           <img
@@ -95,9 +95,9 @@ const MediaLightbox = memo(({ post, onClose }: MediaLightboxProps) => (
       className="max-w-lg w-full max-h-[80vh] rounded-xl overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
-      {post.type === "reel" && post.videoUrl ? (
+      {(post.type === "reel" || post.type === "video") && post.imageUrl ? (
         <video
-          src={post.videoUrl}
+          src={post.imageUrl}
           controls
           autoPlay
           className="w-full h-full object-contain"
@@ -142,9 +142,10 @@ export const ProfileMediaGrid = memo(
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
     const mediaPosts = posts.filter((p) => {
+      // Always require non-empty media URL so unrenderable items never appear
       if (filterType === "image") return p.type === "image" && !!p.imageUrl;
-      if (filterType === "reel") return p.type === "reel";
-      return p.type === "image" || p.type === "reel";
+      if (filterType === "reel") return (p.type === "reel" || p.type === "video") && !!p.imageUrl;
+      return (p.type === "image" || p.type === "reel" || p.type === "video") && !!p.imageUrl;
     });
 
     const handleSelect = useCallback((post: Post) => {
