@@ -213,7 +213,7 @@ export default function ReleasePage() {
           <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 }}
             className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-purple-500/5 p-6 text-center">
             <div className="text-4xl mb-2">🚀</div>
-            <div className="font-black text-lg">SkillLeague {data.version}</div>
+            <div className="font-black text-lg">S.S.C {data.version}</div>
             <div className="text-xs text-muted-foreground mt-1">نسخة مرشحة للإصدار النهائي</div>
             <div className="mt-3 text-xs text-primary font-medium">
               {data.readiness}% جاهز · {data.summary.featuresReady} ميزة مكتملة

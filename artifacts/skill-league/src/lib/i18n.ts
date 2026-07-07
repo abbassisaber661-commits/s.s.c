@@ -25,7 +25,7 @@ export function detectBrowserLanguage(): Language {
 const T = {
   en: {
     // ── Core ──────────────────────────────────────────────
-    app_name:'SkillLeague', tagline:'Pure instinct. Pure speed.',
+    app_name:'S.S.C', tagline:'SkillLeague Social Channel',
     sign_in_pi:'Sign In with Pi', play:'PLAY', rules:'Rules',
     free:'Free', entry:'Entry:', best:'Best', score:'Score', streak:'Streak',
     accuracy:'Accuracy', earned:'Earned', correct_label:'Correct', best_streak:'Best Streak',
@@ -472,7 +472,7 @@ const T = {
 
   // ──── ARABIC ────────────────────────────────────────────
   ar: {
-    app_name:'سكيل ليج', tagline:'غريزة نقية. سرعة خالصة.',
+    app_name:'S.S.C', tagline:'SkillLeague Social Channel',
     sign_in_pi:'تسجيل الدخول عبر Pi', play:'العب', rules:'القواعد',
     free:'مجاني', entry:'الدخول:', best:'أفضل', score:'النتيجة', streak:'سلسلة',
     accuracy:'الدقة', earned:'مكتسب', correct_label:'صحيح', best_streak:'أفضل سلسلة',
@@ -883,7 +883,7 @@ const T = {
   // ──── FRENCH ────────────────────────────────────────────────────────────
   fr: {
     // ── Core ──────────────────────────────────────────────
-    app_name:'SkillLeague', tagline:'Instinct pur. Vitesse pure.',
+    app_name:'S.S.C', tagline:'SkillLeague Social Channel',
     sign_in_pi:'Se connecter avec Pi', play:'JOUER', rules:'Règles',
     free:'Gratuit', entry:'Entrée:', best:'Meilleur', score:'Score', streak:'Série',
     accuracy:'Précision', earned:'Gagné', correct_label:'Correct', best_streak:'Meilleure série',

@@ -1,83 +1,66 @@
-import { useState, useMemo } from "react";
-import { useLocation, Link } from "wouter";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
-import { getLevelTitle, xpProgressInLevel } from "@/lib/xp";
-import { getVerificationStatus } from "@/lib/verified";
-import { loadStreakData } from "@/lib/login-streak";
-import { Bell } from "lucide-react";
-import { Logo } from "@/components/Logo";
+import { leagueApi, type SeasonEntry, type LeagueId } from "@/lib/league-api";
+import { getStoredPlayerId } from "@/lib/apiClient";
 
-// ── Particles (seeded, stable across renders) ─────────────────────────────────
-const PARTICLES = Array.from({ length: 24 }, (_, i) => ({
-  id: i,
-  x: ((i * 137.5) % 100),
-  y: ((i * 97.3) % 100),
-  size: 1.5 + (i % 5),
-  color: i % 3 === 0 ? "#a78bfa" : i % 3 === 1 ? "#60a5fa" : "#f472b6",
-  dur: 4 + (i % 4),
-  delay: (i * 0.4) % 4,
-}));
+// ── Division definitions (mirror Leaderboard.tsx) ──────────────────────────
 
-// ── League grid data ──────────────────────────────────────────────────────────
-const LEAGUES = [
-  {
-    id:       "training",
-    name:     "Division 3",
-    nameAr:   "الدوري الثالث",
-    emblem:   "🥉",
-    color:    "#60a5fa",
-    colorRgb: "96,165,250",
-    href:     "/leaderboard?division=training",
-  },
-  {
-    id:       "coin",
-    name:     "Division 2",
-    nameAr:   "الدوري الثاني",
-    emblem:   "🥈",
-    color:    "#a78bfa",
-    colorRgb: "167,139,250",
-    href:     "/leaderboard?division=coin",
-  },
-  {
-    id:       "pro",
-    name:     "Professional",
-    nameAr:   "الدوري الاحترافي",
-    emblem:   "🏅",
-    color:    "#f59e0b",
-    colorRgb: "245,158,11",
-    href:     "/leaderboard?division=pro",
-  },
-  {
-    id:       "champion",
-    name:     "Champions",
-    nameAr:   "دوري الأبطال",
-    emblem:   "🏆",
-    color:    "#f472b6",
-    colorRgb: "244,114,182",
-    href:     "/leaderboard?division=champion",
-  },
+type DivisionId = "training" | "coin" | "pro" | "champion";
+
+interface DivisionDef {
+  id: DivisionId;
+  leagueId: LeagueId;
+  label: string;
+  emoji: string;
+  color: string;
+  rgb: string;
+}
+
+const DIVISIONS: DivisionDef[] = [
+  { id: "training", leagueId: "coins",    label: "Division III",     emoji: "🎯", color: "#3AB4FF", rgb: "58,180,255"  },
+  { id: "coin",     leagueId: "pro",      label: "Division II",      emoji: "🪙", color: "#FFD93D", rgb: "255,217,61"  },
+  { id: "pro",      leagueId: "elite",    label: "Pro League",       emoji: "🏆", color: "#2EE87A", rgb: "46,232,122"  },
+  { id: "champion", leagueId: "champion", label: "Champions League", emoji: "👑", color: "#B44FFF", rgb: "180,79,255"  },
 ];
 
+const medalFor  = (i: number) => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+const rankColor = (i: number) =>
+  i === 0 ? "#FFD700" : i === 1 ? "#A8A9AD" : i === 2 ? "#CD7F32" : "rgba(255,255,255,0.3)";
+
+// ── HomeScreen ────────────────────────────────────────────────────────────
+
 export default function HomeScreen() {
-  const [, go]    = useLocation();
-  const game      = useGame();
-  const {
-    user, authUser, isGuest,
-    dnBalance, xp, level,
-    verificationLevel,
-  } = game;
+  const [, go]  = useLocation();
+  const { isGuest, username } = useGame();
+  const playerId = getStoredPlayerId();
 
-  const [pressed, setPressed] = useState(false);
-  const unreadCount           = 0;
+  const [pressed,  setPressed]  = useState(false);
+  const [selected, setSelected] = useState<DivisionId>("training");
+  const [entries,  setEntries]  = useState<SeasonEntry[]>([]);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
 
-  const { title: levelTitle, color: levelColor } = getLevelTitle(level);
-  const { pct: xpPct }   = xpProgressInLevel(xp);
-  const verif              = getVerificationStatus((verificationLevel ?? 0) as 0 | 1 | 2);
-  const streakData         = useMemo(() => loadStreakData(), []);
+  const topPad = isGuest ? 88 : 52;
 
-  const playerName =
-    user?.username || authUser?.username || (isGuest ? "ضيف" : "Player");
+  const load = useCallback(async (div: DivisionId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const leagueId = DIVISIONS.find(d => d.id === div)!.leagueId;
+      const data = await leagueApi.getStandings(leagueId);
+      setEntries(data);
+    } catch {
+      setError("Could not load standings");
+      setEntries([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(selected); }, [selected, load]);
 
   const handlePlay = () => {
     if (pressed) return;
@@ -85,265 +68,231 @@ export default function HomeScreen() {
     setTimeout(() => go("/league-select"), 320);
   };
 
+  const div = DIVISIONS.find(d => d.id === selected)!;
+
   return (
     <div
-      className="min-h-screen w-full overflow-y-auto"
+      className="min-h-screen w-full overflow-y-auto pb-28"
       style={{
-        background:
-          "radial-gradient(ellipse at 50% 25%, #1a0533 0%, #0a0118 55%, #000 100%)",
+        background: "radial-gradient(ellipse at 50% 25%, #1a0533 0%, #0a0118 55%, #000 100%)",
+        paddingTop: topPad + 32,
       }}
     >
-      {/* ══════════════════════════════════════════════════════════
-          HERO — full viewport, centered
-      ══════════════════════════════════════════════════════════ */}
-      <div className="relative min-h-[80vh] flex flex-col items-center justify-center overflow-hidden">
-
-        {/* Particles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {PARTICLES.map((p) => (
-            <motion.div
-              key={p.id}
-              className="absolute rounded-full"
-              style={{ left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, background: p.color }}
-              animate={{ y: [0, -36, 0], opacity: [0.15, 0.6, 0.15] }}
-              transition={{ duration: p.dur, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}
-            />
-          ))}
-        </div>
-
-        {/* Ambient glow */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 500, height: 500,
-            top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* ── Top bar ── */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-5 pt-5 z-10">
-          {/* Streak */}
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold"
+      {/* ── Play button ── */}
+      <div className="flex justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8, y: 28 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <motion.button
+            onClick={handlePlay}
+            whileTap={{ scale: 0.93 }}
+            animate={
+              pressed
+                ? { scale: [1, 1.06, 0], opacity: [1, 1, 0] }
+                : {
+                    boxShadow: [
+                      "0 0 28px rgba(124,58,237,0.5), 0 0 56px rgba(79,70,229,0.2)",
+                      "0 0 60px rgba(124,58,237,0.95), 0 0 120px rgba(79,70,229,0.5)",
+                      "0 0 28px rgba(124,58,237,0.5), 0 0 56px rgba(79,70,229,0.2)",
+                    ],
+                  }
+            }
+            transition={
+              pressed
+                ? { duration: 0.32 }
+                : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
+            }
+            className="relative w-72 h-[80px] rounded-3xl font-black text-3xl text-white tracking-widest"
             style={{
-              background: "rgba(251,146,60,0.12)",
-              border: "1px solid rgba(251,146,60,0.25)",
-              color: "#fb923c",
+              background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #4f46e5 100%)",
             }}
           >
-            🔥 {streakData.currentStreak} يوم
-          </motion.div>
-
-          {/* Right HUD */}
-          <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex items-center gap-2"
-          >
-            <Link href="/notifications">
-              <button
-                className="relative p-2 rounded-xl"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-              >
-                <Bell className="w-4 h-4" style={{ color: "rgba(255,255,255,0.6)" }} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
-            </Link>
             <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-black"
-              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fbbf24" }}
-            >
-              {dnBalance} 🪙
-            </div>
-          </motion.div>
-        </div>
-
-        {/* ── Main hero content ── */}
-        <div className="flex flex-col items-center gap-8 z-10 px-6 pt-20">
-
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.75, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center gap-3"
-          >
-            <motion.div
-              animate={{
-                boxShadow: [
-                  "0 0 28px rgba(124,58,237,0.4)",
-                  "0 0 65px rgba(124,58,237,0.75)",
-                  "0 0 28px rgba(124,58,237,0.4)",
-                ],
-              }}
-              transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-              className="w-24 h-24 rounded-[1.8rem] flex items-center justify-center overflow-hidden"
-            >
-              <Logo size={96} rounded="rounded-[1.8rem]" />
-            </motion.div>
-
-            <div className="text-center">
-              <h1
-                className="text-5xl font-black tracking-tight"
-                style={{
-                  background: "linear-gradient(135deg, #e9d5ff, #a78bfa, #818cf8)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 18px rgba(167,139,250,0.5))",
-                }}
-              >
-                SKILLLEAGUE
-              </h1>
-              <p
-                className="text-[10px] uppercase tracking-[0.3em] mt-1 font-medium"
-                style={{ color: "rgba(167,139,250,0.55)" }}
-              >
-                Game of Skill &amp; Challenge
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Player badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            <span className="font-black tabular-nums" style={{ color: levelColor }}>Lv.{level}</span>
-            <span style={{ color: "rgba(255,255,255,0.45)" }}>{levelTitle}</span>
-            <div className="w-px h-3" style={{ background: "rgba(255,255,255,0.15)" }} />
-            <span className="font-bold" style={{ color: "rgba(255,255,255,0.6)" }}>{playerName}</span>
-            {verif.badge && (
-              <span className="font-bold text-xs" style={{ color: verif.color }}>{verif.badge}</span>
-            )}
-          </motion.div>
-
-          {/* XP bar */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.45 }}
-            className="w-64"
-          >
-            <div className="flex justify-between text-[10px] mb-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-              <span>XP</span>
-              <span>{xpPct}%</span>
-            </div>
-            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-              <motion.div
-                className="h-full rounded-full"
-                style={{ backgroundColor: levelColor }}
-                initial={{ width: 0 }}
-                animate={{ width: `${xpPct}%` }}
-                transition={{ duration: 1.2, ease: "easeOut", delay: 0.6 }}
-              />
-            </div>
-          </motion.div>
-
-          {/* ▶ PLAY button */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 28 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: 0.45, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <motion.button
-              onClick={handlePlay}
-              whileTap={{ scale: 0.93 }}
-              animate={
-                pressed
-                  ? { scale: [1, 1.06, 0], opacity: [1, 1, 0] }
-                  : {
-                      boxShadow: [
-                        "0 0 28px rgba(124,58,237,0.5), 0 0 56px rgba(79,70,229,0.2)",
-                        "0 0 60px rgba(124,58,237,0.95), 0 0 120px rgba(79,70,229,0.5)",
-                        "0 0 28px rgba(124,58,237,0.5), 0 0 56px rgba(79,70,229,0.2)",
-                      ],
-                    }
-              }
-              transition={
-                pressed
-                  ? { duration: 0.32 }
-                  : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
-              }
-              className="relative w-72 h-[80px] rounded-3xl font-black text-3xl text-white tracking-widest"
+              className="absolute inset-0 rounded-3xl pointer-events-none"
               style={{
-                background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #4f46e5 100%)",
+                background: "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 55%)",
               }}
-            >
-              <div
-                className="absolute inset-0 rounded-3xl pointer-events-none"
-                style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 55%)" }}
-              />
-              <span className="relative z-10">▶ PLAY</span>
-            </motion.button>
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            className="text-[11px]"
-            style={{ color: "rgba(255,255,255,0.2)" }}
-          >
-            One button. Infinite competition.
-          </motion.p>
-        </div>
+            />
+            <span className="relative z-10">▶ PLAY</span>
+          </motion.button>
+        </motion.div>
       </div>
 
-      {/* ══════════════════════════════════════════════════════════
-          LEAGUES GRID 2×2
-      ══════════════════════════════════════════════════════════ */}
-      <div className="max-w-md mx-auto px-4 pb-28 pt-2">
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+      {/* ── League Standings ── */}
+      <div className="max-w-md mx-auto px-4 mt-10">
+
+        {/* Section label */}
+        <p
           className="text-center text-[10px] uppercase tracking-widest font-bold mb-4"
           style={{ color: "rgba(255,255,255,0.25)" }}
         >
-          الدوريات
-        </motion.p>
+          League Standings
+        </p>
 
-        <div className="grid grid-cols-2 gap-3">
-          {LEAGUES.map((league, i) => (
-            <motion.div
-              key={league.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 + i * 0.09 }}
+        {/* Division tabs */}
+        <div
+          className="grid grid-cols-4 gap-1 p-1 rounded-2xl mb-4"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+        >
+          {DIVISIONS.map(d => (
+            <button
+              key={d.id}
+              onClick={() => setSelected(d.id)}
+              className="flex flex-col items-center gap-0.5 py-2 rounded-xl transition-all duration-200"
+              style={
+                d.id === selected
+                  ? { background: `rgba(${d.rgb},0.18)`, border: `1px solid rgba(${d.rgb},0.4)` }
+                  : { border: "1px solid transparent" }
+              }
             >
-              <Link href={league.href}>
-                <button
-                  className="w-full h-28 rounded-2xl flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform"
-                  style={{
-                    background: `linear-gradient(135deg, rgba(${league.colorRgb},0.14) 0%, rgba(0,0,0,0.55) 100%)`,
-                    border: `1.5px solid rgba(${league.colorRgb},0.28)`,
-                  }}
-                >
-                  <span className="text-3xl leading-none">{league.emblem}</span>
-                  <span
-                    className="text-[13px] font-black leading-tight text-center px-2"
-                    style={{ color: league.color }}
-                  >
-                    {league.name}
-                  </span>
-                </button>
-              </Link>
-            </motion.div>
+              <span className="text-base leading-none">{d.emoji}</span>
+              <span
+                className="text-[9px] font-black leading-tight text-center"
+                style={{ color: d.id === selected ? d.color : "rgba(255,255,255,0.35)" }}
+              >
+                {d.label.split(" ")[0]}
+              </span>
+            </button>
           ))}
         </div>
+
+        {/* Division banner */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selected}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center justify-between px-4 py-3 rounded-2xl mb-3"
+            style={{
+              background: `linear-gradient(135deg, rgba(${div.rgb},0.14) 0%, rgba(0,0,0,0.5) 100%)`,
+              border: `1.5px solid rgba(${div.rgb},0.28)`,
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{div.emoji}</span>
+              <div>
+                <div className="text-sm font-black" style={{ color: div.color }}>{div.label}</div>
+                <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.35)" }}>Current Season</div>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-sm font-black tabular-nums" style={{ color: "rgba(255,255,255,0.7)" }}>
+                {loading ? "—" : entries.length}
+              </div>
+              <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>players</div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Standings rows */}
+        <AnimatePresence mode="wait">
+          {loading && (
+            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center gap-3 py-14"
+            >
+              <Loader2 className="w-8 h-8 animate-spin" style={{ color: div.color }} />
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Loading…</p>
+            </motion.div>
+          )}
+
+          {!loading && error && (
+            <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center gap-3 py-14"
+            >
+              <span className="text-4xl">⚠️</span>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>{error}</p>
+              <button
+                onClick={() => load(selected)}
+                className="text-xs px-4 py-2 rounded-xl font-bold"
+                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.6)" }}
+              >
+                Retry
+              </button>
+            </motion.div>
+          )}
+
+          {!loading && !error && entries.length === 0 && (
+            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center gap-3 py-14"
+            >
+              <span className="text-4xl">🏆</span>
+              <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>No players in {div.label} yet</p>
+            </motion.div>
+          )}
+
+          {!loading && !error && entries.length > 0 && (
+            <motion.div key={`rows-${selected}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="space-y-2"
+            >
+              {entries.map((entry, i) => {
+                const isMe = entry.playerId === playerId || entry.playerName === username;
+                const medal = medalFor(i);
+                const played = entry.wins + entry.draws + entry.losses;
+                return (
+                  <motion.div
+                    key={entry.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: Math.min(i * 0.025, 0.4) }}
+                    className="flex items-center gap-3 px-3 py-3 rounded-2xl"
+                    style={
+                      isMe
+                        ? { background: `rgba(${div.rgb},0.1)`, border: `1.5px solid rgba(${div.rgb},0.45)` }
+                        : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }
+                    }
+                  >
+                    {/* Rank */}
+                    <div
+                      className="w-7 text-center font-black text-sm shrink-0 tabular-nums"
+                      style={{ color: rankColor(i) }}
+                    >
+                      {medal ?? `${i + 1}`}
+                    </div>
+
+                    {/* Name + record */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <span
+                          className="font-bold text-sm truncate"
+                          style={{ color: isMe ? div.color : "rgba(255,255,255,0.88)" }}
+                        >
+                          {entry.playerName}
+                        </span>
+                        {isMe && (
+                          <span
+                            className="text-[9px] font-black px-1.5 py-0.5 rounded-md"
+                            style={{ background: `rgba(${div.rgb},0.22)`, color: div.color }}
+                          >
+                            You
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                          {played}P · {entry.wins}W {entry.draws}D {entry.losses}L
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Points */}
+                    <div className="text-right shrink-0">
+                      <div
+                        className="text-sm font-black tabular-nums"
+                        style={{ color: div.color }}
+                      >
+                        {entry.points}
+                      </div>
+                      <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>pts</div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -32,6 +32,7 @@ import giftLeaderboardRouter   from "./gift-leaderboard.js";
 import verificationRouter      from "./verification.js";
 import ownerAdminRouter        from "./owner-admin.js";
 import skillLeagueMatchesRouter from "./skill-league-matches.js";
+import subscriptionsRouter      from "./subscriptions.js";
 
 const router: IRouter = Router();
 
@@ -68,5 +69,6 @@ router.use(giftLeaderboardRouter);
 router.use(verificationRouter);
 router.use(ownerAdminRouter);
 router.use(skillLeagueMatchesRouter);
+router.use(subscriptionsRouter);
 
 export default router;

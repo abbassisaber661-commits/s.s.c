@@ -10,6 +10,13 @@ interface ReelThumb {
   imageUrl?: string;
 }
 
+// Fallback demo thumbnails — same seeds used in ReelsPage DEMO_REELS
+const DEMO_THUMBS = Array.from({ length: 8 }, (_, i) => ({
+  id: `demo_${i}`,
+  authorName: `Creator${i + 1}`,
+  imageUrl: `https://picsum.photos/seed/reel${i}/240/400`,
+}));
+
 export default function GameReelsRow() {
   const [, navigate] = useLocation();
   const [reels, setReels] = useState<ReelThumb[]>([]);
@@ -48,7 +55,7 @@ export default function GameReelsRow() {
         </span>
       </div>
 
-      <div className="flex gap-2.5 overflow-x-auto px-4 py-3 scrollbar-hide">
+      <div dir="ltr" className="flex gap-2.5 overflow-x-auto px-4 py-3 scrollbar-hide">
         {loading &&
           [1, 2, 3, 4, 5].map((i) => (
             <div
@@ -58,23 +65,28 @@ export default function GameReelsRow() {
           ))}
 
         {!loading && reels.length === 0 &&
-          Array.from({ length: 5 }).map((_, i) => (
+          DEMO_THUMBS.slice(0, 5).map((reel, i) => (
             <motion.div
-              key={i}
+              key={reel.id}
               onClick={() => navigate("/reels")}
               whileTap={{ scale: 0.96 }}
-              className="relative w-24 h-36 rounded-xl flex-shrink-0 overflow-hidden cursor-pointer"
-              style={{
-                background: `linear-gradient(160deg, hsl(${(i * 47) % 360} 70% 35%), hsl(${(i * 47 + 40) % 360} 70% 20%))`,
-              }}
+              className="relative w-24 h-36 rounded-xl flex-shrink-0 overflow-hidden cursor-pointer bg-gray-900"
             >
+              <img
+                src={reel.imageUrl}
+                alt={reel.authorName}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              {/* Dark gradient for readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-8 h-8 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center">
                   <Play className="w-4 h-4 text-white fill-white" />
                 </div>
               </div>
               <div className="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-bold text-white truncate drop-shadow">
-                Highlight #{i + 1}
+                {reel.authorName}
               </div>
             </motion.div>
           ))}

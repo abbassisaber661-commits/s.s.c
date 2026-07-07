@@ -11,7 +11,7 @@ export function Logo({ size = 40, className = "", rounded = "rounded-2xl", glow 
   return (
     <img
       src={logoImg}
-      alt="SkillLeague"
+      alt="S.S.C"
       className={`${rounded} object-cover flex-shrink-0 ${className}`}
       style={{
         width: size,

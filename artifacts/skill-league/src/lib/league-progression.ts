@@ -46,7 +46,7 @@ export const LEAGUE_DEFS: Record<LeagueTier, LeagueDef> = {
     color: '#B44FFF', glowColor: 'rgba(180,79,255,0.18)',
     bgGradient: 'linear-gradient(135deg,#B44FFF12,#3AB4FF04)',
     minLp: 500, maxLp: -1, penaltyOnLoss: true,
-    description: 'Elite only. The pinnacle of SkillLeague competition.',
+    description: 'Elite only. The pinnacle of S.S.C competition.',
     perks: ['Prestige crown badge', 'Max Pi rewards', 'Season finals access'],
   },
 };

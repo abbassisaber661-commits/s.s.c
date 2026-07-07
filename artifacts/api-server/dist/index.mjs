@@ -20501,27 +20501,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router36;
+    module.exports = Router37;
     module.exports.Route = Route;
-    function Router36(options) {
-      if (!(this instanceof Router36)) {
-        return new Router36(options);
+    function Router37(options) {
+      if (!(this instanceof Router37)) {
+        return new Router37(options);
       }
       const opts = options || {};
-      function router36(req, res, next) {
-        router36.handle(req, res, next);
+      function router37(req, res, next) {
+        router37.handle(req, res, next);
       }
-      Object.setPrototypeOf(router36, this);
-      router36.caseSensitive = opts.caseSensitive;
-      router36.mergeParams = opts.mergeParams;
-      router36.params = {};
-      router36.strict = opts.strict;
-      router36.stack = [];
-      return router36;
+      Object.setPrototypeOf(router37, this);
+      router37.caseSensitive = opts.caseSensitive;
+      router37.mergeParams = opts.mergeParams;
+      router37.params = {};
+      router37.strict = opts.strict;
+      router37.stack = [];
+      return router37;
     }
-    Router36.prototype = function() {
+    Router37.prototype = function() {
     };
-    Router36.prototype.param = function param2(name2, fn) {
+    Router37.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20541,7 +20541,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router36.prototype.handle = function handle(req, res, callback) {
+    Router37.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20668,7 +20668,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router36.prototype.use = function use(handler) {
+    Router37.prototype.use = function use(handler) {
       let offset = 0;
       let path2 = "/";
       if (typeof handler !== "function") {
@@ -20701,7 +20701,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router36.prototype.route = function route(path2) {
+    Router37.prototype.route = function route(path2) {
       const route2 = new Route(path2);
       const layer = new Layer(path2, {
         sensitive: this.caseSensitive,
@@ -20716,7 +20716,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router36.prototype[method] = function(path2) {
+      Router37.prototype[method] = function(path2) {
         const route = this.route(path2);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20899,13 +20899,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve4 = __require("node:path").resolve;
     var once = require_once();
-    var Router36 = require_router();
+    var Router37 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router36 = null;
+      var router37 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20914,13 +20914,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router36 === null) {
-            router36 = new Router36({
+          if (router37 === null) {
+            router37 = new Router37({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router36;
+          return router37;
         }
       });
     };
@@ -20991,15 +20991,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router36 = this.router;
+      var router37 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router36.use(path2, fn2);
+          return router37.use(path2, fn2);
         }
         debug(".use app under %s", path2);
         fn2.mountpath = path2;
         fn2.parent = this;
-        router36.use(path2, function mounted_app(req, res, next) {
+        router37.use(path2, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23572,7 +23572,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router36 = require_router();
+    var Router37 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23594,8 +23594,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router36.Route;
-    exports.Router = Router36;
+    exports.Route = Router37.Route;
+    exports.Router = Router37;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -29161,10 +29161,10 @@ var init_subquery = __esm({
     init_entity();
     Subquery = class {
       static [entityKind] = "Subquery";
-      constructor(sql5, fields, alias, isWith = false, usedTables = []) {
+      constructor(sql4, fields, alias, isWith = false, usedTables = []) {
         this._ = {
           brand: "Subquery",
-          sql: sql5,
+          sql: sql4,
           selectedFields: fields,
           alias,
           isWith,
@@ -41222,10 +41222,10 @@ var init_raw = __esm({
     init_entity();
     init_query_promise();
     PgRaw = class extends QueryPromise {
-      constructor(execute, sql5, query, mapBatchResult) {
+      constructor(execute, sql4, query, mapBatchResult) {
         super();
         this.execute = execute;
-        this.sql = sql5;
+        this.sql = sql4;
         this.query = query;
         this.mapBatchResult = mapBatchResult;
       }
@@ -41545,8 +41545,8 @@ var init_db = __esm({
 });
 
 // ../../node_modules/.pnpm/drizzle-orm@0.45.2_@types+pg@8.20.0_pg@8.20.0/node_modules/drizzle-orm/cache/core/cache.js
-async function hashQuery(sql5, params) {
-  const dataToHash = `${sql5}-${JSON.stringify(params)}`;
+async function hashQuery(sql4, params) {
+  const dataToHash = `${sql4}-${JSON.stringify(params)}`;
   const encoder = new TextEncoder();
   const data = encoder.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -54405,6 +54405,32 @@ var init_economy = __esm({
   }
 });
 
+// ../../lib/db/src/schema/subscriptions.ts
+var subscriptionsTable;
+var init_subscriptions = __esm({
+  "../../lib/db/src/schema/subscriptions.ts"() {
+    "use strict";
+    init_pg_core();
+    subscriptionsTable = pgTable("subscriptions", {
+      id: text("id").primaryKey(),
+      playerId: text("player_id").notNull(),
+      plan: text("plan").notNull(),
+      // 'premium3' | 'premium1'
+      amountPi: real("amount_pi").notNull(),
+      // Pi amount paid (Testnet or Mainnet)
+      piPaymentId: text("pi_payment_id"),
+      // Pi Network payment identifier
+      piTxId: text("pi_tx_id"),
+      // Pi Network blockchain transaction ID
+      status: text("status").notNull().default("active"),
+      // 'active' | 'expired'
+      expiresAt: timestamp("expires_at").notNull(),
+      createdAt: timestamp("created_at").notNull().defaultNow(),
+      updatedAt: timestamp("updated_at").notNull().defaultNow()
+    });
+  }
+});
+
 // ../../lib/db/src/schema/notifications.ts
 var notificationsTable, insertNotifSchema;
 var init_notifications = __esm({
@@ -54668,6 +54694,7 @@ __export(schema_exports, {
   seasonsTable: () => seasonsTable,
   storePurchasesTable: () => storePurchasesTable,
   storiesTable: () => storiesTable,
+  subscriptionsTable: () => subscriptionsTable,
   suspiciousActivityTable: () => suspiciousActivityTable,
   systemSettingsTable: () => systemSettingsTable,
   tournamentsTable: () => tournamentsTable,
@@ -54683,6 +54710,7 @@ var init_schema2 = __esm({
     init_matches();
     init_community();
     init_economy();
+    init_subscriptions();
     init_notifications();
     init_messages();
     init_analytics();
@@ -54736,6 +54764,7 @@ __export(src_exports, {
   seasonsTable: () => seasonsTable,
   storePurchasesTable: () => storePurchasesTable,
   storiesTable: () => storiesTable,
+  subscriptionsTable: () => subscriptionsTable,
   suspiciousActivityTable: () => suspiciousActivityTable,
   systemSettingsTable: () => systemSettingsTable,
   tournamentsTable: () => tournamentsTable,
@@ -80822,14 +80851,14 @@ var init_notificationService = __esm({
 import { createServer } from "http";
 
 // src/app.ts
-var import_express35 = __toESM(require_express2(), 1);
+var import_express36 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 import path from "node:path";
 import { existsSync as existsSync4 } from "node:fs";
 
 // src/routes/index.ts
-var import_express34 = __toESM(require_express2(), 1);
+var import_express35 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -87486,18 +87515,18 @@ function levelFromXp(xp) {
   return level;
 }
 function calcCoinsForMatch(score, rank, accuracyFraction, tier) {
-  let coins = 1;
-  if (rank === 1) coins += 3;
-  else if (rank === 2) coins += 2;
-  else if (rank === 3) coins += 1;
-  if (accuracyFraction >= 1) coins += 2;
-  else if (accuracyFraction >= 0.8) coins += 1;
+  let dn = 1;
+  if (rank === 1) dn += 3;
+  else if (rank === 2) dn += 2;
+  else if (rank === 3) dn += 1;
+  if (accuracyFraction >= 1) dn += 2;
+  else if (accuracyFraction >= 0.8) dn += 1;
   if (tier !== "training") {
     const base = Math.floor(score / 12);
     const winBonus = rank === 1 ? 60 : rank === 2 ? 30 : rank === 3 ? 10 : 0;
-    coins += base + winBonus;
+    dn += base + winBonus;
   }
-  return coins;
+  return dn;
 }
 function startOfTodayUtc() {
   const d = /* @__PURE__ */ new Date();
@@ -87689,7 +87718,7 @@ router5.get("/tournaments", async (req, res) => {
 });
 router5.post("/tournaments", async (req, res) => {
   try {
-    const { name: name2, type, size, rewardDn, rewardCoins, rewardXp, startAt, endAt } = req.body;
+    const { name: name2, type, size, rewardDn, rewardCoins: rewardCoins_legacy, rewardXp, startAt, endAt } = req.body;
     if (!name2 || !startAt) {
       res.status(400).json({ error: "missing fields" });
       return;
@@ -87700,7 +87729,7 @@ router5.post("/tournaments", async (req, res) => {
       type: String(type || "daily"),
       status: "open",
       size: Number(size) || 8,
-      rewardDn: Number(rewardDn ?? rewardCoins) || 500,
+      rewardDn: Number(rewardDn ?? rewardCoins_legacy) || 500,
       rewardXp: Number(rewardXp) || 300,
       startAt: new Date(String(startAt)),
       endAt: endAt ? new Date(String(endAt)) : void 0
@@ -89281,20 +89310,97 @@ init_src();
 init_nanoid();
 init_notificationService();
 var router14 = (0, import_express14.Router)();
+var PI_SERVER_KEY = process.env["PI_NETWORK_API_KEY"] ?? process.env["PI_API_KEY"] ?? "";
+if (!PI_SERVER_KEY) {
+  console.warn(
+    "[Pi] WARNING: PI_NETWORK_API_KEY is not set. Payment approve/complete calls to Pi Network will be skipped. This MUST be configured before going to Mainnet."
+  );
+}
+async function piNetworkApprove(piPaymentId, log) {
+  if (!PI_SERVER_KEY) {
+    log.warn({ piPaymentId }, "[Pi] Skipping approve \u2014 PI_NETWORK_API_KEY not set");
+    return true;
+  }
+  try {
+    const res = await fetch(
+      `https://api.minepi.com/v2/payments/${piPaymentId}/approve`,
+      {
+        method: "POST",
+        headers: { Authorization: `Key ${PI_SERVER_KEY}` }
+      }
+    );
+    if (!res.ok) {
+      log.warn({ piPaymentId, status: res.status }, "[Pi] approve call rejected by Pi Network");
+      return false;
+    }
+    return true;
+  } catch (err) {
+    log.warn({ piPaymentId, err }, "[Pi] approve network error");
+    return false;
+  }
+}
+async function piNetworkComplete(piPaymentId, txid, log) {
+  if (!PI_SERVER_KEY) {
+    log.warn({ piPaymentId }, "[Pi] Skipping complete \u2014 PI_NETWORK_API_KEY not set");
+    return { identifier: piPaymentId, amount: 0, status: { developer_completed: true } };
+  }
+  try {
+    const res = await fetch(
+      `https://api.minepi.com/v2/payments/${piPaymentId}/complete`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Key ${PI_SERVER_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ txid })
+      }
+    );
+    if (!res.ok) {
+      log.warn({ piPaymentId, txid, status: res.status }, "[Pi] complete call rejected by Pi Network");
+      return null;
+    }
+    return res.json();
+  } catch (err) {
+    log.error({ piPaymentId, txid, err }, "[Pi] complete network error");
+    return null;
+  }
+}
+var SUBSCRIPTION_PLAN_PRICES = {
+  premium3: 3,
+  premium1: 1
+};
 var PI_PRODUCTS = {
   "vip_silver": { name: "VIP Silver (30 days)", vipTier: "silver", description: "Silver VIP membership" },
   "vip_gold": { name: "VIP Gold (30 days)", vipTier: "gold", description: "Gold VIP membership" },
   "vip_diamond": { name: "VIP Diamond (30 days)", vipTier: "diamond", description: "Diamond VIP membership" },
-  "coins_250": { name: "250 Coins Bundle", coins: 250, description: "250 in-game coins" },
-  "coins_500": { name: "500 Coins Bundle", coins: 500, description: "500 in-game coins" },
-  "coins_1000": { name: "1000 Coins Bundle", coins: 1e3, description: "1000 in-game coins" },
-  "tournament_entry": { name: "Tournament Entry", description: "Entry to paid tournament" }
+  "coins_250": { name: "250 DN$ Bundle", dn: 250, description: "250 DN$ in-game points" },
+  "coins_500": { name: "500 DN$ Bundle", dn: 500, description: "500 DN$ in-game points" },
+  "coins_1000": { name: "1000 DN$ Bundle", dn: 1e3, description: "1000 DN$ in-game points" },
+  "tournament_entry": { name: "Tournament Entry", description: "Entry to paid tournament" },
+  "premium3": { name: "S.S.C Premium (30 days) \u2014 3\u03C0", description: "S.S.C SkillLeague Social Channel Premium subscription" },
+  "premium1": { name: "S.S.C Standard (30 days) \u2014 1\u03C0", description: "S.S.C SkillLeague Social Channel Standard subscription" }
 };
 async function getOrCreateWallet2(playerId) {
   const [existing] = await db.select().from(walletsTable).where(eq(walletsTable.playerId, playerId)).limit(1);
   if (existing) return existing;
   const [created] = await db.insert(walletsTable).values({ id: nanoid3(), playerId, dnBalance: 0, totalEarnedPi: 0, pendingPi: 0, availablePi: 0 }).returning();
   return created;
+}
+async function fulfillSubscription(playerId, plan, amountPi, piPaymentId, txId) {
+  const existing = await db.select({ id: subscriptionsTable.id }).from(subscriptionsTable).where(eq(subscriptionsTable.piPaymentId, piPaymentId)).limit(1);
+  if (existing.length) return;
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1e3);
+  await db.insert(subscriptionsTable).values({
+    id: nanoid3(),
+    playerId,
+    plan,
+    amountPi,
+    piPaymentId,
+    piTxId: txId,
+    status: "active",
+    expiresAt
+  });
 }
 router14.post("/pi/payments", requireAuth, strictRateLimit, async (req, res) => {
   const { playerId, amount, memo, metadata } = req.body;
@@ -89369,11 +89475,20 @@ router14.post("/pi/payments/:paymentId/approve", requireAuth, async (req, res) =
     res.status(404).json({ error: "payment not found" });
     return;
   }
+  if (req.auth.playerId !== pending.playerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
   if (pending.status !== "pending") {
     res.status(409).json({ error: `payment already ${pending.status}` });
     return;
   }
   await db.update(piPaymentsTable).set({ piPaymentId: String(piPaymentId), updatedAt: /* @__PURE__ */ new Date() }).where(eq(piPaymentsTable.id, String(paymentId)));
+  const approved = await piNetworkApprove(String(piPaymentId), req.log);
+  if (!approved && PI_SERVER_KEY) {
+    res.status(502).json({ error: "Pi Network rejected the payment. Please try again." });
+    return;
+  }
   res.json({ ok: true, status: "pending" });
 });
 router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) => {
@@ -89388,29 +89503,70 @@ router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) 
     res.status(404).json({ error: "payment not found" });
     return;
   }
+  if (req.auth.playerId !== pending.playerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
   if (pending.status !== "pending") {
     res.status(409).json({ error: `payment already ${pending.status}` });
+    return;
+  }
+  const resolvedPiPaymentId = pending.piPaymentId ?? String(paymentId);
+  const piResult = await piNetworkComplete(resolvedPiPaymentId, String(txId), req.log);
+  if (!piResult) {
+    res.status(402).json({
+      error: "Pi Network could not confirm the payment. Please contact support if Pi was deducted from your balance."
+    });
+    return;
+  }
+  if (PI_SERVER_KEY && piResult.amount > 0 && Math.abs(piResult.amount - pending.amount) > 1e-5) {
+    req.log.error(
+      { expected: pending.amount, actual: piResult.amount, piPaymentId: resolvedPiPaymentId },
+      "[Pi] Amount mismatch \u2014 rejecting completion"
+    );
+    res.status(402).json({ error: "Payment amount does not match expected value." });
     return;
   }
   const meta = pending.metadata ?? {};
   const isGift = pending.kind === "gift";
   const product = meta.productId;
   const productInfo = product ? PI_PRODUCTS[product] : void 0;
-  const resolvedPiPaymentId = pending.piPaymentId ?? String(paymentId);
+  if (meta.kind === "subscription") {
+    const plan = String(meta.plan ?? "premium1");
+    const expectedPrice = SUBSCRIPTION_PLAN_PRICES[plan];
+    if (expectedPrice !== void 0 && Math.abs(pending.amount - expectedPrice) > 1e-5) {
+      req.log.error(
+        { plan, expectedPrice, actualAmount: pending.amount },
+        "[Pi] Subscription plan/amount mismatch \u2014 rejecting"
+      );
+      res.status(402).json({ error: "Subscription amount does not match plan price." });
+      return;
+    }
+  }
   try {
-    await db.update(piPaymentsTable).set({ status: "confirmed", piTxId: String(txId), piPaymentId: resolvedPiPaymentId, completedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq(piPaymentsTable.id, String(paymentId)));
+    await db.update(piPaymentsTable).set({
+      status: "confirmed",
+      piTxId: String(txId),
+      piPaymentId: resolvedPiPaymentId,
+      completedAt: /* @__PURE__ */ new Date(),
+      updatedAt: /* @__PURE__ */ new Date()
+    }).where(eq(piPaymentsTable.id, String(paymentId)));
     if (isGift) {
       const receiverId = pending.receiverId ?? String(meta.receiverId);
       const postId = meta.postId ? String(meta.postId) : null;
       const emoji3 = meta.emoji ? String(meta.emoji).slice(0, 8) : "\u{1F381}";
       const message = meta.message ? String(meta.message).slice(0, 200) : "";
-      const [senderPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1);
-      const [receiverPlayer] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, receiverId)).limit(1);
+      const [[senderPlayer], [receiverPlayer]] = await Promise.all([
+        db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, pending.playerId)).limit(1),
+        db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, receiverId)).limit(1)
+      ]);
       const receiverWallet = await getOrCreateWallet2(receiverId);
-      const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
-      const newTotalEarned = Number(receiverWallet.totalEarnedPi) + pending.amount;
-      const newAvailable = Number(receiverWallet.availablePi) + pending.amount;
-      await db.update(walletsTable).set({ pendingPi: newPending, totalEarnedPi: newTotalEarned, availablePi: newAvailable, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
+      await db.update(walletsTable).set({
+        pendingPi: Math.max(0, Number(receiverWallet.pendingPi) - pending.amount),
+        totalEarnedPi: Number(receiverWallet.totalEarnedPi) + pending.amount,
+        availablePi: Number(receiverWallet.availablePi) + pending.amount,
+        updatedAt: /* @__PURE__ */ new Date()
+      }).where(eq(walletsTable.playerId, receiverId));
       await db.insert(giftLedgerTable).values({
         id: nanoid3(),
         senderId: pending.playerId,
@@ -89438,14 +89594,17 @@ router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) 
         data: { receiverId, amount: pending.amount, emoji: emoji3, currency: "pi" }
       }).catch(() => {
       });
-    } else if (productInfo?.coins) {
-      const { awardDN: awardDN2 } = await Promise.resolve().then(() => (init_dn_service(), dn_service_exports));
-      await awardDN2(
+    } else if (meta.kind === "subscription") {
+      await fulfillSubscription(
         pending.playerId,
-        productInfo.coins,
-        "pi_purchase",
-        `Pi purchase: ${productInfo.name}`
-      ).catch(() => {
+        String(meta.plan ?? "premium1"),
+        pending.amount,
+        resolvedPiPaymentId,
+        String(txId)
+      );
+    } else if (productInfo?.dn) {
+      const { awardDN: awardDN2 } = await Promise.resolve().then(() => (init_dn_service(), dn_service_exports));
+      await awardDN2(pending.playerId, productInfo.dn, "pi_purchase", `Pi purchase: ${productInfo.name}`).catch(() => {
       });
     }
     await logAudit(
@@ -89461,6 +89620,58 @@ router14.post("/pi/payments/:paymentId/complete", requireAuth, async (req, res) 
     res.json({ ok: true, product: productInfo?.name, kind: isGift ? "gift" : "purchase" });
   } catch (err) {
     req.log.error({ err }, "pi complete error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router14.post("/pi/payments/incomplete", strictRateLimit, async (req, res) => {
+  const { piPaymentId, txId } = req.body;
+  if (!piPaymentId) {
+    res.status(400).json({ error: "piPaymentId required" });
+    return;
+  }
+  try {
+    const [payment] = await db.select().from(piPaymentsTable).where(eq(piPaymentsTable.piPaymentId, String(piPaymentId))).limit(1);
+    if (!payment) {
+      req.log.info({ piPaymentId }, "[Pi] Incomplete payment not found in DB \u2014 acknowledging");
+      res.json({ ok: true, status: "unknown" });
+      return;
+    }
+    if (payment.status !== "pending") {
+      res.json({ ok: true, status: payment.status });
+      return;
+    }
+    if (!txId) {
+      await db.update(piPaymentsTable).set({ status: "failed", updatedAt: /* @__PURE__ */ new Date() }).where(eq(piPaymentsTable.id, payment.id));
+      if (payment.kind === "gift" && payment.receiverId) {
+        const w = await getOrCreateWallet2(payment.receiverId);
+        await db.update(walletsTable).set({ pendingPi: Math.max(0, Number(w.pendingPi) - payment.amount), updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, payment.receiverId));
+      }
+      req.log.info({ piPaymentId }, "[Pi] Incomplete payment (no blockchain tx) \u2014 marked failed");
+      res.json({ ok: true, status: "failed" });
+      return;
+    }
+    const piResult = await piNetworkComplete(String(piPaymentId), String(txId), req.log);
+    if (!piResult) {
+      req.log.warn({ piPaymentId, txId }, "[Pi] Pi Network rejected incomplete payment completion");
+      res.status(402).json({ error: "Pi Network could not confirm the payment." });
+      return;
+    }
+    await db.update(piPaymentsTable).set({ status: "confirmed", piTxId: String(txId), completedAt: /* @__PURE__ */ new Date(), updatedAt: /* @__PURE__ */ new Date() }).where(eq(piPaymentsTable.id, payment.id));
+    const meta = payment.metadata ?? {};
+    if (meta.kind === "subscription") {
+      const plan = String(meta.plan ?? "premium1");
+      const expectedPrice = SUBSCRIPTION_PLAN_PRICES[plan];
+      if (expectedPrice !== void 0 && Math.abs(payment.amount - expectedPrice) > 1e-5) {
+        req.log.error({ plan, expectedPrice, actualAmount: payment.amount }, "[Pi] Incomplete: plan/amount mismatch \u2014 not fulfilling");
+        res.status(402).json({ error: "Subscription amount does not match plan price." });
+        return;
+      }
+      await fulfillSubscription(payment.playerId, plan, payment.amount, String(piPaymentId), String(txId));
+    }
+    req.log.info({ piPaymentId, txId }, "[Pi] Incomplete payment recovered and completed");
+    res.json({ ok: true, status: "confirmed" });
+  } catch (err) {
+    req.log.error({ err, piPaymentId }, "[Pi] Error handling incomplete payment");
     res.status(500).json({ error: "internal" });
   }
 });
@@ -89485,9 +89696,8 @@ router14.post("/pi/payments/:paymentId/fail", requireAuth, async (req, res) => {
   if (pending.kind === "gift") {
     const receiverId = pending.receiverId ?? (meta.receiverId ? String(meta.receiverId) : null);
     if (receiverId) {
-      const receiverWallet = await getOrCreateWallet2(receiverId);
-      const newPending = Math.max(0, Number(receiverWallet.pendingPi) - pending.amount);
-      await db.update(walletsTable).set({ pendingPi: newPending, updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
+      const w = await getOrCreateWallet2(receiverId);
+      await db.update(walletsTable).set({ pendingPi: Math.max(0, Number(w.pendingPi) - pending.amount), updatedAt: /* @__PURE__ */ new Date() }).where(eq(walletsTable.playerId, receiverId));
     }
   }
   await logAudit(
@@ -89808,7 +90018,7 @@ router16.get("/monitor/economy", requireAdmin, async (req, res) => {
       GROUP BY 1, 2 ORDER BY 1 DESC, total_amount DESC LIMIT 50
     `);
     const topBalances = await db.execute(sql`
-      SELECT username, coins, level, elo FROM players
+      SELECT username, coins AS dn, level, elo FROM players
       ORDER BY coins DESC LIMIT 10
     `);
     res.json({
@@ -89835,7 +90045,7 @@ var RC_DATE = "2026-05-29";
 var CHECKLIST = [
   { id: "auth", label: "\u0646\u0638\u0627\u0645 \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u062F\u062E\u0648\u0644", status: "done", note: "Google + Pi + Guest" },
   { id: "matchmaking", label: "\u0646\u0638\u0627\u0645 \u0627\u0644\u0645\u0628\u0627\u0631\u064A\u0627\u062A", status: "done", note: "PvP + Bots + Tournaments" },
-  { id: "economy", label: "\u0646\u0638\u0627\u0645 \u0627\u0644\u0639\u0645\u0644\u0627\u062A", status: "done", note: "Coins + Transactions" },
+  { id: "economy", label: "\u0646\u0638\u0627\u0645 DN$", status: "done", note: "DN$ + Transactions" },
   { id: "vip", label: "\u0627\u0634\u062A\u0631\u0627\u0643 VIP \u0639\u0628\u0631 Pi", status: "done", note: "3 \u0645\u0633\u062A\u0648\u064A\u0627\u062A \u0645\u0641\u0639\u0651\u0644\u0629" },
   { id: "store", label: "\u0627\u0644\u0645\u062A\u062C\u0631 + Pi", status: "done", note: "\u0639\u0646\u0627\u0635\u0631 \u0645\u062F\u0641\u0648\u0639\u0629 \u0628\u0640 Pi" },
   { id: "anticheat", label: "Anti-Cheat", status: "done", note: "Score + Bot + Multi-account" },
@@ -91127,9 +91337,9 @@ var STREAK_BONUSES = {
   10: 100
 };
 var ARCADE_REWARDS = {
-  memory_speed: { xp: 10, coins: 15, name: "Memory Speed", icon: "\u{1F9E0}", desc: "Match tiles before the clock runs out." },
-  logic_puzzle: { xp: 15, coins: 20, name: "Logic Puzzle", icon: "\u{1F52E}", desc: "Crack the sequence and win big XP." },
-  word_sprint: { xp: 10, coins: 15, name: "Word Sprint", icon: "\u{1F4AC}", desc: "Spell as many words as you can in 60s." }
+  memory_speed: { xp: 10, dn: 15, name: "Memory Speed", icon: "\u{1F9E0}", desc: "Match tiles before the clock runs out." },
+  logic_puzzle: { xp: 15, dn: 20, name: "Logic Puzzle", icon: "\u{1F52E}", desc: "Crack the sequence and win big XP." },
+  word_sprint: { xp: 10, dn: 15, name: "Word Sprint", icon: "\u{1F4AC}", desc: "Spell as many words as you can in 60s." }
 };
 var DAILY_COINS = 20;
 var DAILY_XP = 10;
@@ -91288,7 +91498,7 @@ function claimDailyReward(playerId, playerName) {
   const newBadges = [];
   if (profile2.dailyClaimCount >= 7 && grantBadge(profile2, "daily_devotee")) newBadges.push("daily_devotee");
   save2();
-  return { coins: DAILY_COINS, xp: DAILY_XP, profile: profile2, newBadges };
+  return { dn: DAILY_COINS, xp: DAILY_XP, profile: profile2, newBadges };
 }
 function getXpLeaderboard(limit = 20) {
   return [...store3().profiles].sort((a, b) => b.xp - a.xp).slice(0, limit);
@@ -91757,9 +91967,9 @@ var ARENAS = [
     maxElo: 1099,
     description: "Free entry. Low stakes \u2014 perfect for learning the game.",
     rewards: {
-      win: { coinMultiplier: 1.5, xp: 60 },
-      draw: { coinMultiplier: 0.5, xp: 20 },
-      loss: { coinMultiplier: 0, xp: 8 }
+      win: { dnMultiplier: 1.5, xp: 60 },
+      draw: { dnMultiplier: 0.5, xp: 20 },
+      loss: { dnMultiplier: 0, xp: 8 }
     }
   },
   {
@@ -91775,9 +91985,9 @@ var ARENAS = [
     maxElo: 1399,
     description: "50 coin entry. 2.5\xD7 win reward. Real stakes, real competition.",
     rewards: {
-      win: { coinMultiplier: 2.5, xp: 136 },
-      draw: { coinMultiplier: 0.8, xp: 50 },
-      loss: { coinMultiplier: 0, xp: 25 }
+      win: { dnMultiplier: 2.5, xp: 136 },
+      draw: { dnMultiplier: 0.8, xp: 50 },
+      loss: { dnMultiplier: 0, xp: 25 }
     }
   },
   {
@@ -91793,9 +92003,9 @@ var ARENAS = [
     maxElo: 1699,
     description: "200 coin entry. 3\xD7 win reward. High-skill competitive play.",
     rewards: {
-      win: { coinMultiplier: 3, xp: 152 },
-      draw: { coinMultiplier: 1, xp: 50 },
-      loss: { coinMultiplier: 0, xp: 25 }
+      win: { dnMultiplier: 3, xp: 152 },
+      draw: { dnMultiplier: 1, xp: 50 },
+      loss: { dnMultiplier: 0, xp: 25 }
     }
   },
   {
@@ -91811,9 +92021,9 @@ var ARENAS = [
     maxElo: 9999,
     description: "500 coin entry. 4\xD7 win reward. Top-tier elite competition.",
     rewards: {
-      win: { coinMultiplier: 4, xp: 184 },
-      draw: { coinMultiplier: 1.2, xp: 50 },
-      loss: { coinMultiplier: 0, xp: 25 }
+      win: { dnMultiplier: 4, xp: 184 },
+      draw: { dnMultiplier: 1.2, xp: 50 },
+      loss: { dnMultiplier: 0, xp: 25 }
     }
   }
 ];
@@ -91840,7 +92050,7 @@ init_dn_service();
 var router21 = (0, import_express21.Router)();
 var LP_RANGES = {
   training: { min: 0, max: 99 },
-  coins: { min: 0, max: 99 },
+  dn: { min: 0, max: 99 },
   coin: { min: 100, max: 299 },
   pro: { min: 300, max: 499 },
   champion: { min: 500, max: null }
@@ -92089,7 +92299,7 @@ var INTEGRATION_MANIFEST = [
     description: "Post creation triggers daily post-coin reward (1 Coin on 2nd post/day)",
     hookFile: "routes/community.ts",
     hookFn: "recordPost(authorId)",
-    probeType: "coin_tx_source",
+    probeType: "dn_tx_source",
     probeKey: "daily_posts",
     severity: "warning"
   },
@@ -92121,8 +92331,8 @@ var INTEGRATION_MANIFEST = [
     subcategory: "interactions",
     description: "1 Coin awarded when author receives 5 likes + 5 comments in a day",
     hookFile: "routes/community.ts",
-    hookFn: "recordInteraction \u2192 awardCoins(daily_interactions)",
-    probeType: "coin_tx_source",
+    hookFn: "recordInteraction \u2192 awardDN(daily_interactions)",
+    probeType: "dn_tx_source",
     probeKey: "daily_interactions",
     severity: "info"
   },
@@ -92134,7 +92344,7 @@ var INTEGRATION_MANIFEST = [
     description: "1 Coin awarded once per day when a full match is completed",
     hookFile: "routes/matches.ts",
     hookFn: "claimMatchReward(pAId)",
-    probeType: "coin_tx_source",
+    probeType: "dn_tx_source",
     probeKey: "daily_match",
     severity: "critical"
   },
@@ -92145,49 +92355,49 @@ var INTEGRATION_MANIFEST = [
     description: "1 Coin awarded once per day on first login (password, guest, or Pi)",
     hookFile: "routes/auth.ts",
     hookFn: "claimLoginReward(player.id)",
-    probeType: "coin_tx_source",
+    probeType: "dn_tx_source",
     probeKey: "daily_login",
     severity: "critical"
   },
   {
-    id: "season_end_gems",
+    id: "season_end_pi",
     category: "game",
     subcategory: "seasons",
-    description: "Gems distributed to top-ranked real players when a season ends",
+    description: "Pi distributed to top-ranked real players when a season ends",
     hookFile: "routes/league-system.ts",
-    hookFn: "awardSeasonEndGems(leagueId)",
-    probeType: "gems_tx",
+    hookFn: "awardSeasonEndPi(leagueId)",
+    probeType: "pi_tx",
     probeKey: "season_end",
     severity: "warning"
   },
   // ── Economy ───────────────────────────────────────────────────────────────
   {
-    id: "coins_earn_pipeline",
+    id: "dn_earn_pipeline",
     category: "economy",
-    subcategory: "coins",
+    subcategory: "dn",
     description: "coin_transactions table records all earn events correctly",
     hookFile: "lib/daily-rewards.ts",
-    hookFn: "awardCoins()",
-    probeType: "coin_tx_source",
+    hookFn: "awardDN()",
+    probeType: "dn_tx_source",
     probeKey: "daily_login",
     severity: "critical"
   },
   {
-    id: "gems_earn_pipeline",
+    id: "pi_earn_pipeline",
     category: "economy",
-    subcategory: "gems",
-    description: "Gems are stored in playersTable.gems (DB column, not JSON file)",
+    subcategory: "pi",
+    description: "Pi rewards are tracked in pi_payments table",
     hookFile: "lib/audit-engine.ts (DB probe)",
-    hookFn: "playersTable.gems column",
+    hookFn: "pi_payments table",
     probeType: "table_rows",
-    probeKey: "gems_column",
+    probeKey: "pi_payments",
     severity: "critical"
   },
   {
     id: "shop_coin_deduction",
     category: "economy",
     subcategory: "shop",
-    description: "Shop purchases deduct coins and are recorded in store_purchases + coin_transactions",
+    description: "Shop purchases deduct DN$ and are recorded in store_purchases + coin_transactions",
     hookFile: "lib/shop-service.ts",
     hookFn: "purchaseShopItem()",
     probeType: "store_purchase",
@@ -92197,7 +92407,7 @@ var INTEGRATION_MANIFEST = [
   {
     id: "daily_economy_table",
     category: "economy",
-    subcategory: "coins",
+    subcategory: "dn",
     description: "user_daily_economy table exists and enforces per-day limits",
     hookFile: "lib/daily-rewards.ts",
     hookFn: "getOrCreateDailyRecord()",
@@ -92215,7 +92425,7 @@ async function probeCoinTxSource(source) {
     return { count: 0 };
   }
 }
-async function probeGemsTx(source) {
+async function probePiTx(source) {
   try {
     const rows = await db.select({ n: count() }).from(walletTransactionsTable).where(and(
       eq(walletTransactionsTable.type, "gem_earn"),
@@ -92243,7 +92453,7 @@ async function probeDailyField(field) {
 }
 async function probeTableRows(key) {
   try {
-    if (key === "gems_column") {
+    if (key === "pi_payments") {
       const [r] = await db.select({ n: count() }).from(walletTransactionsTable);
       return { rowCount: r?.n ?? 0, ok: (r?.n ?? 0) >= 0 };
     }
@@ -92266,7 +92476,7 @@ async function probeStorePurchase(source) {
 }
 async function runProbe(point2) {
   switch (point2.probeType) {
-    case "coin_tx_source": {
+    case "dn_tx_source": {
       const r = await probeCoinTxSource(point2.probeKey);
       if (r.count > 0) {
         return {
@@ -92281,8 +92491,8 @@ async function runProbe(point2) {
         data: r
       };
     }
-    case "gems_tx": {
-      const r = await probeGemsTx(point2.probeKey);
+    case "pi_tx": {
+      const r = await probePiTx(point2.probeKey);
       if (r.count > 0) {
         return {
           status: "linked",
@@ -92458,8 +92668,8 @@ async function runFullAudit() {
       details: socialChecks
     },
     economy: {
-      coins: aggregateStatus(coinChecks),
-      gems: aggregateStatus(gemChecks),
+      dn: aggregateStatus(coinChecks),
+      pi: aggregateStatus(gemChecks),
       shop: aggregateStatus(shopChecks),
       details: economyChecks
     },
@@ -92533,7 +92743,7 @@ router22.get("/system/audit/economy", async (_req, res) => {
       generatedAt: report.generatedAt,
       economy: report.economy,
       suggestions: report.suggestions.filter(
-        (s) => ["coins_earn_pipeline", "gems_earn_pipeline", "shop_coin_deduction", "daily_economy_table"].includes(s.event)
+        (s) => ["dn_earn_pipeline", "pi_earn_pipeline", "shop_coin_deduction", "daily_economy_table"].includes(s.event)
       )
     });
   } catch (err) {
@@ -92547,7 +92757,7 @@ router22.get("/system/audit/game", async (_req, res) => {
       generatedAt: report.generatedAt,
       game: report.game,
       suggestions: report.suggestions.filter(
-        (s) => ["match_completion_reward", "daily_login_reward", "season_end_gems"].includes(s.event)
+        (s) => ["match_completion_reward", "daily_login_reward", "season_end_pi"].includes(s.event)
       )
     });
   } catch (err) {
@@ -92618,31 +92828,31 @@ async function getEconomyMetrics(periodDays = 7) {
   const allPlayers = await db.select({ id: playersTable.id }).from(playersTable);
   const totalUsers = allPlayers.length || 1;
   const totalGems = 0;
-  const gemsPerLeague = { div3: 0, div2: 0, pro: 0, champions: 0 };
+  const piPerLeague = { div3: 0, div2: 0, pro: 0, champions: 0 };
   const rarityDistribution = {
     common: Math.floor(totalUsers * 0.5),
     uncommon: Math.floor(totalUsers * 0.3),
     rare: Math.floor(totalUsers * 0.15),
     legendary: Math.ceil(totalUsers * 0.05)
   };
-  const coinsEarnedPerDay = totalEarned / periodDays;
-  const coinsSpentPerDay = totalSpent / periodDays;
-  const averageCoinsPerUser = totalUsers > 0 ? totalEarned / totalUsers : 0;
+  const dnEarnedPerDay = totalEarned / periodDays;
+  const dnSpentPerDay = totalSpent / periodDays;
+  const averageDNPerUser = totalUsers > 0 ? totalEarned / totalUsers : 0;
   return {
-    coinsEarnedPerDay: round2(coinsEarnedPerDay),
-    coinsSpentPerDay: round2(coinsSpentPerDay),
-    netFlow: round2(coinsEarnedPerDay - coinsSpentPerDay),
-    averageCoinsPerUser: round2(averageCoinsPerUser),
+    dnEarnedPerDay: round2(dnEarnedPerDay),
+    dnSpentPerDay: round2(dnSpentPerDay),
+    netFlow: round2(dnEarnedPerDay - dnSpentPerDay),
+    averageDNPerUser: round2(averageDNPerUser),
     totalActiveUsers: totalUsers,
-    gemsDistributedTotal: totalGems,
-    gemsPerLeague,
+    piDistributedTotal: totalGems,
+    piPerLeague,
     rarityDistribution,
     periodDays,
     calculatedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
 }
 function detectInflation(metrics) {
-  const cpd = metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
+  const cpd = metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
   if (cpd > INFLATION_HIGH_THRESHOLD) return "HIGH";
   if (cpd >= INFLATION_NORMAL_MIN) return "NORMAL";
   return "LOW";
@@ -92660,12 +92870,12 @@ function applyScaling(amount, type, level) {
 }
 function getSmartRecommendations(level, metrics) {
   const recs = [];
-  const cpd = metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
+  const cpd = metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1);
   if (level === "HIGH") {
     recs.push({
       type: "reduce_rewards",
       priority: "HIGH",
-      message: `Reduce post reward scaling by 25% due to inflation (${round2(cpd)} coins/user/day > ${INFLATION_HIGH_THRESHOLD})`
+      message: `Reduce post reward scaling by 25% due to inflation (${round2(cpd)} DN$/user/day > ${INFLATION_HIGH_THRESHOLD})`
     });
     recs.push({
       type: "reduce_rewards",
@@ -92675,7 +92885,7 @@ function getSmartRecommendations(level, metrics) {
     recs.push({
       type: "adjust_shop",
       priority: "MEDIUM",
-      message: "Consider increasing shop item prices by 15\u201320% to absorb excess coins"
+      message: "Consider increasing shop item prices by 15\u201320% to absorb excess DN$"
     });
     recs.push({
       type: "adjust_caps",
@@ -92686,7 +92896,7 @@ function getSmartRecommendations(level, metrics) {
     recs.push({
       type: "increase_rewards",
       priority: "MEDIUM",
-      message: `Boost match and post rewards by 10\u201315% \u2014 economy is under-powered (${round2(cpd)} coins/user/day < ${INFLATION_NORMAL_MIN})`
+      message: `Boost match and post rewards by 10\u201315% \u2014 economy is under-powered (${round2(cpd)} DN$/user/day < ${INFLATION_NORMAL_MIN})`
     });
     recs.push({
       type: "adjust_shop",
@@ -92697,31 +92907,31 @@ function getSmartRecommendations(level, metrics) {
     recs.push({
       type: "no_action",
       priority: "LOW",
-      message: `Economy is balanced (${round2(cpd)} coins/user/day) \u2014 no scaling changes needed`
+      message: `Economy is balanced (${round2(cpd)} DN$/user/day) \u2014 no scaling changes needed`
     });
   }
   return recs;
 }
-function detectGemsFlow(metrics) {
+function detectPiFlow(metrics) {
   if (metrics.totalActiveUsers < 5) return "INSUFFICIENT_DATA";
-  const avgGems = metrics.gemsDistributedTotal / metrics.totalActiveUsers;
-  if (avgGems > 3) return "GROWING";
-  if (avgGems < 0.5) return "DECLINING";
+  const avgPi = metrics.piDistributedTotal / metrics.totalActiveUsers;
+  if (avgPi > 3) return "GROWING";
+  if (avgPi < 0.5) return "DECLINING";
   return "STABLE";
 }
-function computeRisk(level, gemsFlow) {
-  if (level === "HIGH" && gemsFlow === "GROWING") return "HIGH";
-  if (level === "HIGH" || gemsFlow === "GROWING") return "MEDIUM";
-  if (level === "LOW" && gemsFlow === "DECLINING") return "MEDIUM";
+function computeRisk(level, piFlow) {
+  if (level === "HIGH" && piFlow === "GROWING") return "HIGH";
+  if (level === "HIGH" || piFlow === "GROWING") return "MEDIUM";
+  if (level === "LOW" && piFlow === "DECLINING") return "MEDIUM";
   return "LOW";
 }
 async function buildBalanceReport() {
   const metrics = await getEconomyMetrics(7);
   const inflation = detectInflation(metrics);
-  const gemsFlow = detectGemsFlow(metrics);
-  const riskLevel = computeRisk(inflation, gemsFlow);
+  const piFlow = detectPiFlow(metrics);
+  const riskLevel = computeRisk(inflation, piFlow);
   const recs = getSmartRecommendations(inflation, metrics);
-  const cpd = round2(metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1));
+  const cpd = round2(metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1));
   const primaryRec = recs[0];
   let recommendation;
   if (inflation === "NORMAL") {
@@ -92731,8 +92941,8 @@ async function buildBalanceReport() {
   }
   return {
     inflation,
-    coinsPerUserPerDay: cpd,
-    gemsFlow,
+    dnPerUserPerDay: cpd,
+    piFlow,
     riskLevel,
     recommendation,
     metrics,
@@ -92761,17 +92971,17 @@ async function computeWeekSnapshot(startDate, endDate) {
   return {
     weekStart: dateStr(startDate),
     weekEnd: dateStr(endDate),
-    coinsEarned: earned,
-    coinsSpent: spent,
+    dnEarned: earned,
+    dnSpent: spent,
     netFlow: earned - spent,
     activeUsers,
-    coinsPerUserPerDay: round2(earned / activeUsers / 7)
+    dnPerUserPerDay: round2(earned / activeUsers / 7)
   };
 }
 function classifyTrend(current, previous) {
   if (!previous) return "Stable";
-  const change = previous.coinsPerUserPerDay > 0 ? (current.coinsPerUserPerDay - previous.coinsPerUserPerDay) / previous.coinsPerUserPerDay : 0;
-  const cpd = current.coinsPerUserPerDay;
+  const change = previous.dnPerUserPerDay > 0 ? (current.dnPerUserPerDay - previous.dnPerUserPerDay) / previous.dnPerUserPerDay : 0;
+  const cpd = current.dnPerUserPerDay;
   if (cpd > INFLATION_HIGH_THRESHOLD) return "Over-inflated";
   if (cpd < INFLATION_NORMAL_MIN / 2) return "Under-powered";
   if (change > 0.1) return "Growing";
@@ -92789,9 +92999,9 @@ async function getWeeklyAnalysis() {
   ]);
   const trend = classifyTrend(currentWeek, previousWeek);
   let changePercent = null;
-  if (previousWeek.coinsPerUserPerDay > 0) {
+  if (previousWeek.dnPerUserPerDay > 0) {
     changePercent = round2(
-      (currentWeek.coinsPerUserPerDay - previousWeek.coinsPerUserPerDay) / previousWeek.coinsPerUserPerDay * 100
+      (currentWeek.dnPerUserPerDay - previousWeek.dnPerUserPerDay) / previousWeek.dnPerUserPerDay * 100
     );
   }
   return {
@@ -92848,8 +93058,8 @@ router23.get("/system/economy/scaling-preview", async (req, res) => {
     res.json({
       inflation,
       scalingFactor: factor,
-      coinsPerUserPerDay: Math.round(
-        metrics.coinsEarnedPerDay / Math.max(metrics.totalActiveUsers, 1) * 100
+      dnPerUserPerDay: Math.round(
+        metrics.dnEarnedPerDay / Math.max(metrics.totalActiveUsers, 1) * 100
       ) / 100,
       preview,
       calculatedAt: (/* @__PURE__ */ new Date()).toISOString()
@@ -92884,14 +93094,14 @@ var import_express24 = __toESM(require_express2(), 1);
 init_src();
 init_drizzle_orm();
 var HARD_CAPS = {
-  /** Maximum coins a single user may earn in one calendar day (all sources combined). */
-  maxCoinsPerUserPerDay: 50,
-  /** Maximum coins awarded per single reward event (one match, one post, etc.). */
-  maxCoinsPerEvent: 10,
-  /** Maximum gems a single user may accumulate in one season. */
-  maxGemsPerSeason: 20,
-  /** Maximum login-reward coins per day (always 1, immune to inflation scaling). */
-  maxLoginCoinsPerDay: 1,
+  /** Maximum DN$ a single user may earn in one calendar day (all sources combined). */
+  maxDNPerUserPerDay: 50,
+  /** Maximum DN$ awarded per single reward event (one match, one post, etc.). */
+  maxDNPerEvent: 10,
+  /** Maximum Pi a single user may accumulate in one season. */
+  maxPiPerSeason: 20,
+  /** Maximum login-reward DN$ per day (always 1, immune to inflation scaling). */
+  maxLoginDNPerDay: 1,
   /** Maximum interactions (likes+comments) counted toward rewards per day. */
   maxInteractionsPerDay: 10,
   /** Minimum seconds between two reward-eligible events of the same type for one user. */
@@ -92902,10 +93112,10 @@ var HARD_CAPS = {
 async function normalizeReward(input) {
   const { playerId, amount, source } = input;
   if (source === "daily_login") {
-    const final = Math.min(amount, HARD_CAPS.maxLoginCoinsPerDay);
+    const final = Math.min(amount, HARD_CAPS.maxLoginDNPerDay);
     return { allowed: true, finalAmount: final, cappedBy: null, reason: "Login reward \u2014 fixed" };
   }
-  const perEventCapped = Math.min(amount, HARD_CAPS.maxCoinsPerEvent);
+  const perEventCapped = Math.min(amount, HARD_CAPS.maxDNPerEvent);
   if (perEventCapped !== amount) {
   }
   const today = /* @__PURE__ */ new Date();
@@ -92927,20 +93137,20 @@ async function normalizeReward(input) {
       dailyEarned = 0;
     }
   }
-  const remaining = Math.max(0, HARD_CAPS.maxCoinsPerUserPerDay - dailyEarned);
+  const remaining = Math.max(0, HARD_CAPS.maxDNPerUserPerDay - dailyEarned);
   if (remaining === 0) {
     return {
       allowed: false,
       finalAmount: 0,
-      cappedBy: "maxCoinsPerUserPerDay",
-      reason: `Daily cap reached (${HARD_CAPS.maxCoinsPerUserPerDay} coins/day)`
+      cappedBy: "maxDNPerUserPerDay",
+      reason: `Daily DN$ cap reached (${HARD_CAPS.maxDNPerUserPerDay}/day)`
     };
   }
   const finalAmount = Math.min(perEventCapped, remaining);
   return {
     allowed: true,
     finalAmount,
-    cappedBy: finalAmount < amount ? perEventCapped < amount ? "maxCoinsPerEvent" : "maxCoinsPerUserPerDay" : null,
+    cappedBy: finalAmount < amount ? perEventCapped < amount ? "maxDNPerEvent" : "maxDNPerUserPerDay" : null,
     reason: finalAmount < amount ? `Capped from ${amount} \u2192 ${finalAmount}` : "Within all limits"
   };
 }
@@ -93017,7 +93227,7 @@ async function getStabilityReport() {
     db.select({ id: playersTable.id }).from(playersTable),
     // Count suspicious/exploit-flagged transactions (very large single amounts)
     db.select({ cnt: count() }).from(walletTransactionsTable).where(and(
-      gte(walletTransactionsTable.amount, HARD_CAPS.maxCoinsPerEvent * 3),
+      gte(walletTransactionsTable.amount, HARD_CAPS.maxDNPerEvent * 3),
       gte(walletTransactionsTable.createdAt, since7d)
     ))
   ]);
@@ -93025,13 +93235,13 @@ async function getStabilityReport() {
   const totalSpent = Number(spendRows[0]?.total ?? 0);
   const totalPlayers = Math.max(playerRows.length, 1);
   const exploitFlags = Number(exploitRows[0]?.cnt ?? 0);
-  const coinsPerUserPerDay = totalEarned / totalPlayers / 7;
+  const dnPerUserPerDay = totalEarned / totalPlayers / 7;
   const spendRatio = totalEarned > 0 ? totalSpent / totalEarned : 0;
   let inflationScore;
-  if (coinsPerUserPerDay === 0) inflationScore = 10;
-  else if (coinsPerUserPerDay <= 7) inflationScore = 30;
-  else if (coinsPerUserPerDay <= 10) inflationScore = 22;
-  else if (coinsPerUserPerDay <= 15) inflationScore = 12;
+  if (dnPerUserPerDay === 0) inflationScore = 10;
+  else if (dnPerUserPerDay <= 7) inflationScore = 30;
+  else if (dnPerUserPerDay <= 10) inflationScore = 22;
+  else if (dnPerUserPerDay <= 15) inflationScore = 12;
   else inflationScore = 5;
   let spendScore;
   if (spendRatio >= 0.3 && spendRatio <= 0.7) spendScore = 25;
@@ -93056,7 +93266,7 @@ async function getStabilityReport() {
   ));
   const g = grade(total);
   let recommendation = gradeLabel(g);
-  if (coinsPerUserPerDay > 10)
+  if (dnPerUserPerDay > 10)
     recommendation += " \u2014 \u062E\u0641\u0651\u0636 \u0645\u0643\u0627\u0641\u0622\u062A \u0627\u0644\u0645\u0628\u0627\u0631\u064A\u0627\u062A \u0648\u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0627\u062A";
   else if (spendRatio < 0.2)
     recommendation += " \u2014 \u062E\u0641\u0651\u0636 \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0645\u062A\u062C\u0631 \u0644\u062A\u062D\u0641\u064A\u0632 \u0627\u0644\u0625\u0646\u0641\u0627\u0642";
@@ -93074,7 +93284,7 @@ async function getStabilityReport() {
       activityScore,
       total
     },
-    coinsPerUserPerDay: Math.round(coinsPerUserPerDay * 100) / 100,
+    dnPerUserPerDay: Math.round(dnPerUserPerDay * 100) / 100,
     totalPlayers,
     spendRatio: Math.round(spendRatio * 1e3) / 1e3,
     recentExploitFlags: exploitFlags,
@@ -93111,10 +93321,10 @@ router24.get("/system/economy/hard-caps", (_req, res) => {
   res.json({
     caps: HARD_CAPS,
     description: {
-      maxCoinsPerUserPerDay: "Max coins any user may earn in one calendar day (all sources)",
-      maxCoinsPerEvent: "Max coins from a single reward event",
-      maxGemsPerSeason: "Max gems a user may hold per season",
-      maxLoginCoinsPerDay: "Login reward \u2014 always fixed, immune to inflation scaling",
+      maxDNPerUserPerDay: "Max DN$ any user may earn in one calendar day (all sources)",
+      maxDNPerEvent: "Max DN$ from a single reward event",
+      maxPiPerSeason: "Max Pi a user may hold per season",
+      maxLoginDNPerDay: "Login reward \u2014 always fixed, immune to inflation scaling",
       maxInteractionsPerDay: "Max interactions (likes+comments) counted for rewards per day",
       minSecondsBetweenSameEvents: "Cooldown between two identical reward events for one user",
       maxMatchesPerHour: "Max reward-earning match events per user per hour"
@@ -94910,46 +95120,112 @@ router33.get("/matches/leaderboard/skill/:pid", async (req, res) => {
 });
 var skill_league_matches_default = router33;
 
-// src/routes/index.ts
+// src/routes/subscriptions.ts
+var import_express34 = __toESM(require_express2(), 1);
+init_drizzle_orm();
+init_src();
 var router34 = (0, import_express34.Router)();
-router34.use(health_default);
-router34.use(auth_default);
-router34.use(pi_auth_default);
-router34.use(arenas_default);
-router34.use(players_default);
-router34.use(matches_default);
-router34.use(community_default);
-router34.use(economy_default);
-router34.use(notifications_default);
-router34.use(messages_default);
-router34.use(analytics_default);
-router34.use(followers_default);
-router34.use(marketplace_default);
-router34.use(security_default);
-router34.use(pi_payments_default);
-router34.use(beta_default);
-router34.use(monitor_default);
-router34.use(release_default);
-router34.use(league_system_default);
-router34.use(game_layer_default);
-router34.use(daily_economy_default);
-router34.use(audit_default);
-router34.use(economy_balance_default);
-router34.use(economy_stabilizer_default);
-router34.use(social_default);
-router34.use(stories_default);
-router34.use(jobs_default);
-router34.use(wallet_default);
-router34.use(gift_ledger_default);
-router34.use(gift_leaderboard_default);
-router34.use(verification_default);
-router34.use(owner_admin_default);
-router34.use(skill_league_matches_default);
-var routes_default = router34;
+router34.get("/subscriptions/status/:playerId", requireAuth, async (req, res) => {
+  const playerId = String(req.params.playerId);
+  if (req.auth.playerId !== playerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    const now = /* @__PURE__ */ new Date();
+    const [active] = await db.select().from(subscriptionsTable).where(
+      and(
+        eq(subscriptionsTable.playerId, playerId),
+        eq(subscriptionsTable.status, "active"),
+        gt(subscriptionsTable.expiresAt, now)
+      )
+    ).orderBy(subscriptionsTable.expiresAt).limit(1);
+    if (!active) {
+      res.json({ active: false, plan: null, expiresAt: null, daysLeft: 0 });
+      return;
+    }
+    const daysLeft = Math.max(
+      0,
+      Math.ceil((active.expiresAt.getTime() - now.getTime()) / (1e3 * 60 * 60 * 24))
+    );
+    res.json({
+      active: true,
+      plan: active.plan,
+      expiresAt: active.expiresAt.toISOString(),
+      daysLeft,
+      piTxId: active.piTxId
+    });
+  } catch (err) {
+    req.log.error({ err }, "subscription status error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router34.get("/subscriptions/history/:playerId", requireAuth, async (req, res) => {
+  const playerId = String(req.params.playerId);
+  if (req.auth.playerId !== playerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    const rows = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.playerId, playerId)).orderBy(subscriptionsTable.createdAt);
+    res.json({
+      data: rows.reverse().map((r) => ({
+        id: r.id,
+        plan: r.plan,
+        amountPi: r.amountPi,
+        status: r.status,
+        expiresAt: r.expiresAt.toISOString(),
+        createdAt: r.createdAt.toISOString()
+      }))
+    });
+  } catch (err) {
+    req.log.error({ err }, "subscription history error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+var subscriptions_default = router34;
+
+// src/routes/index.ts
+var router35 = (0, import_express35.Router)();
+router35.use(health_default);
+router35.use(auth_default);
+router35.use(pi_auth_default);
+router35.use(arenas_default);
+router35.use(players_default);
+router35.use(matches_default);
+router35.use(community_default);
+router35.use(economy_default);
+router35.use(notifications_default);
+router35.use(messages_default);
+router35.use(analytics_default);
+router35.use(followers_default);
+router35.use(marketplace_default);
+router35.use(security_default);
+router35.use(pi_payments_default);
+router35.use(beta_default);
+router35.use(monitor_default);
+router35.use(release_default);
+router35.use(league_system_default);
+router35.use(game_layer_default);
+router35.use(daily_economy_default);
+router35.use(audit_default);
+router35.use(economy_balance_default);
+router35.use(economy_stabilizer_default);
+router35.use(social_default);
+router35.use(stories_default);
+router35.use(jobs_default);
+router35.use(wallet_default);
+router35.use(gift_ledger_default);
+router35.use(gift_leaderboard_default);
+router35.use(verification_default);
+router35.use(owner_admin_default);
+router35.use(skill_league_matches_default);
+router35.use(subscriptions_default);
+var routes_default = router35;
 
 // src/app.ts
 init_logger2();
-var app = (0, import_express35.default)();
+var app = (0, import_express36.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -94970,8 +95246,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express35.default.json({ limit: "10mb" }));
-app.use(import_express35.default.urlencoded({ extended: true, limit: "10mb" }));
+app.use(import_express36.default.json({ limit: "10mb" }));
+app.use(import_express36.default.urlencoded({ extended: true, limit: "10mb" }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();
@@ -94997,8 +95273,8 @@ if (process.env.NODE_ENV === "production") {
     "../../skill-league/dist/public"
   );
   if (existsSync4(frontendDist)) {
-    app.use(import_express35.default.static(frontendDist));
-    app.get("*", (_req, res) => {
+    app.use(import_express36.default.static(frontendDist));
+    app.get("/{*path}", (_req, res) => {
       res.sendFile(path.join(frontendDist, "index.html"));
     });
   } else {
@@ -95008,8 +95284,8 @@ if (process.env.NODE_ENV === "production") {
 var app_default = app;
 
 // src/routes/profile.ts
-var import_express36 = __toESM(require_express2(), 1);
-var router35 = (0, import_express36.Router)();
+var import_express37 = __toESM(require_express2(), 1);
+var router36 = (0, import_express37.Router)();
 var profile = {
   id: "1",
   username: "user123",
@@ -95019,7 +95295,7 @@ var profile = {
   location: "Tunisia",
   website: "https://example.com"
 };
-router35.get("/", (req, res) => {
+router36.get("/", (req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -95033,7 +95309,7 @@ router35.get("/", (req, res) => {
     });
   }
 });
-router35.put("/", (req, res) => {
+router36.put("/", (req, res) => {
   try {
     const { username, bio, avatar, fullName, location, website } = req.body;
     profile = {
@@ -95058,7 +95334,7 @@ router35.put("/", (req, res) => {
     });
   }
 });
-var profile_default = router35;
+var profile_default = router36;
 
 // src/index.ts
 init_socket_manager();
@@ -95079,7 +95355,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AlexAhmed"),
     elo: 1920,
     lp: 680,
-    // coins removed: 15600, xp: 14200, level: 28, leagueDivision: "champion",
+    // xp: 14200, level: 28, leagueDivision: "champion",
     pvpWins: 187,
     pvpLosses: 43,
     pvpWinStreak: 5,
@@ -95098,7 +95374,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("OmarSilva"),
     elo: 1780,
     lp: 620,
-    // coins removed: 11200, xp: 10800, level: 22, leagueDivision: "champion",
+    // xp: 10800, level: 22, leagueDivision: "champion",
     pvpWins: 143,
     pvpLosses: 58,
     pvpWinStreak: 3,
@@ -95117,7 +95393,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("JamesCarter"),
     elo: 2100,
     lp: 780,
-    // coins removed: 24000, xp: 21000, level: 42, leagueDivision: "champion",
+    // xp: 21000, level: 42, leagueDivision: "champion",
     pvpWins: 311,
     pvpLosses: 29,
     pvpWinStreak: 12,
@@ -95136,7 +95412,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("LucasMartin"),
     elo: 1850,
     lp: 560,
-    // coins removed: 18500, xp: 16000, level: 33, leagueDivision: "champion",
+    // xp: 16000, level: 33, leagueDivision: "champion",
     pvpWins: 220,
     pvpLosses: 51,
     pvpWinStreak: 7,
@@ -95155,7 +95431,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("RyanChen"),
     elo: 1760,
     lp: 530,
-    // coins removed: 13400, xp: 12100, level: 26, leagueDivision: "champion",
+    // xp: 12100, level: 26, leagueDivision: "champion",
     pvpWins: 172,
     pvpLosses: 62,
     pvpWinStreak: 4,
@@ -95175,7 +95451,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("ElenaPetrov"),
     elo: 1490,
     lp: 445,
-    // coins removed: 6500, xp: 7200, level: 16, leagueDivision: "pro",
+    // xp: 7200, level: 16, leagueDivision: "pro",
     pvpWins: 108,
     pvpLosses: 77,
     pvpWinStreak: 2,
@@ -95194,7 +95470,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("KarimHassan"),
     elo: 1380,
     lp: 315,
-    // coins removed: 4900, xp: 4600, level: 11, leagueDivision: "pro",
+    // xp: 4600, level: 11, leagueDivision: "pro",
     pvpWins: 65,
     pvpLosses: 92,
     pvpWinStreak: 0,
@@ -95213,7 +95489,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("YunaKim"),
     elo: 1555,
     lp: 395,
-    // coins removed: 7800, xp: 7100, level: 17, leagueDivision: "pro",
+    // xp: 7100, level: 17, leagueDivision: "pro",
     pvpWins: 121,
     pvpLosses: 68,
     pvpWinStreak: 3,
@@ -95232,7 +95508,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("DiegoFernandez"),
     elo: 1460,
     lp: 340,
-    // coins removed: 5200, xp: 5000, level: 13, leagueDivision: "pro",
+    // xp: 5000, level: 13, leagueDivision: "pro",
     pvpWins: 83,
     pvpLosses: 88,
     pvpWinStreak: 1,
@@ -95251,7 +95527,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("PriyaSharma"),
     elo: 1610,
     lp: 465,
-    // coins removed: 9200, xp: 8800, level: 19, leagueDivision: "pro",
+    // xp: 8800, level: 19, leagueDivision: "pro",
     pvpWins: 132,
     pvpLosses: 59,
     pvpWinStreak: 4,
@@ -95270,7 +95546,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SofiaTorres"),
     elo: 1650,
     lp: 480,
-    // coins removed: 8900, xp: 8500, level: 18, leagueDivision: "pro",
+    // xp: 8500, level: 18, leagueDivision: "pro",
     pvpWins: 112,
     pvpLosses: 71,
     pvpWinStreak: 2,
@@ -95289,7 +95565,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AishaPatel"),
     elo: 1540,
     lp: 420,
-    // coins removed: 7200, xp: 6900, level: 15, leagueDivision: "pro",
+    // xp: 6900, level: 15, leagueDivision: "pro",
     pvpWins: 98,
     pvpLosses: 84,
     pvpWinStreak: 1,
@@ -95308,7 +95584,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("MarcoRossi"),
     elo: 1420,
     lp: 360,
-    // coins removed: 5800, xp: 5400, level: 12, leagueDivision: "pro",
+    // xp: 5400, level: 12, leagueDivision: "pro",
     pvpWins: 76,
     pvpLosses: 89,
     pvpWinStreak: 0,
@@ -95328,7 +95604,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("JakeThompson"),
     elo: 1310,
     lp: 280,
-    // coins removed: 4500, xp: 4000, level: 9, leagueDivision: "coin",
+    // xp: 4000, level: 9, leagueDivision: "coin",
     pvpWins: 54,
     pvpLosses: 78,
     pvpWinStreak: 2,
@@ -95347,7 +95623,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("NourRashid"),
     elo: 1200,
     lp: 175,
-    // coins removed: 3200, xp: 2800, level: 7, leagueDivision: "coin",
+    // xp: 2800, level: 7, leagueDivision: "coin",
     pvpWins: 38,
     pvpLosses: 67,
     pvpWinStreak: 0,
@@ -95366,7 +95642,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("MiaJohnson"),
     elo: 1260,
     lp: 240,
-    // coins removed: 3800, xp: 3500, level: 8, leagueDivision: "coin",
+    // xp: 3500, level: 8, leagueDivision: "coin",
     pvpWins: 47,
     pvpLosses: 72,
     pvpWinStreak: 1,
@@ -95385,7 +95661,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("EthanWilliams"),
     elo: 1350,
     lp: 295,
-    // coins removed: 4200, xp: 3900, level: 9, leagueDivision: "coin",
+    // xp: 3900, level: 9, leagueDivision: "coin",
     pvpWins: 58,
     pvpLosses: 74,
     pvpWinStreak: 2,
@@ -95404,7 +95680,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AmaraOsei"),
     elo: 1180,
     lp: 145,
-    // coins removed: 2700, xp: 2300, level: 6, leagueDivision: "coin",
+    // xp: 2300, level: 6, leagueDivision: "coin",
     pvpWins: 32,
     pvpLosses: 60,
     pvpWinStreak: 0,
@@ -95423,7 +95699,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("LeoZhang"),
     elo: 1290,
     lp: 215,
-    // coins removed: 3600, xp: 3200, level: 8, leagueDivision: "coin",
+    // xp: 3200, level: 8, leagueDivision: "coin",
     pvpWins: 44,
     pvpLosses: 69,
     pvpWinStreak: 1,
@@ -95442,7 +95718,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SanaMalik"),
     elo: 1225,
     lp: 165,
-    // coins removed: 2900, xp: 2600, level: 7, leagueDivision: "coin",
+    // xp: 2600, level: 7, leagueDivision: "coin",
     pvpWins: 36,
     pvpLosses: 64,
     pvpWinStreak: 0,
@@ -95461,7 +95737,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("IvanPetrov"),
     elo: 1320,
     lp: 260,
-    // coins removed: 4100, xp: 3700, level: 9, leagueDivision: "coin",
+    // xp: 3700, level: 9, leagueDivision: "coin",
     pvpWins: 51,
     pvpLosses: 76,
     pvpWinStreak: 1,
@@ -95480,7 +95756,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("LenaMuller"),
     elo: 1165,
     lp: 120,
-    // coins removed: 2400, xp: 1900, level: 6, leagueDivision: "coin",
+    // xp: 1900, level: 6, leagueDivision: "coin",
     pvpWins: 28,
     pvpLosses: 56,
     pvpWinStreak: 0,
@@ -95499,7 +95775,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("TariqIbrahim"),
     elo: 1245,
     lp: 195,
-    // coins removed: 3300, xp: 3000, level: 7, leagueDivision: "coin",
+    // xp: 3000, level: 7, leagueDivision: "coin",
     pvpWins: 41,
     pvpLosses: 66,
     pvpWinStreak: 1,
@@ -95519,7 +95795,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("ChloeDubois"),
     elo: 1100,
     lp: 85,
-    // coins removed: 2100, xp: 1800, level: 5, leagueDivision: "training",
+    // xp: 1800, level: 5, leagueDivision: "training",
     pvpWins: 22,
     pvpLosses: 51,
     pvpWinStreak: 1,
@@ -95538,7 +95814,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("RamiKhalil"),
     elo: 1020,
     lp: 45,
-    // coins removed: 1400, xp: 900, level: 3, leagueDivision: "training",
+    // xp: 900, level: 3, leagueDivision: "training",
     pvpWins: 11,
     pvpLosses: 38,
     pvpWinStreak: 0,
@@ -95557,7 +95833,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SaraNovak"),
     elo: 1050,
     lp: 65,
-    // coins removed: 1700, xp: 1400, level: 4, leagueDivision: "training",
+    // xp: 1400, level: 4, leagueDivision: "training",
     pvpWins: 15,
     pvpLosses: 43,
     pvpWinStreak: 0,
@@ -95576,7 +95852,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("TomNakamura"),
     elo: 1010,
     lp: 30,
-    // coins removed: 1100, xp: 700, level: 2, leagueDivision: "training",
+    // xp: 700, level: 2, leagueDivision: "training",
     pvpWins: 8,
     pvpLosses: 32,
     pvpWinStreak: 0,
@@ -95595,7 +95871,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("AnyaSmirnova"),
     elo: 1080,
     lp: 78,
-    // coins removed: 1900, xp: 1600, level: 4, leagueDivision: "training",
+    // xp: 1600, level: 4, leagueDivision: "training",
     pvpWins: 18,
     pvpLosses: 46,
     pvpWinStreak: 1,
@@ -95614,7 +95890,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("BenFoster"),
     elo: 1035,
     lp: 15,
-    // coins removed: 900, xp: 500, level: 2, leagueDivision: "training",
+    // xp: 500, level: 2, leagueDivision: "training",
     pvpWins: 6,
     pvpLosses: 28,
     pvpWinStreak: 0,
@@ -95633,7 +95909,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("MayaRivera"),
     elo: 1060,
     lp: 55,
-    // coins removed: 1600, xp: 1200, level: 3, leagueDivision: "training",
+    // xp: 1200, level: 3, leagueDivision: "training",
     pvpWins: 13,
     pvpLosses: 41,
     pvpWinStreak: 0,
@@ -95652,7 +95928,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("SamOBrien"),
     elo: 1015,
     lp: 8,
-    // coins removed: 800, xp: 400, level: 1, leagueDivision: "training",
+    // xp: 400, level: 1, leagueDivision: "training",
     pvpWins: 4,
     pvpLosses: 25,
     pvpWinStreak: 0,
@@ -95671,7 +95947,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("HanaYamamoto"),
     elo: 1045,
     lp: 38,
-    // coins removed: 1300, xp: 1000, level: 3, leagueDivision: "training",
+    // xp: 1000, level: 3, leagueDivision: "training",
     pvpWins: 10,
     pvpLosses: 36,
     pvpWinStreak: 0,
@@ -95690,7 +95966,7 @@ var FIXED_BOTS = [
     avatar: botAvatar("KiranPatel"),
     elo: 1090,
     lp: 92,
-    // coins removed: 2000, xp: 1700, level: 5, leagueDivision: "training",
+    // xp: 1700, level: 5, leagueDivision: "training",
     pvpWins: 20,
     pvpLosses: 49,
     pvpWinStreak: 1,

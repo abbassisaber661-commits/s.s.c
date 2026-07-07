@@ -129,14 +129,16 @@ export default function NotificationPanel({ open, onClose }: Props) {
             onClick={onClose}
             style={{
               position: "fixed",
-              inset: 0,
+              top: "var(--topbar-h, 52px)",
+              left: 0,
+              right: 0,
+              bottom: 0,
               background: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(4px)",
               zIndex: 9998,
             }}
           />
 
-          {/* Panel */}
+          {/* Panel — starts below the fixed top bar (52 px authenticated / 88 px guest) */}
           <motion.div
             key="panel"
             initial={{ x: "100%", opacity: 0 }}
@@ -145,14 +147,14 @@ export default function NotificationPanel({ open, onClose }: Props) {
             transition={{ type: "spring", stiffness: 350, damping: 32 }}
             style={{
               position: "fixed",
-              top: 0,
+              top: "var(--topbar-h, 52px)",
               right: 0,
               bottom: 0,
               width: "min(380px, 95vw)",
               background: "rgba(8,8,18,0.96)",
               backdropFilter: "blur(24px)",
               borderLeft: "1px solid rgba(255,255,255,0.08)",
-              zIndex: 9999,
+              zIndex: 10000,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",

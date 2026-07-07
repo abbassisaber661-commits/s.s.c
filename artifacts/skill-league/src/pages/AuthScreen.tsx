@@ -128,8 +128,9 @@ export default function AuthScreen() {
             style={{ borderColor: 'rgba(167,139,250,0.3)', borderTopColor: '#a78bfa' }}
           />
           <div className="text-center">
-            <p className="text-white font-bold text-xl">SkillLeague</p>
-            <p className="text-white/50 text-sm mt-1">جارٍ التحميل…</p>
+            <p className="text-white font-black text-2xl tracking-tight">S.S.C</p>
+            <p className="text-white/55 text-xs font-semibold mt-0.5" style={{ letterSpacing: "0.1em" }}>SkillLeague Social Channel</p>
+            <p className="text-white/50 text-sm mt-2">جارٍ التحميل…</p>
           </div>
         </motion.div>
       </div>
@@ -215,7 +216,7 @@ export default function AuthScreen() {
                 <Logo size={96} rounded="rounded-3xl" />
               </div>
               <div className="text-center">
-                <h1 className="text-4xl font-black text-white tracking-tight">SkillLeague</h1>
+                <h1 className="text-4xl font-black text-white tracking-tight">S.S.C</h1>
                 <p className="text-purple-300 text-sm font-medium mt-1">بطل المهارات</p>
               </div>
             </motion.div>

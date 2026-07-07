@@ -384,9 +384,10 @@ export default function IntroPage({ onContinue }: Props) {
           >
             <Logo size={36} rounded="rounded-xl" />
           </div>
-          <span className="text-white font-black text-base tracking-tight">
-            SkillLeague
-          </span>
+          <div className="flex flex-col leading-none">
+            <span className="text-white font-black text-base tracking-tight">S.S.C</span>
+            <span className="text-white/50 font-semibold" style={{ fontSize: 9, letterSpacing: "0.08em" }}>SkillLeague Social Channel</span>
+          </div>
         </motion.div>
 
         <motion.div

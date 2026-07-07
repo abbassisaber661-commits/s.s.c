@@ -474,14 +474,12 @@ const SocialPostCard = memo(function SocialPostCard({
           {/* Row 2 — Time · Level   [🎁 Gift DN] */}
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-[11px] text-[#9B9B9B] flex items-center gap-1 shrink-0">
-              {post.isOfficialPage ? (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-600 font-semibold">
-                  🛡️ {rtl ? "صفحة SkillLeague الرسمية" : "Official SkillLeague Page"}
-                </span>
-              ) : (
-                <span>Lv.{post.authorLevel}</span>
+              {!post.isOfficialPage && (
+                <>
+                  <span>Lv.{post.authorLevel}</span>
+                  <span>·</span>
+                </>
               )}
-              <span>·</span>
               <span>{age(post.timestamp, rtl)}</span>
               {post.isPinned && (
                 <>

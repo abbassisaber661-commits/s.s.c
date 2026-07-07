@@ -521,7 +521,7 @@ export default function OwnerPanel() {
           </div>
           <div>
             <p className="text-white font-black text-sm leading-tight">Owner Control Center</p>
-            <p className="text-white/30 text-[10px]">SkillLeague Admin · Private</p>
+            <p className="text-white/30 text-[10px]">S.S.C Admin · Private</p>
           </div>
         </div>
 

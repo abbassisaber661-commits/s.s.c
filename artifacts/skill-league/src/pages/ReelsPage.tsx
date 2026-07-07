@@ -41,7 +41,7 @@ const DEMO_REELS: (CommunityPost & { videoUrl?: string; description?: string })[
     authorName:  `Creator${i + 1}`,
     authorLevel: Math.floor(Math.random() * 50) + 1,
     authorFame:  0,
-    content:     `Check out this amazing play! #SkillLeague #Gaming #${["Pro", "Epic", "Viral", "Top"][i % 4]}`,
+    content:     `Check out this amazing play! #S.S.C #Gaming #${["Pro", "Epic", "Viral", "Top"][i % 4]}`,
     imageUrl:    `https://picsum.photos/seed/reel${i}/600/1000`,
     type:        "text" as const,
     timestamp:   Date.now() - i * 3_600_000,

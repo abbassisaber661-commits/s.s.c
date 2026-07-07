@@ -7,10 +7,10 @@
 // `routes/pi-payments.ts`.
 
 export const DANOUS_CURRENCY_DEFINITION =
-  "DN$ (Danous) is an internal gamification points system in SkillLeague. It reflects your in-app progress — earned from matches, streaks, levels, and achievements. DN$ has no monetary value, no exchange rate to Pi or any other currency, and cannot be transferred, gifted, or withdrawn.";
+  "DN$ (Danous) is an internal gamification points system in S.S.C. It reflects your in-app progress — earned from matches, streaks, levels, and achievements. DN$ has no monetary value, no exchange rate to Pi or any other currency, and cannot be transferred, gifted, or withdrawn.";
 
 export const DANOUS_CURRENCY_DEFINITION_AR =
-  "عملة Danous (DN$) هي نظام نقاط داخلي للتقدّم داخل SkillLeague فقط. تُكتسب من المباريات، السلاسل المتتالية، المستويات، والإنجازات. ليس لها أي قيمة نقدية، ولا معدل تحويل إلى Pi أو أي عملة أخرى، ولا يمكن إرسالها أو إهداؤها أو سحبها.";
+  "عملة Danous (DN$) هي نظام نقاط داخلي للتقدّم داخل S.S.C فقط. تُكتسب من المباريات، السلاسل المتتالية، المستويات، والإنجازات. ليس لها أي قيمة نقدية، ولا معدل تحويل إلى Pi أو أي عملة أخرى، ولا يمكن إرسالها أو إهداؤها أو سحبها.";
 
 export interface DanousEarnSource {
   icon: string;

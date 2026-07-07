@@ -62,8 +62,8 @@ function getCoachResponse(msg: string, stats: any, language: string): string {
 
   if (m.includes('hello') || m.includes('hi') || m.includes('مرحبا') || m.includes('هلا') || m.includes('أهلا')) {
     return isAr
-      ? `مرحباً بك في مساعد SkillLeague الذكي! 🤖\n\nأنا هنا لمساعدتك على تحسين أدائك. يمكنني مساعدتك في:\n• تحسين السرعة والدقة\n• استراتيجيات PvP والبطولات\n• رفع ELO\n• كسب المزيد من DN$\n\nعن ماذا تريد التحدث؟`
-      : `Hello! Welcome to SkillLeague AI Coach! 🤖\n\nI'm here to help you improve your performance. I can help with:\n• Speed and accuracy improvement\n• PvP and tournament strategies\n• Climbing ELO\n• Earning more DN$\n\nWhat would you like to discuss?`;
+      ? `مرحباً بك في مساعد S.S.C الذكي! 🤖\n\nأنا هنا لمساعدتك على تحسين أدائك. يمكنني مساعدتك في:\n• تحسين السرعة والدقة\n• استراتيجيات PvP والبطولات\n• رفع ELO\n• كسب المزيد من DN$\n\nعن ماذا تريد التحدث؟`
+      : `Hello! Welcome to S.S.C AI Coach! 🤖\n\nI'm here to help you improve your performance. I can help with:\n• Speed and accuracy improvement\n• PvP and tournament strategies\n• Climbing ELO\n• Earning more DN$\n\nWhat would you like to discuss?`;
   }
 
   // Default response with personalized analysis
@@ -92,8 +92,8 @@ export default function AICoach() {
   const [messages, setMessages] = useState<Message[]>([{
     id: '0', role: 'assistant',
     text: language === 'ar'
-      ? `مرحباً! 🤖 أنا مساعدك الذكي في SkillLeague.\n\nمستواك: ${level} | ELO: ${elo}\nأنا هنا لأساعدك تتحسن وتفوز أكثر. اسألني أي شيء!`
-      : `Hello! 🤖 I'm your SkillLeague AI Coach.\n\nYour Level: ${level} | ELO: ${elo}\nI'm here to help you improve and win more. Ask me anything!`,
+      ? `مرحباً! 🤖 أنا مساعدك الذكي في S.S.C.\n\nمستواك: ${level} | ELO: ${elo}\nأنا هنا لأساعدك تتحسن وتفوز أكثر. اسألني أي شيء!`
+      : `Hello! 🤖 I'm your S.S.C AI Coach.\n\nYour Level: ${level} | ELO: ${elo}\nI'm here to help you improve and win more. Ask me anything!`,
     ts: Date.now(),
   }]);
   const [input, setInput]       = useState('');

@@ -235,7 +235,7 @@ export default function CompetePage() {
           className="text-[10px] font-black uppercase tracking-[0.35em] mb-2"
           style={{ color: "rgba(167,139,250,0.55)" }}
         >
-          SkillLeague · Competitive Hub
+          S.S.C · Competitive Hub
         </motion.div>
 
         <motion.h1

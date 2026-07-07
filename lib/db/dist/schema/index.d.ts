@@ -3,6 +3,7 @@ export * from './bots';
 export * from './matches';
 export * from './community';
 export * from './economy';
+export * from './subscriptions';
 export * from './notifications';
 export * from './messages';
 export * from './analytics';

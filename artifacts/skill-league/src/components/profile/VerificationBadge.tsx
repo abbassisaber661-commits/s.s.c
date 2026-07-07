@@ -31,7 +31,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     bg: "bg-blue-600",
     glowColor: "rgba(37,99,235,0.9)",
     label: "App Owner",
-    description: "The creator and owner of SkillLeague.",
+    description: "The creator and owner of S.S.C.",
     isPrimary: true,
   },
   verified: {
@@ -40,7 +40,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     bg: "bg-blue-500",
     glowColor: "rgba(59,130,246,0.7)",
     label: "Verified",
-    description: "This account has been verified by SkillLeague.",
+    description: "This account has been verified by S.S.C.",
     isPrimary: true,
   },
   official: {
@@ -49,7 +49,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     bg: "bg-sky-500",
     glowColor: "rgba(14,165,233,0.6)",
     label: "Official",
-    description: "This is an official SkillLeague account.",
+    description: "This is an official S.S.C account.",
     isPrimary: true,
   },
   premium: {
@@ -66,7 +66,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     bg: "bg-purple-500",
     glowColor: "rgba(168,85,247,0.6)",
     label: "Partner",
-    description: "Official SkillLeague content partner.",
+    description: "Official S.S.C content partner.",
   },
   creator: {
     icon: Brush,
@@ -82,7 +82,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     bg: "bg-emerald-500",
     glowColor: "rgba(16,185,129,0.6)",
     label: "Developer",
-    description: "A member of the SkillLeague development team.",
+    description: "A member of the S.S.C development team.",
   },
   moderator: {
     icon: UserCog,
@@ -98,7 +98,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     bg: "bg-indigo-500",
     glowColor: "rgba(99,102,241,0.6)",
     label: "Ambassador",
-    description: "An official SkillLeague brand ambassador.",
+    description: "An official S.S.C brand ambassador.",
   },
   staff: {
     icon: Shield,
@@ -106,7 +106,7 @@ const CONFIG: Record<Exclude<VerificationTier, "none">, BadgeConfig> = {
     bg: "bg-green-500",
     glowColor: "rgba(34,197,94,0.6)",
     label: "Staff",
-    description: "A member of the SkillLeague staff team.",
+    description: "A member of the S.S.C staff team.",
   },
 };
 

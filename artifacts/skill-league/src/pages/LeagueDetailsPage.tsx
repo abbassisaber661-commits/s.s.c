@@ -30,7 +30,7 @@ const LEAGUE_INFO: Record<string, {
   "division-iii": {
     name: "Division III", shortLabel: "DIV III", emblem: "🥉",
     color: "#cd7f32", colorRgb: "205,127,50", eloRange: "0 – 99 LP",
-    description: "Division III هي نقطة البداية لكل لاعب في SkillLeague. هنا ستواجه منافسين حقيقيين وتتعلم أساسيات الأداء تحت الضغط. المنافسة متاحة للجميع بدون قيود.",
+    description: "Division III هي نقطة البداية لكل لاعب في S.S.C. هنا ستواجه منافسين حقيقيين وتتعلم أساسيات الأداء تحت الضغط. المنافسة متاحة للجميع بدون قيود.",
     difficulty: "مستوى سهل إلى متوسط. الأسئلة تختبر المعرفة العامة والسرعة في الإجابة. زمن الإجابة كافٍ لكل سؤال.",
     promotion: "الوصول إلى 100 نقطة LP يؤهلك للترقية التلقائية إلى Division II في نهاية الموسم.",
     relegation: "لا يوجد هبوط من Division III. هذا هو مستوى الانطلاق لجميع اللاعبين الجدد.",
@@ -57,7 +57,7 @@ const LEAGUE_INFO: Record<string, {
   "champions": {
     name: "Champions League", shortLabel: "ELITE", emblem: "👑",
     color: "#a78bfa", colorRgb: "167,139,250", eloRange: "500+ LP",
-    description: "Champions League هو قمة SkillLeague. مجموعة مختارة من أفضل اللاعبين في العالم يتنافسون على اللقب الأسمى.",
+    description: "Champions League هو قمة S.S.C. مجموعة مختارة من أفضل اللاعبين في العالم يتنافسون على اللقب الأسمى.",
     difficulty: "مستوى الخبراء. أصعب الأسئلة وأقصر الأوقات. لا هامش للخطأ.",
     promotion: "لا توجد مرحلة أعلى — Champions League هي الذروة. الهدف هو البقاء في القمة.",
     relegation: "الهبوط إلى Pro League يحدث إذا انخفض LP دون 500 في نهاية الموسم.",

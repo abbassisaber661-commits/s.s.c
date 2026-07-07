@@ -202,7 +202,7 @@ export const PI_VIP_MISSIONS: PiVipMission[] = [
   },
   {
     id: 'vip_legend_badge', icon: '👑', title: 'شارة Supporter',
-    desc: 'شارة حصرية تُظهر دعمك لمنصة SkillLeague',
+    desc: 'شارة حصرية تُظهر دعمك لمنصة S.S.C',
     piCost: 5, rewardDN: 1000, rewardXp: 2000, rewardBadge: '🌟',
     minTier: 'competitor',
   },

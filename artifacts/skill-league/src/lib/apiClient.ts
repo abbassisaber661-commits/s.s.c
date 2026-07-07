@@ -43,6 +43,8 @@ export interface ApiPlayer {
   elo: number;
   fame?: number;
   language?: string;
+  /** Pi Network UID — present on players authenticated via Pi, verified by backend /v2/me */
+  piUid?: string;
   [key: string]: unknown;
 }
 
@@ -698,6 +700,32 @@ export const api = {
       ),
   },
 
+  /* ── Subscriptions ── */
+  subscriptions: {
+    /** Check if a player has an active subscription (requires JWT). */
+    status: (playerId: string) =>
+      get<{
+        active:    boolean;
+        plan:      string | null;
+        expiresAt: string | null;
+        daysLeft:  number;
+        piTxId?:   string;
+      }>(`/subscriptions/status/${playerId}`),
+
+    /** Full subscription history for a player (requires JWT). */
+    history: (playerId: string) =>
+      get<{
+        data: {
+          id:        string;
+          plan:      string;
+          amountPi:  number;
+          status:    string;
+          expiresAt: string;
+          createdAt: string;
+        }[];
+      }>(`/subscriptions/history/${playerId}`),
+  },
+
   /* ── Pi Payments ── */
   pi: {
     create: (data: { amount: number; memo: string; [key: string]: unknown }) =>
@@ -713,6 +741,20 @@ export const api = {
      * so the pending ledger entry doesn't stay stuck forever. */
     fail: (paymentId: string, reason?: string) =>
       post<{ ok: boolean; status: string }>(`/pi/payments/${paymentId}/fail`, { reason }),
+
+    /**
+     * Handle an incomplete payment found during Pi.authenticate().
+     * This is a PUBLIC endpoint (no JWT required) because it fires before
+     * the user has a session.
+     *
+     * • piPaymentId — Pi Network's payment identifier
+     * • txId        — blockchain tx id (present if payment hit the blockchain)
+     *
+     * Backend calls POST /v2/payments/:id/complete if txId is provided,
+     * or marks the payment failed if txId is absent.
+     */
+    incomplete: (piPaymentId: string, txId?: string) =>
+      post<{ ok: boolean; status: string }>("/pi/payments/incomplete", { piPaymentId, txId }),
 
     ledger: (playerId: string) =>
       get<{

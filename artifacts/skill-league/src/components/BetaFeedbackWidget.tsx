@@ -67,7 +67,7 @@ export default function BetaFeedbackWidget() {
                   <h2 className="font-bold text-base flex items-center gap-2">
                     <MessageSquarePlus size={16} className="text-indigo-400" /> ملاحظات النسخة التجريبية
                   </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">ساعدنا في تحسين SkillLeague</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">ساعدنا في تحسين S.S.C</p>
                 </div>
                 <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-muted"><X size={18} /></button>
               </div>

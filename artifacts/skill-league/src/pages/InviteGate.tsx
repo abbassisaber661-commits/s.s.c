@@ -59,7 +59,7 @@ export default function InviteGate({ onGranted }: Props) {
             <Logo size={80} rounded="rounded-3xl" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">SkillLeague</h1>
+            <h1 className="text-2xl font-bold">S.S.C</h1>
             <p className="text-muted-foreground text-sm mt-1">الإصدار التجريبي Beta v{BETA_VERSION}</p>
           </div>
         </div>
@@ -70,7 +70,7 @@ export default function InviteGate({ onGranted }: Props) {
             <span>وصول محدود — دعوة فقط</span>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            SkillLeague في مرحلة البيتا. للوصول تحتاج رمز دعوة من الفريق أو أحد المختبرين.
+            S.S.C في مرحلة البيتا. للوصول تحتاج رمز دعوة من الفريق أو أحد المختبرين.
           </p>
         </div>
 

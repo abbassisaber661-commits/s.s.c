@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Search, MessageCircle, Bell, Users, User, Menu } from "lucide-react";
+import { Loader2, Search, Users } from "lucide-react";
 import { useInView } from "react-intersection-observer";
 import { useLocation } from "wouter";
 
@@ -15,8 +15,7 @@ import TrendingSection from "@/components/social/TrendingSection";
 import GameReelsRow from "@/components/social/GameReelsRow";
 import SuggestedPlayersRow from "@/components/social/SuggestedPlayersRow";
 import Avatar from "@/components/Avatar";
-import Logo from "@/components/Logo";
-import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { getStoredPlayerId } from "@/lib/apiClient";
 
 const PostSkeleton = () => (
   <div className="bg-white rounded-2xl p-4 animate-pulse border border-[#E5E5E5] shadow-sm">
@@ -60,12 +59,10 @@ const CreatePostTrigger = ({ username, onOpen }: { username: string; onOpen: () 
 );
 
 export default function FeedPage() {
-  const { username, authUser } = useGame() as any;
-  const { connected, pushNotifs } = useRealtime();
+  const { username, authUser, isGuest } = useGame() as any;
+  useRealtime(); // keep provider subscription active
   const [, navigate] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifCount, setNotifCount] = useState(0);
-  const [dmCount, setDmCount] = useState(0);
   const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
@@ -84,27 +81,6 @@ export default function FeedPage() {
   const { mutate: createPost } = useCreatePost();
 
   const playerId = getStoredPlayerId();
-
-  useEffect(() => {
-    if (!playerId) return;
-    api.notifications.list(playerId, 20)
-      .then(notifs => setNotifCount(notifs.filter(n => !n.read).length))
-      .catch(() => {});
-    api.messages.inbox(playerId)
-      .then(msgs => setDmCount(msgs.filter((m: any) => !m.read && m.toId === playerId).length))
-      .catch(() => {});
-  }, [playerId]);
-
-  useEffect(() => {
-    if (pushNotifs.length > 0) setNotifCount(c => c + 1);
-  }, [pushNotifs.length]);
-
-  const { dmMessages } = useRealtime();
-  useEffect(() => {
-    if (dmMessages.length === 0) return;
-    const last = dmMessages[dmMessages.length - 1];
-    if (last && last.toId === playerId) setDmCount(c => c + 1);
-  }, [dmMessages.length]);
 
   const posts = useMemo(() => {
     return data?.pages?.flatMap((p) => p.data) ?? [];
@@ -134,44 +110,14 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-24">
 
-      {/* ── App Identity Bar ── */}
-      <div className="sticky top-0 z-30 bg-white border-b border-[#E5E5E5]">
-        <div className="max-w-2xl mx-auto flex items-center justify-center px-3 py-2 gap-2">
-          <Logo size={36} rounded="rounded-full" />
-          <span className="text-lg font-black tracking-tight text-[#111827]">Danous</span>
-        </div>
-      </div>
+      {/* ── Social Secondary Bar ── */}
+      <div
+        className="sticky z-30 bg-white border-b border-[#E5E5E5] shadow-sm"
+        style={{ top: isGuest ? 88 : 52 }}
+      >
+        <div className="max-w-2xl mx-auto flex items-center px-3 py-2.5">
 
-      {/* ── Social Top Bar ── */}
-      <div className="sticky top-[52px] z-30 bg-white border-b border-[#E5E5E5] shadow-sm">
-        <div className="max-w-2xl mx-auto flex items-center px-3 py-2.5 gap-1">
-
-          {/* ☰ Settings */}
-          <button
-            onClick={() => navigate("/settings")}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Settings"
-          >
-            <Menu size={19} />
-          </button>
-
-          {/* ── "social" label ── */}
-          <span className="text-sm font-black tracking-tight text-[#111111] select-none pointer-events-none">
-            social
-          </span>
-
-          <div className="flex-1" />
-
-          {/* 🔎 Search */}
-          <button
-            onClick={() => navigate("/search")}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Search"
-          >
-            <Search size={19} />
-          </button>
-
-          {/* Friend shortcut */}
+          {/* Left: Friends */}
           <button
             onClick={() => navigate("/friends")}
             className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
@@ -180,35 +126,18 @@ export default function FeedPage() {
             <Users size={19} />
           </button>
 
-          {/* ✉️ Messages */}
-          <button
-            onClick={() => navigate("/messages")}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Messages"
-          >
-            <MessageCircle size={19} />
-            {dmCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                {dmCount > 9 ? "9+" : dmCount}
-              </span>
-            )}
-          </button>
+          {/* Center: Search */}
+          <div className="flex-1 flex justify-center">
+            <button
+              onClick={() => navigate("/search")}
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
+              aria-label="Search"
+            >
+              <Search size={19} />
+            </button>
+          </div>
 
-          {/* 🔔 Notifications */}
-          <button
-            onClick={() => navigate("/notifications")}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[#444444] hover:bg-[#F5F5F7] transition-colors"
-            aria-label="Notifications"
-          >
-            <Bell size={19} />
-            {notifCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
-                {notifCount > 9 ? "9+" : notifCount}
-              </span>
-            )}
-          </button>
-
-          {/* 👤 Profile */}
+          {/* Right: Profile picture */}
           <button
             onClick={() => navigate("/profile")}
             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-[#3B82F6] overflow-hidden"

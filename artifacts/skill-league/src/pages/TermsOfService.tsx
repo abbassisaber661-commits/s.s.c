@@ -21,7 +21,7 @@ export default function TermsOfService() {
         <div className="space-y-8 text-sm leading-relaxed">
           <Section title="1. Acceptance of Terms">
             <p>
-              By accessing or using SkillLeague ("the App", "the Service"), you agree to be
+              By accessing or using S.S.C ("the App", "the Service"), you agree to be
               bound by these Terms of Service. If you do not agree to these terms, please do
               not use the App.
             </p>
@@ -29,7 +29,7 @@ export default function TermsOfService() {
 
           <Section title="2. Eligibility">
             <p>
-              You must be at least 13 years old to use SkillLeague. By using the App you
+              You must be at least 13 years old to use S.S.C. By using the App you
               represent that you meet this requirement. If you are under 18, you must have
               consent from a parent or legal guardian.
             </p>
@@ -51,7 +51,7 @@ export default function TermsOfService() {
 
           <Section title="4. In-App Currency and Rewards">
             <p className="mb-3">
-              SkillLeague uses DN$ (virtual points) and Pi for gameplay. Please note:
+              S.S.C uses DN$ (virtual points) and Pi for gameplay. Please note:
             </p>
             <ul className="list-disc list-inside space-y-1.5">
               <li>DN$ (virtual points) have no real-world monetary value unless explicitly stated</li>
@@ -64,7 +64,7 @@ export default function TermsOfService() {
           <Section title="5. Pi Network Integration">
             <p>
               Features involving Pi Network are subject to Pi Network's own Terms of Service.
-              Any Pi-related transactions are governed by Pi Network's policies. SkillLeague
+              Any Pi-related transactions are governed by Pi Network's policies. S.S.C
               is not responsible for Pi Network's availability or changes to their platform.
             </p>
           </Section>
@@ -74,7 +74,7 @@ export default function TermsOfService() {
             <ul className="list-disc list-inside space-y-1.5">
               <li>Cheat, hack, or exploit bugs to gain unfair advantages</li>
               <li>Use bots, scripts, or automated tools to play the game</li>
-              <li>Impersonate other users or SkillLeague staff</li>
+              <li>Impersonate other users or S.S.C staff</li>
               <li>Harass, threaten, or abuse other users</li>
               <li>Attempt to reverse-engineer or modify the App</li>
               <li>Post spam, offensive, or illegal content in community features</li>
@@ -84,8 +84,8 @@ export default function TermsOfService() {
 
           <Section title="7. Intellectual Property">
             <p>
-              All content in SkillLeague — including graphics, code, game mechanics, and
-              branding — is the property of SkillLeague and its licensors. You may not
+              All content in S.S.C — including graphics, code, game mechanics, and
+              branding — is the property of S.S.C and its licensors. You may not
               reproduce, distribute, or create derivative works without written permission.
             </p>
           </Section>
@@ -93,7 +93,7 @@ export default function TermsOfService() {
           <Section title="8. User-Generated Content">
             <p>
               By posting content in community features (such as posts or comments), you grant
-              SkillLeague a non-exclusive, royalty-free license to display and moderate that
+              S.S.C a non-exclusive, royalty-free license to display and moderate that
               content. You retain ownership of your content but are responsible for ensuring
               it does not violate these terms or any third-party rights.
             </p>
@@ -101,7 +101,7 @@ export default function TermsOfService() {
 
           <Section title="9. Disclaimer of Warranties">
             <p>
-              SkillLeague is provided "as is" without warranties of any kind. We do not
+              S.S.C is provided "as is" without warranties of any kind. We do not
               guarantee that the service will be uninterrupted, error-free, or free of harmful
               components. Use of the App is at your own risk.
             </p>
@@ -109,7 +109,7 @@ export default function TermsOfService() {
 
           <Section title="10. Limitation of Liability">
             <p>
-              To the maximum extent permitted by law, SkillLeague shall not be liable for any
+              To the maximum extent permitted by law, S.S.C shall not be liable for any
               indirect, incidental, special, or consequential damages arising from your use of
               the App, including loss of virtual items, data, or access to the service.
             </p>
@@ -126,7 +126,7 @@ export default function TermsOfService() {
 
           <Section title="12. Termination">
             <p>
-              We may suspend or terminate your access to SkillLeague at our discretion,
+              We may suspend or terminate your access to S.S.C at our discretion,
               including for violations of these terms. Upon termination, your right to use
               the App ceases immediately. Provisions that by their nature should survive
               termination will remain in effect.
@@ -155,7 +155,7 @@ export default function TermsOfService() {
               <span className="underline cursor-pointer hover:text-foreground transition-colors">Privacy Policy</span>
             </Link>
             {' · '}
-            SkillLeague Terms of Service · v1.0
+            S.S.C Terms of Service · v1.0
           </div>
         </div>
       </div>

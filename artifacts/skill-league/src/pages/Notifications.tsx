@@ -111,7 +111,7 @@ export default function Notifications() {
     <div dir={rtl ? "rtl" : "ltr"} className="min-h-screen bg-[#F5F5F7] pb-24">
 
       {/* HEADER */}
-      <div className="sticky top-0 z-20 bg-white border-b border-[#E5E5E5] shadow-sm px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-[52px] z-20 bg-white border-b border-[#E5E5E5] shadow-sm px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => { playTap(); navigate("/feed"); }}
           className="p-2 rounded-xl hover:bg-[#F5F5F7] transition-colors"

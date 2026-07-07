@@ -21,9 +21,9 @@ export default function PrivacyPolicy() {
         <div className="space-y-8 text-sm leading-relaxed">
           <Section title="1. Introduction">
             <p>
-              SkillLeague ("we", "us", or "our") is committed to protecting your privacy.
+              S.S.C ("we", "us", or "our") is committed to protecting your privacy.
               This Privacy Policy explains how we collect, use, and safeguard your information
-              when you use the SkillLeague application.
+              when you use the S.S.C application.
             </p>
           </Section>
 
@@ -84,7 +84,7 @@ export default function PrivacyPolicy() {
 
           <Section title="8. Children's Privacy">
             <p>
-              SkillLeague is not directed to children under the age of 13. We do not knowingly
+              S.S.C is not directed to children under the age of 13. We do not knowingly
               collect personal information from children under 13. If you believe a child has
               provided us with personal data, please contact us and we will delete it.
             </p>
@@ -111,13 +111,13 @@ export default function PrivacyPolicy() {
           <Section title="11. Contact Us">
             <p>
               If you have questions or concerns about this Privacy Policy, please contact us
-              through the SkillLeague support channel or via the feedback widget in the app.
+              through the S.S.C support channel or via the feedback widget in the app.
             </p>
           </Section>
         </div>
 
         <div className="mt-10 pt-6 border-t border-border text-xs text-muted-foreground text-center">
-          SkillLeague · Privacy Policy · v1.0
+          S.S.C · Privacy Policy · v1.0
         </div>
       </div>
     </div>

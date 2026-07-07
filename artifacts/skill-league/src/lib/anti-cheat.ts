@@ -46,7 +46,7 @@ export function validateUsername(name: string): { valid: boolean; reason?: strin
   if (!/^[a-zA-Z0-9_]+$/.test(trimmed))
     return { valid: false, reason: 'Only letters, numbers and underscores' };
   if (/skillleague/i.test(trimmed))
-    return { valid: false, reason: 'This name is reserved for official SkillLeague pages' };
+    return { valid: false, reason: 'This name is reserved for official S.S.C pages' };
   return { valid: true };
 }
 

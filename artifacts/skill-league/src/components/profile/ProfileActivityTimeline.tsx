@@ -90,7 +90,7 @@ const DEMO_EVENTS: ActivityEvent[] = [
   {
     id: "1",
     type: "joined",
-    title: "Joined SkillLeague",
+    title: "Joined S.S.C",
     description: "Welcome to the platform!",
     timestamp: Date.now() - 30 * 24 * 60 * 60 * 1000,
   },

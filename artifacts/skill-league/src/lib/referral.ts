@@ -48,12 +48,12 @@ export function claimReferralReward(referralData: ReferralData): { data: Referra
 }
 
 export function buildShareText(username: string, code: string, score?: number, league?: string): string {
-  const scoreText = score ? `Just scored ${score} pts in ${league ?? 'SkillLeague'}! ` : '';
-  return `${scoreText}Join me on SkillLeague — the fastest word game on Pi Network! Use my code ${code} to get a bonus. 🎮⚡ #SkillLeague #PiNetwork`;
+  const scoreText = score ? `Just scored ${score} pts in ${league ?? 'S.S.C'}! ` : '';
+  return `${scoreText}Join me on S.S.C — the fastest word game on Pi Network! Use my code ${code} to get a bonus. 🎮⚡ #S.S.C #PiNetwork`;
 }
 
 export function buildResultShareText(username: string, score: number, accuracy: number, streak: number): string {
-  return `🎮 SkillLeague Match Result\n👤 ${username}\n📊 Score: ${score} pts\n🎯 Accuracy: ${accuracy}%\n⚡ Best Streak: ${streak}\n\n#SkillLeague #PiNetwork`;
+  return `🎮 S.S.C Match Result\n👤 ${username}\n📊 Score: ${score} pts\n🎯 Accuracy: ${accuracy}%\n⚡ Best Streak: ${streak}\n\n#S.S.C #PiNetwork`;
 }
 
 export const REFERRAL_REWARD_PER_FRIEND = 100;

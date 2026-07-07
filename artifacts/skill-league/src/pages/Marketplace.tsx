@@ -99,7 +99,7 @@ export default function Marketplace() {
             <h1 className="font-bold text-lg flex items-center gap-2 text-[#111111]">
               <ShoppingBag size={18} className="text-[#FFD60A]" /> السوق الداخلي
             </h1>
-            <p className="text-xs text-[#666666]">تداول العناصر بين اللاعبين</p>
+            <p className="text-xs font-semibold text-red-500">Coming soon</p>
           </div>
           <button
             onClick={() => setShowSell(true)}

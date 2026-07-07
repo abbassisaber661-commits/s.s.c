@@ -70,8 +70,8 @@ export const ProfileShareSheet = memo(({ username, profileUrl, isOpen, onClose }
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `@${username} on SkillLeague`,
-          text:  `Check out ${username}'s profile on SkillLeague!`,
+          title: `@${username} on S.S.C`,
+          text:  `Check out ${username}'s profile on S.S.C!`,
           url:   profileUrl,
         });
         setShareDone(true);

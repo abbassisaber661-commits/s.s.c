@@ -59,7 +59,7 @@ export default function PiLock() {
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Lock Pi to unlock premium in-game features — verified badge, DN$ bonuses, XP boosts,
-            and VIP tournament access. Your Pi supports SkillLeague development.
+            and VIP tournament access. Your Pi supports S.S.C development.
             All benefits are in-game only — no withdrawals.
           </p>
         </motion.div>
@@ -88,7 +88,7 @@ export default function PiLock() {
         {(piTotalLocked || 0) > 0 && (
           <div className="rounded-2xl border border-border bg-card px-4 py-3 flex items-center gap-3">
             <span className="text-2xl font-black text-primary">π {(piTotalLocked || 0).toFixed(1)}</span>
-            <div className="text-xs text-muted-foreground">Total Pi contributed to SkillLeague</div>
+            <div className="text-xs text-muted-foreground">Total Pi contributed to S.S.C</div>
           </div>
         )}
 

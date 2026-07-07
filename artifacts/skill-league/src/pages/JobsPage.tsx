@@ -109,7 +109,10 @@ export default function JobsPage() {
           <ArrowLeft className="w-5 h-5 text-[#111111]" />
         </button>
         <Briefcase className="w-5 h-5 text-[#FFD60A]" />
-        <h1 className="text-lg font-black flex-1 text-[#111111]">الوظائف 💼</h1>
+        <div className="flex-1">
+          <h1 className="text-lg font-black text-[#111111]">الوظائف 💼</h1>
+          <p className="text-xs font-semibold text-red-500">Coming soon</p>
+        </div>
         {myId && (
           <button
             onClick={() => setShowPost(true)}

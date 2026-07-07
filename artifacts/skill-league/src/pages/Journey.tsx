@@ -63,7 +63,7 @@ export default function Journey() {
             animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2.5 }}
             className="text-7xl">{currentTier.icon}</motion.div>
           <h2 className="text-3xl font-black" style={{ color: currentTier.color }}>{currentTier.ar}</h2>
-          <p className="text-sm text-muted-foreground">مرتبتك الحالية في SkillLeague</p>
+          <p className="text-sm text-muted-foreground">مرتبتك الحالية في S.S.C</p>
 
           {nextTier && progress && (
             <div className="w-full mt-3 max-w-xs">

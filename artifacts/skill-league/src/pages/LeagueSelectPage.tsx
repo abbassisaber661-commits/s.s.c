@@ -124,7 +124,7 @@ const LEAGUES = [
     diamondCost: 4,
     cardFrom: "rgba(146,64,14,0.4)",
     cardTo: "rgba(26,12,4,0.97)",
-    desc: "قمة SkillLeague. الأفضل عالمياً فقط. لا رحمة، لا تسهيلات.",
+    desc: "قمة S.S.C. الأفضل عالمياً فقط. لا رحمة، لا تسهيلات.",
     diffLabel: "نخبة",
     eloLabel: "LP 500+",
     entryCost: 4,
@@ -659,7 +659,7 @@ export default function LeagueSelectPage() {
             اختر الدوري
           </h1>
           <p className="text-[10px] uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.3)" }}>
-            Select League · SkillLeague
+            Select League · S.S.C
           </p>
         </div>
 

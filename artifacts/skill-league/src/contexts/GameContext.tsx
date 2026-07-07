@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useDbSync } from "../lib/useDbSync";
 import { PlayerData, storage } from "../lib/storage";
-import { PiUser, getCachedPiUser, loginWithPi, cachePiUser } from "../lib/pi-auth";
+import { PiUser, getCachedPiUser, loginWithPi, cachePiUser, hasPiSDK } from "../lib/pi-auth";
 import {
   AuthUser, loadAuthUser, isGuestUser,
   saveAuthUser, clearAuthUser,
@@ -10,6 +10,7 @@ import {
 import { Language } from "../lib/i18n";
 import { getActiveLockTier } from "../lib/pi-lock";
 import { startSession, endSession, trackPageView } from "../lib/sessionTracker";
+import { api, setToken, setStoredPlayerId } from "../lib/apiClient";
 
 interface GameState extends PlayerData {
   user: PiUser | null;
@@ -23,6 +24,8 @@ interface GameState extends PlayerData {
   loginWithGoogle: (name: string, email: string) => Promise<void>;
   loginWithPiNetwork: () => Promise<void>;
   loginAsGuest: () => void;
+  /** Set Pi auth state directly (used after subscription payment completes). */
+  setAuthFromPi: (uid: string, username: string) => void;
 
   setLanguage: (lang: Language) => void;
   updateUsername: (name: string) => void;
@@ -252,15 +255,88 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAuthUser(user);
   };
 
+  /**
+   * Full server-authoritative Pi authentication flow:
+   *
+   *  1. ensurePiInitialized() — awaits Pi.init() (shared promise, no-op if
+   *     already done via startPiAutoInit() at boot).
+   *  2. Pi.authenticate(["username"]) — opens Pi wallet dialog (or silently
+   *     resolves in Pi Browser when permissions were already granted).
+   *     Scope: "username" only — no payments scope needed here.
+   *  3. POST /api/auth/pi { accessToken }
+   *     Backend verifies by calling:
+   *       GET https://api.minepi.com/v2/me
+   *       Authorization: Bearer <accessToken>
+   *     Only data returned by the server is trusted — frontend user data
+   *     from Pi SDK is NEVER used as the authoritative identity.
+   *  4. Backend creates/gets player, signs JWT, returns { token, player }.
+   *  5. JWT + playerId stored locally; auth state set from backend record.
+   *
+   * No Pi Network API key is required for this flow.
+   *
+   * Throws on SDK failure, user cancellation, or backend verification error
+   * so callers (auto-auth, manual button) can handle each case.
+   */
   const loginWithPiNetwork = async () => {
+    // Step 1 + 2: SDK init is already underway (startPiAutoInit at boot);
+    //             loginWithPi() awaits ensurePiInitialized() then calls
+    //             Pi.authenticate(["username"]).
+    //             loginWithPi() throws (never returns null) with a typed
+    //             PiAuthErrorCode message: pi_sdk_unavailable, pi_auth_cancelled,
+    //             or pi_auth_timeout — let it propagate to the caller.
     const result = await loginWithPi();
-    if (result?.user) {
-      cachePiUser(result.user);
-      setUser(result.user);
-      const authU = createPiUser(result.user.uid, result.user.username);
-      saveAuthUser(authU);
-      setAuthUser(authU);
+
+    // Step 3: forward token to backend for server-side /v2/me verification.
+    // IMPORTANT: we do NOT use result.user.uid / result.user.username here —
+    // those come from the frontend (Pi SDK) and are untrusted. The backend
+    // derives the authoritative uid/username from /v2/me independently.
+    let authResp: { token: string; player: { id: string; username: string; piUid?: string } };
+    try {
+      authResp = await api.auth.pi(result.accessToken);
+    } catch (err) {
+      console.error("[Pi] Backend token verification failed", err);
+      throw new Error("pi_verify_failed");
     }
+
+    // Step 4: store JWT + internal player ID for authenticated API calls.
+    setToken(authResp.token);
+    setStoredPlayerId(authResp.player.id);
+
+    // Step 5: set auth state using ONLY backend-verified data.
+    //
+    // SECURITY: we MUST use the piUid returned by the backend, which derived
+    // it exclusively from GET /v2/me using the access token.  We must NOT
+    // fall back to result.user.uid from the Pi SDK (frontend-supplied).
+    // If the backend doesn't return piUid, the verification chain is broken —
+    // abort rather than silently degrade to unverified frontend data.
+    const verifiedPiUid = authResp.player.piUid;
+    if (!verifiedPiUid) {
+      console.error("[Pi] Backend did not return piUid — aborting to preserve server-authoritative identity");
+      throw new Error("pi_verify_failed");
+    }
+    const verifiedUsername = authResp.player.username;
+
+    const piUser: PiUser = { uid: verifiedPiUid, username: verifiedUsername };
+    cachePiUser(piUser);
+    setUser(piUser);
+
+    const authU = createPiUser(verifiedPiUid, verifiedUsername);
+    saveAuthUser(authU);
+    setAuthUser(authU);
+  };
+
+  /**
+   * Set Pi auth state directly — called by SubscriptionPage after a payment
+   * completes. The Pi access token has already been validated by the backend
+   * and the JWT is already stored in localStorage. This just updates React state.
+   */
+  const setAuthFromPi = (uid: string, username: string) => {
+    const piUser: PiUser = { uid, username };
+    cachePiUser(piUser);
+    setUser(piUser);
+    const authU = createPiUser(uid, username);
+    saveAuthUser(authU);
+    setAuthUser(authU);
   };
 
   const loginAsGuest = () => {
@@ -292,6 +368,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (authUser?.uid) trackPageView(authUser.uid, "app_open");
   }, [authUser?.uid]);
 
+  // ── Auto Pi authentication ───────────────────────────────────────────────
+  // When the app is opened inside Pi Browser (window.Pi is pre-injected) and
+  // the user has no existing session, attempt Pi.authenticate() automatically.
+  // Pi.init() was already fired at boot (startPiAutoInit in main.tsx), so by
+  // the time this effect runs it is likely already resolved — making the auth
+  // attempt feel instant to the user.
+  //
+  // We use a ref flag so the attempt fires at most once per page load even if
+  // GameProvider ever re-renders before the promise resolves.
+  const autoAuthAttempted = useRef(false);
+
+  useEffect(() => {
+    if (autoAuthAttempted.current) return;        // already fired this session
+    if (authUser)                  return;        // already authenticated
+    if (!hasPiSDK())               return;        // not in Pi Browser
+
+    autoAuthAttempted.current = true;
+
+    // Fire-and-forget — errors are non-fatal; the manual button is the fallback.
+    loginWithPiNetwork().catch((err) => {
+      console.info("[Pi] Auto-auth did not complete:", (err as Error)?.message);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — must run once on mount only
+
   return (
     <GameContext.Provider
       value={{
@@ -307,6 +408,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         loginWithGoogle,
         loginWithPiNetwork,
         loginAsGuest,
+        setAuthFromPi,
 
         // Game Flow FIX
         setGameMode,
