@@ -33,6 +33,7 @@ export default function CreatePost({
   const galleryRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const selfieRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
 
   // ✅ إعادة تعيين حالة "تم النشر" تلقائياً
   useEffect(() => {
@@ -116,7 +117,7 @@ export default function CreatePost({
   const canPost = !!imageUrl || draft.trim().length >= 3;
 
   return (
-    <div className="px-4 py-3">
+    <div className="px-4 py-3" dir="ltr">
       {/* Hidden file inputs */}
       <input
         ref={galleryRef}
@@ -147,6 +148,15 @@ export default function CreatePost({
         aria-hidden="true"
         onChange={handleImagePick}
       />
+      <input
+        ref={videoRef}
+        type="file"
+        accept="video/*"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={handleImagePick}
+      />
 
       <AnimatePresence mode="wait">
         {!open ? (
@@ -155,43 +165,67 @@ export default function CreatePost({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex items-center gap-2"
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "#FFFFFF", border: "1px solid #E4E6EB" }}
           >
-            {username && (
+            {/* Row 1: Avatar + placeholder + Send */}
+            <div className="flex items-center gap-2 px-3 pt-3 pb-1">
+              {username && (
+                <button
+                  type="button"
+                  onClick={onAvatarClick}
+                  className="flex-shrink-0 active:scale-90 transition-transform"
+                  aria-label={t('createPost.viewProfile') || "View profile"}
+                >
+                  <Avatar username={username} size="sm" shape="rounded-full" />
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={onAvatarClick}
-                className="flex-shrink-0 active:scale-90 transition-transform"
-                aria-label={t('createPost.viewProfile') || "View profile"}
+                onClick={() => setOpen(true)}
+                className="flex-1 text-left px-3 py-2 rounded-full transition-all active:scale-[0.99] text-sm"
+                style={{ background: "#F0F2F5", border: "1px solid #CED0D4", color: "#65676B" }}
               >
-                <Avatar username={username} size="sm" shape="rounded-full" />
+                {t('createPost.placeholder') || "What's happening?"}
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="flex-1 flex items-center gap-3 px-4 py-2.5 rounded-full transition-all active:scale-[0.99]"
-              style={{ background: "#F0F2F5", border: "1px solid #CED0D4", color: "#65676B" }}
-            >
-              <span className="text-sm" style={{ color: "#65676B" }}>
-                {t('createPost.placeholder') || "Share a win, tip, or achievement…"}
-              </span>
-            </button>
+              {/* Send button — slightly raised */}
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-transform -translate-y-0.5"
+                style={{ background: "#1877F2" }}
+                aria-label="Open composer"
+              >
+                {loadingImage ? (
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 text-white -rotate-45" strokeWidth={2.2} />
+                )}
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => galleryRef.current?.click()}
-              className="flex-shrink-0 p-2 rounded-full active:scale-90 transition-transform"
-              style={{ background: "#F0F2F5", color: "#45BD62" }}
-              aria-label={t('createPost.addImage') || "Add image"}
-            >
-              {loadingImage ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <ImageIcon className="w-5 h-5" />
-              )}
-            </button>
+            {/* Row 2: Media shortcuts */}
+            <div className="flex items-center gap-1 px-3 pb-2.5 pt-1" style={{ borderTop: "1px solid #F0F2F5" }}>
+              <button
+                type="button"
+                onClick={() => galleryRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+                style={{ color: "#45BD62", background: "#F0FDF4" }}
+              >
+                <ImageIcon className="w-4 h-4" />
+                Photo
+              </button>
+              <button
+                type="button"
+                onClick={() => videoRef.current?.click()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+                style={{ color: "#F59E0B", background: "#FFFBEB" }}
+              >
+                🎥 Video
+              </button>
+            </div>
           </motion.div>
         ) : (
           <motion.div
