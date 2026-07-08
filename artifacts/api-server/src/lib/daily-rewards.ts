@@ -5,10 +5,11 @@
  * All tasks reset each UTC day (one row per player per calendar day).
  *
  * Tasks & DN$ rewards:
- *   1. Daily Login      → +1 DN$   (claim from Daily Tasks page)
+ *   1. Daily Login      → +1 DN$   (claim from Daily Tasks section)
  *   2. Social Activity  → +3 DN$   (5 likes GIVEN + 5 comments GIVEN)
  *   3. Create Content   → +1 DN$   (1 post + 1 story)
  *   4. Play Match       → +1 DN$   (complete 1 full match)
+ *   5. Get Popular      → +2 DN$   (receive 3 likes on your posts)
  */
 
 import { eq, and } from 'drizzle-orm';
@@ -22,10 +23,11 @@ import { awardDN } from './dn-service.js';
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const TASK_DN = {
-  login:   1,
-  social:  3,
-  content: 1,
-  match:   1,
+  login:       1,
+  social:      3,
+  content:     1,
+  match:       1,
+  interaction: 2,   // Task 5: receive 3 likes on your posts
 } as const;
 
 export type DailyTask = keyof typeof TASK_DN;
@@ -220,6 +222,44 @@ export async function claimMatchReward(playerId: string): Promise<RewardResult> 
   return { awarded: true, dn: TASK_DN.match, newBalance, reason: 'Play Match reward' };
 }
 
+// ── Task 5: Get Popular (receive 3 likes on your posts) ───────────────────
+
+export async function recordLikeReceived(playerId: string): Promise<void> {
+  const record = await getOrCreateDailyRecord(playerId);
+  // Cap tracking at 3 likes — no need to go beyond requirement
+  if (record.likesReceived >= 3) return;
+
+  await db
+    .update(userDailyEconomyTable)
+    .set({ likesReceived: record.likesReceived + 1, updatedAt: new Date() })
+    .where(eq(userDailyEconomyTable.id, record.id));
+}
+
+export async function claimInteractionReward(playerId: string): Promise<RewardResult> {
+  const record = await getOrCreateDailyRecord(playerId);
+
+  if (record.interactionRewardClaimed) {
+    return { awarded: false, reason: 'Popularity reward already claimed today' };
+  }
+  if (record.likesReceived < 3) {
+    return { awarded: false, reason: `Need 3 likes received. Have: ${record.likesReceived}` };
+  }
+
+  await db
+    .update(userDailyEconomyTable)
+    .set({ interactionRewardClaimed: true, updatedAt: new Date() })
+    .where(eq(userDailyEconomyTable.id, record.id));
+
+  const { newBalance } = await awardDN(
+    playerId,
+    TASK_DN.interaction,
+    'daily_interaction',
+    'Get Popular task: 3 likes received on posts',
+  );
+
+  return { awarded: true, dn: TASK_DN.interaction, newBalance, reason: 'Get Popular reward' };
+}
+
 // ── Status ────────────────────────────────────────────────────────────────
 
 export async function getDailyStatus(playerId: string) {
@@ -229,27 +269,33 @@ export async function getDailyStatus(playerId: string) {
   return {
     date: today,
 
-    // Task 1
-    loginClaimed:          record.loginClaimed,
-    loginReward:           TASK_DN.login,
+    // Task 1: Daily Login
+    loginClaimed:               record.loginClaimed,
+    loginReward:                TASK_DN.login,
 
-    // Task 2
-    likesGiven:            record.likesGiven,
-    commentsGiven:         record.commentsGiven,
-    socialRewardClaimed:   record.socialRewardClaimed,
-    socialComplete:        record.likesGiven >= 5 && record.commentsGiven >= 5,
-    socialReward:          TASK_DN.social,
+    // Task 2: Social Activity
+    likesGiven:                 record.likesGiven,
+    commentsGiven:              record.commentsGiven,
+    socialRewardClaimed:        record.socialRewardClaimed,
+    socialComplete:             record.likesGiven >= 5 && record.commentsGiven >= 5,
+    socialReward:               TASK_DN.social,
 
-    // Task 3
-    postsCount:            record.postsCount,
-    storiesCount:          record.storiesCount,
-    contentRewardClaimed:  record.contentRewardClaimed,
-    contentComplete:       record.postsCount >= 1 && record.storiesCount >= 1,
-    contentReward:         TASK_DN.content,
+    // Task 3: Create Content
+    postsCount:                 record.postsCount,
+    storiesCount:               record.storiesCount,
+    contentRewardClaimed:       record.contentRewardClaimed,
+    contentComplete:            record.postsCount >= 1 && record.storiesCount >= 1,
+    contentReward:              TASK_DN.content,
 
-    // Task 4
-    matchPlayed:           record.matchPlayed,
-    matchPlayedClaimed:    record.matchPlayedClaimed,
-    matchReward:           TASK_DN.match,
+    // Task 4: Play Match
+    matchPlayed:                record.matchPlayed,
+    matchPlayedClaimed:         record.matchPlayedClaimed,
+    matchReward:                TASK_DN.match,
+
+    // Task 5: Get Popular
+    likesReceived:              record.likesReceived,
+    interactionRewardClaimed:   record.interactionRewardClaimed,
+    interactionComplete:        record.likesReceived >= 3,
+    interactionReward:          TASK_DN.interaction,
   };
 }

@@ -9,7 +9,7 @@ import { Info, Receipt, X, Wallet } from "lucide-react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
-import danousCurrencyLogo from "@/assets/currency/dns-official-currency.png";
+import DNCurrencyIcon from "@/components/ui/DNCurrencyIcon";
 
 const DN_INFO =
   "DN$ is the internal currency of the application. It has no real-world monetary value. It is a utility currency used to unlock features, access services, and participate in many activities across the platform.";
@@ -111,12 +111,7 @@ export default function ProfileWalletCard() {
           {/* Label row */}
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-1.5">
-              <img
-                src={danousCurrencyLogo}
-                alt="DN$"
-                className="w-4 h-4 rounded-full object-cover flex-shrink-0"
-                draggable={false}
-              />
+              <DNCurrencyIcon size="xs" />
               <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">
                 DN$ Balance
               </span>

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 import DanousInfoModal from "./DanousInfoModal";
-import danousCurrencyLogo from "@/assets/currency/dns-official-currency.png";
+import DNCurrencyIcon from "@/components/ui/DNCurrencyIcon";
 
 export default function DanousWalletSection() {
   const [infoOpen, setInfoOpen] = useState(false);
@@ -24,21 +24,17 @@ export default function DanousWalletSection() {
       <div
         className="rounded-2xl overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #191D3A 0%, #2A1F52 55%, #0F1225 100%)",
+          background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%)",
           border: "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        <div className="flex items-center gap-3 px-4 pt-3 pb-1" dir="rtl">
-          <img
-            src={danousCurrencyLogo}
-            alt="Danous DN$"
-            className="w-6 h-6 rounded-full object-cover flex-shrink-0"
-            draggable={false}
-          />
-          <span className="text-sm font-black text-white">نقاط Danous</span>
+        {/* Banknote strip */}
+        <div className="px-4 pt-3">
+          <DNCurrencyIcon size="hero" className="shadow-md" />
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-1">
+        {/* Balance row */}
+        <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-2">
           <button
             onClick={() => setInfoOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full flex-shrink-0 active:scale-95 transition-all"
@@ -48,7 +44,7 @@ export default function DanousWalletSection() {
             <span className="text-[11px] font-bold text-white/70">عن DN$</span>
           </button>
 
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex items-center gap-2" dir="ltr">
             {isLoading ? (
               <div className="h-8 w-24 rounded-xl bg-white/10 animate-pulse" />
             ) : (
@@ -56,13 +52,7 @@ export default function DanousWalletSection() {
                 <span className="text-3xl font-black text-white tabular-nums">
                   {balance.toLocaleString("en-US")}
                 </span>
-                <img
-                  src={danousCurrencyLogo}
-                  alt="DN$"
-                  className="w-5 h-5 rounded-full object-cover flex-shrink-0"
-                  draggable={false}
-                />
-                <span className="text-base font-black" style={{ color: "#C9A6FF" }}>DN$</span>
+                <span className="text-base font-black text-yellow-300">DN$</span>
               </>
             )}
           </div>

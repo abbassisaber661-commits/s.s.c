@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import danousCurrencyLogo from "@/assets/currency/dns-official-currency.png";
 import { DANOUS_CURRENCY_DEFINITION_AR, DANOUS_EARN_SOURCES } from "@/lib/danousCoins";
+import DNCurrencyIcon from "@/components/ui/DNCurrencyIcon";
 
 export default function DanousInfoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
@@ -31,12 +31,7 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
                 className="sticky top-0 z-10 flex items-center gap-3 px-5 py-4"
                 style={{ background: "linear-gradient(135deg,#191D3A,#0F1225)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <img
-                  src={danousCurrencyLogo}
-                  alt="Danous DN$"
-                  className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
-                  draggable={false}
-                />
+                <DNCurrencyIcon size="sm" />
                 <div className="flex-1 text-right" dir="rtl">
                   <div className="text-base font-black text-white">نقاط Danous (DN$)</div>
                   <div className="text-xs text-white/50">نظام تقدّم داخلي — بدون قيمة نقدية</div>
@@ -49,6 +44,11 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
                 </button>
               </div>
 
+              {/* Banknote hero */}
+              <div className="px-5 pt-4">
+                <DNCurrencyIcon size="hero" className="shadow-lg" />
+              </div>
+
               {/* Intro text */}
               <div className="px-5 pt-4 pb-2 text-right" dir="rtl">
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -58,7 +58,9 @@ export default function DanousInfoModal({ open, onClose }: { open: boolean; onCl
 
               {/* Earn sources list */}
               <div className="px-5 py-5">
-                <div className="text-xs font-bold text-white/40 mb-3 text-right" dir="rtl">كيف تكسب DN$؟</div>
+                <div className="text-xs font-bold text-white/40 mb-3 text-right" dir="rtl">
+                  كيف تكسب DN$؟
+                </div>
                 <div className="space-y-2">
                   {DANOUS_EARN_SOURCES.map((s, i) => (
                     <div

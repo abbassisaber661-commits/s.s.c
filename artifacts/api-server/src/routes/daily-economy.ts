@@ -25,6 +25,7 @@ import {
   claimSocialReward,
   claimContentReward,
   claimMatchReward,
+  claimInteractionReward,
   recordMatchPlayed,
   recordStory,
   getDailyStatus,
@@ -109,6 +110,20 @@ router.post('/economy/daily/:playerId/claim/content', async (req, res) => {
     const playerId = parsePlayerId(req);
     if (!playerId) { res.status(400).json({ error: 'missing playerId' }); return; }
     const result = await claimContentReward(playerId);
+    res.status(result.awarded ? 200 : 409).json(result);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: 'internal' });
+  }
+});
+
+// ── Claim: Get Popular (+2 DN$) ──────────────────────────────────────────────
+
+router.post('/economy/daily/:playerId/claim/interaction', async (req, res) => {
+  try {
+    const playerId = parsePlayerId(req);
+    if (!playerId) { res.status(400).json({ error: 'missing playerId' }); return; }
+    const result = await claimInteractionReward(playerId);
     res.status(result.awarded ? 200 : 409).json(result);
   } catch (err) {
     req.log.error({ err });
@@ -253,10 +268,11 @@ router.post('/daily/claim', async (req, res) => {
     if (!playerId || !taskId) { res.status(400).json({ error: 'missing playerId or taskId' }); return; }
     let result: { awarded: boolean; dn?: number; reason?: string };
     switch (taskId) {
-      case 'login':   result = await claimLoginReward(playerId);   break;
-      case 'social':  result = await claimSocialReward(playerId);  break;
-      case 'content': result = await claimContentReward(playerId); break;
-      case 'match':   result = await claimMatchReward(playerId);   break;
+      case 'login':       result = await claimLoginReward(playerId);       break;
+      case 'social':      result = await claimSocialReward(playerId);      break;
+      case 'content':     result = await claimContentReward(playerId);     break;
+      case 'match':       result = await claimMatchReward(playerId);       break;
+      case 'interaction': result = await claimInteractionReward(playerId); break;
       default: res.status(400).json({ error: `Unknown taskId: ${taskId}` }); return;
     }
     res.status(result.awarded ? 200 : 409).json(result);

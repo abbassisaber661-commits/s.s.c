@@ -86683,7 +86683,9 @@ var TASK_DN = {
   login: 1,
   social: 3,
   content: 1,
-  match: 1
+  match: 1,
+  interaction: 2
+  // Task 5: receive 3 likes on your posts
 };
 function todayUTC() {
   return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
@@ -86789,30 +86791,57 @@ async function claimMatchReward(playerId) {
   );
   return { awarded: true, dn: TASK_DN.match, newBalance, reason: "Play Match reward" };
 }
+async function recordLikeReceived(playerId) {
+  const record2 = await getOrCreateDailyRecord(playerId);
+  if (record2.likesReceived >= 3) return;
+  await db.update(userDailyEconomyTable).set({ likesReceived: record2.likesReceived + 1, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
+}
+async function claimInteractionReward(playerId) {
+  const record2 = await getOrCreateDailyRecord(playerId);
+  if (record2.interactionRewardClaimed) {
+    return { awarded: false, reason: "Popularity reward already claimed today" };
+  }
+  if (record2.likesReceived < 3) {
+    return { awarded: false, reason: `Need 3 likes received. Have: ${record2.likesReceived}` };
+  }
+  await db.update(userDailyEconomyTable).set({ interactionRewardClaimed: true, updatedAt: /* @__PURE__ */ new Date() }).where(eq(userDailyEconomyTable.id, record2.id));
+  const { newBalance } = await awardDN(
+    playerId,
+    TASK_DN.interaction,
+    "daily_interaction",
+    "Get Popular task: 3 likes received on posts"
+  );
+  return { awarded: true, dn: TASK_DN.interaction, newBalance, reason: "Get Popular reward" };
+}
 async function getDailyStatus(playerId) {
   const today = todayUTC();
   const record2 = await getOrCreateDailyRecord(playerId);
   return {
     date: today,
-    // Task 1
+    // Task 1: Daily Login
     loginClaimed: record2.loginClaimed,
     loginReward: TASK_DN.login,
-    // Task 2
+    // Task 2: Social Activity
     likesGiven: record2.likesGiven,
     commentsGiven: record2.commentsGiven,
     socialRewardClaimed: record2.socialRewardClaimed,
     socialComplete: record2.likesGiven >= 5 && record2.commentsGiven >= 5,
     socialReward: TASK_DN.social,
-    // Task 3
+    // Task 3: Create Content
     postsCount: record2.postsCount,
     storiesCount: record2.storiesCount,
     contentRewardClaimed: record2.contentRewardClaimed,
     contentComplete: record2.postsCount >= 1 && record2.storiesCount >= 1,
     contentReward: TASK_DN.content,
-    // Task 4
+    // Task 4: Play Match
     matchPlayed: record2.matchPlayed,
     matchPlayedClaimed: record2.matchPlayedClaimed,
-    matchReward: TASK_DN.match
+    matchReward: TASK_DN.match,
+    // Task 5: Get Popular
+    likesReceived: record2.likesReceived,
+    interactionRewardClaimed: record2.interactionRewardClaimed,
+    interactionComplete: record2.likesReceived >= 3,
+    interactionReward: TASK_DN.interaction
   };
 }
 
@@ -87995,6 +88024,10 @@ router6.post("/community/posts/:id/like", async (req, res) => {
       recordLikeGiven(String(playerId)).catch(() => {
       });
       if (post?.authorId && post.authorId !== String(playerId)) {
+        recordLikeReceived(post.authorId).catch(() => {
+        });
+      }
+      if (post?.authorId && post.authorId !== String(playerId)) {
         const liker = String(playerUsername || playerId);
         notify(
           post.authorId,
@@ -88035,6 +88068,10 @@ router6.patch("/community/posts/:id/like", async (req, res) => {
       await db.update(postsTable).set({ likes: newLikes2 }).where(eq(postsTable.id, req.params.id));
       recordLikeGiven(pid).catch(() => {
       });
+      if (post2?.authorId && post2.authorId !== pid) {
+        recordLikeReceived(post2.authorId).catch(() => {
+        });
+      }
       if (post2?.authorId && post2.authorId !== pid) {
         const liker = String(playerUsername || pid);
         notify(
@@ -92141,6 +92178,20 @@ router21.post("/economy/daily/:playerId/claim/content", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
+router21.post("/economy/daily/:playerId/claim/interaction", async (req, res) => {
+  try {
+    const playerId = parsePlayerId(req);
+    if (!playerId) {
+      res.status(400).json({ error: "missing playerId" });
+      return;
+    }
+    const result = await claimInteractionReward(playerId);
+    res.status(result.awarded ? 200 : 409).json(result);
+  } catch (err) {
+    req.log.error({ err });
+    res.status(500).json({ error: "internal" });
+  }
+});
 router21.post("/economy/daily/:playerId/claim/match", async (req, res) => {
   try {
     const playerId = parsePlayerId(req);
@@ -92281,6 +92332,9 @@ router21.post("/daily/claim", async (req, res) => {
         break;
       case "match":
         result = await claimMatchReward(playerId);
+        break;
+      case "interaction":
+        result = await claimInteractionReward(playerId);
         break;
       default:
         res.status(400).json({ error: `Unknown taskId: ${taskId}` });

@@ -9,6 +9,7 @@ import { playTap, playCoin } from "@/lib/sounds";
 import { useT, isRTL } from "@/lib/i18n";
 import DailyTasksSection from "@/components/store/DailyTasksSection";
 import PremiumSection from "@/components/store/PremiumSection";
+import DNCurrencyIcon from "@/components/ui/DNCurrencyIcon";
 
 const TYPE_COLOR: Record<string, string> = {
   dn_bundle: '#fbbf24', xp_boost: '#a78bfa', cosmetic: '#f472b6', entry_pass: '#34d399',
@@ -119,8 +120,9 @@ export default function Store() {
           <ChevronLeft className={`w-5 h-5 ${rtl ? 'rotate-180' : ''}`} />
         </button>
         <h1 className="text-lg font-black flex-1">🛍️ {t('nav_store')}</h1>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/15 border border-yellow-500/30 rounded-xl text-sm font-black text-yellow-400">
-          {dnBalance ?? 0} DN$
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-sm font-black text-yellow-400">
+          <DNCurrencyIcon size="xs" />
+          <span>{dnBalance ?? 0}</span>
         </div>
       </div>
 

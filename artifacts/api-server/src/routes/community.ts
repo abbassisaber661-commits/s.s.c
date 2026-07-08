@@ -3,7 +3,7 @@ import { eq, desc, and, asc, sql, inArray } from "drizzle-orm";
 import { db, postsTable, postLikesTable, postCommentsTable, postSavesTable, playersTable } from "@workspace/db";
 import { nanoid } from "../lib/nanoid.js";
 import { getOwnerPlayerId } from "../lib/owner.js";
-import { recordPostCreated, recordLikeGiven, recordCommentGiven } from "../lib/daily-rewards.js";
+import { recordPostCreated, recordLikeGiven, recordCommentGiven, recordLikeReceived } from "../lib/daily-rewards.js";
 import { createNotification } from "../lib/notificationService.js";
 import { getSocialSettings } from "../lib/settings-service.js";
 
@@ -238,6 +238,9 @@ router.post("/community/posts/:id/like", async (req, res) => {
       await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
 
       recordLikeGiven(String(playerId)).catch(() => {});
+      if (post?.authorId && post.authorId !== String(playerId)) {
+        recordLikeReceived(post.authorId).catch(() => {});
+      }
 
       if (post?.authorId && post.authorId !== String(playerId)) {
         const liker = String(playerUsername || playerId);
@@ -284,6 +287,9 @@ router.patch("/community/posts/:id/like", async (req, res) => {
       await db.update(postsTable).set({ likes: newLikes }).where(eq(postsTable.id, req.params.id));
 
       recordLikeGiven(pid).catch(() => {});
+      if (post?.authorId && post.authorId !== pid) {
+        recordLikeReceived(post.authorId).catch(() => {});
+      }
 
       if (post?.authorId && post.authorId !== pid) {
         const liker = String(playerUsername || pid);
