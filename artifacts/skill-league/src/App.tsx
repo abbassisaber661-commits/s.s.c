@@ -84,6 +84,7 @@ import SocialBottomNav from "@/components/SocialBottomNav";
 import LiveNotifToast from "@/components/LiveNotifToast";
 import NotificationBell from "@/components/NotificationBell";
 import GuestBanner from "@/components/GuestBanner";
+import DevNotice from "@/components/DevNotice";
 import { Logo } from "@/components/Logo";
 
 // Utils
@@ -142,6 +143,7 @@ function AppShell() {
       {/* Guest mode top banner — pushes no layout, overlays only */}
       <GuestBanner />
       <LiveNotifToast />
+      <DevNotice />
 
       {/* Top navigation bar — hidden on settings/match pages */}
       {!hideNav && !onSettings && (
