@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 import { cn } from "@/lib/utils";
-import { PI_GIFT_TIERS, type PiGiftTier } from "@/lib/piGiftTiers";
+import { PI_GIFT_TIERS, GIFT_ROW_COLORS, formatGiftAmount, type PiGiftTier } from "@/lib/piGiftTiers";
 
 interface Props {
   isOpen: boolean;
@@ -17,15 +17,150 @@ interface Props {
   receiverId: string;
   receiverName: string;
   postId?: string; // passed from SocialPostCard for ledger tracking
+  senderAvatarUrl?: string;
+  senderName?: string;
+  /** Fired the moment a gift payment completes — used by the post card to
+   *  play a "landed" celebration on the post itself. */
+  onSent?: (tier: PiGiftTier) => void;
 }
 
-export default function GiftModal({ isOpen, onClose, receiverId, receiverName, postId }: Props) {
+// ─── Premium gift ring (purple-outlined, gradient by row) ───────────────────
+
+const GiftRing = React.memo(function GiftRing({
+  tier, isSending, disabled, onClick,
+}: { tier: PiGiftTier; isSending: boolean; disabled: boolean; onClick: () => void }) {
+  const colors = GIFT_ROW_COLORS[tier.row];
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "relative flex flex-col items-center gap-1.5 select-none transition-transform active:scale-90",
+        disabled && "opacity-35 grayscale cursor-not-allowed"
+      )}
+    >
+      <div
+        className="w-16 h-16 rounded-full p-[3px] shrink-0"
+        style={{
+          background: `linear-gradient(135deg, ${colors.from} 0%, ${colors.to} 100%)`,
+          boxShadow: isSending ? `0 0 0 4px ${colors.glow}` : `0 1px 6px rgba(76,29,149,0.18)`,
+        }}
+      >
+        <div className="w-full h-full rounded-full bg-white flex flex-col items-center justify-center">
+          {isSending ? (
+            <Loader2 size={18} className="animate-spin" style={{ color: colors.text }} />
+          ) : (
+            <>
+              <span className="text-[11px] font-black leading-none" style={{ color: colors.text }}>
+                {formatGiftAmount(tier.piAmount)}
+              </span>
+              <span className="text-[9px] font-bold leading-none mt-0.5" style={{ color: colors.text }}>
+                π
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+});
+
+// ─── Sending flight animation (avatar + amount rising toward the post) ──────
+
+const GIFT_PARTICLES = Array.from({ length: 10 });
+
+function GiftFlight({
+  tier, avatarUrl, senderName, onDone,
+}: { tier: PiGiftTier; avatarUrl?: string; senderName?: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 1450);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  const colors = GIFT_ROW_COLORS[tier.row];
+
+  return (
+    <motion.div
+      className="fixed left-1/2 z-[70] pointer-events-none flex flex-col items-center"
+      style={{ bottom: 150 }}
+      initial={{ opacity: 0, y: 0, scale: 0.4, x: "-50%" }}
+      animate={{ opacity: [0, 1, 1, 0], y: -280, scale: [0.4, 1.25, 1, 0.9], x: "-50%" }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1.35, times: [0, 0.16, 0.78, 1], ease: "easeOut" }}
+    >
+      {/* glow pulse */}
+      <motion.div
+        className="absolute -inset-5 rounded-full"
+        style={{ background: `radial-gradient(circle, ${colors.glow}, transparent 70%)` }}
+        initial={{ scale: 0.6, opacity: 0.9 }}
+        animate={{ scale: [0.6, 1.5, 1.1], opacity: [0.95, 0.6, 0] }}
+        transition={{ duration: 1.35 }}
+      />
+
+      {/* sparkle particles burst */}
+      {GIFT_PARTICLES.map((_, i) => {
+        const angle = (i / GIFT_PARTICLES.length) * Math.PI * 2;
+        const dist = 30 + (i % 3) * 12;
+        return (
+          <motion.span
+            key={i}
+            className="absolute text-[12px]"
+            style={{ left: "50%", top: "50%" }}
+            initial={{ opacity: 1, x: 0, y: 0, scale: 0.5 }}
+            animate={{
+              opacity: 0,
+              x: Math.cos(angle) * dist,
+              y: Math.sin(angle) * dist,
+              scale: 1.15,
+            }}
+            transition={{ duration: 0.9, ease: "easeOut", delay: 0.05 }}
+          >
+            ✨
+          </motion.span>
+        );
+      })}
+
+      {/* sender avatar */}
+      <div
+        className="relative w-14 h-14 rounded-full border-[2.5px] border-white overflow-hidden flex items-center justify-center"
+        style={{
+          background: `linear-gradient(135deg, ${colors.from}, ${colors.to})`,
+          boxShadow: `0 0 18px ${colors.glow}`,
+        }}
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} className="w-full h-full object-cover" draggable={false} />
+        ) : (
+          <span className="text-white text-lg font-black">
+            {(senderName || "?").slice(0, 1).toUpperCase()}
+          </span>
+        )}
+      </div>
+
+      {/* amount label */}
+      <div
+        className="mt-1.5 px-2.5 py-1 rounded-full text-[11px] font-black text-white whitespace-nowrap"
+        style={{
+          background: `linear-gradient(135deg, ${colors.to} 0%, #3B0764 100%)`,
+          boxShadow: "0 3px 12px rgba(59,7,100,0.45)",
+        }}
+      >
+        {formatGiftAmount(tier.piAmount)} π
+      </div>
+    </motion.div>
+  );
+}
+
+export default function GiftModal({
+  isOpen, onClose, receiverId, receiverName, postId, senderAvatarUrl, senderName, onSent,
+}: Props) {
   const senderId = getStoredPlayerId() ?? "";
   const qc = useQueryClient();
 
   const [sendingTierId, setSendingTierId] = useState<string | null>(null);
   const [sessionTotalPi, setSessionTotalPi] = useState(0);
   const [sessionGiftCount, setSessionGiftCount] = useState(0);
+  const [flight, setFlight] = useState<{ tier: PiGiftTier; key: number } | null>(null);
   const backendPaymentId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -48,11 +183,13 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
     setSessionTotalPi((t) => t + tier.piAmount);
     setSessionGiftCount((c) => c + 1);
     setSendingTierId(null);
+    setFlight({ tier, key: Date.now() });
     qc.invalidateQueries({ queryKey: ["wallet", "balance", receiverId] });
     qc.invalidateQueries({ queryKey: ["lb", "top-earners"] });
     qc.invalidateQueries({ queryKey: ["lb", "top-supporters"] });
     toast.success(`تم إرسال ${tier.piAmount} π إلى ${receiverName}`);
-  }, [qc, receiverId, receiverName]);
+    onSent?.(tier);
+  }, [qc, receiverId, receiverName, onSent]);
 
   const handleTap = useCallback(
     (tier: PiGiftTier) => {
@@ -184,7 +321,7 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                 <p className="text-xs text-center text-[#888] py-2">لا يمكنك إرسال هدية لنفسك</p>
               )}
 
-              {/* Tier grid */}
+              {/* Tier grid — 5 rows x 4 rings, light → deep purple */}
               <div>
                 <div className="text-xs font-bold text-[#888] mb-3">اختر قيمة الهدية بعملة Pi</div>
                 <div className="grid grid-cols-4 gap-x-2 gap-y-5 place-items-center">
@@ -192,33 +329,13 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
                     const isSending = sendingTierId === tier.id;
                     const disabled = !canGift || (!!sendingTierId && !isSending);
                     return (
-                      <button
+                      <GiftRing
                         key={tier.id}
-                        onClick={() => handleTap(tier)}
+                        tier={tier}
+                        isSending={isSending}
                         disabled={disabled}
-                        className={cn(
-                          "relative flex flex-col items-center gap-1.5 select-none transition-transform active:scale-90",
-                          disabled && "opacity-35 grayscale cursor-not-allowed"
-                        )}
-                      >
-                        <div className="relative w-16 h-16">
-                          <img
-                            src={tier.image}
-                            alt={tier.nameAr}
-                            className="w-16 h-16 rounded-full object-cover"
-                            style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.15)" }}
-                            draggable={false}
-                          />
-                          {isSending && (
-                            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/30">
-                              <Loader2 size={20} className="text-white animate-spin" />
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-[10px] font-bold text-[#666] text-center leading-tight">
-                          {tier.tierLabelAr}
-                        </span>
-                      </button>
+                        onClick={() => handleTap(tier)}
+                      />
                     );
                   })}
                 </div>
@@ -259,6 +376,19 @@ export default function GiftModal({ isOpen, onClose, receiverId, receiverName, p
               </button>
             </div>
           </motion.div>
+
+          {/* Sending celebration — avatar + amount rising with sparkles */}
+          <AnimatePresence>
+            {flight && (
+              <GiftFlight
+                key={flight.key}
+                tier={flight.tier}
+                avatarUrl={senderAvatarUrl}
+                senderName={senderName}
+                onDone={() => setFlight(null)}
+              />
+            )}
+          </AnimatePresence>
         </>
       )}
     </AnimatePresence>

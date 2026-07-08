@@ -70,7 +70,7 @@ function useScrollPaused(delay = 600) {
   return paused;
 }
 
-// ─── Gift button (header floating badge) ─────────────────────────────────────
+// ─── Gift button (header floating badge) — premium purple Pi gift entry ──────
 
 const GiftButton = memo(function GiftButton({
   visible, rtl, onClick,
@@ -98,17 +98,50 @@ const GiftButton = memo(function GiftButton({
             },
           }}
           onClick={onClick}
-          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold text-[#111111] select-none shrink-0"
+          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold text-white select-none shrink-0"
           style={{
-            background: "linear-gradient(135deg, #FFD60A 0%, #FF9500 100%)",
-            boxShadow: "0 0 8px 2px rgba(255,214,10,0.5), 0 0 16px 4px rgba(255,149,0,0.25), 0 1px 4px rgba(0,0,0,0.1)",
+            background: "linear-gradient(135deg, #C4B5FD 0%, #6D28D9 100%)",
+            boxShadow: "0 0 8px 2px rgba(124,58,237,0.45), 0 0 16px 4px rgba(76,29,149,0.3), 0 1px 4px rgba(0,0,0,0.1)",
           }}
         >
           <Gift size={11} className="shrink-0" />
-          <span>{rtl ? "DN هدية" : "Gift DN"}</span>
+          <span>{rtl ? "هدية Pi" : "Send Pi"}</span>
         </motion.button>
       )}
     </AnimatePresence>
+  );
+});
+
+// ─── Post celebration overlay — plays when a gift "lands" on this post ──────
+
+const PostCelebration = memo(function PostCelebration({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 1100);
+    return () => clearTimeout(t);
+  }, [onDone]);
+
+  return (
+    <motion.div
+      className="pointer-events-none absolute inset-0 rounded-2xl z-20 overflow-hidden"
+      initial={{ boxShadow: "0 0 0 0 rgba(124,58,237,0)" }}
+      animate={{
+        boxShadow: [
+          "0 0 0 0 rgba(124,58,237,0)",
+          "0 0 0 5px rgba(124,58,237,0.35)",
+          "0 0 0 0 rgba(124,58,237,0)",
+        ],
+      }}
+      transition={{ duration: 1.1, ease: "easeOut" }}
+    >
+      <motion.div
+        className="absolute inset-0 flex items-center justify-center"
+        initial={{ opacity: 0, scale: 0.7 }}
+        animate={{ opacity: [0, 1, 0], scale: [0.7, 1.2, 1] }}
+        transition={{ duration: 1 }}
+      >
+        <span className="text-3xl drop-shadow-[0_0_6px_rgba(124,58,237,0.6)]">✨</span>
+      </motion.div>
+    </motion.div>
   );
 });
 
@@ -343,6 +376,7 @@ const SocialPostCard = memo(function SocialPostCard({
   const [hidden, setHidden] = useState(false);
   const [content, setContent] = useState(post.content);
   const [giftOpen, setGiftOpen] = useState(false);
+  const [celebrateKey, setCelebrateKey] = useState<number | null>(null);
 
   // ── like ──
   const [liked, setLiked] = useState(post.likedByMe ?? false);
@@ -443,7 +477,7 @@ const SocialPostCard = memo(function SocialPostCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
       className={cn(
-        "bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden",
+        "relative bg-white rounded-2xl border border-[#EBEBEB] overflow-hidden",
         "shadow-[0_1px_4px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]",
         className
       )}
@@ -650,16 +684,23 @@ const SocialPostCard = memo(function SocialPostCard({
             icon={
               <Gift
                 size={18}
-                className="text-[#FF9500]"
-                style={{ filter: "drop-shadow(0 0 4px rgba(255,149,0,0.5))" }}
+                className="text-[#7C3AED]"
+                style={{ filter: "drop-shadow(0 0 4px rgba(124,58,237,0.5))" }}
               />
             }
             label={giftLabel}
-            activeColor="text-[#FF9500]"
+            activeColor="text-[#7C3AED]"
           />
         )}
 
       </div>
+
+      {/* ── GIFT CELEBRATION — plays when a gift lands on this post ────── */}
+      <AnimatePresence>
+        {celebrateKey !== null && (
+          <PostCelebration key={celebrateKey} onDone={() => setCelebrateKey(null)} />
+        )}
+      </AnimatePresence>
 
       {/* ── GIFT MODAL ────────────────────────────────────────────── */}
       {!isOwner && post.authorId && (
@@ -669,6 +710,9 @@ const SocialPostCard = memo(function SocialPostCard({
           receiverId={post.authorId}
           receiverName={post.authorName}
           postId={post.id}
+          senderAvatarUrl={authUser?.photoURL}
+          senderName={authUser?.username}
+          onSent={() => setCelebrateKey(Date.now())}
         />
       )}
     </motion.article>
