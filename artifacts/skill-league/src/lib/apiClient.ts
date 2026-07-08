@@ -547,6 +547,20 @@ export const api = {
       ),
   },
 
+  /* ── GCV (internal community consensus price) ── */
+  gcv: {
+    results: (playerId?: string) =>
+      get<{
+        options: { value: string; votes: number; percent: number }[];
+        totalVotes: number;
+        myVote: string | null;
+        consensusValue: string | null;
+      }>(`/gcv/results${playerId ? `?playerId=${encodeURIComponent(playerId)}` : ""}`),
+
+    vote: (playerId: string, value: string) =>
+      post<{ ok: boolean; value: string }>(`/gcv/vote`, { playerId, value }),
+  },
+
   /* ── Daily Economy ── */
   daily: {
     status: (playerId: string) =>

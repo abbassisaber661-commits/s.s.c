@@ -667,12 +667,12 @@ export declare const jobsTable: import("drizzle-orm/pg-core").PgTableWithColumns
 }>;
 export declare const insertPostSchema: z.ZodObject<{
     id: z.ZodString;
-    authorId: z.ZodString;
     username: z.ZodString;
     level: z.ZodOptional<z.ZodInt>;
+    type: z.ZodOptional<z.ZodString>;
+    authorId: z.ZodString;
     content: z.ZodOptional<z.ZodString>;
     imageUrl: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    type: z.ZodOptional<z.ZodString>;
     meta: z.ZodOptional<z.ZodNullable<z.ZodType<Record<string, unknown>, Record<string, unknown>, z.core.$ZodTypeInternals<Record<string, unknown>, Record<string, unknown>>>>>;
     likes: z.ZodOptional<z.ZodInt>;
     replies: z.ZodOptional<z.ZodInt>;
@@ -685,8 +685,8 @@ export declare const insertPostSchema: z.ZodObject<{
 }>;
 export declare const insertCommentSchema: z.ZodObject<{
     id: z.ZodString;
-    authorId: z.ZodString;
     username: z.ZodString;
+    authorId: z.ZodString;
     content: z.ZodString;
     postId: z.ZodString;
 }, {

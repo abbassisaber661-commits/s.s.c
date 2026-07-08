@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 import { leagueApi, type SeasonEntry, type LeagueId } from "@/lib/league-api";
 import { getStoredPlayerId } from "@/lib/apiClient";
+import GCVSection from "@/components/home/GCVSection";
 
 // ── Division definitions (mirror Leaderboard.tsx) ──────────────────────────
 
@@ -34,7 +35,7 @@ const rankColor = (i: number) =>
 
 export default function HomeScreen() {
   const [, go]  = useLocation();
-  const { isGuest, username } = useGame();
+  const { isGuest, username, language } = useGame();
   const playerId = getStoredPlayerId();
 
   const [pressed,  setPressed]  = useState(false);
@@ -78,6 +79,11 @@ export default function HomeScreen() {
         paddingTop: topPad + 32,
       }}
     >
+      {/* ── GCV Consensus ── */}
+      <div className="mb-6">
+        <GCVSection language={language} />
+      </div>
+
       {/* ── Play button ── */}
       <div className="flex justify-center">
         <motion.div

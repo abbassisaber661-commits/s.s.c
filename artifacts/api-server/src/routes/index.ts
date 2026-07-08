@@ -34,6 +34,7 @@ import ownerAdminRouter        from "./owner-admin.js";
 import ownerDashboardRouter    from "./owner-dashboard.js";
 import skillLeagueMatchesRouter from "./skill-league-matches.js";
 import subscriptionsRouter      from "./subscriptions.js";
+import gcvRouter                from "./gcv.js";
 
 const router: IRouter = Router();
 
@@ -72,5 +73,6 @@ router.use(ownerAdminRouter);
 router.use(ownerDashboardRouter);
 router.use(skillLeagueMatchesRouter);
 router.use(subscriptionsRouter);
+router.use(gcvRouter);
 
 export default router;

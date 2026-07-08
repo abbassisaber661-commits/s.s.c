@@ -33,3 +33,4 @@
 - [Dev Mode Bypass](dev-mode-bypass.md) — `import.meta.env.DEV` (never true in prod builds) auto-logs a real backend player via existing `/api/auth/guest` route + skips subscription gate; double-guarded, Pi/DB/OWNER_UID/JWT_SECRET untouched.
 - [Owner Dashboard (8-section)](owner-dashboard.md) — private gold/black sidebar admin at /owner-dashboard, entry only in Settings when getJwtRole()==="admin"; reuses requireAdmin, never touches OWNER_UID/Pi/JWT logic.
 - [Boutique Daily Tasks + Premium](boutique-daily-tasks.md) — new sections added atop /store (Boutique); reuses existing daily-economy backend, no new endpoints/DB.
+- [GCV Consensus Price Section](gcv-consensus.md) — separate `gcv_votes` table/route, one-vote-per-player value poll on Home page; explicitly NOT the Pi price, fully isolated from wallet/payments.
