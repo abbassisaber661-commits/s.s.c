@@ -25,3 +25,4 @@
 - [Pi vs DN$ Currency Separation](currency-separation.md) — Pi (via pi-payments.ts) is the only real payment/gifting currency; DN$ is non-monetary points only, no conversion/transfer between them.
 - [Pi Authentication Timeout Fix](pi-auth-timeout-fix.md) — never call Pi.authenticate() without a real user gesture; gesture-less calls can hang and starve the shared in-flight promise, blocking manual sign-in too.
 - [Pi UID Privacy Boundary](pi-uid-privacy.md) — raw piUid must never appear in UI or in responses about OTHER users; the /auth/pi login response is the one sanctioned exception (own-session only, required by the client verification chain).
+- [Entry-Flow Language Selector](entry-language-selector.md) — SubscriptionPage/IntroPage language state lives in EntryLanguageContext (localStorage `sl_entry_lang`), separate from the main app i18n; keep the selector its own isolated card, never inline with header/title text.

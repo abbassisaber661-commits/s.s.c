@@ -16,7 +16,7 @@
  *  6. onCancel / onError: reset loading state, show error
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { useGame } from "@/contexts/GameContext";
@@ -61,6 +61,7 @@ interface SubT {
   days:           string;
   guest_enter:    string;
   guest_note:     string;
+  language_label: string;
 }
 
 const T: Record<Language, SubT> = {
@@ -83,6 +84,7 @@ const T: Record<Language, SubT> = {
     days:           "days",
     guest_enter:    "Continue as Guest",
     guest_note:     "Browse only · No payments · Data not saved",
+    language_label: "Language",
   },
   ar: {
     heading:        "اشترك في S.S.C",
@@ -103,6 +105,7 @@ const T: Record<Language, SubT> = {
     days:           "يوم",
     guest_enter:    "الدخول كضيف",
     guest_note:     "تصفح فقط · بدون دفع · لا تُحفظ البيانات",
+    language_label: "اللغة",
   },
   fr: {
     heading:        "S'abonner à S.S.C",
@@ -123,6 +126,7 @@ const T: Record<Language, SubT> = {
     days:           "jours",
     guest_enter:    "Continuer en invité",
     guest_note:     "Navigation uniquement · Sans paiement · Données non sauvegardées",
+    language_label: "Langue",
   },
   es: {
     heading:        "Suscríbete a S.S.C",
@@ -143,6 +147,7 @@ const T: Record<Language, SubT> = {
     days:           "días",
     guest_enter:    "Continuar como invitado",
     guest_note:     "Solo exploración · Sin pagos · Datos no guardados",
+    language_label: "Idioma",
   },
   de: {
     heading:        "S.S.C abonnieren",
@@ -163,6 +168,7 @@ const T: Record<Language, SubT> = {
     days:           "Tage",
     guest_enter:    "Als Gast fortfahren",
     guest_note:     "Nur browsen · Keine Zahlung · Daten nicht gespeichert",
+    language_label: "Sprache",
   },
   pt: {
     heading:        "Assine o S.S.C",
@@ -183,6 +189,7 @@ const T: Record<Language, SubT> = {
     days:           "dias",
     guest_enter:    "Continuar como convidado",
     guest_note:     "Apenas navegação · Sem pagamento · Dados não salvos",
+    language_label: "Idioma",
   },
   tr: {
     heading:        "S.S.C'e Abone Ol",
@@ -203,6 +210,7 @@ const T: Record<Language, SubT> = {
     days:           "gün",
     guest_enter:    "Misafir olarak devam et",
     guest_note:     "Yalnızca göz atma · Ödeme yok · Veri kaydedilmez",
+    language_label: "Dil",
   },
   hi: {
     heading:        "S.S.C सब्सक्राइब करें",
@@ -223,6 +231,7 @@ const T: Record<Language, SubT> = {
     days:           "दिन",
     guest_enter:    "अतिथि के रूप में जारी रखें",
     guest_note:     "केवल ब्राउज़िंग · कोई भुगतान नहीं · डेटा सहेजा नहीं जाता",
+    language_label: "भाषा",
   },
   zh: {
     heading:        "订阅 S.S.C",
@@ -243,6 +252,7 @@ const T: Record<Language, SubT> = {
     days:           "天",
     guest_enter:    "以访客身份继续",
     guest_note:     "仅限浏览 · 无需付款 · 数据不保存",
+    language_label: "语言",
   },
   ru: {
     heading:        "Подписаться на S.S.C",
@@ -263,8 +273,15 @@ const T: Record<Language, SubT> = {
     days:           "дней",
     guest_enter:    "Войти как гость",
     guest_note:     "Только просмотр · Без оплаты · Данные не сохраняются",
+    language_label: "Язык",
   },
 };
+
+/* ─── Languages shown on the subscription screen selector ──────────────── */
+const SUB_LANGUAGE_CODES: Language[] = ["ar", "en", "fr"];
+const SUB_LANGUAGES = SUB_LANGUAGE_CODES
+  .map(code => LANGUAGES.find(l => l.code === code))
+  .filter((l): l is (typeof LANGUAGES)[number] => !!l);
 
 /* ─── Plan card data ────────────────────────────────────────────────────── */
 interface PlanConfig {
@@ -328,17 +345,7 @@ export default function SubscriptionPage({ onBack }: Props) {
   const [error,         setError]         = useState("");
   const [signInError,   setSignInError]   = useState("");
   const [signInSuccess, setSignInSuccess] = useState(false);
-  const [langOpen,      setLangOpen]      = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!langOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [langOpen]);
 
   /* ── Core subscription payment handler ─────────────────────────────────── */
   const handleSubscribe = async (plan: PlanConfig) => {
@@ -631,62 +638,48 @@ export default function SubscriptionPage({ onBack }: Props) {
           </div>
           <p className="text-white/40 text-xs">{tx.powered}</p>
         </motion.div>
-
-        {/* Language selector — far right */}
-        <div className="ml-auto relative" ref={langRef}>
-          <button
-            onClick={() => setLangOpen(v => !v)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95"
-            style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              color: "rgba(255,255,255,0.8)",
-            }}
-          >
-            <Globe size={13} />
-            <span>{LANGUAGES.find(l => l.code === language)?.native ?? "English"}</span>
-          </button>
-
-          <AnimatePresence>
-            {langOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.92, y: -4 }}
-                transition={{ duration: 0.13 }}
-                className="absolute right-0 top-full mt-1 z-[999] w-44 rounded-2xl overflow-hidden shadow-2xl"
-                style={{ background: "#1a1030", border: "1px solid rgba(255,255,255,0.12)" }}
-              >
-                <div className="px-3 py-2 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
-                    Language
-                  </p>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {LANGUAGES.map(lang => {
-                    const active = language === lang.code;
-                    return (
-                      <button
-                        key={lang.code}
-                        onClick={() => { setLanguage(lang.code as Language); setLangOpen(false); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs transition-colors"
-                        style={{
-                          background: active ? "rgba(124,58,237,0.25)" : "transparent",
-                          color: active ? "#c4b5fd" : "rgba(255,255,255,0.65)",
-                        }}
-                      >
-                        <span className={active ? "font-bold flex-1" : "flex-1"}>{lang.native}</span>
-                        <span className="text-white/30">{lang.label}</span>
-                        {active && <span className="ml-2 text-purple-400">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
+
+      {/* Language selector — isolated card, never overlaps other content */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+        ref={langRef}
+        className="mx-5 mt-3 rounded-2xl px-4 py-3 flex items-center flex-wrap gap-3 relative z-10"
+        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.14)" }}
+      >
+        <div className="flex items-center gap-1.5 text-white/55 text-xs font-bold shrink-0">
+          <Globe size={14} />
+          <span>{tx.language_label}</span>
+        </div>
+        <div className="flex items-center gap-2 flex-1 flex-wrap" role="group" aria-label={tx.language_label}>
+          {SUB_LANGUAGES.map(lang => {
+            const active = language === lang.code;
+            return (
+              <button
+                key={lang.code}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setLanguage(lang.code as Language)}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95"
+                style={{
+                  background: active
+                    ? "linear-gradient(135deg,#7c3aed,#4f46e5)"
+                    : "rgba(255,255,255,0.08)",
+                  border: active
+                    ? "1px solid rgba(167,139,250,0.6)"
+                    : "1px solid rgba(255,255,255,0.14)",
+                  color: active ? "#ffffff" : "rgba(255,255,255,0.65)",
+                  boxShadow: active ? "0 0 14px rgba(124,58,237,0.5)" : "none",
+                }}
+              >
+                {lang.native}
+              </button>
+            );
+          })}
+        </div>
+      </motion.div>
 
       {/* PI TEST notice */}
       <motion.div
