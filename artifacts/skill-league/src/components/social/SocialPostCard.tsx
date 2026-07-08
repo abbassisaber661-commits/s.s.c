@@ -307,7 +307,7 @@ const VideoPost = memo(function VideoPost({ src }: { src: string }) {
 
 const ActionBtn = memo(function ActionBtn({
   onClick, icon, label, active = false, activeColor = "text-[#FFD60A]",
-  count,
+  count, inactiveColor = "text-[#888888] hover:text-[#444444]",
 }: {
   onClick?: (e: React.MouseEvent) => void;
   icon: React.ReactNode;
@@ -315,13 +315,14 @@ const ActionBtn = memo(function ActionBtn({
   active?: boolean;
   activeColor?: string;
   count?: number;
+  inactiveColor?: string;
 }) {
   return (
     <button
       onClick={onClick}
       className={cn(
         "flex-1 py-3 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90 select-none",
-        active ? activeColor : "text-[#888888] hover:text-[#444444]"
+        active ? activeColor : inactiveColor
       )}
     >
       <div className="relative">
@@ -468,6 +469,11 @@ const SocialPostCard = memo(function SocialPostCard({
   const isVideo = post.type === "video" ||
     (post.imageUrl && /\.(mp4|webm|mov|ogg)(\?|$)/i.test(post.imageUrl));
 
+  // ── text-only post gets the yellow/white/yellow S.S.C theme ──
+  const isTextPost = !post.imageUrl;
+  const themeYellowSection = "bg-[#FFD60A]";
+  const themeBlackText = "text-[#111111]";
+
   const likeLabel    = rtl ? "إعجاب"  : "Like";
   const commentLabel = rtl ? "تعليق"  : "Comment";
   const shareLabel   = rtl ? "مشاركة" : "Share";
@@ -488,7 +494,10 @@ const SocialPostCard = memo(function SocialPostCard({
       )}
     >
       {/* ── HEADER ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2.5 px-3.5 pt-3.5 pb-2.5">
+      <div className={cn(
+        "flex items-center gap-2.5 px-3.5 pt-3.5 pb-2.5",
+        isTextPost && themeYellowSection
+      )}>
         {/* Avatar */}
         <button
           onClick={() => navigate(`/profile/${post.authorId}`)}
@@ -520,7 +529,10 @@ const SocialPostCard = memo(function SocialPostCard({
 
           {/* Row 2 — Time · Level   [🎁 Gift DN] */}
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] text-[#9B9B9B] flex items-center gap-1 shrink-0">
+            <span className={cn(
+              "text-[11px] flex items-center gap-1 shrink-0",
+              isTextPost ? themeBlackText : "text-[#9B9B9B]"
+            )}>
               {!post.isOfficialPage && (
                 <>
                   <span>Lv.{post.authorLevel}</span>
@@ -531,7 +543,9 @@ const SocialPostCard = memo(function SocialPostCard({
               {post.isPinned && (
                 <>
                   <span>·</span>
-                  <span className="text-[#FFD60A] font-semibold">{rtl ? "📌 مثبّت" : "📌 Pinned"}</span>
+                  <span className={cn("font-semibold", isTextPost ? themeBlackText : "text-[#FFD60A]")}>
+                    {rtl ? "📌 مثبّت" : "📌 Pinned"}
+                  </span>
                 </>
               )}
             </span>
@@ -631,13 +645,14 @@ const SocialPostCard = memo(function SocialPostCard({
       <div className="mx-3.5 mt-1 border-t border-[#F2F2F2]" />
 
       {/* ── ACTION BAR ──────────────────────────────────────────────────────── */}
-      <div dir={dir} className="flex items-center">
+      <div dir={dir} className={cn("flex items-center", isTextPost && themeYellowSection)}>
 
         {/* LIKE */}
         <ActionBtn
           onClick={handleLike}
           active={liked}
           activeColor="text-red-500"
+          inactiveColor={isTextPost ? cn(themeBlackText, "hover:opacity-70") : undefined}
           icon={
             <Heart
               size={18}
@@ -647,7 +662,7 @@ const SocialPostCard = memo(function SocialPostCard({
           label={likeLabel}
         />
 
-        <div className="w-px h-7 bg-[#F0F0F0]" />
+        <div className={cn("w-px h-7", isTextPost ? "bg-black/10" : "bg-[#F0F0F0]")} />
 
         {/* COMMENT */}
         <ActionBtn
@@ -655,27 +670,30 @@ const SocialPostCard = memo(function SocialPostCard({
             if (onGuestInteract) { onGuestInteract(); return; }
             onCommentClick?.(post.id);
           }}
+          inactiveColor={isTextPost ? cn(themeBlackText, "hover:opacity-70") : undefined}
           icon={<MessageCircle size={18} />}
           label={commentLabel}
           count={commentCount > 0 ? commentCount : undefined}
         />
 
-        <div className="w-px h-7 bg-[#F0F0F0]" />
+        <div className={cn("w-px h-7", isTextPost ? "bg-black/10" : "bg-[#F0F0F0]")} />
 
         {/* SHARE */}
         <ActionBtn
           onClick={handleShare}
+          inactiveColor={isTextPost ? cn(themeBlackText, "hover:opacity-70") : undefined}
           icon={<Share2 size={18} />}
           label={shareLabel}
         />
 
-        <div className="w-px h-7 bg-[#F0F0F0]" />
+        <div className={cn("w-px h-7", isTextPost ? "bg-black/10" : "bg-[#F0F0F0]")} />
 
         {/* SAVE */}
         <ActionBtn
           onClick={handleSave}
           active={saved}
           activeColor="text-[#FFD60A]"
+          inactiveColor={isTextPost ? cn(themeBlackText, "hover:opacity-70") : undefined}
           icon={
             saved
               ? <BookmarkCheck size={18} className="fill-[#FFD60A]" />
@@ -684,7 +702,7 @@ const SocialPostCard = memo(function SocialPostCard({
           label={saveLabel}
         />
 
-        <div className="w-px h-7 bg-[#F0F0F0]" />
+        <div className={cn("w-px h-7", isTextPost ? "bg-black/10" : "bg-[#F0F0F0]")} />
 
         {/* GIFT */}
         {!isOwner && (
@@ -706,6 +724,7 @@ const SocialPostCard = memo(function SocialPostCard({
             }
             label={giftLabel}
             activeColor="text-[#7C3AED]"
+            inactiveColor={isTextPost ? cn(themeBlackText, "hover:opacity-70") : undefined}
           />
         )}
 
