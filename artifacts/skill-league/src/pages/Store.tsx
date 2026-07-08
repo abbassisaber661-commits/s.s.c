@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { STORE_ITEMS, formatPiPrice, isOwned, type StoreItem } from "@/lib/store";
 import { playTap, playCoin } from "@/lib/sounds";
 import { useT, isRTL } from "@/lib/i18n";
+import DailyTasksSection from "@/components/store/DailyTasksSection";
+import PremiumSection from "@/components/store/PremiumSection";
 
 const TYPE_COLOR: Record<string, string> = {
   dn_bundle: '#fbbf24', xp_boost: '#a78bfa', cosmetic: '#f472b6', entry_pass: '#34d399',
@@ -123,6 +125,17 @@ export default function Store() {
       </div>
 
       <div className="max-w-md mx-auto px-4 pt-4 space-y-6">
+
+        {/* ── 0a. DAILY TASKS (main active section) ── */}
+        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <SectionHeader icon="🎯" label={language === 'ar' ? 'المهام اليومية' : 'Daily Tasks'} />
+          <DailyTasksSection language={language} />
+        </motion.section>
+
+        {/* ── 0b. PREMIUM (locked) ── */}
+        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }}>
+          <PremiumSection language={language} />
+        </motion.section>
 
         {/* Pi Banner */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}

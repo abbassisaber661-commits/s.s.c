@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Search, Users, Send, ImageIcon } from "lucide-react";
 import { useInView } from "react-intersection-observer";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 
 import { useGame } from "@/contexts/GameContext";
 import { useRealtime } from "@/contexts/RealtimeContext";
@@ -109,9 +109,16 @@ export default function FeedPage() {
   const { username, authUser, isGuest } = useGame() as any;
   useRealtime(); // keep provider subscription active
   const [, navigate] = useLocation();
+  const search = useSearch();
   const [isOpen, setIsOpen] = useState(false);
   const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (new URLSearchParams(search).get("compose") === "1") {
+      setIsOpen(true);
+    }
+  }, [search]);
 
   const { ref, inView } = useInView();
 
