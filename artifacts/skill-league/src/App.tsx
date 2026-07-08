@@ -77,6 +77,7 @@ import TermsOfService from "@/pages/TermsOfService";
 // Admin
 import AdminVerificationPanel from "@/pages/AdminVerificationPanel";
 import OwnerPanel from "@/pages/OwnerPanel";
+import OwnerDashboard from "@/pages/OwnerDashboard";
 
 // UI
 import BottomNav from "@/components/BottomNav";
@@ -286,6 +287,7 @@ function AppShell() {
         {/* ── ADMIN ── */}
         <Route path="/admin/verification" component={AdminVerificationPanel} />
         <Route path="/owner-panel"        component={OwnerPanel} />
+        <Route path="/owner-dashboard"    component={OwnerDashboard} />
 
         {/* ── FALLBACK ── */}
         <Route component={NotFound} />

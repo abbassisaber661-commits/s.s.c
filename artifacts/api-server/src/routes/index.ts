@@ -31,6 +31,7 @@ import giftLedgerRouter        from "./gift-ledger.js";
 import giftLeaderboardRouter   from "./gift-leaderboard.js";
 import verificationRouter      from "./verification.js";
 import ownerAdminRouter        from "./owner-admin.js";
+import ownerDashboardRouter    from "./owner-dashboard.js";
 import skillLeagueMatchesRouter from "./skill-league-matches.js";
 import subscriptionsRouter      from "./subscriptions.js";
 
@@ -68,6 +69,7 @@ router.use(giftLedgerRouter);
 router.use(giftLeaderboardRouter);
 router.use(verificationRouter);
 router.use(ownerAdminRouter);
+router.use(ownerDashboardRouter);
 router.use(skillLeagueMatchesRouter);
 router.use(subscriptionsRouter);
 

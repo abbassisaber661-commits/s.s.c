@@ -20501,27 +20501,27 @@ var require_router = __commonJS({
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var methods = METHODS.map((method) => method.toLowerCase());
-    module.exports = Router37;
+    module.exports = Router38;
     module.exports.Route = Route;
-    function Router37(options) {
-      if (!(this instanceof Router37)) {
-        return new Router37(options);
+    function Router38(options) {
+      if (!(this instanceof Router38)) {
+        return new Router38(options);
       }
       const opts = options || {};
-      function router37(req, res, next) {
-        router37.handle(req, res, next);
+      function router38(req, res, next) {
+        router38.handle(req, res, next);
       }
-      Object.setPrototypeOf(router37, this);
-      router37.caseSensitive = opts.caseSensitive;
-      router37.mergeParams = opts.mergeParams;
-      router37.params = {};
-      router37.strict = opts.strict;
-      router37.stack = [];
-      return router37;
+      Object.setPrototypeOf(router38, this);
+      router38.caseSensitive = opts.caseSensitive;
+      router38.mergeParams = opts.mergeParams;
+      router38.params = {};
+      router38.strict = opts.strict;
+      router38.stack = [];
+      return router38;
     }
-    Router37.prototype = function() {
+    Router38.prototype = function() {
     };
-    Router37.prototype.param = function param2(name2, fn) {
+    Router38.prototype.param = function param2(name2, fn) {
       if (!name2) {
         throw new TypeError("argument name is required");
       }
@@ -20541,7 +20541,7 @@ var require_router = __commonJS({
       params.push(fn);
       return this;
     };
-    Router37.prototype.handle = function handle(req, res, callback) {
+    Router38.prototype.handle = function handle(req, res, callback) {
       if (!callback) {
         throw new TypeError("argument callback is required");
       }
@@ -20668,7 +20668,7 @@ var require_router = __commonJS({
         }
       }
     };
-    Router37.prototype.use = function use(handler) {
+    Router38.prototype.use = function use(handler) {
       let offset = 0;
       let path2 = "/";
       if (typeof handler !== "function") {
@@ -20701,7 +20701,7 @@ var require_router = __commonJS({
       }
       return this;
     };
-    Router37.prototype.route = function route(path2) {
+    Router38.prototype.route = function route(path2) {
       const route2 = new Route(path2);
       const layer = new Layer(path2, {
         sensitive: this.caseSensitive,
@@ -20716,7 +20716,7 @@ var require_router = __commonJS({
       return route2;
     };
     methods.concat("all").forEach(function(method) {
-      Router37.prototype[method] = function(path2) {
+      Router38.prototype[method] = function(path2) {
         const route = this.route(path2);
         route[method].apply(route, slice.call(arguments, 1));
         return this;
@@ -20899,13 +20899,13 @@ var require_application = __commonJS({
     var compileTrust = require_utils3().compileTrust;
     var resolve4 = __require("node:path").resolve;
     var once = require_once();
-    var Router37 = require_router();
+    var Router38 = require_router();
     var slice = Array.prototype.slice;
     var flatten = Array.prototype.flat;
     var app2 = exports = module.exports = {};
     var trustProxyDefaultSymbol = "@@symbol:trust_proxy_default";
     app2.init = function init() {
-      var router37 = null;
+      var router38 = null;
       this.cache = /* @__PURE__ */ Object.create(null);
       this.engines = /* @__PURE__ */ Object.create(null);
       this.settings = /* @__PURE__ */ Object.create(null);
@@ -20914,13 +20914,13 @@ var require_application = __commonJS({
         configurable: true,
         enumerable: true,
         get: function getrouter() {
-          if (router37 === null) {
-            router37 = new Router37({
+          if (router38 === null) {
+            router38 = new Router38({
               caseSensitive: this.enabled("case sensitive routing"),
               strict: this.enabled("strict routing")
             });
           }
-          return router37;
+          return router38;
         }
       });
     };
@@ -20991,15 +20991,15 @@ var require_application = __commonJS({
       if (fns.length === 0) {
         throw new TypeError("app.use() requires a middleware function");
       }
-      var router37 = this.router;
+      var router38 = this.router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router37.use(path2, fn2);
+          return router38.use(path2, fn2);
         }
         debug(".use app under %s", path2);
         fn2.mountpath = path2;
         fn2.parent = this;
-        router37.use(path2, function mounted_app(req, res, next) {
+        router38.use(path2, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             Object.setPrototypeOf(req, orig.request);
@@ -23572,7 +23572,7 @@ var require_express = __commonJS({
     var EventEmitter = __require("node:events").EventEmitter;
     var mixin = require_merge_descriptors();
     var proto = require_application();
-    var Router37 = require_router();
+    var Router38 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -23594,8 +23594,8 @@ var require_express = __commonJS({
     exports.application = proto;
     exports.request = req;
     exports.response = res;
-    exports.Route = Router37.Route;
-    exports.Router = Router37;
+    exports.Route = Router38.Route;
+    exports.Router = Router38;
     exports.json = bodyParser.json;
     exports.raw = bodyParser.raw;
     exports.static = require_serve_static();
@@ -80851,14 +80851,14 @@ var init_notificationService = __esm({
 import { createServer } from "http";
 
 // src/app.ts
-var import_express36 = __toESM(require_express2(), 1);
+var import_express37 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
 var import_pino_http = __toESM(require_logger(), 1);
 import path from "node:path";
 import { existsSync as existsSync4 } from "node:fs";
 
 // src/routes/index.ts
-var import_express35 = __toESM(require_express2(), 1);
+var import_express36 = __toESM(require_express2(), 1);
 
 // src/routes/health.ts
 var import_express = __toESM(require_express2(), 1);
@@ -86986,10 +86986,9 @@ router2.post("/auth/pi", strictRateLimit, async (req, res) => {
     if (existing) {
       await db.update(playersTable).set({
         lastActiveAt: /* @__PURE__ */ new Date(),
-        verificationStatus: "verified",
-        username: piUsername.trim().slice(0, 20)
+        verificationStatus: "verified"
       }).where(eq(playersTable.id, existing.id));
-      player = { ...existing, verificationStatus: "verified", username: piUsername.trim().slice(0, 20) };
+      player = { ...existing, verificationStatus: "verified" };
     } else {
       const safeUsername = piUsername.trim().slice(0, 20) || `Pi_${nanoid3().slice(0, 6)}`;
       const [created] = await db.insert(playersTable).values({
@@ -87006,7 +87005,7 @@ router2.post("/auth/pi", strictRateLimit, async (req, res) => {
     });
     const token = buildToken(player);
     const ownerFlag = isOwnerPlayer(player);
-    res.json({ token, player: { ...player, isOwner: ownerFlag }, isOwner: ownerFlag });
+    res.json({ token, player: { ...player, isOwner: ownerFlag }, isOwner: ownerFlag, piUsername });
   } catch (err) {
     req.log.error({ err }, "pi auth error");
     res.status(500).json({ error: "internal" });
@@ -87138,6 +87137,23 @@ async function isUsernameReserved(username) {
   const reserved = await getReservedUsernames();
   const lower = username.toLowerCase();
   return reserved.some((word) => lower.includes(word));
+}
+
+// src/lib/username-validate.ts
+var USERNAME_CHARS_RE = /^[\p{L}\p{N}]+$/u;
+var USERNAME_HAS_DIGIT_RE = /\d/u;
+function validateUsernameFormat(name2) {
+  if (typeof name2 !== "string") return { valid: false, reason: "username must be a string" };
+  const trimmed = name2.trim();
+  if (trimmed.length < 3) return { valid: false, reason: "At least 3 characters" };
+  if (trimmed.length > 20) return { valid: false, reason: "Max 20 characters" };
+  if (!USERNAME_CHARS_RE.test(trimmed)) {
+    return { valid: false, reason: "Only letters and numbers, no symbols or spaces" };
+  }
+  if (!USERNAME_HAS_DIGIT_RE.test(trimmed)) {
+    return { valid: false, reason: "Must include at least one number" };
+  }
+  return { valid: true };
 }
 
 // src/routes/players.ts
@@ -87305,7 +87321,6 @@ router4.post("/players", async (req, res) => {
     const existing = typeof id === "string" && id ? (await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, id)).limit(1))[0] ?? null : null;
     if (existing) {
       await db.update(playersTable).set({
-        username: String(username),
         updatedAt: /* @__PURE__ */ new Date(),
         lastActiveAt: /* @__PURE__ */ new Date(),
         ...typeof language === "string" && { language },
@@ -87364,10 +87379,23 @@ router4.patch("/players/:id", async (req, res) => {
       "skillAccuracy",
       "skillMemory"
     ];
+    if ("username" in req.body) {
+      const format = validateUsernameFormat(req.body.username);
+      if (!format.valid) {
+        res.status(400).json({ error: "invalid_username", message: format.reason });
+        return;
+      }
+      const trimmed = String(req.body.username).trim();
+      if (await isUsernameReserved(trimmed)) {
+        res.status(400).json({ error: "username_reserved", message: "This name is reserved for official SkillLeague pages" });
+        return;
+      }
+    }
     const updates = { updatedAt: /* @__PURE__ */ new Date(), lastActiveAt: /* @__PURE__ */ new Date() };
     for (const key of allowed) {
       if (key in req.body) updates[key] = req.body[key];
     }
+    if (typeof updates.username === "string") updates.username = updates.username.trim();
     req.log.info({
       playerId: req.params.id,
       bodyKeys: Object.keys(req.body),
@@ -94160,7 +94188,7 @@ router29.get("/gifts/post/:postId/stats", async (req, res) => {
       senderId: giftLedgerTable.senderId,
       totalAmount: sql`sum(${giftLedgerTable.amount})`,
       giftCount: sql`count(*)`
-    }).from(giftLedgerTable).where(eq(giftLedgerTable.postId, postId)).groupBy(giftLedgerTable.senderId).orderBy(desc(sql`sum(${giftLedgerTable.amount})`)).limit(3);
+    }).from(giftLedgerTable).where(eq(giftLedgerTable.postId, postId)).groupBy(giftLedgerTable.senderId).orderBy(desc(sql`sum(${giftLedgerTable.amount})`)).limit(10);
     const enriched = await Promise.all(
       topSenders.map(async (s) => {
         const [p] = await db.select({ username: playersTable.username }).from(playersTable).where(eq(playersTable.id, s.senderId)).limit(1);
@@ -94892,12 +94920,248 @@ router32.patch("/owner/users/:userId/suspend", requireAdmin, async (req, res) =>
 });
 var owner_admin_default = router32;
 
-// src/routes/skill-league-matches.ts
+// src/routes/owner-dashboard.ts
 var import_express33 = __toESM(require_express2(), 1);
+init_src();
+init_src();
+init_drizzle_orm();
+init_nanoid();
+init_socket_manager();
+var router33 = (0, import_express33.Router)();
+router33.get("/owner/dashboard/overview", requireAdmin, async (req, res) => {
+  try {
+    const stats = await db.execute(sql`
+      SELECT
+        (SELECT COUNT(*) FROM players)                                                    AS total_players,
+        (SELECT COUNT(*) FROM players WHERE last_active_at > NOW() - INTERVAL '24 hours') AS active_24h,
+        (SELECT COUNT(*) FROM players WHERE last_active_at > NOW() - INTERVAL '7 days')   AS active_7d,
+        (SELECT COUNT(*) FROM players WHERE created_at > NOW() - INTERVAL '24 hours')     AS new_players_24h,
+        (SELECT COUNT(*) FROM players WHERE verified = true)                              AS verified_players,
+        (SELECT COUNT(*) FROM players WHERE verification_status = 'pending')              AS pending_verifications,
+        (SELECT COUNT(*) FROM players WHERE suspended = true)                             AS suspended_players,
+        (SELECT COUNT(*) FROM posts)                                                      AS total_posts,
+        (SELECT COUNT(*) FROM post_comments)                                              AS total_comments,
+        (SELECT COUNT(*) FROM pvp_matches WHERE created_at > NOW() - INTERVAL '24 hours')  AS matches_24h,
+        (SELECT COUNT(*) FROM pvp_matches)                                                AS total_matches,
+        (SELECT COALESCE(COUNT(*),0) FROM wallet_transactions WHERE type = 'gift')         AS total_gifts,
+        (SELECT COALESCE(SUM(ABS(amount)),0) FROM wallet_transactions)                     AS total_dn_volume,
+        (SELECT COUNT(*) FROM suspicious_activity WHERE resolved = FALSE)                  AS open_flags,
+        (SELECT COUNT(*) FROM subscriptions WHERE status = 'active')                       AS active_subscriptions,
+        (SELECT COALESCE(SUM(amount),0) FROM pi_payments WHERE status = 'confirmed')       AS total_pi_confirmed
+    `);
+    res.json(stats.rows?.[0] ?? {});
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard overview error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/owner/dashboard/posts", requireAdmin, async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+    const search = req.query.search?.trim() ?? "";
+    const offset = (page - 1) * limit;
+    const base = db.select().from(postsTable);
+    const rows = search ? await base.where(ilike(postsTable.username, `%${search}%`)).orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset) : await base.orderBy(desc(postsTable.createdAt)).limit(limit).offset(offset);
+    const [totalRow] = search ? await db.select({ cnt: count() }).from(postsTable).where(ilike(postsTable.username, `%${search}%`)) : await db.select({ cnt: count() }).from(postsTable);
+    res.json({ posts: rows, total: totalRow?.cnt ?? 0, page, limit });
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard posts error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.patch("/owner/dashboard/posts/:id/visibility", requireAdmin, async (req, res) => {
+  try {
+    const { isPublic } = req.body;
+    if (typeof isPublic !== "boolean") {
+      res.status(400).json({ error: "isPublic_required" });
+      return;
+    }
+    const id = String(req.params.id);
+    await db.update(postsTable).set({ isPublic }).where(eq(postsTable.id, id));
+    res.json({ ok: true, id, isPublic });
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard post visibility error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.delete("/owner/dashboard/posts/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = String(req.params.id);
+    await db.delete(postCommentsTable).where(eq(postCommentsTable.postId, id));
+    await db.delete(postsTable).where(eq(postsTable.id, id));
+    res.json({ ok: true, id });
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard post delete error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/owner/dashboard/posts/:id/comments", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.select().from(postCommentsTable).where(eq(postCommentsTable.postId, String(req.params.id))).orderBy(desc(postCommentsTable.createdAt));
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard post comments error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.delete("/owner/dashboard/comments/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = String(req.params.id);
+    await db.delete(postCommentsTable).where(eq(postCommentsTable.id, id));
+    res.json({ ok: true, id });
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard comment delete error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/owner/dashboard/leagues", requireAdmin, async (req, res) => {
+  try {
+    const leagues = getLeagues();
+    const summary = leagues.map((league) => {
+      const season = getActiveSeason(league.id);
+      const standings = season ? getStandings(season.id) : [];
+      return {
+        league,
+        season: season ? { ...season, currentRound: getSeasonCurrentRound(season) } : null,
+        topStandings: standings.slice(0, 10),
+        totalPlayers: standings.length
+      };
+    });
+    res.json(summary);
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard leagues error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/owner/dashboard/matches/recent", requireAdmin, async (req, res) => {
+  try {
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 30));
+    const rows = await db.select().from(pvpMatchesTable).orderBy(desc(pvpMatchesTable.createdAt)).limit(limit);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard matches error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/owner/dashboard/economy", requireAdmin, async (req, res) => {
+  try {
+    const hourly = await db.execute(sql`
+      SELECT DATE_TRUNC('hour', created_at)::text AS hour, type,
+        SUM(amount) AS total_amount, COUNT(*) AS tx_count
+      FROM wallet_transactions
+      WHERE created_at > NOW() - INTERVAL '24 hours'
+      GROUP BY 1, 2 ORDER BY 1 DESC LIMIT 50
+    `);
+    const topBalances = await db.execute(sql`
+      SELECT username, coins AS dn, level, elo FROM players ORDER BY coins DESC LIMIT 10
+    `);
+    const subscriptionsByPlan = await db.execute(sql`
+      SELECT plan, COUNT(*) AS count FROM subscriptions WHERE status = 'active' GROUP BY plan
+    `);
+    const piPayments = await db.select().from(piPaymentsTable).orderBy(desc(piPaymentsTable.createdAt)).limit(30);
+    const piTotals = await db.execute(sql`
+      SELECT
+        COALESCE(SUM(amount) FILTER (WHERE status = 'confirmed'), 0) AS confirmed_total,
+        COALESCE(SUM(amount) FILTER (WHERE status = 'pending'), 0)   AS pending_total,
+        COUNT(*) FILTER (WHERE kind = 'gift' AND status = 'confirmed')    AS gift_count,
+        COUNT(*) FILTER (WHERE kind = 'purchase' AND status = 'confirmed') AS purchase_count
+      FROM pi_payments
+    `);
+    res.json({
+      hourly: hourly.rows ?? [],
+      topBalances: topBalances.rows ?? [],
+      subscriptionsByPlan: subscriptionsByPlan.rows ?? [],
+      piPayments,
+      piTotals: piTotals.rows?.[0] ?? {}
+    });
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard economy error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/owner/dashboard/verified", requireAdmin, async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
+    const rows = await db.select({
+      id: playersTable.id,
+      username: playersTable.username,
+      avatar: playersTable.avatar,
+      level: playersTable.level,
+      verificationStatus: playersTable.verificationStatus,
+      createdAt: playersTable.createdAt
+    }).from(playersTable).where(eq(playersTable.verified, true)).orderBy(desc(playersTable.createdAt)).limit(limit).offset((page - 1) * limit);
+    res.json(rows);
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard verified list error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.post("/owner/dashboard/announce", requireAdmin, async (req, res) => {
+  try {
+    const { title, body } = req.body;
+    if (typeof title !== "string" || !title.trim() || typeof body !== "string" || !body.trim()) {
+      res.status(400).json({ error: "title_and_body_required" });
+      return;
+    }
+    const broadcastId = nanoid3();
+    const ids = await db.select({ id: playersTable.id }).from(playersTable);
+    if (ids.length > 0) {
+      const now = /* @__PURE__ */ new Date();
+      const rows = ids.map((p) => ({
+        id: nanoid3(),
+        playerId: p.id,
+        type: "system",
+        title: title.trim(),
+        body: body.trim(),
+        data: { broadcastId, owner: true },
+        createdAt: now
+      }));
+      const chunkSize = 500;
+      for (let i = 0; i < rows.length; i += chunkSize) {
+        await db.insert(notificationsTable).values(rows.slice(i, i + chunkSize));
+      }
+    }
+    const io2 = getIO();
+    if (io2) {
+      io2.emit("notification:broadcast", { broadcastId, title: title.trim(), body: body.trim(), createdAt: (/* @__PURE__ */ new Date()).toISOString() });
+    }
+    res.json({ ok: true, broadcastId, recipients: ids.length });
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard announce error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+router33.get("/owner/dashboard/announcements", requireAdmin, async (req, res) => {
+  try {
+    const rows = await db.execute(sql`
+      SELECT
+        data->>'broadcastId' AS broadcast_id,
+        MAX(title)      AS title,
+        MAX(body)       AS body,
+        COUNT(*)        AS recipients,
+        MAX(created_at) AS created_at
+      FROM notifications
+      WHERE type = 'system' AND data->>'broadcastId' IS NOT NULL
+      GROUP BY data->>'broadcastId'
+      ORDER BY MAX(created_at) DESC
+      LIMIT 30
+    `);
+    res.json(rows.rows ?? []);
+  } catch (err) {
+    req.log.error({ err }, "owner dashboard announcements list error");
+    res.status(500).json({ error: "internal" });
+  }
+});
+var owner_dashboard_default = router33;
+
+// src/routes/skill-league-matches.ts
+var import_express34 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
 init_nanoid();
-var router33 = (0, import_express33.Router)();
+var router34 = (0, import_express34.Router)();
 function calculateMatchResult(answers, shapeSection) {
   const correctAnswers = answers.filter((a) => a.correct).length;
   const wrongAnswers = answers.filter((a) => !a.correct).length;
@@ -94915,7 +95179,7 @@ function calculateMatchResult(answers, shapeSection) {
     shapeCorrect: shapeSection.correct
   };
 }
-router33.post("/matches/submit-result", optionalAuth, async (req, res) => {
+router34.post("/matches/submit-result", optionalAuth, async (req, res) => {
   try {
     const body = req.body;
     const { playerId, answers, shapeSection, leagueId } = body;
@@ -94978,7 +95242,7 @@ router33.post("/matches/submit-result", optionalAuth, async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
-router33.get("/matches/leaderboard/skill", async (req, res) => {
+router34.get("/matches/leaderboard/skill", async (req, res) => {
   try {
     const limit = Math.min(Number(req.query.limit) || 50, 100);
     const leagueId = typeof req.query.leagueId === "string" ? req.query.leagueId : null;
@@ -95057,7 +95321,7 @@ router33.get("/matches/leaderboard/skill", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
-router33.get("/matches/leaderboard/skill/:pid", async (req, res) => {
+router34.get("/matches/leaderboard/skill/:pid", async (req, res) => {
   try {
     const { pid } = req.params;
     const [row] = await db.select({
@@ -95100,14 +95364,14 @@ router33.get("/matches/leaderboard/skill/:pid", async (req, res) => {
     res.status(500).json({ error: "internal" });
   }
 });
-var skill_league_matches_default = router33;
+var skill_league_matches_default = router34;
 
 // src/routes/subscriptions.ts
-var import_express34 = __toESM(require_express2(), 1);
+var import_express35 = __toESM(require_express2(), 1);
 init_drizzle_orm();
 init_src();
-var router34 = (0, import_express34.Router)();
-router34.get("/subscriptions/status/:playerId", requireAuth, async (req, res) => {
+var router35 = (0, import_express35.Router)();
+router35.get("/subscriptions/status/:playerId", requireAuth, async (req, res) => {
   const playerId = String(req.params.playerId);
   if (req.auth.playerId !== playerId) {
     res.status(403).json({ error: "Forbidden" });
@@ -95154,7 +95418,7 @@ router34.get("/subscriptions/status/:playerId", requireAuth, async (req, res) =>
     res.status(500).json({ error: "internal" });
   }
 });
-router34.get("/subscriptions/history/:playerId", requireAuth, async (req, res) => {
+router35.get("/subscriptions/history/:playerId", requireAuth, async (req, res) => {
   const playerId = String(req.params.playerId);
   if (req.auth.playerId !== playerId) {
     res.status(403).json({ error: "Forbidden" });
@@ -95177,49 +95441,50 @@ router34.get("/subscriptions/history/:playerId", requireAuth, async (req, res) =
     res.status(500).json({ error: "internal" });
   }
 });
-var subscriptions_default = router34;
+var subscriptions_default = router35;
 
 // src/routes/index.ts
-var router35 = (0, import_express35.Router)();
-router35.use(health_default);
-router35.use(auth_default);
-router35.use(pi_auth_default);
-router35.use(arenas_default);
-router35.use(players_default);
-router35.use(matches_default);
-router35.use(community_default);
-router35.use(economy_default);
-router35.use(notifications_default);
-router35.use(messages_default);
-router35.use(analytics_default);
-router35.use(followers_default);
-router35.use(marketplace_default);
-router35.use(security_default);
-router35.use(pi_payments_default);
-router35.use(beta_default);
-router35.use(monitor_default);
-router35.use(release_default);
-router35.use(league_system_default);
-router35.use(game_layer_default);
-router35.use(daily_economy_default);
-router35.use(audit_default);
-router35.use(economy_balance_default);
-router35.use(economy_stabilizer_default);
-router35.use(social_default);
-router35.use(stories_default);
-router35.use(jobs_default);
-router35.use(wallet_default);
-router35.use(gift_ledger_default);
-router35.use(gift_leaderboard_default);
-router35.use(verification_default);
-router35.use(owner_admin_default);
-router35.use(skill_league_matches_default);
-router35.use(subscriptions_default);
-var routes_default = router35;
+var router36 = (0, import_express36.Router)();
+router36.use(health_default);
+router36.use(auth_default);
+router36.use(pi_auth_default);
+router36.use(arenas_default);
+router36.use(players_default);
+router36.use(matches_default);
+router36.use(community_default);
+router36.use(economy_default);
+router36.use(notifications_default);
+router36.use(messages_default);
+router36.use(analytics_default);
+router36.use(followers_default);
+router36.use(marketplace_default);
+router36.use(security_default);
+router36.use(pi_payments_default);
+router36.use(beta_default);
+router36.use(monitor_default);
+router36.use(release_default);
+router36.use(league_system_default);
+router36.use(game_layer_default);
+router36.use(daily_economy_default);
+router36.use(audit_default);
+router36.use(economy_balance_default);
+router36.use(economy_stabilizer_default);
+router36.use(social_default);
+router36.use(stories_default);
+router36.use(jobs_default);
+router36.use(wallet_default);
+router36.use(gift_ledger_default);
+router36.use(gift_leaderboard_default);
+router36.use(verification_default);
+router36.use(owner_admin_default);
+router36.use(owner_dashboard_default);
+router36.use(skill_league_matches_default);
+router36.use(subscriptions_default);
+var routes_default = router36;
 
 // src/app.ts
 init_logger2();
-var app = (0, import_express36.default)();
+var app = (0, import_express37.default)();
 app.use(
   (0, import_pino_http.default)({
     logger,
@@ -95240,8 +95505,8 @@ app.use(
   })
 );
 app.use((0, import_cors.default)());
-app.use(import_express36.default.json({ limit: "50mb" }));
-app.use(import_express36.default.urlencoded({ extended: true, limit: "50mb" }));
+app.use(import_express37.default.json({ limit: "50mb" }));
+app.use(import_express37.default.urlencoded({ extended: true, limit: "50mb" }));
 app.use(defaultRateLimit);
 app.use((_req, res, next) => {
   const start = Date.now();
@@ -95267,7 +95532,7 @@ if (process.env.NODE_ENV === "production") {
     "../../skill-league/dist/public"
   );
   if (existsSync4(frontendDist)) {
-    app.use(import_express36.default.static(frontendDist));
+    app.use(import_express37.default.static(frontendDist));
     app.get("/{*path}", (_req, res) => {
       res.sendFile(path.join(frontendDist, "index.html"));
     });
@@ -95278,8 +95543,8 @@ if (process.env.NODE_ENV === "production") {
 var app_default = app;
 
 // src/routes/profile.ts
-var import_express37 = __toESM(require_express2(), 1);
-var router36 = (0, import_express37.Router)();
+var import_express38 = __toESM(require_express2(), 1);
+var router37 = (0, import_express38.Router)();
 var profile = {
   id: "1",
   username: "user123",
@@ -95289,7 +95554,7 @@ var profile = {
   location: "Tunisia",
   website: "https://example.com"
 };
-router36.get("/", (req, res) => {
+router37.get("/", (req, res) => {
   try {
     return res.status(200).json({
       success: true,
@@ -95303,7 +95568,7 @@ router36.get("/", (req, res) => {
     });
   }
 });
-router36.put("/", (req, res) => {
+router37.put("/", (req, res) => {
   try {
     const { username, bio, avatar, fullName, location, website } = req.body;
     profile = {
@@ -95328,7 +95593,7 @@ router36.put("/", (req, res) => {
     });
   }
 });
-var profile_default = router36;
+var profile_default = router37;
 
 // src/index.ts
 init_socket_manager();

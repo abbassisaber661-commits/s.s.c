@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useGame } from "@/contexts/GameContext";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, ChevronRight, LogOut } from "lucide-react";
+import { ArrowLeft, ChevronRight, LogOut, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import { validateUsername } from "@/lib/anti-cheat";
 import { LANGUAGES } from "@/lib/i18n";
 import type { Language } from "@/lib/i18n";
+import { getJwtRole } from "@/lib/apiClient";
 
 export const APP_VERSION = "1.1.0";
 
@@ -208,6 +209,7 @@ export default function Settings() {
   }
 
   const currentLang = LANGUAGES.find(l => l.code === language);
+  const isOwner = getJwtRole() === "admin";
 
   const BG = "#F0F2F5";
   const CARD = { background: "#FFFFFF", border: "1px solid #E4E6EB", borderRadius: "16px", overflow: "hidden" };
@@ -354,6 +356,30 @@ export default function Settings() {
             <span className="text-sm font-semibold" style={{ color: "#050505" }}>{APP_VERSION}</span>
           </div>
         </motion.div>
+
+        {/* ── OWNER (private, visible only to OWNER_UID) ────── */}
+        {isOwner && (
+          <>
+            <SectionLabel>لوحة المالك</SectionLabel>
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
+              style={{ background: "#0a0906", border: "1px solid rgba(212,175,55,0.35)", borderRadius: "16px", overflow: "hidden" }}>
+              <button
+                onClick={() => setLocation("/owner-dashboard")}
+                className="w-full flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-white/5 active:bg-white/10"
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  style={{ background: "linear-gradient(135deg,#D4AF37,#8a6d1f)" }}>
+                  <Crown className="w-4 h-4 text-black" />
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-sm font-bold" style={{ color: "#D4AF37" }}>لوحة تحكم المالك</div>
+                  <div className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>إدارة كاملة للمنصة — خاص جداً</div>
+                </div>
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "rgba(212,175,55,0.6)" }} />
+              </button>
+            </motion.div>
+          </>
+        )}
 
         {/* ── SUPPORT ───────────────────────────────────────── */}
         <SectionLabel>الدعم</SectionLabel>

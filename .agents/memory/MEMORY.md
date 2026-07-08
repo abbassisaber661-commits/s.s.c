@@ -31,3 +31,4 @@
 - [Username Identity System](username-identity.md) — username is sole public identity, set once from Pi name at first registration then persists; Pi name shown only in profile info; badge order is crown-before-name, checkmark-after-name.
 - [Gift Support Bar](gift-support-bar.md) — top-supporters row on posts; supporter avatars fall back to initials like rest of feed (no real avatar wired to posts); widening gift-ledger top-senders limit is a safe non-schema change.
 - [Dev Mode Bypass](dev-mode-bypass.md) — `import.meta.env.DEV` (never true in prod builds) auto-logs a real backend player via existing `/api/auth/guest` route + skips subscription gate; double-guarded, Pi/DB/OWNER_UID/JWT_SECRET untouched.
+- [Owner Dashboard (8-section)](owner-dashboard.md) — private gold/black sidebar admin at /owner-dashboard, entry only in Settings when getJwtRole()==="admin"; reuses requireAdmin, never touches OWNER_UID/Pi/JWT logic.

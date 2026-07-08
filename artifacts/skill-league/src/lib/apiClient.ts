@@ -414,8 +414,16 @@ export const api = {
         [key: string]: unknown;
       }>("/admin/stats"),
 
-    suspicious: () =>
-      get<{ playerId: string; reason: string }[]>("/admin/suspicious"),
+    suspicious: (limit = 50) =>
+      get<Record<string, unknown>[]>(`/admin/suspicious?limit=${limit}`),
+
+    logs: (limit = 100, playerId?: string) =>
+      get<Record<string, unknown>[]>(
+        `/admin/logs?limit=${limit}${playerId ? `&playerId=${encodeURIComponent(playerId)}` : ""}`,
+      ),
+
+    resolveSuspicious: (id: number | string) =>
+      patch<{ ok: boolean }>(`/admin/suspicious/${id}/resolve`, {}),
   },
 
   /* ── Owner Panel ── */
@@ -467,6 +475,75 @@ export const api = {
     suspend: (userId: string) =>
       patch<{ ok: boolean; userId: string; suspended: boolean }>(
         `/owner/users/${userId}/suspend`, {},
+      ),
+  },
+
+  /* ── Owner Dashboard (extended admin control center) ── */
+  ownerDashboard: {
+    overview: () =>
+      get<{
+        total_players: string; active_24h: string; active_7d: string; new_players_24h: string;
+        verified_players: string; pending_verifications: string; suspended_players: string;
+        total_posts: string; total_comments: string; matches_24h: string; total_matches: string;
+        total_gifts: string; total_dn_volume: string; open_flags: string;
+        active_subscriptions: string; total_pi_confirmed: string;
+      }>("/owner/dashboard/overview"),
+
+    /* Social content management */
+    posts: (page = 1, limit = 20, search = "") =>
+      get<{ posts: Record<string, unknown>[]; total: number; page: number; limit: number }>(
+        `/owner/dashboard/posts?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
+      ),
+
+    setPostVisibility: (postId: string, isPublic: boolean) =>
+      patch<{ ok: boolean; id: string; isPublic: boolean }>(
+        `/owner/dashboard/posts/${postId}/visibility`, { isPublic },
+      ),
+
+    deletePost: (postId: string) =>
+      del<{ ok: boolean; id: string }>(`/owner/dashboard/posts/${postId}`),
+
+    postComments: (postId: string) =>
+      get<Record<string, unknown>[]>(`/owner/dashboard/posts/${postId}/comments`),
+
+    deleteComment: (commentId: string) =>
+      del<{ ok: boolean; id: string }>(`/owner/dashboard/comments/${commentId}`),
+
+    /* SkillLeague management */
+    leagues: () =>
+      get<{
+        league: Record<string, unknown>;
+        season: Record<string, unknown> | null;
+        topStandings: Record<string, unknown>[];
+        totalPlayers: number;
+      }[]>("/owner/dashboard/leagues"),
+
+    recentMatches: (limit = 30) =>
+      get<Record<string, unknown>[]>(`/owner/dashboard/matches/recent?limit=${limit}`),
+
+    /* Economy & Pi */
+    economy: () =>
+      get<{
+        hourly: Record<string, unknown>[];
+        topBalances: Record<string, unknown>[];
+        subscriptionsByPlan: Record<string, unknown>[];
+        piPayments: Record<string, unknown>[];
+        piTotals: Record<string, unknown>;
+      }>("/owner/dashboard/economy"),
+
+    /* Verification */
+    verifiedList: (page = 1, limit = 20) =>
+      get<Record<string, unknown>[]>(`/owner/dashboard/verified?page=${page}&limit=${limit}`),
+
+    /* Announcements / Notifications */
+    announce: (title: string, body: string) =>
+      post<{ ok: boolean; broadcastId: string; recipients: number }>(
+        "/owner/dashboard/announce", { title, body },
+      ),
+
+    announcements: () =>
+      get<{ broadcast_id: string; title: string; body: string; recipients: string; created_at: string }[]>(
+        "/owner/dashboard/announcements",
       ),
   },
 
