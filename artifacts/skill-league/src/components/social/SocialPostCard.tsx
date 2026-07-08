@@ -5,7 +5,7 @@ import React, {
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle, Share2, Heart, Bookmark, BookmarkCheck,
-  Eye, Gift, Play, Pause, Volume2, VolumeX,
+  Eye, Play, Pause, Volume2, VolumeX,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -105,8 +105,8 @@ const GiftButton = memo(function GiftButton({
             boxShadow: "0 0 8px 2px rgba(124,58,237,0.45), 0 0 16px 4px rgba(76,29,149,0.3), 0 1px 4px rgba(0,0,0,0.1)",
           }}
         >
-          <Gift size={11} className="shrink-0" />
-          <span>{rtl ? "هدية Pi" : "Send Pi"}</span>
+          <span className="text-[13px] leading-none">🎁</span>
+          <span className="font-black">π</span>
         </motion.button>
       )}
     </AnimatePresence>
@@ -696,11 +696,13 @@ const SocialPostCard = memo(function SocialPostCard({
             }}
             active={false}
             icon={
-              <Gift
-                size={18}
-                className="text-[#7C3AED]"
+              <span
+                className="flex items-center gap-0.5 text-[16px] leading-none"
                 style={{ filter: "drop-shadow(0 0 4px rgba(124,58,237,0.5))" }}
-              />
+              >
+                <span>🎁</span>
+                <span className="text-[13px] font-black text-[#7C3AED]">π</span>
+              </span>
             }
             label={giftLabel}
             activeColor="text-[#7C3AED]"

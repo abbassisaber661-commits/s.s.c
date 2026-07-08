@@ -161,6 +161,7 @@ export default function GiftModal({
   const [sessionTotalPi, setSessionTotalPi] = useState(0);
   const [sessionGiftCount, setSessionGiftCount] = useState(0);
   const [flight, setFlight] = useState<{ tier: PiGiftTier; key: number } | null>(null);
+  const [confirmTier, setConfirmTier] = useState<PiGiftTier | null>(null);
   const backendPaymentId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -168,6 +169,7 @@ export default function GiftModal({
       setSendingTierId(null);
       setSessionTotalPi(0);
       setSessionGiftCount(0);
+      setConfirmTier(null);
       backendPaymentId.current = null;
     }
   }, [isOpen]);
@@ -268,6 +270,23 @@ export default function GiftModal({
     [canGift, sendingTierId, receiverId, receiverName, postId, senderId, finishSend]
   );
 
+  const handleRingTap = useCallback(
+    (tier: PiGiftTier) => {
+      if (!canGift || sendingTierId) return;
+      setConfirmTier(tier);
+    },
+    [canGift, sendingTierId]
+  );
+
+  const handleConfirmSend = useCallback(() => {
+    if (!confirmTier) return;
+    const tier = confirmTier;
+    setConfirmTier(null);
+    // Must stay inside this synchronous click handler — the Pi Browser
+    // requires createPayment() to be triggered directly by the user gesture.
+    handleTap(tier);
+  }, [confirmTier, handleTap]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -334,7 +353,7 @@ export default function GiftModal({
                         tier={tier}
                         isSending={isSending}
                         disabled={disabled}
-                        onClick={() => handleTap(tier)}
+                        onClick={() => handleRingTap(tier)}
                       />
                     );
                   })}
@@ -387,6 +406,82 @@ export default function GiftModal({
                 senderName={senderName}
                 onDone={() => setFlight(null)}
               />
+            )}
+          </AnimatePresence>
+
+          {/* Confirmation card — small, not full-screen. Payment only starts after "Send". */}
+          <AnimatePresence>
+            {confirmTier && (
+              <React.Fragment key="gift-confirm">
+                <motion.div
+                  key="gift-confirm-backdrop"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[80] bg-black/40"
+                  onClick={() => setConfirmTier(null)}
+                />
+                <motion.div
+                  key="gift-confirm-card"
+                  initial={{ opacity: 0, scale: 0.9, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 12 }}
+                  transition={{ type: "spring", stiffness: 340, damping: 28 }}
+                  className="fixed left-1/2 top-1/2 z-[81] w-[86%] max-w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white p-5 text-center"
+                  style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}
+                  dir="rtl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div
+                    className="mx-auto mb-3 w-20 h-20 rounded-full p-[3px] flex items-center justify-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${GIFT_ROW_COLORS[confirmTier.row].from} 0%, ${GIFT_ROW_COLORS[confirmTier.row].to} 100%)`,
+                      boxShadow: `0 0 0 4px ${GIFT_ROW_COLORS[confirmTier.row].glow}`,
+                    }}
+                  >
+                    <div className="w-full h-full rounded-full bg-white flex flex-col items-center justify-center">
+                      <span
+                        className="text-lg font-black leading-none"
+                        style={{ color: GIFT_ROW_COLORS[confirmTier.row].text }}
+                      >
+                        {formatGiftAmount(confirmTier.piAmount)}
+                      </span>
+                      <span
+                        className="text-[11px] font-bold leading-none mt-0.5"
+                        style={{ color: GIFT_ROW_COLORS[confirmTier.row].text }}
+                      >
+                        π
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm font-bold text-[#111] mb-1">
+                    إرسال {formatGiftAmount(confirmTier.piAmount)}π إلى {receiverName}؟
+                  </p>
+                  <p className="text-[11px] text-[#999] mb-5">
+                    سيتم الدفع من محفظة Pi الخاصة بك عبر شبكة Pi Network
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setConfirmTier(null)}
+                      className="flex-1 py-3 rounded-2xl text-sm font-bold text-[#666] bg-[#F2F2F4] active:scale-[0.97] transition-all"
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      onClick={handleConfirmSend}
+                      className="flex-1 py-3 rounded-2xl text-sm font-black text-white active:scale-[0.97] transition-all"
+                      style={{
+                        background: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
+                        boxShadow: "0 4px 16px rgba(124,58,237,0.35)",
+                      }}
+                    >
+                      إرسال
+                    </button>
+                  </div>
+                </motion.div>
+              </React.Fragment>
             )}
           </AnimatePresence>
         </>
