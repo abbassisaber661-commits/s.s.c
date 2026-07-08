@@ -169,12 +169,15 @@ router.post("/auth/pi", strictRateLimit, async (req, res) => {
 
     let player: typeof playersTable.$inferSelect;
     if (existing) {
+      // NOTE: do NOT overwrite `username` here — it is the player's public
+      // identity and may have been customized since registration (rule: a
+      // custom username persists across future logins). Only Pi-derived
+      // account state (verification, activity) is refreshed on login.
       await db.update(playersTable).set({
         lastActiveAt: new Date(),
         verificationStatus: "verified",
-        username: piUsername.trim().slice(0, 20),
       }).where(eq(playersTable.id, existing.id));
-      player = { ...existing, verificationStatus: "verified", username: piUsername.trim().slice(0, 20) };
+      player = { ...existing, verificationStatus: "verified" };
     } else {
       const safeUsername = piUsername.trim().slice(0, 20) || `Pi_${nanoid().slice(0, 6)}`;
       const [created] = await db.insert(playersTable).values({
@@ -189,7 +192,11 @@ router.post("/auth/pi", strictRateLimit, async (req, res) => {
     claimLoginReward(player.id).catch(() => {});
     const token = buildToken(player);
     const ownerFlag = isOwnerPlayer(player);
-    res.json({ token, player: { ...player, isOwner: ownerFlag }, isOwner: ownerFlag });
+    // `piUsername` is the live Pi Network account name (freshly fetched from
+    // /v2/me above). It is NOT persisted to `players.username` and must only
+    // ever be used for read-only "Pi account name" display in profile info —
+    // it is never the public identity (that is always `player.username`).
+    res.json({ token, player: { ...player, isOwner: ownerFlag }, isOwner: ownerFlag, piUsername });
   } catch (err) {
     req.log.error({ err }, "pi auth error");
     res.status(500).json({ error: "internal" });

@@ -155,10 +155,13 @@ export const ProfileCoverHeader = memo(
             return (
               <>
                 <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                  {profile.verification === "owner" && (
+                    <VerificationBadge tier="owner" size="md" />
+                  )}
                   <h1 className="text-xl font-bold text-[#111111] leading-tight">
                     {displayName}
                   </h1>
-                  {profile.verification && profile.verification !== "none" && (
+                  {profile.verification && profile.verification !== "none" && profile.verification !== "owner" && (
                     <VerificationBadge tier={profile.verification} size="md" />
                   )}
                 </div>

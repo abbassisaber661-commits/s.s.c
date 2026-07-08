@@ -39,12 +39,23 @@ export function recordSubmission(score: number) {
   saveLog(log);
 }
 
+// Username rules (app-wide, single source of truth on the frontend —
+// mirrored server-side in players.ts PATCH /players/:id):
+//  - letters (any language/script) and digits only, no symbols/spaces/underscore
+//  - at least 1 digit required
+//  - case-insensitive (no uniqueness distinction by case)
+//  - length 3–20
+const USERNAME_CHARS_RE = /^[\p{L}\p{N}]+$/u;
+const USERNAME_HAS_DIGIT_RE = /\d/u;
+
 export function validateUsername(name: string): { valid: boolean; reason?: string } {
   const trimmed = name.trim();
-  if (trimmed.length < 2)  return { valid: false, reason: 'At least 2 characters' };
+  if (trimmed.length < 3)  return { valid: false, reason: 'At least 3 characters' };
   if (trimmed.length > 20) return { valid: false, reason: 'Max 20 characters' };
-  if (!/^[a-zA-Z0-9_]+$/.test(trimmed))
-    return { valid: false, reason: 'Only letters, numbers and underscores' };
+  if (!USERNAME_CHARS_RE.test(trimmed))
+    return { valid: false, reason: 'Only letters and numbers, no symbols or spaces' };
+  if (!USERNAME_HAS_DIGIT_RE.test(trimmed))
+    return { valid: false, reason: 'Must include at least one number' };
   if (/skillleague/i.test(trimmed))
     return { valid: false, reason: 'This name is reserved for official S.S.C pages' };
   return { valid: true };

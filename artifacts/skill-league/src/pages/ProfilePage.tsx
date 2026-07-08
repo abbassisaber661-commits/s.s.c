@@ -117,10 +117,8 @@ export default function ProfilePage() {
   }, [profile, followMutation, refetch, isGuest]);
 
   const handleSaveProfile = useCallback(async (data: {
-    username: string;
     bio: string;
     avatar: string | File;
-    fullName?: string;
     location?: string;
     website?: string;
   }) => {
@@ -134,10 +132,8 @@ export default function ProfilePage() {
         avatarStr = data.avatar || undefined;
       }
       await api.players.sync(pid, {
-        username: data.username,
         bio:      data.bio || undefined,
         avatar:   avatarStr,
-        fullName: data.fullName || undefined,
         location: data.location || undefined,
         website:  data.website  || undefined,
       } as any);
@@ -455,10 +451,8 @@ export default function ProfilePage() {
           isOpen={isEditOpen}
           onClose={() => setIsEditOpen(false)}
           initialData={{
-            username: profile.username,
             bio:      profile.bio ?? "",
             avatar:   profile.avatar ?? "",
-            fullName: profile.fullName ?? "",
             location: profile.country ?? "",
             website:  profile.website ?? "",
           }}

@@ -116,7 +116,8 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 
   if (!res.ok) {
     const err = await res.json().catch(() => null);
-    throw new Error((err as { error?: string } | null)?.error || `HTTP ${res.status}`);
+    const parsed = err as { error?: string; message?: string } | null;
+    throw new Error(parsed?.message || parsed?.error || `HTTP ${res.status}`);
   }
 
   return res.json() as Promise<T>;

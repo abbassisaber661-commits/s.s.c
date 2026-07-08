@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useDbSync } from "../lib/useDbSync";
 import { PlayerData, storage } from "../lib/storage";
-import { PiUser, getCachedPiUser, loginWithPi, cachePiUser } from "../lib/pi-auth";
+import { PiUser, getCachedPiUser, loginWithPi, cachePiUser, cachePiAccountName } from "../lib/pi-auth";
+import { validateUsername } from "../lib/anti-cheat";
 import {
   AuthUser, loadAuthUser, isGuestUser,
   saveAuthUser, clearAuthUser,
@@ -29,7 +30,13 @@ interface GameState extends PlayerData {
   setAuthFromPi: (uid: string, username: string) => void;
 
   setLanguage: (lang: Language) => void;
-  updateUsername: (name: string) => void;
+  /**
+   * The single canonical username-edit path (rule: exactly ONE editable
+   * username field app-wide). Validates the format, persists to the backend
+   * (source of truth), then updates both the local player cache and the
+   * auth user so every consumer stays in sync.
+   */
+  updateUsername: (name: string) => Promise<{ success: boolean; reason?: string }>;
 
   // Game Flow (IMPORTANT FIX)
   setGameMode: (mode: "questions" | "puzzle" | "result") => void;
@@ -181,15 +188,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   // =========================
-  // USERNAME FIX (LEADERBOARD FIX)
+  // USERNAME (single canonical edit path — see GameState.updateUsername doc)
   // =========================
-  const updateUsername = (name: string) => {
-    const finalName = name?.trim() || "Player";
+  const updateUsername = async (name: string): Promise<{ success: boolean; reason?: string }> => {
+    const { valid, reason } = validateUsername(name || "");
+    if (!valid) return { success: false, reason };
 
-    persist({
-      ...data,
-      username: finalName,
-    });
+    const finalName = name.trim();
+    const playerId = authUser?.uid;
+
+    if (playerId) {
+      try {
+        await api.players.sync(playerId, { username: finalName });
+      } catch (err: any) {
+        const reason = err?.message || "Failed to update username";
+        return { success: false, reason };
+      }
+    }
+
+    persist({ ...data, username: finalName });
+    if (authUser) {
+      const updatedAuth = { ...authUser, username: finalName };
+      saveAuthUser(updatedAuth);
+      setAuthUser(updatedAuth);
+    }
+    return { success: true };
   };
 
   // =========================
@@ -254,6 +277,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const user = createGoogleUser(name, email);
     saveAuthUser(user);
     setAuthUser(user);
+    persist({ ...data, username: user.username });
   };
 
   /**
@@ -291,7 +315,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // IMPORTANT: we do NOT use result.user.uid / result.user.username here —
     // those come from the frontend (Pi SDK) and are untrusted. The backend
     // derives the authoritative uid/username from /v2/me independently.
-    let authResp: { token: string; player: { id: string; username: string; piUid?: string } };
+    let authResp: { token: string; player: { id: string; username: string; piUid?: string }; piUsername?: string };
     try {
       authResp = await api.auth.pi(result.accessToken);
     } catch (err) {
@@ -324,6 +348,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const authU = createPiUser(verifiedPiUid, verifiedUsername);
     saveAuthUser(authU);
     setAuthUser(authU);
+
+    // Public identity (`data.username`, denormalized into posts/comments at
+    // write-time) must match the backend's `player.username` — which is
+    // either the persisted custom username or, on first registration, the
+    // Pi name. It is never re-derived from the live Pi account name here.
+    persist({ ...data, username: verifiedUsername });
+
+    // Cache the LIVE Pi account name separately, purely for read-only
+    // display in the owner's own profile info (never public identity).
+    if (authResp.piUsername) {
+      cachePiAccountName(verifiedPiUid, authResp.piUsername);
+    }
   };
 
   /**
@@ -338,12 +374,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const authU = createPiUser(uid, username);
     saveAuthUser(authU);
     setAuthUser(authU);
+    persist({ ...data, username });
   };
 
   const loginAsGuest = () => {
     const user = createGuestUser();
     saveAuthUser(user);
     setAuthUser(user);
+    persist({ ...data, username: user.username });
   };
 
   /**
@@ -363,6 +401,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const authU = createDevUser(authResp.player.id, authResp.player.username);
       saveAuthUser(authU);
       setAuthUser(authU);
+      persist({ ...data, username: authResp.player.username });
     } catch (err) {
       console.error("[DevMode] auto sign-in failed", err);
     }

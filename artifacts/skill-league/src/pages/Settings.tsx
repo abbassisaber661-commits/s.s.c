@@ -166,13 +166,17 @@ export default function Settings() {
     savePrivacy(next);
   }
 
-  function handleSaveUsername() {
+  async function handleSaveUsername() {
     const { valid, reason } = validateUsername(draft);
     if (!valid) {
       setNameError(reason ?? "Invalid username");
       return;
     }
-    updateUsername(draft);
+    const result = await updateUsername(draft);
+    if (!result.success) {
+      setNameError(result.reason ?? "Invalid username");
+      return;
+    }
     setNameError(null);
     setUsernameSaved(true);
     setTimeout(() => {

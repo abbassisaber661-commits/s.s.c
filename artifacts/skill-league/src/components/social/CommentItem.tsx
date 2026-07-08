@@ -94,12 +94,12 @@ export const CommentItem = memo(function CommentItem({
       <div className="flex-1 min-w-0">
         <div className="bg-[#F5F5F7] rounded-2xl px-3 py-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-[#111111]">
-              {displayName}
-            </span>
             {comment.authorIsOwner && (
               <VerificationBadge tier="owner" size="sm" showTooltip={false} />
             )}
+            <span className="text-xs font-bold text-[#111111]">
+              {displayName}
+            </span>
             {!comment.authorIsOwner && isOfficial && (
               <VerificationBadge tier="official" size="sm" showTooltip={false} />
             )}

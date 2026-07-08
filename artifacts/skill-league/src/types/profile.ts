@@ -159,7 +159,6 @@ export interface ProfileData {
   privacyConfig?: PrivacyConfig;
   avatarFrame?: AvatarFrame;
   profileTheme?: ProfileTheme;
-  fullName?: string;
   website?: string;
   socialLinks?: SocialLinks;
 }

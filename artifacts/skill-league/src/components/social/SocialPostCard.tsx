@@ -515,12 +515,12 @@ const SocialPostCard = memo(function SocialPostCard({
               rtl ? "text-right" : "text-left"
             )}
           >
-            <span className="truncate">
-              {post.isOfficialPage ? officialPageName(post.authorName) : post.authorName}
-            </span>
             {post.authorIsOwner && (
               <VerificationBadge tier="owner" size="sm" showTooltip={false} />
             )}
+            <span className="truncate">
+              {post.isOfficialPage ? officialPageName(post.authorName) : post.authorName}
+            </span>
             {!post.authorIsOwner && post.isOfficialPage && (
               <VerificationBadge tier="official" size="sm" />
             )}

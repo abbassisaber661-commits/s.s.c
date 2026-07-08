@@ -102,9 +102,15 @@ interface ProfileAboutTabProps {
   profile: ProfileData;
   isOwner?: boolean;
   onEdit?: () => void;
+  /**
+   * The player's real Pi Network account name — read-only, owner-only.
+   * Per the username spec this is profile-info display ONLY and is never
+   * the public identity (that is always `profile.username`).
+   */
+  piAccountName?: string | null;
 }
 
-export const ProfileAboutTab = memo(({ profile, isOwner = false, onEdit }: ProfileAboutTabProps) => {
+export const ProfileAboutTab = memo(({ profile, isOwner = false, onEdit, piAccountName }: ProfileAboutTabProps) => {
   const joinDate = formatJoinDate(profile.joinedAt);
 
   const hasSocialLinks = !!(
@@ -135,8 +141,12 @@ export const ProfileAboutTab = memo(({ profile, isOwner = false, onEdit }: Profi
           )}
         </div>
 
-        <FieldRow icon={User}     label="Full Name" value={profile.fullName}  placeholder="Not provided" />
-        <Divider />
+        {isOwner && piAccountName && (
+          <>
+            <FieldRow icon={User} label="Pi Account Name" value={piAccountName} placeholder="Not provided" />
+            <Divider />
+          </>
+        )}
         <FieldRow icon={AtSign}   label="Username"  value={profile.username ? `@${profile.username}` : undefined} />
         <Divider />
         <FieldRow icon={FileText} label="Bio"       value={profile.bio}       placeholder="No bio yet" />
@@ -162,7 +172,7 @@ export const ProfileAboutTab = memo(({ profile, isOwner = false, onEdit }: Profi
       )}
 
       {/* ── Empty state (owner) ── */}
-      {isOwner && !profile.bio && !profile.fullName && !hasSocialLinks && (
+      {isOwner && !profile.bio && !hasSocialLinks && (
         <div className="text-center py-6 px-4">
           <p className="text-sm text-[#666666]">
             Complete your profile to help others find you.

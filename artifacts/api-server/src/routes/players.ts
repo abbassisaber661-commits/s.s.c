@@ -4,6 +4,7 @@ import { db, playersTable, pvpMatchesTable, walletTransactionsTable } from "@wor
 import { nanoid } from "../lib/nanoid.js";
 import { isOwnerPiUid } from "../lib/owner.js";
 import { isUsernameReserved } from "../lib/settings-service.js";
+import { validateUsernameFormat } from "../lib/username-validate.js";
 
 const router = Router();
 
@@ -221,8 +222,13 @@ router.post("/players", async (req, res) => {
       ? (await db.select({ id: playersTable.id }).from(playersTable).where(eq(playersTable.id, id)).limit(1))[0] ?? null
       : null;
     if (existing) {
+      // NOTE: do NOT overwrite `username` for existing players here — this
+      // route doubles as a login/session "ensure player exists" sync call
+      // (see useDbSync.ts), and the username is the player's public identity
+      // which must persist once customized. Use PATCH /players/:id to
+      // explicitly change a username.
       await db.update(playersTable)
-        .set({ username: String(username), updatedAt: new Date(), lastActiveAt: new Date(),
+        .set({ updatedAt: new Date(), lastActiveAt: new Date(),
                ...(typeof language === "string" && { language }),
                ...(typeof piUid === "string" && { piUid, verificationStatus: "verified" }) })
         .where(eq(playersTable.id, id as string));
@@ -256,10 +262,24 @@ router.patch("/players/:id", async (req, res) => {
       "achievements","trophies","dailyChallenges","matchesPlayed","matchesWon",
       "pvpWins","pvpLosses","pvpWinStreak","bestPvpStreak","tournamentWins","bestStreak",
       "skillSpeed","skillAccuracy","skillMemory"];
+    if ("username" in req.body) {
+      const format = validateUsernameFormat(req.body.username);
+      if (!format.valid) {
+        res.status(400).json({ error: "invalid_username", message: format.reason });
+        return;
+      }
+      const trimmed = String(req.body.username).trim();
+      if (await isUsernameReserved(trimmed)) {
+        res.status(400).json({ error: "username_reserved", message: "This name is reserved for official SkillLeague pages" });
+        return;
+      }
+    }
+
     const updates: Record<string, unknown> = { updatedAt: new Date(), lastActiveAt: new Date() };
     for (const key of allowed) {
       if (key in req.body) updates[key] = req.body[key];
     }
+    if (typeof updates.username === "string") updates.username = updates.username.trim();
 
     req.log.info({
       playerId: req.params.id,

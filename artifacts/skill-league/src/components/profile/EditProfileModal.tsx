@@ -7,25 +7,20 @@ interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialData: {
-    username: string;
     bio: string;
     avatar: string;
-    fullName?: string;
     location?: string;
     website?: string;
   };
   onSave: (data: {
-    username: string;
     bio: string;
     avatar: string | File;
-    fullName?: string;
     location?: string;
     website?: string;
   }) => Promise<void> | void;
 }
 
 type Errors = {
-  username?: string;
   bio?: string;
   website?: string;
   avatar?: string;
@@ -41,9 +36,7 @@ const inputCls = (error?: string) =>
   );
 
 export default function EditProfileModal({ isOpen, onClose, initialData, onSave }: EditProfileModalProps) {
-  const [username,      setUsername]      = useState(initialData.username || "");
   const [bio,           setBio]           = useState(initialData.bio || "");
-  const [fullName,      setFullName]      = useState(initialData.fullName || "");
   const [location,      setLocation]      = useState(initialData.location || "");
   const [website,       setWebsite]       = useState(initialData.website || "");
   const [avatarPreview, setAvatarPreview] = useState<string>(initialData.avatar || "");
@@ -62,9 +55,7 @@ export default function EditProfileModal({ isOpen, onClose, initialData, onSave 
 
   useEffect(() => {
     if (isOpen) {
-      setUsername(initialData.username || "");
       setBio(initialData.bio || "");
-      setFullName(initialData.fullName || "");
       setLocation(initialData.location || "");
       setWebsite(initialData.website || "");
       setAvatarPreview(initialData.avatar || "");
@@ -99,14 +90,11 @@ export default function EditProfileModal({ isOpen, onClose, initialData, onSave 
 
   const validate = useCallback((): Errors => {
     const errs: Errors = {};
-    const u = username.trim();
     const w = website?.trim();
-    if (!u)           errs.username = "Username is required";
-    else if (u.length < 3) errs.username = "Username must be at least 3 characters";
     if (bio && bio.length > 150)             errs.bio     = "Bio max 150 characters";
     if (w && !/^https?:\/\/\S+$/.test(w))   errs.website = "Enter a valid URL (http:// or https://)";
     return errs;
-  }, [username, bio, website]);
+  }, [bio, website]);
 
   const handleSave = useCallback(async () => {
     if (isSaving) return;
@@ -119,10 +107,8 @@ export default function EditProfileModal({ isOpen, onClose, initialData, onSave 
 
     try {
       await onSave({
-        username: username.trim(),
         bio:      bio.trim(),
         avatar:   avatarFile || avatarPreview,
-        fullName: fullName.trim() || undefined,
         location: location.trim() || undefined,
         website:  website.trim()  || undefined,
       });
@@ -133,7 +119,7 @@ export default function EditProfileModal({ isOpen, onClose, initialData, onSave 
     } finally {
       if (isMounted.current) setIsSaving(false);
     }
-  }, [username, bio, avatarFile, avatarPreview, fullName, location, website, validate, onSave, onClose, isSaving]);
+  }, [bio, avatarFile, avatarPreview, location, website, validate, onSave, onClose, isSaving]);
 
   const handleClose = useCallback(() => { if (!isSaving) onClose(); }, [isSaving, onClose]);
 
@@ -234,21 +220,6 @@ export default function EditProfileModal({ isOpen, onClose, initialData, onSave 
 
                 {/* Fields */}
                 <div className="space-y-3">
-                  <Field label="Username *" error={errors.username}>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => { setUsername(e.target.value); setErrors((p) => { const { username, ...r } = p; return r; }); }}
-                      className={inputCls(errors.username)}
-                      placeholder="@username"
-                      disabled={isSaving}
-                    />
-                  </Field>
-
-                  <Field label="Full Name">
-                    <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls()} placeholder="Your full name" disabled={isSaving} />
-                  </Field>
-
                   <Field label="Bio" error={errors.bio}>
                     <textarea
                       value={bio}

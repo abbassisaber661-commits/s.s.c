@@ -277,3 +277,32 @@ export function clearCachedPiUser(): void {
 // Keep old name so existing imports don't break.
 export const getCurrentUser  = getCachedPiUser;
 export const logoutPi        = clearCachedPiUser;
+
+// ── Cached Pi account name (profile-info display ONLY) ───────────────────────
+//
+// This is the player's real Pi Network account name, refreshed from
+// GET /v2/me on every Pi login. Per the username spec it must NEVER be used
+// as the public identity (posts/comments/feed always use `players.username`)
+// — it is only ever shown read-only in the owner's own "Profile info" panel
+// so they can see which Pi account they're signed in with.
+const PI_ACCOUNT_NAME_KEY = "sl_pi_account_name";
+
+export function cachePiAccountName(uid: string, name: string): void {
+  try {
+    const map = JSON.parse(localStorage.getItem(PI_ACCOUNT_NAME_KEY) || "{}");
+    map[uid] = name;
+    localStorage.setItem(PI_ACCOUNT_NAME_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getCachedPiAccountName(uid: string | null | undefined): string | null {
+  if (!uid) return null;
+  try {
+    const map = JSON.parse(localStorage.getItem(PI_ACCOUNT_NAME_KEY) || "{}");
+    return typeof map[uid] === "string" ? map[uid] : null;
+  } catch {
+    return null;
+  }
+}
