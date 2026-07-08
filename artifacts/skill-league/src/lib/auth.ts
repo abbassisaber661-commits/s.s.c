@@ -1,4 +1,4 @@
-export type AuthMode = 'google' | 'pi' | 'guest' | null;
+export type AuthMode = 'google' | 'pi' | 'guest' | 'dev' | null;
 
 export interface AuthUser {
   uid: string;
@@ -81,4 +81,19 @@ export function createPiUser(uid: string, username: string): AuthUser {
 
 export function isGuestUser(user: AuthUser | null): boolean {
   return user?.authMode === 'guest';
+}
+
+/**
+ * Development-mode user — Replit dev environment only (see `devMode.ts`).
+ * Backed by a real backend player record (via /api/auth/guest) so all
+ * features work normally, but marked with a distinct authMode so it is
+ * never confused with a real guest or Pi user, and is never granted a
+ * subscription bypass outside of `IS_DEV_MODE`.
+ */
+export function createDevUser(uid: string, username: string): AuthUser {
+  return {
+    uid,
+    username: username?.trim().slice(0, 20) || "Dev Tester",
+    authMode: 'dev',
+  };
 }

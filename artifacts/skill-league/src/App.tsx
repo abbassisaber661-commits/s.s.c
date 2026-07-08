@@ -96,6 +96,7 @@ import {
   type SubscriptionPlanId,
 } from "@/lib/pi-subscription";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
+import { IS_DEV_MODE } from "@/lib/devMode";
 
 const queryClient = new QueryClient();
 
@@ -354,6 +355,11 @@ function AppRoot() {
   // Derive these before hooks (hooks must not be called conditionally).
   const isPiUser       = authUser?.authMode === "pi";
   const isGuest        = authUser?.authMode === "guest";
+  // Development Mode — Replit dev environment ONLY. IS_DEV_MODE is a
+  // Vite build-time constant baked to `false` in every production build
+  // (see lib/devMode.ts), so this branch can never activate in a
+  // deployed app even if a stray authMode:'dev' record existed locally.
+  const isDevUser      = IS_DEV_MODE && authUser?.authMode === "dev";
   // Use storedPlayerId (backend player.id nanoid) — NOT authUser.uid (Pi UUID).
   // These are two different identifiers:
   //   authUser.uid     = Pi Network UUID  (used for Pi identity, from /v2/me)
@@ -421,6 +427,18 @@ function AppRoot() {
       <AnimatePresence mode="wait">
         <SplashScreen key="splash" onDone={handleSplashDone} />
       </AnimatePresence>
+    );
+  }
+
+  // ── Development Mode → full app, no Pi auth / no subscription gate ──────
+  // Replit dev environment only (IS_DEV_MODE — see lib/devMode.ts).
+  if (isAuthenticated && isDevUser) {
+    return (
+      <RealtimeProvider playerId={authUser!.uid}>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <AppShell />
+        </WouterRouter>
+      </RealtimeProvider>
     );
   }
 

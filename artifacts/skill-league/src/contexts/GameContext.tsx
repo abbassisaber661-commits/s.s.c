@@ -5,12 +5,13 @@ import { PiUser, getCachedPiUser, loginWithPi, cachePiUser } from "../lib/pi-aut
 import {
   AuthUser, loadAuthUser, isGuestUser,
   saveAuthUser, clearAuthUser,
-  createGoogleUser, createGuestUser, createPiUser,
+  createGoogleUser, createGuestUser, createPiUser, createDevUser,
 } from "../lib/auth";
 import { Language } from "../lib/i18n";
 import { getActiveLockTier } from "../lib/pi-lock";
 import { startSession, endSession, trackPageView } from "../lib/sessionTracker";
 import { api, setToken, setStoredPlayerId } from "../lib/apiClient";
+import { IS_DEV_MODE, DEV_USER_ID, DEV_USERNAME } from "../lib/devMode";
 
 interface GameState extends PlayerData {
   user: PiUser | null;
@@ -345,6 +346,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAuthUser(user);
   };
 
+  /**
+   * Replit Development Mode ONLY (see `lib/devMode.ts` — gated by
+   * `import.meta.env.DEV`, which is permanently false in production
+   * builds). Auto-signs-in a temporary local player by reusing the
+   * existing `/api/auth/guest` backend route — no new backend surface,
+   * no change to Pi auth, payments, subscriptions, DB, OWNER_UID, or
+   * JWT_SECRET. Marks the resulting session with authMode 'dev' so
+   * AppRoot can skip the subscription gate ONLY while IS_DEV_MODE is true.
+   */
+  const loginAsDevUser = async () => {
+    try {
+      const authResp = await api.auth.guest(DEV_USER_ID, DEV_USERNAME);
+      setToken(authResp.token);
+      setStoredPlayerId(authResp.player.id);
+      const authU = createDevUser(authResp.player.id, authResp.player.username);
+      saveAuthUser(authU);
+      setAuthUser(authU);
+    } catch (err) {
+      console.error("[DevMode] auto sign-in failed", err);
+    }
+  };
+
   const logout = () => {
     clearAuthUser();
     setAuthUser(null);
@@ -391,6 +414,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     autoAuthAttempted.current = true; // no-op: auto-auth intentionally disabled
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally empty — must run once on mount only
+
+  // ── Development Mode auto sign-in — Replit dev environment ONLY ─────────
+  // IS_DEV_MODE is baked to `false` in every production build (see
+  // `lib/devMode.ts`), so this effect is fully inert outside the Replit
+  // dev workflow. It never runs if the user already has any session
+  // (Pi, guest, or a previously-created dev session).
+  const devAutoLoginAttempted = useRef(false);
+
+  useEffect(() => {
+    if (!IS_DEV_MODE) return;
+    if (authUser) return;
+    if (devAutoLoginAttempted.current) return;
+    devAutoLoginAttempted.current = true;
+    loginAsDevUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser]);
 
   return (
     <GameContext.Provider
