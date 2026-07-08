@@ -15,8 +15,9 @@ import Avatar from "@/components/Avatar";
 import { VerificationBadge } from "@/components/profile/VerificationBadge";
 import { PostOptionsMenu } from "@/components/social/PostOptionsMenu";
 import GiftModal from "@/components/social/GiftModal";
+import GiftSupportBar from "@/components/social/GiftSupportBar";
 import type { CommunityPost } from "@/shared/community";
-import { useLikePost, useSavePost } from "@/hooks/useCommunity";
+import { useLikePost, useSavePost, useGiftPostStats } from "@/hooks/useCommunity";
 import { api } from "@/lib/apiClient";
 import { useGame } from "@/contexts/GameContext";
 import { isRTL } from "@/lib/i18n";
@@ -378,6 +379,10 @@ const SocialPostCard = memo(function SocialPostCard({
   const [giftOpen, setGiftOpen] = useState(false);
   const [celebrateKey, setCelebrateKey] = useState<number | null>(null);
 
+  // ── gift support bar ──
+  const { data: giftStats, refetch: refetchGiftStats } = useGiftPostStats(post.id);
+  const supporters = giftStats?.topSenders ?? [];
+
   // ── like ──
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [likes, setLikes] = useState(post.likes ?? 0);
@@ -613,6 +618,15 @@ const SocialPostCard = memo(function SocialPostCard({
         )}
       </div>
 
+      {/* ── GIFT SUPPORT BAR ────────────────────────────────────────────────── */}
+      {supporters.length > 0 && (
+        <GiftSupportBar
+          supporters={supporters}
+          rtl={rtl}
+          onSupporterClick={(senderId) => navigate(`/profile/${senderId}`)}
+        />
+      )}
+
       {/* ── DIVIDER ─────────────────────────────────────────────────────────── */}
       <div className="mx-3.5 mt-1 border-t border-[#F2F2F2]" />
 
@@ -712,7 +726,10 @@ const SocialPostCard = memo(function SocialPostCard({
           postId={post.id}
           senderAvatarUrl={authUser?.photoURL}
           senderName={authUser?.username}
-          onSent={() => setCelebrateKey(Date.now())}
+          onSent={() => {
+            setCelebrateKey(Date.now());
+            refetchGiftStats();
+          }}
         />
       )}
     </motion.article>

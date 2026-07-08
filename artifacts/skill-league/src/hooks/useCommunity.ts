@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, getStoredPlayerId } from "@/lib/apiClient";
 import type { CommunityPost, CreatePostPayload, PaginatedResponse } from "@/shared/community";
 
@@ -89,6 +89,20 @@ export function usePosts(type: string, authorId?: string) {
     refetchOnWindowFocus: false,
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10_000),
+  });
+}
+
+/* ─────────────────────────────
+   Gift Support Bar — top supporters for a single post
+   Read-only display query on top of the existing gift ledger route.
+───────────────────────────── */
+export function useGiftPostStats(postId: string, enabled = true) {
+  return useQuery({
+    queryKey: ["gifts", "post", postId, "stats"],
+    queryFn: () => api.gifts.postStats(postId),
+    enabled: enabled && !!postId,
+    staleTime: 15 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 

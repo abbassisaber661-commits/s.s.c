@@ -19,7 +19,7 @@ router.get("/gifts/post/:postId/stats", async (req, res) => {
       .from(giftLedgerTable)
       .where(eq(giftLedgerTable.postId, postId));
 
-    // top 3 senders by amount
+    // top 10 senders by amount (Gift Support Bar)
     const topSenders = await db
       .select({
         senderId:    giftLedgerTable.senderId,
@@ -30,7 +30,7 @@ router.get("/gifts/post/:postId/stats", async (req, res) => {
       .where(eq(giftLedgerTable.postId, postId))
       .groupBy(giftLedgerTable.senderId)
       .orderBy(desc(sql`sum(${giftLedgerTable.amount})`))
-      .limit(3);
+      .limit(10);
 
     // enrich with usernames
     const enriched = await Promise.all(
