@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useDbSync } from "../lib/useDbSync";
 import { PlayerData, storage } from "../lib/storage";
-import { PiUser, getCachedPiUser, loginWithPi, cachePiUser, hasPiSDK } from "../lib/pi-auth";
+import { PiUser, getCachedPiUser, loginWithPi, cachePiUser } from "../lib/pi-auth";
 import {
   AuthUser, loadAuthUser, isGuestUser,
   saveAuthUser, clearAuthUser,
@@ -368,28 +368,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (authUser?.uid) trackPageView(authUser.uid, "app_open");
   }, [authUser?.uid]);
 
-  // ── Auto Pi authentication ───────────────────────────────────────────────
-  // When the app is opened inside Pi Browser (window.Pi is pre-injected) and
-  // the user has no existing session, attempt Pi.authenticate() automatically.
-  // Pi.init() was already fired at boot (startPiAutoInit in main.tsx), so by
-  // the time this effect runs it is likely already resolved — making the auth
-  // attempt feel instant to the user.
+  // ── Auto Pi authentication — DISABLED ────────────────────────────────────
+  // Previously this effect fired Pi.authenticate() automatically on mount,
+  // with no user gesture. Pi Browser's native bridge does not reliably
+  // resolve/reject an authenticate() call that wasn't triggered by a real
+  // tap — it can hang indefinitely. Because loginWithPi() shares a single
+  // in-flight promise across all callers (by design, to prevent duplicate
+  // concurrent SDK calls), a hung gesture-less auto attempt would also
+  // block/starve a subsequent manual "Sign in with Pi" tap, since the
+  // manual click would just await the same stuck promise instead of
+  // starting its own gesture-backed call. That was the root cause of the
+  // "Authentication timed out" errors.
   //
-  // We use a ref flag so the attempt fires at most once per page load even if
-  // GameProvider ever re-renders before the promise resolves.
+  // Fix: auto sign-in is disabled. The manual "Sign in with Pi" button
+  // (a genuine user gesture) is now the sole entry point for Pi
+  // authentication, guaranteeing only one, gesture-backed request is ever
+  // active. The ref flag / effect are kept as an inert hook so this can be
+  // safely re-enabled later behind a gesture-aware guard if needed.
   const autoAuthAttempted = useRef(false);
 
   useEffect(() => {
-    if (autoAuthAttempted.current) return;        // already fired this session
-    if (authUser)                  return;        // already authenticated
-    if (!hasPiSDK())               return;        // not in Pi Browser
-
-    autoAuthAttempted.current = true;
-
-    // Fire-and-forget — errors are non-fatal; the manual button is the fallback.
-    loginWithPiNetwork().catch((err) => {
-      console.info("[Pi] Auto-auth did not complete:", (err as Error)?.message);
-    });
+    autoAuthAttempted.current = true; // no-op: auto-auth intentionally disabled
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally empty — must run once on mount only
 
