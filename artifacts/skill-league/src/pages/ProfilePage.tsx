@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, RefreshCcw, Menu } from "lucide-react";
-import { api, getStoredPlayerId, getJwtRole } from "@/lib/apiClient";
+import { api, getStoredPlayerId } from "@/lib/apiClient";
 import { compressImageToBase64 } from "@/lib/imageUtils";
 
 import { useTranslation } from "@/hooks/useTranslation";
@@ -49,7 +49,7 @@ export default function ProfilePage() {
   const [, navigate] = useLocation();
 
   const [, routeParams] = useRoute("/profile/:userId?");
-  const { authUser, isGuest, user: piUser } = useGame();
+  const { authUser, isGuest } = useGame();
   const storedPlayerId = getStoredPlayerId();
   // Prefer storedPlayerId (DB nanoid) over authUser.uid (Pi UUID for Pi users)
   // so profile fetch and upload handlers always target the correct player record.
@@ -106,10 +106,6 @@ export default function ProfilePage() {
     !routeParams?.userId ||
     routeParams.userId === authUser?.uid ||
     routeParams.userId === storedPlayerId;
-
-  // isAdminUser: true only when the stored JWT carries role="admin" (set by backend
-  // when player.piUid matches OWNER_UID secret).  Used to gate owner-only UI.
-  const isAdminUser = getJwtRole() === "admin";
 
   const creatorStats = useCreatorStats(userId || "1", profile?.postsCount ?? 0);
 
@@ -328,45 +324,12 @@ export default function ProfilePage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════
-          3b. Pi UID card — owner only, Pi users only
-              Shows the Pi Network UID so the owner can copy it and
-              set it as OWNER_UID in Replit Secrets for admin access.
+          3b. Pi UID card — REMOVED for security (SSC hardening).
+              The raw Pi Network UID must never be displayed in the UI,
+              even to the owner. Owner verification is handled entirely
+              server-side (isOwnerPiUid against the OWNER_UID secret);
+              the UID itself stays private in the database/session only.
       ══════════════════════════════════════════════════════════════ */}
-      {isOwner && isAdminUser && piUser?.uid && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mt-3 px-4"
-        >
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-amber-600 text-sm font-bold">🔑 Pi UID (للمالك)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 text-xs text-amber-800 bg-amber-100 rounded-lg px-3 py-2 break-all select-all font-mono">
-                {piUser.uid}
-              </code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(piUser.uid).then(() => {
-                    toast.success("تم نسخ Pi UID ✓");
-                  }).catch(() => {
-                    toast.error("فشل النسخ — انسخه يدوياً");
-                  });
-                }}
-                className="flex-shrink-0 px-3 py-2 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
-                style={{ background: "linear-gradient(135deg,#d97706,#f59e0b)" }}
-              >
-                نسخ
-              </button>
-            </div>
-            <p className="text-amber-500 text-[10px] mt-2 leading-relaxed">
-              أضف هذه القيمة كـ OWNER_UID في Replit Secrets للدخول كمالك التطبيق
-            </p>
-          </div>
-        </motion.div>
-      )}
 
       {/* ══════════════════════════════════════════════════════════════
           4. 📊 Statistics  |  Share Profile  |  Edit Profile

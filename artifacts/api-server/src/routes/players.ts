@@ -109,7 +109,8 @@ router.get("/players/:id", async (req, res) => {
       .where(eq(playersTable.id, req.params.id))
       .limit(1);
     if (!player) { res.status(404).json({ error: "not found" }); return; }
-    res.json({ ...player, isOwner: isOwnerPiUid(player.piUid) });
+    const { piUid, ...safePlayer } = player;
+    res.json({ ...safePlayer, isOwner: isOwnerPiUid(piUid) });
   } catch (err) {
     req.log.error({ err }, "get player error");
     res.status(500).json({ error: "internal" });
@@ -226,7 +227,8 @@ router.post("/players", async (req, res) => {
                ...(typeof piUid === "string" && { piUid, verificationStatus: "verified" }) })
         .where(eq(playersTable.id, id as string));
       const [updated] = await db.select().from(playersTable).where(eq(playersTable.id, id as string));
-      res.json(updated);
+      const { piUid: _uUid, ...safeUpdated } = updated;
+      res.json(safeUpdated);
     } else {
       const [created] = await db.insert(playersTable).values({
         id: playerId,
@@ -236,7 +238,8 @@ router.post("/players", async (req, res) => {
         piUid: typeof piUid === "string" ? piUid : undefined,
         verificationStatus: piUid ? "verified" : "unverified",
       }).returning();
-      res.status(201).json(created);
+      const { piUid: _cUid, ...safeCreated } = created;
+      res.status(201).json(safeCreated);
     }
   } catch (err) {
     req.log.error({ err }, "create/update player error");
@@ -280,7 +283,8 @@ router.patch("/players/:id", async (req, res) => {
       coverLen: typeof updated.cover === "string" ? updated.cover.length : null,
     }, "[PATCH /players/:id] DB updated OK");
 
-    res.json(updated);
+    const { piUid, ...safeUpdated } = updated;
+    res.json(safeUpdated);
   } catch (err) {
     req.log.error({ err }, "patch player error");
     res.status(500).json({ error: "internal" });

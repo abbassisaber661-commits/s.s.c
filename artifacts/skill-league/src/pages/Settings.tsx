@@ -132,7 +132,7 @@ function Toggle({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Settings() {
-  const { username, updateUsername, logout, language, setLanguage, authUser } = useGame();
+  const { username, updateUsername, logout, language, setLanguage } = useGame();
   const [, setLocation] = useLocation();
 
   const [theme, setTheme] = useState<"dark" | "light">(getStoredTheme);
@@ -150,7 +150,6 @@ export default function Settings() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [usernameSaved, setUsernameSaved] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
-  const [uidCopied, setUidCopied] = useState(false);
 
   // Sync draft when username changes externally
   useEffect(() => { setDraft(username); }, [username]);
@@ -204,39 +203,6 @@ export default function Settings() {
     setLocation("/");
   }
 
-  function handleCopyUid() {
-    const uid = authUser?.uid ?? "";
-    if (!uid) return;
-
-    const doFallback = () => {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = uid;
-        ta.style.position = "fixed";
-        ta.style.left = "-9999px";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.focus();
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        setUidCopied(true);
-        setTimeout(() => setUidCopied(false), 2000);
-      } catch { /* ignore */ }
-    };
-
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-      navigator.clipboard.writeText(uid)
-        .then(() => {
-          setUidCopied(true);
-          setTimeout(() => setUidCopied(false), 2000);
-        })
-        .catch(doFallback);
-    } else {
-      doFallback();
-    }
-  }
-
   const currentLang = LANGUAGES.find(l => l.code === language);
 
   const BG = "#F0F2F5";
@@ -258,42 +224,12 @@ export default function Settings() {
 
       <div className="max-w-md mx-auto px-4">
 
-        {/* ── ACCOUNT UID ───────────────────────────────────── */}
-        <SectionLabel>الحساب</SectionLabel>
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }} style={CARD}>
-          <div className="flex items-center justify-between px-4 py-3.5">
-            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-              <span className="text-xs font-semibold" style={{ color: "#65676B" }}>معرّف المستخدم (UID)</span>
-              <span
-                className="text-sm font-mono font-bold truncate"
-                style={{ color: "#050505", letterSpacing: "0.02em" }}
-              >
-                {authUser?.uid ?? "—"}
-              </span>
-            </div>
-            <button
-              onClick={handleCopyUid}
-              disabled={!authUser?.uid}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 shrink-0 ml-3 disabled:opacity-40"
-              style={{
-                background: uidCopied ? "#2D8A3E" : "#1877F2",
-                color: "white",
-                minWidth: 80,
-                justifyContent: "center",
-              }}
-            >
-              {uidCopied ? "✓ تم النسخ" : "نسخ UID"}
-            </button>
-          </div>
-          {authUser?.authMode === "guest" && (
-            <div
-              className="mx-4 mb-3 px-3 py-2 rounded-xl text-xs"
-              style={{ background: "rgba(99,102,241,0.08)", color: "#4f46e5", border: "1px solid rgba(99,102,241,0.15)" }}
-            >
-              🔒 وضع الضيف — UID مؤقت، لا يتم حفظه
-            </div>
-          )}
-        </motion.div>
+        {/* ── ACCOUNT UID ───────────────────────────────────────────────
+            Removed from display for security (SSC hardening): the raw
+            Pi Network UID must never be shown or copyable in the UI,
+            even to the account's own owner. It remains stored server-side
+            and continues to power internal auth/session logic unchanged.
+        ──────────────────────────────────────────────────────────────── */}
 
         {/* ── GENERAL ───────────────────────────────────────── */}
         <SectionLabel>عام</SectionLabel>

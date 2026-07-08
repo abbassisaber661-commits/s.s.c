@@ -61,7 +61,7 @@ const SEVERITY_COLOR: Record<string, string> = {
 };
 
 export default function BetaDashboard() {
-  const { language, authUser } = useGame();
+  const { language } = useGame();
   const rtl     = isRTL(language);
   const access  = getBetaAccess();
   const offline = isOfflineMode();
@@ -310,7 +310,6 @@ export default function BetaDashboard() {
                 <div className="flex justify-between"><span className="text-muted-foreground">مستوى الوصول</span><span>{getBetaTierLabel(access.tier)}</span></div>
                 {access.inviteCode && <div className="flex justify-between"><span className="text-muted-foreground">رمز الدعوة</span><span className="font-mono text-xs">{access.inviteCode}</span></div>}
                 {access.grantedAt && <div className="flex justify-between"><span className="text-muted-foreground">تاريخ الانضمام</span><span className="text-xs">{new Date(access.grantedAt).toLocaleDateString('ar-SA')}</span></div>}
-                <div className="flex justify-between"><span className="text-muted-foreground">المستخدم</span><span className="font-mono text-xs truncate max-w-32">{authUser?.uid?.slice(0, 16) ?? '—'}</span></div>
               </div>
             </div>
 
