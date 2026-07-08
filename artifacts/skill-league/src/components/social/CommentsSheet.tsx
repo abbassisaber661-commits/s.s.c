@@ -33,6 +33,7 @@ const SKELETON = () => (
 const mapToCommentData = (c: any): CommentData => ({
   id:          c.id,
   postId:      c.postId,
+  authorId:    c.authorId,
   authorName:  c.authorName ?? c.username ?? "User",
   authorLevel: c.authorLevel ?? c.level ?? 1,
   content:     c.content,

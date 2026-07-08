@@ -5,11 +5,13 @@ import {
   MessageCircle, Loader2, BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { OFFICIAL_FOLLOW_LABEL } from "@/lib/officialPage";
 
 interface ProfileActionButtonsProps {
   isOwner: boolean;
   isFollowing?: boolean;
   isFollowLoading?: boolean;
+  isOfficialPage?: boolean;
   onEditProfile?: () => void;
   onShareProfile?: () => void;
   onFollowToggle?: () => void;
@@ -69,6 +71,7 @@ export const ProfileActionButtons = memo(
     isOwner,
     isFollowing = false,
     isFollowLoading = false,
+    isOfficialPage = false,
     onEditProfile,
     onShareProfile,
     onFollowToggle,
@@ -112,7 +115,7 @@ export const ProfileActionButtons = memo(
       >
         <ActionButton
           icon={isFollowing ? UserCheck : UserPlus}
-          label={isFollowing ? "Following" : "Follow"}
+          label={isOfficialPage ? OFFICIAL_FOLLOW_LABEL : isFollowing ? "Following" : "Follow"}
           variant={isFollowing ? "secondary" : "primary"}
           loading={isFollowLoading}
           onClick={onFollowToggle}

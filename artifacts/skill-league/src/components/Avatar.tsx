@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { Shield } from "lucide-react";
 
 export type AvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
 export type AvatarShape = "rounded-lg" | "rounded-xl" | "rounded-2xl" | "rounded-3xl" | "rounded-full";
@@ -10,7 +11,17 @@ interface AvatarProps {
   shape?: AvatarShape;
   className?: string;
   online?: boolean;
+  /** Renders the official S.S.C shield identity instead of a photo/initials. */
+  isOfficialPage?: boolean;
 }
+
+const ICON_SIZE_MAP: Record<AvatarSize, number> = {
+  xs: 13,
+  sm: 16,
+  md: 20,
+  lg: 26,
+  xl: 36,
+};
 
 const SIZE_MAP: Record<AvatarSize, string> = {
   xs: "w-7 h-7 text-[10px]",
@@ -39,12 +50,22 @@ const Avatar = memo(
     shape = "rounded-full",
     className = "",
     online,
+    isOfficialPage = false,
   }: AvatarProps) => {
     const initials = getInitials(username);
 
     return (
       <div className={`relative flex-shrink-0 ${className}`}>
-        {avatar ? (
+        {isOfficialPage ? (
+          <div
+            className={`${SIZE_MAP[size]} rounded-2xl
+            flex items-center justify-center
+            bg-gradient-to-br from-[#111111] to-[#333333]
+            border border-[#FFD60A]/40`}
+          >
+            <Shield size={ICON_SIZE_MAP[size]} className="text-[#FFD60A]" fill="currentColor" fillOpacity={0.15} />
+          </div>
+        ) : avatar ? (
           <img
             src={avatar}
             alt={username}

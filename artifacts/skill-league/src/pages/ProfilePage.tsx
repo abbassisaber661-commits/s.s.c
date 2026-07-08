@@ -345,6 +345,7 @@ export default function ProfilePage() {
           isOwner={isOwner}
           isFollowing={profile.isFollowing ?? false}
           isFollowLoading={followMutation.isPending}
+          isOfficialPage={profile.verification === "official"}
           onStatistics={() => setStatsOpen(true)}
           onEditProfile={() => guardGuest(() => setIsEditOpen(true))}
           onShareProfile={() => setIsShareOpen(true)}

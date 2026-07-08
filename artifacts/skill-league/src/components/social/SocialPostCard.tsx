@@ -20,12 +20,12 @@ import { useLikePost, useSavePost } from "@/hooks/useCommunity";
 import { api } from "@/lib/apiClient";
 import { useGame } from "@/contexts/GameContext";
 import { isRTL } from "@/lib/i18n";
+import { officialPageDisplayName, OFFICIAL_FOLLOW_LABEL } from "@/lib/officialPage";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 /** Normalise official-page display names: "SkillLeague X" → "S.S.C X" (null-safe) */
-const officialPageName = (name?: string | null) =>
-  (name ?? "").replace(/^SkillLeague(\s+|$)/i, (_, sp) => sp ? "S.S.C " : "S.S.C");
+const officialPageName = officialPageDisplayName;
 
 const fmt = (n: number) =>
   n >= 1_000_000
@@ -115,8 +115,8 @@ const GiftButton = memo(function GiftButton({
 // ─── Follow button ────────────────────────────────────────────────────────────
 
 const FollowBtn = memo(function FollowBtn({
-  meId, themId, rtl,
-}: { meId?: string; themId?: string; rtl: boolean }) {
+  meId, themId, rtl, isOfficialPage,
+}: { meId?: string; themId?: string; rtl: boolean; isOfficialPage?: boolean }) {
   const [following, setFollowing] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -156,7 +156,9 @@ const FollowBtn = memo(function FollowBtn({
           : "bg-[#FFD60A] text-[#111111]"
       )}
     >
-      {following
+      {isOfficialPage
+        ? OFFICIAL_FOLLOW_LABEL
+        : following
         ? (rtl ? "متابَع" : "Following")
         : (rtl ? "متابعة" : "Follow")}
     </button>
@@ -453,7 +455,7 @@ const SocialPostCard = memo(function SocialPostCard({
           onClick={() => navigate(`/profile/${post.authorId}`)}
           className="shrink-0"
         >
-          <Avatar username={post.authorName} />
+          <Avatar username={post.authorName} isOfficialPage={post.isOfficialPage} />
         </button>
 
         {/* Name + meta + gift */}
@@ -512,7 +514,7 @@ const SocialPostCard = memo(function SocialPostCard({
 
         {/* Follow + Options */}
         <div className="flex items-center gap-1 shrink-0">
-          <FollowBtn meId={currentPlayerId} themId={post.authorId} rtl={rtl} />
+          <FollowBtn meId={currentPlayerId} themId={post.authorId} rtl={rtl} isOfficialPage={post.isOfficialPage} />
           <PostOptionsMenu
             postId={post.id}
             authorId={post.authorId ?? ""}

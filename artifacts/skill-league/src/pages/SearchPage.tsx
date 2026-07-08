@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ArrowLeft, Hash, User, FileText, TrendingUp } from "lucide-react";
 import { api } from "@/lib/apiClient";
 import Avatar from "@/components/Avatar";
+import { VerificationBadge } from "@/components/profile/VerificationBadge";
+import { isOfficialPageId, officialPageDisplayName } from "@/lib/officialPage";
 import { playTap } from "@/lib/sounds";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -204,27 +206,37 @@ export default function SearchPage() {
                     </span>
                   </div>
                   <div className="space-y-2">
-                    {results.users.map(u => (
-                      <motion.button
-                        key={u.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        onClick={() => navigate(`/profile/${u.id}`)}
-                        className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#E5E5E5] hover:border-[#FFD60A]/40 hover:shadow-sm active:scale-[0.98] transition-all text-left shadow-sm"
-                      >
-                        <Avatar username={u.username} size="sm" shape="rounded-xl" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-[#111111] truncate">
-                            <HighlightText text={u.username} query={query} />
-                            {u.verificationStatus === "verified" && <span className="ml-1 text-[#FFD60A]">✓</span>}
+                    {results.users.map(u => {
+                      const official = isOfficialPageId(u.id);
+                      const label = official ? officialPageDisplayName(u.username) : u.username;
+                      return (
+                        <motion.button
+                          key={u.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          onClick={() => navigate(`/profile/${u.id}`)}
+                          className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white border border-[#E5E5E5] hover:border-[#FFD60A]/40 hover:shadow-sm active:scale-[0.98] transition-all text-left shadow-sm"
+                        >
+                          <Avatar username={label} size="sm" shape="rounded-xl" isOfficialPage={official} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-[#111111] truncate flex items-center gap-1">
+                              <HighlightText text={label} query={query} />
+                              {official ? (
+                                <VerificationBadge tier="official" size="sm" showTooltip={false} />
+                              ) : (
+                                u.verificationStatus === "verified" && <span className="ml-1 text-[#FFD60A]">✓</span>
+                              )}
+                            </div>
+                            {!official && (
+                              <div className="text-xs text-[#666666]">
+                                {`Lvl ${u.level} · ${u.elo} ELO`}
+                              </div>
+                            )}
                           </div>
-                          <div className="text-xs text-[#666666]">
-                            {`Lvl ${u.level} · ${u.elo} ELO`}
-                          </div>
-                        </div>
-                        <ArrowLeft className="w-4 h-4 text-[#666666] rotate-180 flex-shrink-0" />
-                      </motion.button>
-                    ))}
+                          <ArrowLeft className="w-4 h-4 text-[#666666] rotate-180 flex-shrink-0" />
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 </section>
               )}
@@ -239,7 +251,10 @@ export default function SearchPage() {
                     </span>
                   </div>
                   <div className="space-y-2">
-                    {results.posts.map(p => (
+                    {results.posts.map(p => {
+                      const postOfficial = isOfficialPageId(p.authorId);
+                      const postAuthorLabel = postOfficial ? officialPageDisplayName(p.username) : p.username;
+                      return (
                       <motion.div
                         key={p.id}
                         initial={{ opacity: 0, y: 8 }}
@@ -247,12 +262,13 @@ export default function SearchPage() {
                         className="p-3 rounded-2xl bg-white border border-[#E5E5E5] shadow-sm"
                       >
                         <div className="flex items-center gap-2 mb-1.5">
-                          <Avatar username={p.username} size="xs" shape="rounded-lg" />
+                          <Avatar username={postAuthorLabel} size="xs" shape="rounded-lg" isOfficialPage={postOfficial} />
                           <button
-                            className="text-xs font-bold text-[#111111] hover:underline"
+                            className="text-xs font-bold text-[#111111] hover:underline flex items-center gap-1"
                             onClick={() => navigate(`/profile/${p.authorId}`)}
                           >
-                            {p.username}
+                            {postAuthorLabel}
+                            {postOfficial && <VerificationBadge tier="official" size="sm" showTooltip={false} />}
                           </button>
                           <span className="text-[10px] text-[#666666] ml-auto">
                             {formatTimeAgo(p.createdAt, t)}
@@ -266,7 +282,8 @@ export default function SearchPage() {
                           <span>💬 {p.replies}</span>
                         </div>
                       </motion.div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               )}

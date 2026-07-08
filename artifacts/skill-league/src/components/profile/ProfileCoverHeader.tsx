@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Camera, MapPin, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerificationBadge } from "./VerificationBadge";
+import Avatar from "@/components/Avatar";
+import { officialPageDisplayName } from "@/lib/officialPage";
 import type { ProfileData } from "@/types/profile";
 
 const formatJoinDate = (ts?: number) => {
@@ -28,6 +30,7 @@ export const ProfileCoverHeader = memo(
     onCoverClick,
   }: ProfileCoverHeaderProps) => {
     const joinDate = formatJoinDate(profile.joinedAt);
+    const isOfficial = profile.verification === "official";
 
     return (
       <div className="w-full">
@@ -97,7 +100,15 @@ export const ProfileCoverHeader = memo(
                   "shadow-xl bg-[#F5F5F7]"
                 )}
               >
-                {profile.avatar ? (
+                {isOfficial ? (
+                  <Avatar
+                    username={profile.username}
+                    isOfficialPage
+                    size="xl"
+                    shape="rounded-full"
+                    className="w-full h-full"
+                  />
+                ) : profile.avatar ? (
                   <img
                     src={profile.avatar}
                     alt={profile.username}
@@ -111,7 +122,7 @@ export const ProfileCoverHeader = memo(
               </div>
 
               {/* Edit avatar button (owner only) */}
-              {isOwner && (
+              {isOwner && !isOfficial && (
                 <button
                   onClick={onAvatarClick}
                   className={cn(
@@ -137,10 +148,9 @@ export const ProfileCoverHeader = memo(
         >
           {/* Display name + badge */}
           {(() => {
-            const isOfficial = profile.verification === "official";
             const rawName = profile.displayName ?? profile.username ?? "";
             const displayName = isOfficial
-              ? rawName.replace(/^SkillLeague(\s+|$)/i, (_, sp) => sp ? "S.S.C " : "S.S.C")
+              ? officialPageDisplayName(rawName)
               : rawName;
             return (
               <>

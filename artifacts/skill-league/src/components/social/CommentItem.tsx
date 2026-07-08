@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Reply, MoreHorizontal, Trash2, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VerificationBadge } from "@/components/profile/VerificationBadge";
+import Avatar from "@/components/Avatar";
+import { isOfficialPageId, officialPageDisplayName } from "@/lib/officialPage";
 
 const formatAge = (ts: number) => {
   const d = Date.now() - ts;
@@ -15,6 +17,7 @@ const formatAge = (ts: number) => {
 export interface CommentData {
   id:            string;
   postId:        string;
+  authorId?:     string;
   authorName:    string;
   authorLevel:   number;
   authorIsOwner?: boolean;
@@ -52,6 +55,8 @@ export const CommentItem = memo(function CommentItem({
 
   const isOwner = currentUser === comment.authorName;
   const replyCount = comment.replies?.length ?? 0;
+  const isOfficial = isOfficialPageId(comment.authorId);
+  const displayName = isOfficial ? officialPageDisplayName(comment.authorName) : comment.authorName;
 
   const handleLike = () => {
     setLiked((v) => !v);
@@ -66,14 +71,23 @@ export const CommentItem = memo(function CommentItem({
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div
-          className={cn(
-            "rounded-full flex items-center justify-center font-bold text-black bg-[#FFD60A]",
-            depth === 0 ? "w-8 h-8 text-xs" : "w-6 h-6 text-[10px]"
-          )}
-        >
-          {comment.authorName[0]?.toUpperCase()}
-        </div>
+        {isOfficial ? (
+          <Avatar
+            username={displayName}
+            isOfficialPage
+            size={depth === 0 ? "sm" : "xs"}
+            shape="rounded-xl"
+          />
+        ) : (
+          <div
+            className={cn(
+              "rounded-full flex items-center justify-center font-bold text-black bg-[#FFD60A]",
+              depth === 0 ? "w-8 h-8 text-xs" : "w-6 h-6 text-[10px]"
+            )}
+          >
+            {comment.authorName[0]?.toUpperCase()}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -81,12 +95,17 @@ export const CommentItem = memo(function CommentItem({
         <div className="bg-[#F5F5F7] rounded-2xl px-3 py-2">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-[#111111]">
-              {comment.authorName}
+              {displayName}
             </span>
             {comment.authorIsOwner && (
               <VerificationBadge tier="owner" size="sm" showTooltip={false} />
             )}
-            <span className="text-[10px] text-[#666666]">Lv.{comment.authorLevel}</span>
+            {!comment.authorIsOwner && isOfficial && (
+              <VerificationBadge tier="official" size="sm" showTooltip={false} />
+            )}
+            {!isOfficial && (
+              <span className="text-[10px] text-[#666666]">Lv.{comment.authorLevel}</span>
+            )}
           </div>
           <p className="text-sm text-[#111111] mt-0.5 leading-relaxed break-words">
             {comment.content}
